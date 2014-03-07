@@ -14,7 +14,15 @@ func main() {
 		os.Exit(-1)
 	}
 
-	for _, tok := range tokens {
-		fmt.Println(tok)
+	expressions, err := ParseTokens(tokens)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(-1)
+	}
+
+	fmt.Println(tokens)
+
+	for _, expr := range expressions {
+		fmt.Println(expr.SexpString())
 	}
 }
