@@ -5,6 +5,8 @@ import (
 	"strconv"
 )
 
+var UnexpectedEnd error = errors.New("Unexpected end of input")
+
 const SliceDefaultCap = 10
 
 var SymbolTable map[string]SexpSymbol = make(map[string]SexpSymbol)
@@ -115,6 +117,10 @@ func ParseList(lexer *Lexer) (Sexp, error) {
 	if err != nil {
 		return SexpNull, err
 	}
+	if tok.typ == TokenEnd {
+		_, _ = lexer.GetNextToken()
+		return SexpEnd, UnexpectedEnd
+	}
 
 	if tok.typ == TokenRParen {
 		_, _ = lexer.GetNextToken()
@@ -157,7 +163,7 @@ func ParseList(lexer *Lexer) (Sexp, error) {
 	}
 
 	expr, err = ParseList(lexer)
-	if (err != nil) {
+	if err != nil {
 		return start, err
 	}
 	start.tail = expr
@@ -175,7 +181,7 @@ func ParseArray(lexer *Lexer) (Sexp, error) {
 		}
 
 		if tok.typ == TokenEnd {
-			return SexpEnd, errors.New("input ended unexpectedly")
+			return SexpEnd, UnexpectedEnd
 		}
 
 		if tok.typ == TokenRSquare {

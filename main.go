@@ -11,7 +11,7 @@ func main() {
 
 	expressions, err := ParseTokens(lexer)
 	if err != nil {
-		fmt.Println(err)
+		fmt.Printf("Error on line %d: %v\n", lexer.linenum, err)
 		os.Exit(-1)
 	}
 

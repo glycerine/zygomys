@@ -62,6 +62,8 @@ type Lexer struct {
 	tokens []Token
 	buffer *bytes.Buffer
 	stream io.RuneReader
+	linenum int
+	finished bool
 }
 
 var DecimalRegex *regexp.Regexp
@@ -199,6 +201,9 @@ func (lexer *Lexer) LexNextRune(r rune) error {
 		return nil
 	}
 	if r == ' ' || r == '\n' || r == '\t' || r == '\r' {
+		if r == '\n' {
+			lexer.linenum++
+		}
 		err := lexer.dumpBuffer()
 		if err != nil {
 			return err
@@ -218,9 +223,13 @@ func (lexer *Lexer) LexNextRune(r rune) error {
 }
 
 func (lexer *Lexer) PeekNextToken() (Token, error) {
+	if lexer.finished {
+		return Token{TokenEnd, ""}, nil
+	}
 	for len(lexer.tokens) == 0 {
 		r, _, err := lexer.stream.ReadRune()
 		if err != nil {
+			lexer.finished = true
 			return Token{TokenEnd, ""}, nil
 		}
 
@@ -254,6 +263,8 @@ func NewLexerFromStream(stream io.RuneReader) *Lexer {
 	lexer.buffer = new(bytes.Buffer)
 	lexer.comment = false
 	lexer.stream = stream
+	lexer.linenum = 1
+	lexer.finished = false
 
 	return lexer
 }
