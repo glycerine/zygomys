@@ -14,9 +14,21 @@ type Sexp interface {
 	SexpString() string
 }
 
-type SexpNullValue int
-func (null SexpNullValue) SexpString() string {
-	return "()"
+type SexpSentinel int
+const (
+	SexpNull SexpSentinel = iota
+	SexpEnd
+)
+
+func (sent SexpSentinel) SexpString() string {
+	if sent == SexpNull {
+		return "()"
+	}
+	if sent == SexpEnd {
+		return "End"
+	}
+
+	return ""
 }
 
 type SexpPair struct {
@@ -48,7 +60,6 @@ func (pair SexpPair) SexpString() string {
 	return str
 }
 
-const SexpNull SexpNullValue = 0
 
 type SexpArray []Sexp
 type SexpInt int8
@@ -99,111 +110,145 @@ func MakeList(expressions []Sexp) Sexp {
 	return SexpPair{expressions[0], MakeList(expressions[1:])}
 }
 
-func ParseList(tokens []Token) (Sexp, []Token, error) {
-	if tokens[0].typ == TokenRParen {
-		return SexpNull, tokens[1:], nil
+func ParseList(lexer *Lexer) (Sexp, error) {
+	tok, err := lexer.PeekNextToken()
+	if err != nil {
+		return SexpNull, err
+	}
+
+	if tok.typ == TokenRParen {
+		_, _ = lexer.GetNextToken()
+		return SexpNull, nil
 	}
 
 	var start SexpPair
-	var expr Sexp
-	var err error
 
-	expr, tokens, err = ParseExpression(tokens)
+	expr, err := ParseExpression(lexer)
 	if err != nil {
-		return SexpNull, tokens, err
+		return SexpNull, err
 	}
 
 	start.head = expr
 
-	if tokens[0].typ == TokenDot {
-		expr, tokens, err = ParseExpression(tokens[1:])
-		if err != nil {
-			return SexpNull, tokens, err
-		}
-		if tokens[0].typ != TokenRParen {
-			return SexpNull, tokens,
-			       errors.New("extra value in dotted pair")
-		}
-		start.tail = expr
-		return start, tokens[1:], nil
+	tok, err = lexer.PeekNextToken()
+	if err != nil {
+		return SexpNull, err
 	}
 
-	expr, tokens, err = ParseList(tokens)
+	if tok.typ == TokenDot {
+		// eat up the dot
+		_, _ = lexer.GetNextToken()
+		expr, err = ParseExpression(lexer)
+		if err != nil {
+			return SexpNull, err
+		}
+
+		// eat up the end paren
+		tok, err = lexer.GetNextToken()
+		if err != nil {
+			return SexpNull, err
+		}
+		// make sure it was actually an end paren
+		if tok.typ != TokenRParen {
+			return SexpNull, errors.New("extra value in dotted pair")
+		}
+		start.tail = expr
+		return start, nil
+	}
+
+	expr, err = ParseList(lexer)
 	if (err != nil) {
-		return start, tokens, err
+		return start, err
 	}
 	start.tail = expr
 
-	return start, tokens, nil
+	return start, nil
 }
 
-func ParseArray(tokens []Token) (Sexp, []Token, error) {
+func ParseArray(lexer *Lexer) (Sexp, error) {
 	arr := make([]Sexp, 0, SliceDefaultCap)
-	var expr Sexp
-	var err error
 
-	for tokens[0].typ != TokenRSquare {
-		expr, tokens, err = ParseExpression(tokens)
+	for {
+		tok, err := lexer.PeekNextToken()
 		if err != nil {
-			return SexpNull, tokens, err
+			return SexpEnd, err
+		}
+
+		if tok.typ == TokenEnd {
+			return SexpEnd, errors.New("input ended unexpectedly")
+		}
+
+		if tok.typ == TokenRSquare {
+			// pop off the ]
+			_, _ = lexer.GetNextToken()
+			break
+		}
+
+		expr, err := ParseExpression(lexer)
+		if err != nil {
+			return SexpNull, err
 		}
 		arr = append(arr, expr)
 	}
 
-	return SexpArray(arr), tokens[1:], nil
+	return SexpArray(arr), nil
 }
 
-func ParseExpression(tokens []Token) (Sexp, []Token, error) {
-	var expr Sexp
-	var err error
-	tok := tokens[0]
+func ParseExpression(lexer *Lexer) (Sexp, error) {
+	tok, err := lexer.GetNextToken()
+	if err != nil {
+		return SexpEnd, err
+	}
+
 	switch (tok.typ) {
 	case TokenLParen:
-		return ParseList(tokens[1:])
+		return ParseList(lexer)
 	case TokenLSquare:
-		return ParseArray(tokens[1:])
+		return ParseArray(lexer)
 	case TokenQuote:
-		expr, tokens, err = ParseExpression(tokens[1:])
+		expr, err := ParseExpression(lexer)
 		if err != nil {
-			return SexpNull, tokens, err
+			return SexpNull, err
 		}
-		return MakeList([]Sexp{MakeSymbol("quote"), expr}),
-			tokens, nil
+		return MakeList([]Sexp{MakeSymbol("quote"), expr}), nil
 	case TokenSymbol:
-		return MakeSymbol(tok.str), tokens[1:], nil
+		return MakeSymbol(tok.str), nil
 	case TokenDecimal:
 		i, err := strconv.ParseInt(tok.str, 10, 8)
 		if err != nil {
-			return SexpNull, tokens, err
+			return SexpNull, err
 		}
-		return SexpInt(i), tokens[1:], nil
+		return SexpInt(i), nil
 	case TokenHex:
 		i, err := strconv.ParseUint(tok.str, 16, 8)
 		if err != nil {
-			return SexpNull, tokens, err
+			return SexpNull, err
 		}
-		return SexpUint(i), tokens[1:], nil
+		return SexpUint(i), nil
 	case TokenBinary:
 		i, err := strconv.ParseUint(tok.str, 2, 8)
 		if err != nil {
-			return SexpNull, tokens, err
+			return SexpNull, err
 		}
-		return SexpUint(i), tokens[1:], nil
+		return SexpUint(i), nil
 	case TokenChar:
-		return SexpUint(tok.str[0]), tokens[1:], nil
+		return SexpUint(tok.str[0]), nil
+	case TokenEnd:
+		return SexpEnd, nil
 	}
-	return SexpNull, tokens, errors.New("Invalid syntax")
+	return SexpNull, errors.New("Invalid syntax")
 }
 
-func ParseTokens(tokens []Token) ([]Sexp, error) {
+func ParseTokens(lexer *Lexer) ([]Sexp, error) {
 	expressions := make([]Sexp, 0, SliceDefaultCap)
 
-	for len(tokens) > 0 {
-		var expr Sexp
-		var err error
-		expr, tokens, err = ParseExpression(tokens)
+	for {
+		expr, err := ParseExpression(lexer)
 		if err != nil {
 			return expressions, err
+		}
+		if expr == SexpEnd {
+			break
 		}
 		expressions = append(expressions, expr)
 	}

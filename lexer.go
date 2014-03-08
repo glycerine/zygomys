@@ -22,6 +22,7 @@ const (
 	TokenHex
 	TokenBinary
 	TokenChar
+	TokenEnd
 )
 
 type Token struct {
@@ -54,6 +55,13 @@ func (t Token) String() string {
 		return "#" + quoted[1:len(quoted)-1]
 	}
 	return ""
+}
+
+type Lexer struct {
+	comment bool
+	tokens []Token
+	buffer *bytes.Buffer
+	stream io.RuneReader
 }
 
 var DecimalRegex *regexp.Regexp
@@ -128,17 +136,19 @@ func DecodeAtom(atom string) (Token, error) {
 	return Token{}, errors.New("Unrecognized atom")
 }
 
-func dumpBuffer(tokens []Token, buffer *bytes.Buffer) ([]Token, error) {
-	if buffer.Len() <= 0 {
-		return tokens, nil
+func (lexer *Lexer) dumpBuffer() error {
+	if lexer.buffer.Len() <= 0 {
+		return nil
 	}
 
-	tok, err := DecodeAtom(buffer.String())
+	tok, err := DecodeAtom(lexer.buffer.String())
 	if err != nil {
-		return tokens, err
+		return err
 	}
-	buffer.Reset()
-	return append(tokens, tok), nil
+
+	lexer.buffer.Reset()
+	lexer.tokens = append(lexer.tokens, tok)
+	return nil
 }
 
 func DecodeBrace(brace rune) Token {
@@ -164,72 +174,86 @@ func DecodePunctuation(punct rune) Token {
 	panic("Punctuation is not a quote or dot")
 }
 
-func LexNextRune(buffer *bytes.Buffer, tokens []Token, r rune, comment bool) ([]Token, bool, error) {
-	var err error
-
-	if comment {
+func (lexer *Lexer) LexNextRune(r rune) error {
+	if lexer.comment {
 		if r == '\n' {
-			return tokens, false, nil
+			lexer.comment = false
 		}
-		return tokens, true, nil
+		return nil
 	}
 
 	if r == '.' || r == '\'' {
-		if buffer.Len() > 0 {
-			return tokens, false,
-				errors.New("Unexpected quote or dot")
+		if lexer.buffer.Len() > 0 {
+			return errors.New("Unexpected quote or dot")
 		}
-		tokens = append(tokens, DecodePunctuation(r))
-		return tokens, false, nil
+		lexer.tokens = append(lexer.tokens, DecodePunctuation(r))
+		return nil
 	}
 
 	if r == '(' || r == ')' || r == '[' || r == ']' {
-		tokens, err = dumpBuffer(tokens, buffer)
+		err := lexer.dumpBuffer()
 		if err != nil {
-			return tokens, false, err
+			return err
 		}
-		tokens = append(tokens, DecodeBrace(r))
-		return tokens, false, nil
+		lexer.tokens = append(lexer.tokens, DecodeBrace(r))
+		return nil
 	}
 	if r == ' ' || r == '\n' || r == '\t' || r == '\r' {
-		tokens, err = dumpBuffer(tokens, buffer)
+		err := lexer.dumpBuffer()
 		if err != nil {
-			return tokens, false, err
+			return err
 		}
-		return tokens, false, nil
+		return nil
 	}
 	if r == ';' {
-		comment = true
-		return tokens, true, nil
+		lexer.comment = true
+		return nil
 	}
 
-	_, err = buffer.WriteRune(r)
+	_, err := lexer.buffer.WriteRune(r)
 	if err != nil {
-		return tokens, false, err
+		return err
 	}
-	return tokens, false, nil
+	return nil
 }
 
-func LexStream(stream io.RuneReader) ([]Token, error) {
+func (lexer *Lexer) PeekNextToken() (Token, error) {
+	for len(lexer.tokens) == 0 {
+		r, _, err := lexer.stream.ReadRune()
+		if err != nil {
+			return Token{TokenEnd, ""}, nil
+		}
+
+		err = lexer.LexNextRune(r)
+		if err != nil {
+			return Token{TokenEnd, ""}, err
+		}
+	}
+
+	tok := lexer.tokens[0]
+	return tok, nil
+}
+
+func (lexer *Lexer) GetNextToken() (Token, error) {
+	tok, err := lexer.PeekNextToken()
+	if err != nil || tok.typ == TokenEnd {
+		return Token{TokenEnd, ""}, err
+	}
+	lexer.tokens = lexer.tokens[1:]
+	return tok, nil
+}
+
+func NewLexerFromStream(stream io.RuneReader) *Lexer {
 	if !lexInit {
 		InitLexer()
 	}
 
-	tokens := make([]Token, 0, 20)
-	comment := false
-	buffer := new(bytes.Buffer)
+	lexer := new(Lexer)
 
-	for {
-		r, _, err := stream.ReadRune()
-		if err != nil {
-			break
-		}
+	lexer.tokens = make([]Token, 0, 10)
+	lexer.buffer = new(bytes.Buffer)
+	lexer.comment = false
+	lexer.stream = stream
 
-		tokens, comment, err = LexNextRune(buffer, tokens, r, comment)
-		if err != nil {
-			return tokens, err
-		}
-	}
-
-	return tokens, nil
+	return lexer
 }
