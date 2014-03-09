@@ -73,6 +73,7 @@ type SexpBool bool
 type SexpUint uint
 type SexpFloat float64
 type SexpChar rune
+type SexpStr string
 
 var SexpIntSize = reflect.TypeOf(SexpInt(0)).Bits()
 var SexpFloatSize = reflect.TypeOf(SexpFloat(0.0)).Bits()
@@ -111,6 +112,10 @@ func (f SexpFloat) SexpString() string {
 
 func (c SexpChar) SexpString() string {
 	return "#" + strings.Trim(strconv.QuoteRune(rune(c)), "'")
+}
+
+func (s SexpStr) SexpString() string {
+	return string(s)
 }
 
 type SexpSymbol struct {
@@ -263,6 +268,8 @@ func ParseExpression(parser *Parser) (Sexp, error) {
 		return SexpUint(i), nil
 	case TokenChar:
 		return SexpChar(tok.str[0]), nil
+	case TokenString:
+		return SexpStr(tok.str), nil
 	case TokenFloat:
 		f, err := strconv.ParseFloat(tok.str, SexpFloatSize)
 		if err != nil {

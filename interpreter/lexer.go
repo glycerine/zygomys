@@ -6,6 +6,7 @@ import (
 	"io"
 	"regexp"
 	"strconv"
+	"unicode/utf8"
 )
 
 type TokenType int
@@ -24,6 +25,7 @@ const (
 	TokenBinary
 	TokenFloat
 	TokenChar
+	TokenString
 	TokenEnd
 )
 
@@ -59,8 +61,17 @@ func (t Token) String() string {
 	return ""
 }
 
+type LexerState int
+
+const (
+	LexerNormal LexerState = iota
+	LexerComment
+	LexerStrLit
+	LexerStrEscaped
+)
+
 type Lexer struct {
-	comment bool
+	state LexerState
 	tokens []Token
 	buffer *bytes.Buffer
 	stream io.RuneReader
@@ -111,23 +122,49 @@ func InitLexer() {
 	lexInit = true
 }
 
+func StringToRunes(str string) []rune {
+	b := []byte(str)
+	runes := make([]rune, 0)
+
+	for len(b) > 0 {
+		r, size := utf8.DecodeRune(b)
+		runes = append(runes, r)
+		b = b[size:]
+	}
+	return runes
+}
+
+func EscapeChar(char rune) (rune, error) {
+	switch char {
+	case 'n':
+		return '\n', nil
+	case 'r':
+		return '\r', nil
+	case 'a':
+		return '\a', nil
+	case '\\':
+		return '\\', nil
+	case '"':
+		return '"', nil
+	case '\'':
+		return '\'', nil
+	case '#':
+		return '#', nil
+	}
+	return ' ', errors.New("invalid escape sequence")
+}
+
 func DecodeChar(atom string) (string, error) {
-	if len(atom) == 3 {
-		switch atom[2] {
-		case 'n':
-			return "\n", nil
-		case 'r':
-			return "\r", nil
-		case 'a':
-			return "\a", nil
-		case '#':
-			return "#", nil
-		default:
-			return "", errors.New("invalid escape sequence")
-		}
+	runes := StringToRunes(atom)
+	if len(runes) == 3 {
+		char, err := EscapeChar(runes[2])
+		return string(char), err
 	}
 
-	return atom[1:2], nil
+	if len(runes) == 2 {
+		return string(runes[1:2]), nil
+	}
+	return "", errors.New("not a char literal")
 }
 
 func DecodeAtom(atom string) (Token, error) {
@@ -178,6 +215,12 @@ func (lexer *Lexer) dumpBuffer() error {
 	return nil
 }
 
+func (lexer *Lexer) dumpString() {
+	str := lexer.buffer.String()
+	lexer.buffer.Reset()
+	lexer.tokens = append(lexer.tokens, Token{TokenString, str})
+}
+
 func DecodeBrace(brace rune) Token {
 	switch brace {
 	case '(':
@@ -192,10 +235,44 @@ func DecodeBrace(brace rune) Token {
 }
 
 func (lexer *Lexer) LexNextRune(r rune) error {
-	if lexer.comment {
+	if lexer.state == LexerComment {
 		if r == '\n' {
-			lexer.comment = false
+			lexer.state = LexerComment
 		}
+		return nil
+	}
+	if lexer.state == LexerStrLit {
+		if r == '\\' {
+			lexer.state = LexerStrEscaped
+			return nil
+		}
+		if r == '"' {
+			lexer.dumpString()
+			lexer.state = LexerNormal
+			return nil
+		}
+		lexer.buffer.WriteRune(r)
+		return nil
+	}
+	if lexer.state == LexerStrEscaped {
+		char, err := EscapeChar(r)
+		if err != nil {
+			return err
+		}
+		lexer.buffer.WriteRune(char)
+		lexer.state = LexerStrLit
+	}
+
+	if r == '"' {
+		if lexer.buffer.Len() > 0 {
+			return errors.New("Unexpected quote")
+		}
+		lexer.state = LexerStrLit
+		return nil
+	}
+
+	if r == ';' {
+		lexer.state = LexerComment
 		return nil
 	}
 
@@ -223,10 +300,6 @@ func (lexer *Lexer) LexNextRune(r rune) error {
 		if err != nil {
 			return err
 		}
-		return nil
-	}
-	if r == ';' {
-		lexer.comment = true
 		return nil
 	}
 
@@ -276,7 +349,7 @@ func NewLexerFromStream(stream io.RuneReader) *Lexer {
 
 	lexer.tokens = make([]Token, 0, 10)
 	lexer.buffer = new(bytes.Buffer)
-	lexer.comment = false
+	lexer.state = LexerNormal
 	lexer.stream = stream
 	lexer.linenum = 1
 	lexer.finished = false
