@@ -7,12 +7,14 @@ import (
 	"strings"
 )
 
+type Parser struct {
+	lexer *Lexer
+	env *Glisp
+}
+
 var UnexpectedEnd error = errors.New("Unexpected end of input")
 
 const SliceDefaultCap = 10
-
-var SymbolTable map[string]SexpSymbol = make(map[string]SexpSymbol)
-var NextSymbolNum int = 0
 
 type Sexp interface {
 	SexpString() string
@@ -117,14 +119,7 @@ type SexpSymbol struct {
 }
 
 func (sym SexpSymbol) SexpString() string {
-	return sym.name
-}
-
-func MakeSymbol(name string) SexpSymbol {
-	symbol := SexpSymbol{name, NextSymbolNum}
-	SymbolTable[name] = symbol
-	NextSymbolNum += 1
-	return symbol
+	return sym.name + ":" + strconv.Itoa(sym.number)
 }
 
 func MakeList(expressions []Sexp) Sexp {
@@ -135,7 +130,8 @@ func MakeList(expressions []Sexp) Sexp {
 	return SexpPair{expressions[0], MakeList(expressions[1:])}
 }
 
-func ParseList(lexer *Lexer) (Sexp, error) {
+func ParseList(parser *Parser) (Sexp, error) {
+	lexer := parser.lexer
 	tok, err := lexer.PeekNextToken()
 	if err != nil {
 		return SexpNull, err
@@ -152,7 +148,7 @@ func ParseList(lexer *Lexer) (Sexp, error) {
 
 	var start SexpPair
 
-	expr, err := ParseExpression(lexer)
+	expr, err := ParseExpression(parser)
 	if err != nil {
 		return SexpNull, err
 	}
@@ -167,7 +163,7 @@ func ParseList(lexer *Lexer) (Sexp, error) {
 	if tok.typ == TokenDot {
 		// eat up the dot
 		_, _ = lexer.GetNextToken()
-		expr, err = ParseExpression(lexer)
+		expr, err = ParseExpression(parser)
 		if err != nil {
 			return SexpNull, err
 		}
@@ -185,7 +181,7 @@ func ParseList(lexer *Lexer) (Sexp, error) {
 		return start, nil
 	}
 
-	expr, err = ParseList(lexer)
+	expr, err = ParseList(parser)
 	if err != nil {
 		return start, err
 	}
@@ -194,7 +190,8 @@ func ParseList(lexer *Lexer) (Sexp, error) {
 	return start, nil
 }
 
-func ParseArray(lexer *Lexer) (Sexp, error) {
+func ParseArray(parser *Parser) (Sexp, error) {
+	lexer := parser.lexer
 	arr := make([]Sexp, 0, SliceDefaultCap)
 
 	for {
@@ -213,7 +210,7 @@ func ParseArray(lexer *Lexer) (Sexp, error) {
 			break
 		}
 
-		expr, err := ParseExpression(lexer)
+		expr, err := ParseExpression(parser)
 		if err != nil {
 			return SexpNull, err
 		}
@@ -223,7 +220,9 @@ func ParseArray(lexer *Lexer) (Sexp, error) {
 	return SexpArray(arr), nil
 }
 
-func ParseExpression(lexer *Lexer) (Sexp, error) {
+func ParseExpression(parser *Parser) (Sexp, error) {
+	lexer := parser.lexer
+	env := parser.env
 	tok, err := lexer.GetNextToken()
 	if err != nil {
 		return SexpEnd, err
@@ -231,17 +230,17 @@ func ParseExpression(lexer *Lexer) (Sexp, error) {
 
 	switch (tok.typ) {
 	case TokenLParen:
-		return ParseList(lexer)
+		return ParseList(parser)
 	case TokenLSquare:
-		return ParseArray(lexer)
+		return ParseArray(parser)
 	case TokenQuote:
-		expr, err := ParseExpression(lexer)
+		expr, err := ParseExpression(parser)
 		if err != nil {
 			return SexpNull, err
 		}
-		return MakeList([]Sexp{MakeSymbol("quote"), expr}), nil
+		return MakeList([]Sexp{env.MakeSymbol("quote"), expr}), nil
 	case TokenSymbol:
-		return MakeSymbol(tok.str), nil
+		return env.MakeSymbol(tok.str), nil
 	case TokenBool:
 		return SexpBool(tok.str == "true"), nil
 	case TokenDecimal:
@@ -278,9 +277,11 @@ func ParseExpression(lexer *Lexer) (Sexp, error) {
 
 func ParseTokens(lexer *Lexer) ([]Sexp, error) {
 	expressions := make([]Sexp, 0, SliceDefaultCap)
+	env := NewGlisp()
+	parser := Parser{lexer, env}
 
 	for {
-		expr, err := ParseExpression(lexer)
+		expr, err := ParseExpression(&parser)
 		if err != nil {
 			return expressions, err
 		}
