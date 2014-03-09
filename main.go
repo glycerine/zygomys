@@ -17,7 +17,14 @@ func main() {
 		os.Exit(-1)
 	}
 
-	for _, expr := range expressions {
-		fmt.Println(expr.SexpString())
+	gen := glisp.NewGenerator(env)
+	err = gen.GenerateAll(expressions)
+	if err != nil {
+		fmt.Printf("generate error: %v\n", err)
+		os.Exit(-1)
+	}
+
+	for _, instr := range gen.GetInstructions() {
+		fmt.Println(instr.InstrString())
 	}
 }
