@@ -1,4 +1,4 @@
-package main
+package glisp
 
 import (
 	"bytes"
@@ -282,4 +282,8 @@ func NewLexerFromStream(stream io.RuneReader) *Lexer {
 	lexer.finished = false
 
 	return lexer
+}
+
+func (lexer *Lexer) Linenum() int {
+	return lexer.linenum
 }

@@ -4,14 +4,15 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"./interpreter"
 )
 
 func main() {
-	lexer := NewLexerFromStream(bufio.NewReader(os.Stdin))
+	lexer := glisp.NewLexerFromStream(bufio.NewReader(os.Stdin))
 
-	expressions, err := ParseTokens(lexer)
+	expressions, err := glisp.ParseTokens(lexer)
 	if err != nil {
-		fmt.Printf("Error on line %d: %v\n", lexer.linenum, err)
+		fmt.Printf("Error on line %d: %v\n", lexer.Linenum(), err)
 		os.Exit(-1)
 	}
 
