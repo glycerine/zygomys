@@ -8,9 +8,10 @@ import (
 )
 
 func main() {
+	env := glisp.NewGlisp()
 	lexer := glisp.NewLexerFromStream(bufio.NewReader(os.Stdin))
 
-	expressions, err := glisp.ParseTokens(lexer)
+	expressions, err := glisp.ParseTokens(env, lexer)
 	if err != nil {
 		fmt.Printf("Error on line %d: %v\n", lexer.Linenum(), err)
 		os.Exit(-1)

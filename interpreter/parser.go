@@ -93,7 +93,7 @@ func (arr SexpArray) SexpString() string {
 
 func (b SexpBool) SexpString() string {
 	if b {
-		return "bool:true"
+		return "true"
 	}
 	return "bool:false"
 }
@@ -282,9 +282,8 @@ func ParseExpression(parser *Parser) (Sexp, error) {
 	return SexpNull, errors.New("Invalid syntax")
 }
 
-func ParseTokens(lexer *Lexer) ([]Sexp, error) {
+func ParseTokens(env *Glisp, lexer *Lexer) ([]Sexp, error) {
 	expressions := make([]Sexp, 0, SliceDefaultCap)
-	env := NewGlisp()
 	parser := Parser{lexer, env}
 
 	for {
