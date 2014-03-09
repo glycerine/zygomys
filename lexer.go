@@ -18,6 +18,7 @@ const (
 	TokenDot
 	TokenQuote
 	TokenSymbol
+	TokenBool
 	TokenDecimal
 	TokenHex
 	TokenBinary
@@ -67,6 +68,7 @@ type Lexer struct {
 	finished bool
 }
 
+var BoolRegex *regexp.Regexp
 var DecimalRegex *regexp.Regexp
 var HexRegex *regexp.Regexp
 var BinaryRegex *regexp.Regexp
@@ -78,6 +80,10 @@ var lexInit = false
 func InitLexer() {
 	var err error
 
+	BoolRegex, err = regexp.Compile("^(true|false)$")
+	if err != nil {
+		panic(err)
+	}
 	DecimalRegex, err = regexp.Compile("^-?[0-9]+$")
 	if err != nil {
 		panic(err)
@@ -127,6 +133,9 @@ func DecodeChar(atom string) (string, error) {
 func DecodeAtom(atom string) (Token, error) {
 	if atom == "." {
 		return Token{TokenDot, ""}, nil
+	}
+	if BoolRegex.MatchString(atom) {
+		return Token{TokenBool, atom}, nil
 	}
 	if DecimalRegex.MatchString(atom) {
 		return Token{TokenDecimal, atom}, nil

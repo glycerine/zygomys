@@ -67,6 +67,7 @@ func (pair SexpPair) SexpString() string {
 
 type SexpArray []Sexp
 type SexpInt int
+type SexpBool bool
 type SexpUint uint
 type SexpFloat float64
 type SexpChar rune
@@ -85,6 +86,13 @@ func (arr SexpArray) SexpString() string {
 	}
 	str += "]"
 	return str
+}
+
+func (b SexpBool) SexpString() string {
+	if b {
+		return "bool:true"
+	}
+	return "bool:false"
 }
 
 func (i SexpInt) SexpString() string {
@@ -234,6 +242,8 @@ func ParseExpression(lexer *Lexer) (Sexp, error) {
 		return MakeList([]Sexp{MakeSymbol("quote"), expr}), nil
 	case TokenSymbol:
 		return MakeSymbol(tok.str), nil
+	case TokenBool:
+		return SexpBool(tok.str == "true"), nil
 	case TokenDecimal:
 		i, err := strconv.ParseInt(tok.str, 10, SexpIntSize)
 		if err != nil {
