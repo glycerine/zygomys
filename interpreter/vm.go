@@ -2,18 +2,31 @@ package glisp
 
 import (
 	"fmt"
+	"errors"
 )
 
 type Instruction interface {
 	InstrString() string
+	Execute(env *Glisp) error
 }
 
 type JumpInstr struct {
 	location int
 }
 
+var OutOfBounds error = errors.New("jump out of bounds")
+
 func (j JumpInstr) InstrString() string {
 	return fmt.Sprintf("jump %d", j.location)
+}
+
+func (j JumpInstr) Execute(env *Glisp) error {
+	newpc := env.pc + j.location
+	if newpc < 0 || newpc > env.CurrentFunctionSize() {
+		return OutOfBounds
+	}
+	env.pc = newpc
+	return nil
 }
 
 type BranchInstr struct {
@@ -31,6 +44,18 @@ func (b BranchInstr) InstrString() string {
 	return fmt.Sprintf(format, b.location)
 }
 
+func (b BranchInstr) Execute(env *Glisp) error {
+	expr, err := env.datastack.PopExpr()
+	if err != nil {
+		return err
+	}
+	if b.direction == IsTruthy(expr) {
+		return JumpInstr{b.location}.Execute(env)
+	}
+	env.pc++
+	return nil
+}
+
 type PushInstr struct {
 	expr Sexp
 }
@@ -39,10 +64,22 @@ func (p PushInstr) InstrString() string {
 	return "push " + p.expr.SexpString()
 }
 
+func (p PushInstr) Execute(env *Glisp) error {
+	env.datastack.PushExpr(p.expr)
+	env.pc++
+	return nil
+}
+
 type PopInstr int
 
 func (p PopInstr) InstrString() string {
 	return "pop"
+}
+
+func (p PopInstr) Execute(env *Glisp) error {
+	_, err := env.datastack.PopExpr()
+	env.pc++
+	return err
 }
 
 type GetInstr struct {
@@ -53,12 +90,31 @@ func (g GetInstr) InstrString() string {
 	return fmt.Sprintf("get %s", g.sym.name)
 }
 
+func (g GetInstr) Execute(env *Glisp) error {
+	expr, err := env.scopestack.LookupSymbol(g.sym)
+	if err != nil {
+		return err
+	}
+	env.datastack.PushExpr(expr)
+	env.pc++
+	return nil
+}
+
 type PutInstr struct {
 	sym SexpSymbol
 }
 
 func (p PutInstr) InstrString() string {
 	return fmt.Sprintf("put %s", p.sym.name)
+}
+
+func (p PutInstr) Execute(env *Glisp) error {
+	expr, err := env.datastack.PopExpr()
+	if err != nil {
+		return err
+	}
+	env.pc++
+	return env.scopestack.BindSymbol(p.sym, expr)
 }
 
 type CallInstr struct {
@@ -70,6 +126,24 @@ func (c CallInstr) InstrString() string {
 	return fmt.Sprintf("call %s %d", c.sym.name, c.nargs)
 }
 
+func (c CallInstr) Execute(env *Glisp) error {
+	userfunc, ok := env.user_functions[c.sym.number]
+	if ok {
+		return env.CallUserFunction(userfunc, c.sym.name, c.nargs)
+	}
+
+	funcobj, err := env.scopestack.LookupSymbol(c.sym)
+	if err != nil {
+		return err
+	}
+	switch f := funcobj.(type) {
+	case GlispFunction:
+		env.CallFunction(f)
+		return nil
+	}
+	return errors.New(fmt.Sprintf("%s is not a function", c.sym.name))
+}
+
 type DispatchInstr struct {
 	nargs int
 }
@@ -78,8 +152,26 @@ func (d DispatchInstr) InstrString() string {
 	return fmt.Sprintf("dispatch %d", d.nargs)
 }
 
+func (d DispatchInstr) Execute(env *Glisp) error {
+	funcobj, err := env.datastack.PopExpr()
+	if err != nil {
+		return err
+	}
+
+	switch f := funcobj.(type) {
+	case GlispFunction:
+		env.CallFunction(f)
+		return nil
+	}
+	return errors.New("not a function")
+}
+
 type ReturnInstr struct {
 	err error
+}
+
+func (r ReturnInstr) Execute(env *Glisp) error {
+	return env.ReturnFromFunction()
 }
 
 func (r ReturnInstr) InstrString() string {

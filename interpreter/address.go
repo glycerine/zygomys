@@ -1,17 +1,21 @@
 package glisp
 
-type Address int
+type Address struct {
+	function GlispFunction
+	position int
+}
 
 func (a Address) IsStackElem() {}
 
-func (stack *Stack) PushAddress(addr int) {
-	stack.Push(Address(addr))
+func (stack *Stack) PushAddr(function GlispFunction, pc int) {
+	stack.Push(Address{function, pc})
 }
 
-func (stack *Stack) PopAddress() (int, error) {
+func (stack *Stack) PopAddr() (GlispFunction, int, error) {
 	elem, err := stack.Pop()
 	if err != nil {
-		return 0, err
+		return nil, 0, err
 	}
-	return int(elem.(Address)), nil
+	addr := elem.(Address)
+	return addr.function, addr.position, nil
 }

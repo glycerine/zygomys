@@ -8,22 +8,15 @@ import (
 
 var WrongNargs error = errors.New("wrong number of arguments")
 
-type GlispFunction func(*Glisp, SexpSymbol, int) error
+type GlispFunction []Instruction
 type GlispUserFunction func(*Glisp, string, []Sexp) (Sexp, error)
 
-func MakeUserFunction(fun GlispUserFunction) GlispFunction {
-	return func(glisp *Glisp, sym SexpSymbol, nargs int) error {
-		arr, err := glisp.datastack.PopExpressions(nargs)
-		if err != nil {
-			return err
-		}
-		res, err := fun(glisp, sym.name, arr)
-		if err != nil {
-			return err
-		}
-		glisp.datastack.PushExpr(res)
-		return nil
-	}
+func (f GlispFunction) SexpString() string {
+	return "function"
+}
+
+func (f GlispUserFunction) SexpString() string {
+	return "user_function"
 }
 
 func signum(f SexpFloat) int {
@@ -122,21 +115,18 @@ func Compare(a Sexp, b Sexp) (int, error) {
 	return 0, errors.New(errmsg)
 }
 
-func CompareFunction(glisp *Glisp, sym SexpSymbol, nargs int) error {
-	if nargs != 2 {
-		return WrongNargs
+func CompareFunction(glisp *Glisp, name string, args []Sexp) (Sexp, error) {
+	if len(args) != 2 {
+		return SexpNull, WrongNargs
 	}
-	arr, err := glisp.datastack.PopExpressions(nargs)
+
+	res, err := Compare(args[0], args[1])
 	if err != nil {
-		return err
-	}
-	res, err := Compare(arr[0], arr[1])
-	if err != nil {
-		return err
+		return SexpNull, err
 	}
 
 	cond := false
-	switch sym.name {
+	switch name {
 	case "<":
 		cond = res < 0
 	case ">":
@@ -150,9 +140,8 @@ func CompareFunction(glisp *Glisp, sym SexpSymbol, nargs int) error {
 	case "not=":
 		cond = res != 0
 	}
-	glisp.datastack.PushExpr(SexpBool(cond))
 
-	return nil
+	return SexpBool(cond), nil
 }
 
 /*func ArithFunction(glisp *Glisp, sym SexpSymbol, nargs int) error {
@@ -162,7 +151,7 @@ func CompareFunction(glisp *Glisp, sym SexpSymbol, nargs int) error {
 	}
 }*/
 
-var BuiltinFunctions = map[string]GlispFunction {
+var BuiltinFunctions = map[string]GlispUserFunction {
 	"<" : CompareFunction,
 	">" : CompareFunction,
 	"<=": CompareFunction,

@@ -1,5 +1,9 @@
 package glisp
 
+import (
+	"errors"
+)
+
 type Generator struct {
 	env *Glisp
 	instructions []Instruction
@@ -40,12 +44,63 @@ func (gen *Generator) GenerateShortCircuit(or bool, args []Sexp) error {
 	return nil
 }
 
+func (gen *Generator) GenerateCond(args []Sexp) error {
+	if len(args) % 2 == 0 {
+		return errors.New("missing default case")
+	}
+
+	subgen := NewGenerator(gen.env)
+	err := subgen.Generate(args[len(args) - 1])
+	if err != nil {
+		return err
+	}
+	instructions := subgen.instructions
+
+	for i := len(args) / 2 - 1; i >= 0; i-- {
+		subgen.Reset()
+		err := subgen.Generate(args[2 * i])
+		if err != nil {
+			return err
+		}
+		pred_code := subgen.instructions
+
+		subgen.Reset()
+		err = subgen.Generate(args[2 * i + 1])
+		if err != nil {
+			return err
+		}
+		body_code := subgen.instructions
+
+		subgen.Reset()
+		subgen.AddInstructions(pred_code)
+		subgen.AddInstruction(BranchInstr{false, len(body_code) + 2})
+		subgen.AddInstructions(body_code)
+		subgen.AddInstruction(JumpInstr{len(instructions) + 1})
+		subgen.AddInstructions(instructions)
+		instructions = subgen.instructions
+	}
+
+	gen.AddInstructions(instructions)
+	return nil
+}
+
+func (gen *Generator) GenerateQuote(args []Sexp) error {
+	for _, expr := range args {
+		gen.AddInstruction(PushInstr{expr})
+	}
+	return nil
+}
+
 func (gen *Generator) GenerateCallBySymbol(sym SexpSymbol, args []Sexp) error {
 	switch sym.name {
 	case "and":
 		return gen.GenerateShortCircuit(false, args)
 	case "or":
 		return gen.GenerateShortCircuit(true, args)
+	case "cond":
+		return gen.GenerateCond(args)
+	case "quote":
+		return gen.GenerateQuote(args)
 	}
 	gen.GenerateAll(args)
 	gen.AddInstruction(CallInstr{sym, len(args)})
@@ -97,6 +152,6 @@ func (gen *Generator) GenerateAll(expressions []Sexp) error {
 	return nil
 }
 
-func (gen *Generator) GetInstructions() []Instruction {
-	return gen.instructions
+func (gen *Generator) Reset() {
+	gen.instructions = make([]Instruction, 0)
 }
