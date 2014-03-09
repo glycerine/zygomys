@@ -4,6 +4,7 @@ import (
 	"errors"
 	"strconv"
 	"reflect"
+	"strings"
 )
 
 var UnexpectedEnd error = errors.New("Unexpected end of input")
@@ -68,6 +69,7 @@ type SexpArray []Sexp
 type SexpInt int
 type SexpUint uint
 type SexpFloat float64
+type SexpChar rune
 
 var SexpIntSize = reflect.TypeOf(SexpInt(0)).Bits()
 var SexpFloatSize = reflect.TypeOf(SexpFloat(0.0)).Bits()
@@ -95,6 +97,10 @@ func (i SexpUint) SexpString() string {
 
 func (f SexpFloat) SexpString() string {
 	return strconv.FormatFloat(float64(f), 'g', 5, SexpFloatSize)
+}
+
+func (c SexpChar) SexpString() string {
+	return "#" + strings.Trim(strconv.QuoteRune(rune(c)), "'")
 }
 
 type SexpSymbol struct {
@@ -247,7 +253,7 @@ func ParseExpression(lexer *Lexer) (Sexp, error) {
 		}
 		return SexpUint(i), nil
 	case TokenChar:
-		return SexpUint(tok.str[0]), nil
+		return SexpChar(tok.str[0]), nil
 	case TokenFloat:
 		f, err := strconv.ParseFloat(tok.str, SexpFloatSize)
 		if err != nil {
