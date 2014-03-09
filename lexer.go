@@ -21,6 +21,7 @@ const (
 	TokenDecimal
 	TokenHex
 	TokenBinary
+	TokenFloat
 	TokenChar
 	TokenEnd
 )
@@ -71,6 +72,7 @@ var HexRegex *regexp.Regexp
 var BinaryRegex *regexp.Regexp
 var SymbolRegex *regexp.Regexp
 var CharRegex *regexp.Regexp
+var FloatRegex *regexp.Regexp
 var lexInit = false
 
 func InitLexer() {
@@ -93,6 +95,10 @@ func InitLexer() {
 		panic(err)
 	}
 	CharRegex, err = regexp.Compile("^#\\\\?.$")
+	if err != nil {
+		panic(err)
+	}
+	FloatRegex, err = regexp.Compile("^-?([0-9]+\\.[0-9]*)|(.[0-9]+)|([0-9]+(\\.[0-9]*)?[eE](-?[0-9]+))$")
 	if err != nil {
 		panic(err)
 	}
@@ -119,15 +125,25 @@ func DecodeChar(atom string) (string, error) {
 }
 
 func DecodeAtom(atom string) (Token, error) {
+	if atom == "." {
+		return Token{TokenDot, ""}, nil
+	}
 	if DecimalRegex.MatchString(atom) {
 		return Token{TokenDecimal, atom}, nil
-	} else if HexRegex.MatchString(atom) {
+	}
+	if HexRegex.MatchString(atom) {
 		return Token{TokenHex, atom[2:]}, nil
-	} else if BinaryRegex.MatchString(atom) {
+	}
+	if BinaryRegex.MatchString(atom) {
 		return Token{TokenBinary, atom[2:]}, nil
-	} else if SymbolRegex.MatchString(atom) {
+	}
+	if FloatRegex.MatchString(atom) {
+		return Token{TokenFloat, atom}, nil
+	}
+	if SymbolRegex.MatchString(atom) {
 		return Token{TokenSymbol, atom}, nil
-	} else if CharRegex.MatchString(atom) {
+	}
+	if CharRegex.MatchString(atom) {
 		char, err := DecodeChar(atom)
 		if err != nil {
 			return Token{}, err
@@ -166,16 +182,6 @@ func DecodeBrace(brace rune) Token {
 	}
 }
 
-func DecodePunctuation(punct rune) Token {
-	switch punct {
-	case '\'':
-		return Token{TokenQuote, ""}
-	case '.':
-		return Token{TokenDot, ""}
-	}
-	panic("Punctuation is not a quote or dot")
-}
-
 func (lexer *Lexer) LexNextRune(r rune) error {
 	if lexer.comment {
 		if r == '\n' {
@@ -184,11 +190,11 @@ func (lexer *Lexer) LexNextRune(r rune) error {
 		return nil
 	}
 
-	if r == '.' || r == '\'' {
+	if r == '\'' {
 		if lexer.buffer.Len() > 0 {
-			return errors.New("Unexpected quote or dot")
+			return errors.New("Unexpected quote")
 		}
-		lexer.tokens = append(lexer.tokens, DecodePunctuation(r))
+		lexer.tokens = append(lexer.tokens, Token{TokenQuote, ""})
 		return nil
 	}
 

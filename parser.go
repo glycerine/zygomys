@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"strconv"
+	"reflect"
 )
 
 var UnexpectedEnd error = errors.New("Unexpected end of input")
@@ -64,8 +65,12 @@ func (pair SexpPair) SexpString() string {
 
 
 type SexpArray []Sexp
-type SexpInt int8
-type SexpUint uint8
+type SexpInt int
+type SexpUint uint
+type SexpFloat float64
+
+var SexpIntSize = reflect.TypeOf(SexpInt(0)).Bits()
+var SexpFloatSize = reflect.TypeOf(SexpFloat(0.0)).Bits()
 
 func (arr SexpArray) SexpString() string {
 	if len(arr) == 0 {
@@ -86,6 +91,10 @@ func (i SexpInt) SexpString() string {
 
 func (i SexpUint) SexpString() string {
 	return strconv.Itoa(int(i))
+}
+
+func (f SexpFloat) SexpString() string {
+	return strconv.FormatFloat(float64(f), 'g', 5, SexpFloatSize)
 }
 
 type SexpSymbol struct {
@@ -220,25 +229,31 @@ func ParseExpression(lexer *Lexer) (Sexp, error) {
 	case TokenSymbol:
 		return MakeSymbol(tok.str), nil
 	case TokenDecimal:
-		i, err := strconv.ParseInt(tok.str, 10, 8)
+		i, err := strconv.ParseInt(tok.str, 10, SexpIntSize)
 		if err != nil {
 			return SexpNull, err
 		}
 		return SexpInt(i), nil
 	case TokenHex:
-		i, err := strconv.ParseUint(tok.str, 16, 8)
+		i, err := strconv.ParseUint(tok.str, 16, SexpIntSize)
 		if err != nil {
 			return SexpNull, err
 		}
 		return SexpUint(i), nil
 	case TokenBinary:
-		i, err := strconv.ParseUint(tok.str, 2, 8)
+		i, err := strconv.ParseUint(tok.str, 2, SexpIntSize)
 		if err != nil {
 			return SexpNull, err
 		}
 		return SexpUint(i), nil
 	case TokenChar:
 		return SexpUint(tok.str[0]), nil
+	case TokenFloat:
+		f, err := strconv.ParseFloat(tok.str, SexpFloatSize)
+		if err != nil {
+			return SexpNull, err
+		}
+		return SexpFloat(f), nil
 	case TokenEnd:
 		return SexpEnd, nil
 	}
