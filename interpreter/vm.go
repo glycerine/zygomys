@@ -77,3 +77,14 @@ type DispatchInstr struct {
 func (d DispatchInstr) InstrString() string {
 	return fmt.Sprintf("dispatch %d", d.nargs)
 }
+
+type ReturnInstr struct {
+	err error
+}
+
+func (r ReturnInstr) InstrString() string {
+	if r.err == nil {
+		return "ret"
+	}
+	return "ret \"" + r.err.Error() + "\""
+}
