@@ -46,12 +46,12 @@ func CompareFunction(glisp *Glisp, name string, args []Sexp) (Sexp, error) {
 	return SexpBool(cond), nil
 }
 
-func ShiftFunction(glisp *Glisp, name string, args []Sexp) (Sexp, error) {
+func BinaryIntFunction(glisp *Glisp, name string, args []Sexp) (Sexp, error) {
 	if len(args) != 2 {
 		return SexpNull, WrongNargs
 	}
 
-	var op ShiftOp
+	var op BinaryIntOp
 	switch name {
 	case "sll":
 		op = ShiftLeft
@@ -59,9 +59,11 @@ func ShiftFunction(glisp *Glisp, name string, args []Sexp) (Sexp, error) {
 		op = ShiftRightArith
 	case "srl":
 		op = ShiftRightLog
+	case "mod":
+		op = Modulo
 	}
 
-	return Shift(op, args[0], args[1])
+	return BinaryIntDo(op, args[0], args[1])
 }
 
 /*func ArithFunction(glisp *Glisp, sym SexpSymbol, nargs int) error {
@@ -78,7 +80,8 @@ var BuiltinFunctions = map[string]GlispUserFunction {
 	">=": CompareFunction,
 	"=" : CompareFunction,
 	"not=": CompareFunction,
-	"sll": ShiftFunction,
-	"sra": ShiftFunction,
-	"srl": ShiftFunction,
+	"sll": BinaryIntFunction,
+	"sra": BinaryIntFunction,
+	"srl": BinaryIntFunction,
+	"mod": BinaryIntFunction,
 }
