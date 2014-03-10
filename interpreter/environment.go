@@ -143,7 +143,7 @@ func (env *Glisp) ReachedEnd() bool {
 	return env.pc == env.CurrentFunctionSize()
 }
 
-func (env *Glisp) Run() error {
+func (env *Glisp) Run() (Sexp, error) {
 	if env.pc == -1 {
 		env.pc = 0
 		env.curfunc = env.mainfunc
@@ -153,13 +153,10 @@ func (env *Glisp) Run() error {
 		instr := env.curfunc[env.pc]
 		err := instr.Execute(env)
 		if err != nil {
-			return err
+			return SexpNull, err
 		}
 	}
 
-	return nil
-}
-
-func (env *Glisp) PopResult() (Sexp, error) {
 	return env.datastack.PopExpr()
 }
+

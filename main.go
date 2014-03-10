@@ -85,12 +85,7 @@ func main() {
 			fmt.Println(err)
 			os.Exit(-1)
 		}
-		err = env.Run()
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(-1)
-		}
-		expr, err := env.PopResult()
+		expr, err := env.Run()
 		if err != nil {
 			fmt.Println("nothing on the stack")
 			os.Exit(-1)
