@@ -318,6 +318,10 @@ func (lexer *Lexer) PeekNextToken() (Token, error) {
 		r, _, err := lexer.stream.ReadRune()
 		if err != nil {
 			lexer.finished = true
+			if lexer.buffer.Len() > 0 {
+				lexer.dumpBuffer()
+				return lexer.tokens[0], nil
+			}
 			return Token{TokenEnd, ""}, nil
 		}
 
