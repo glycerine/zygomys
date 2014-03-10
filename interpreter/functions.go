@@ -66,12 +66,33 @@ func BinaryIntFunction(glisp *Glisp, name string, args []Sexp) (Sexp, error) {
 	return BinaryIntDo(op, args[0], args[1])
 }
 
-/*func ArithFunction(glisp *Glisp, sym SexpSymbol, nargs int) error {
-	arr, err := glisp.datastack.PopExpressions(nargs)
-	if err != nil {
-		return err
+func NumericFunction(glisp *Glisp, name string, args []Sexp) (Sexp, error) {
+	if len(args) < 1 {
+		return SexpNull, WrongNargs
 	}
-}*/
+
+	var err error
+	accum := args[0]
+	var op NumericOp
+	switch name {
+	case "+":
+		op = Add
+	case "-":
+		op = Sub
+	case "*":
+		op = Mult
+	case "/":
+		op = Div
+	}
+
+	for _, expr := range args[1:] {
+		accum, err = NumericDo(op, accum, expr)
+		if err != nil {
+			return SexpNull, err
+		}
+	}
+	return accum, nil
+}
 
 var BuiltinFunctions = map[string]GlispUserFunction {
 	"<" : CompareFunction,
@@ -84,4 +105,8 @@ var BuiltinFunctions = map[string]GlispUserFunction {
 	"sra": BinaryIntFunction,
 	"srl": BinaryIntFunction,
 	"mod": BinaryIntFunction,
+	"+": NumericFunction,
+	"-": NumericFunction,
+	"*": NumericFunction,
+	"/": NumericFunction,
 }
