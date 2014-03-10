@@ -1,11 +1,12 @@
 package glisp
 
 import (
-	"os"
-	"errors"
-	"io"
 	"bufio"
+	"bytes"
+	"errors"
 	"fmt"
+	"io"
+	"os"
 )
 
 type Glisp struct {
@@ -111,7 +112,8 @@ func (env *Glisp) LoadStream(stream io.RuneReader) error {
 	if err != nil {
 		return err
 	}
-	env.mainfunc = append(env.mainfunc, gen.instructions...)
+	env.mainfunc = gen.instructions
+	env.pc = -1
 	return nil
 }
 
@@ -119,16 +121,22 @@ func (env *Glisp) LoadFile(file *os.File) error {
 	return env.LoadStream(bufio.NewReader(file))
 }
 
+func (env *Glisp) LoadString(str string) error {
+	return env.LoadStream(bytes.NewBuffer([]byte(str)))
+}
+
 func (env *Glisp) DumpEnvironment() {
-	fmt.Println("instructions:")
-	for _, instr := range env.mainfunc {
+	fmt.Println("Instructions:")
+	for _, instr := range env.curfunc {
 		fmt.Println("\t" + instr.InstrString())
 	}
-	fmt.Println("stack:")
+	fmt.Println("Stack:")
 	for !env.datastack.IsEmpty() {
 		expr, _ := env.datastack.PopExpr()
 		fmt.Println("\t" + expr.SexpString())
 	}
+	fmt.Printf("PC: %d\n", env.pc)
+	fmt.Println("In Scope:")
 }
 
 func (env *Glisp) ReachedEnd() bool {
