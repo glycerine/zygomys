@@ -46,6 +46,24 @@ func CompareFunction(glisp *Glisp, name string, args []Sexp) (Sexp, error) {
 	return SexpBool(cond), nil
 }
 
+func ShiftFunction(glisp *Glisp, name string, args []Sexp) (Sexp, error) {
+	if len(args) != 2 {
+		return SexpNull, WrongNargs
+	}
+
+	var op ShiftOp
+	switch name {
+	case "sll":
+		op = ShiftLeft
+	case "sra":
+		op = ShiftRightArith
+	case "srl":
+		op = ShiftRightLog
+	}
+
+	return Shift(op, args[0], args[1])
+}
+
 /*func ArithFunction(glisp *Glisp, sym SexpSymbol, nargs int) error {
 	arr, err := glisp.datastack.PopExpressions(nargs)
 	if err != nil {
@@ -60,4 +78,7 @@ var BuiltinFunctions = map[string]GlispUserFunction {
 	">=": CompareFunction,
 	"=" : CompareFunction,
 	"not=": CompareFunction,
+	"sll": ShiftFunction,
+	"sra": ShiftFunction,
+	"srl": ShiftFunction,
 }
