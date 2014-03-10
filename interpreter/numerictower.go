@@ -4,23 +4,28 @@ import (
 	"errors"
 )
 
-type BinaryIntOp int
+type IntegerOp int
 const (
-	ShiftLeft BinaryIntOp = iota
+	ShiftLeft IntegerOp = iota
 	ShiftRightArith
 	ShiftRightLog
 	Modulo
+	BitAnd
+	BitOr
+	BitXor
 )
 
 var WrongType error = errors.New("operands have invalid type")
 
-func BinaryIntDo(op BinaryIntOp, a, b Sexp) (Sexp, error) {
+func IntegerDo(op IntegerOp, a, b Sexp) (Sexp, error) {
 	var ia SexpInt
 	var ib SexpInt
 
 	switch i := a.(type) {
 	case SexpInt:
 		ia = i
+	case SexpChar:
+		ia = SexpInt(i)
 	default:
 		return SexpNull, WrongType
 	}
@@ -28,6 +33,8 @@ func BinaryIntDo(op BinaryIntOp, a, b Sexp) (Sexp, error) {
 	switch i := b.(type) {
 	case SexpInt:
 		ib = i
+	case SexpChar:
+		ib = SexpInt(i)
 	default:
 		return SexpNull, WrongType
 	}
@@ -41,6 +48,12 @@ func BinaryIntDo(op BinaryIntOp, a, b Sexp) (Sexp, error) {
 		return SexpInt(uint(ia) >> uint(ib)), nil
 	case Modulo:
 		return ia % ib, nil
+	case BitAnd:
+		return ia & ib, nil
+	case BitOr:
+		return ia | ib, nil
+	case BitXor:
+		return ia ^ ib, nil
 	}
 	return SexpNull, errors.New("unrecognized shift operation")
 }

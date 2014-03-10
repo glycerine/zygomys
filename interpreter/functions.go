@@ -51,7 +51,7 @@ func BinaryIntFunction(glisp *Glisp, name string, args []Sexp) (Sexp, error) {
 		return SexpNull, WrongNargs
 	}
 
-	var op BinaryIntOp
+	var op IntegerOp
 	switch name {
 	case "sll":
 		op = ShiftLeft
@@ -63,7 +63,34 @@ func BinaryIntFunction(glisp *Glisp, name string, args []Sexp) (Sexp, error) {
 		op = Modulo
 	}
 
-	return BinaryIntDo(op, args[0], args[1])
+	return IntegerDo(op, args[0], args[1])
+}
+
+func BitwiseFunction(glisp *Glisp, name string, args []Sexp) (Sexp, error) {
+	if len(args) != 2 {
+		return SexpNull, WrongNargs
+	}
+
+	var op IntegerOp
+	switch name {
+	case "bit-and":
+		op = BitAnd
+	case "bit-or":
+		op = BitOr
+	case "bit-xor":
+		op = BitXor
+	}
+
+	accum := args[0]
+	var err error
+
+	for _, expr := range args[1:] {
+		accum, err = IntegerDo(op, accum, expr)
+		if err != nil {
+			return SexpNull, err
+		}
+	}
+	return accum, nil
 }
 
 func NumericFunction(glisp *Glisp, name string, args []Sexp) (Sexp, error) {
@@ -109,4 +136,7 @@ var BuiltinFunctions = map[string]GlispUserFunction {
 	"-": NumericFunction,
 	"*": NumericFunction,
 	"/": NumericFunction,
+	"bit-and": BitwiseFunction,
+	"bit-or": BitwiseFunction,
+	"bit-xor": BitwiseFunction,
 }
