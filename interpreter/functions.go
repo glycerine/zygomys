@@ -2,6 +2,7 @@ package glisp
 
 import (
 	"errors"
+	"bytes"
 )
 
 var WrongNargs error = errors.New("wrong number of arguments")
@@ -121,6 +122,22 @@ func NumericFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	return accum, nil
 }
 
+func ReadFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
+	if len(args) != 1 {
+		return SexpNull, WrongNargs
+	}
+	str := ""
+	switch t := args[0].(type) {
+	case SexpStr:
+		str = string(t)
+	default:
+		return SexpNull, WrongType
+	}
+	lexer := NewLexerFromStream(bytes.NewBuffer([]byte(str)))
+	parser := Parser{lexer, env}
+	return ParseExpression(&parser)
+}
+
 var BuiltinFunctions = map[string]GlispUserFunction {
 	"<" : CompareFunction,
 	">" : CompareFunction,
@@ -139,4 +156,5 @@ var BuiltinFunctions = map[string]GlispUserFunction {
 	"bit-and": BitwiseFunction,
 	"bit-or": BitwiseFunction,
 	"bit-xor": BitwiseFunction,
+	"read": ReadFunction,
 }
