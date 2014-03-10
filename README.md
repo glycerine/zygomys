@@ -7,18 +7,18 @@ to all systems and architectures that Go targets.
 It is currently very incomplete. Here is a list of what is implemented so far.
 
  * Floats, Ints, Chars, Strings, Symbols, Lists, and Array datatypes
- * <, >, <=, >=, =, and not= comparison operators
- * `and` and `or` short-circuit boolean operators
- * Conditionals
+ * Arithmetic (`+`, `-`, `*`, `/`, `mod`)
+ * Shift Operators (`sll`, `srl`, `sra`)
+ * Bitwise operations (`bit-and`, `bit-or`, `bit-xor`)
+ * Comparison operations (`<`, `>`, `<=`, `>=`, `=`, and `not=`)
+ * Short-circuit boolean operators (`and` and `or`)
+ * Conditionals (`cond`)
  * Lambdas (`fn`)
- * Bindings (`def` and `defn`)
+ * Bindings (`def`, `defn`, and `let`)
  * A Basic Repl
 
 ## In Progress
 
- * Arithmetic
- * Bitwise operations
- * `let` statement
  * Tail-call optimization
  * Channel and goroutine support
  * Sane Go API
