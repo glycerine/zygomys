@@ -17,7 +17,7 @@ func (f GlispUserFunction) SexpString() string {
 	return "user_function"
 }
 
-func CompareFunction(glisp *Glisp, name string, args []Sexp) (Sexp, error) {
+func CompareFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	if len(args) != 2 {
 		return SexpNull, WrongNargs
 	}
@@ -46,7 +46,7 @@ func CompareFunction(glisp *Glisp, name string, args []Sexp) (Sexp, error) {
 	return SexpBool(cond), nil
 }
 
-func BinaryIntFunction(glisp *Glisp, name string, args []Sexp) (Sexp, error) {
+func BinaryIntFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	if len(args) != 2 {
 		return SexpNull, WrongNargs
 	}
@@ -66,7 +66,7 @@ func BinaryIntFunction(glisp *Glisp, name string, args []Sexp) (Sexp, error) {
 	return IntegerDo(op, args[0], args[1])
 }
 
-func BitwiseFunction(glisp *Glisp, name string, args []Sexp) (Sexp, error) {
+func BitwiseFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	if len(args) != 2 {
 		return SexpNull, WrongNargs
 	}
@@ -93,7 +93,7 @@ func BitwiseFunction(glisp *Glisp, name string, args []Sexp) (Sexp, error) {
 	return accum, nil
 }
 
-func NumericFunction(glisp *Glisp, name string, args []Sexp) (Sexp, error) {
+func NumericFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	if len(args) < 1 {
 		return SexpNull, WrongNargs
 	}
