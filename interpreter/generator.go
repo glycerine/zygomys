@@ -186,6 +186,40 @@ func (gen *Generator) GenerateQuote(args []Sexp) error {
 	return nil
 }
 
+func (gen *Generator) GenerateLet(args []Sexp) error {
+	if len(args) < 2 {
+		return errors.New("malformed let statement")
+	}
+
+	lstatements := make([]Sexp, 0)
+	rstatements := make([]Sexp, 0)
+	var bindings []Sexp
+
+	switch expr := args[0].(type) {
+	case SexpArray:
+		bindings = []Sexp(expr)
+	default:
+		return errors.New("let bindings must be in array")
+	}
+
+	if len(bindings) % 2 != 0 {
+		return errors.New("uneven let binding list")
+	}
+
+	for i := 0; i < len(bindings) / 2; i++ {
+		lstatements = append(lstatements, bindings[2 * i])
+		rstatements = append(rstatements, bindings[2 * i + 1])
+	}
+
+	lambda := MakeList(append([]Sexp{
+		gen.env.MakeSymbol("fn"),
+		SexpArray(lstatements),
+	}, args[1:]...))
+
+	transformation := MakeList(append([]Sexp{lambda}, rstatements...))
+	return gen.Generate(transformation)
+}
+
 func (gen *Generator) GenerateCallBySymbol(sym SexpSymbol, args []Sexp) error {
 	switch sym.name {
 	case "and":
@@ -204,6 +238,8 @@ func (gen *Generator) GenerateCallBySymbol(sym SexpSymbol, args []Sexp) error {
 		return gen.GenerateDefn(args)
 	case "begin":
 		return gen.GenerateBegin(args)
+	case "let":
+		return gen.GenerateLet(args)
 	}
 	gen.GenerateAll(args)
 	gen.AddInstruction(CallInstr{sym, len(args)})
