@@ -25,6 +25,23 @@ func (gen *Generator) AddInstruction(instr Instruction) {
 	gen.instructions = append(gen.instructions, instr)
 }
 
+func (gen *Generator) GenerateBegin(expressions []Sexp) error {
+	size := len(expressions)
+	if size == 0 {
+		return errors.New("No expressions found")
+	}
+	for _, expr := range expressions[:size-1] {
+		err := gen.Generate(expr)
+		if err != nil {
+			return err
+		}
+		// insert pops after all but the last instruction
+		// that way the stack remains clean
+		gen.AddInstruction(PopInstr(0))
+	}
+	return gen.Generate(expressions[size-1])
+}
+
 func (gen *Generator) GenerateFn(args []Sexp) error {
 	if len(args) < 2 {
 		return errors.New("malformed function definition")
@@ -52,7 +69,7 @@ func (gen *Generator) GenerateFn(args []Sexp) error {
 		}
 		subgen.AddInstruction(PutInstr{argsym})
 	}
-	err := subgen.GenerateAll(funcbody)
+	err := subgen.GenerateBegin(funcbody)
 	if err != nil {
 		return err
 	}
@@ -185,6 +202,8 @@ func (gen *Generator) GenerateCallBySymbol(sym SexpSymbol, args []Sexp) error {
 		return gen.GenerateFn(args)
 	case "defn":
 		return gen.GenerateDefn(args)
+	case "begin":
+		return gen.GenerateBegin(args)
 	}
 	gen.GenerateAll(args)
 	gen.AddInstruction(CallInstr{sym, len(args)})

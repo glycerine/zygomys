@@ -107,7 +107,7 @@ func (env *Glisp) LoadStream(stream io.RuneReader) error {
 	}
 
 	gen := NewGenerator(env)
-	err = gen.GenerateAll(expressions)
+	err = gen.GenerateBegin(expressions)
 	if err != nil {
 		return err
 	}
