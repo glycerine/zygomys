@@ -122,6 +122,51 @@ func NumericFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	return accum, nil
 }
 
+func ConsFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
+	if len(args) != 2 {
+		return SexpNull, WrongNargs
+	}
+
+	return SexpPair{args[0], args[1]}, nil
+}
+
+func FirstFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
+	if len(args) != 1 {
+		return SexpNull, WrongNargs
+	}
+
+	switch expr := args[0].(type) {
+	case SexpPair:
+		return expr.head, nil
+	case SexpArray:
+		return expr[0], nil
+	}
+
+	return SexpNull, WrongType
+}
+
+func RestFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
+	if len(args) != 1 {
+		return SexpNull, WrongNargs
+	}
+
+	switch expr := args[0].(type) {
+	case SexpPair:
+		return expr.tail, nil
+	case SexpArray:
+		if len(expr) == 0 {
+			return expr, nil
+		}
+		return expr[1:], nil
+	case SexpSentinel:
+		if expr == SexpNull {
+			return SexpNull, nil
+		}
+	}
+
+	return SexpNull, WrongType
+}
+
 func ReadFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	if len(args) != 1 {
 		return SexpNull, WrongNargs
@@ -157,4 +202,7 @@ var BuiltinFunctions = map[string]GlispUserFunction {
 	"bit-or": BitwiseFunction,
 	"bit-xor": BitwiseFunction,
 	"read": ReadFunction,
+	"cons": ConsFunction,
+	"first": FirstFunction,
+	"rest": RestFunction,
 }
