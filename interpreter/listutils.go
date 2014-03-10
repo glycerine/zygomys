@@ -29,3 +29,11 @@ func ListToArray(expr Sexp) ([]Sexp, error) {
 
 	return arr, nil
 }
+
+func MakeList(expressions []Sexp) Sexp {
+	if len(expressions) == 0 {
+		return SexpNull
+	}
+
+	return SexpPair{expressions[0], MakeList(expressions[1:])}
+}

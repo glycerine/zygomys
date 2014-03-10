@@ -117,14 +117,6 @@ func (sym SexpSymbol) SexpString() string {
 	return sym.name + ":" + strconv.Itoa(sym.number)
 }
 
-func MakeList(expressions []Sexp) Sexp {
-	if len(expressions) == 0 {
-		return SexpNull
-	}
-
-	return SexpPair{expressions[0], MakeList(expressions[1:])}
-}
-
 func IsTruthy(expr Sexp) bool {
 	switch e := expr.(type) {
 	case SexpBool:

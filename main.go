@@ -15,6 +15,8 @@ func main() {
 		os.Exit(-1)
 	}
 
+	env.DumpEnvironment()
+
 	err = env.Run()
 	if err != nil {
 		fmt.Println(err)

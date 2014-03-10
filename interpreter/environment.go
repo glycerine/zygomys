@@ -24,6 +24,7 @@ func NewGlisp() *Glisp {
 	env := new(Glisp)
 	env.datastack = NewStack()
 	env.scopestack = NewStack()
+	env.scopestack.PushScope()
 	env.addrstack = NewStack()
 	env.symtable = make(map[string]int)
 	env.nextsymbol = 1
@@ -119,8 +120,14 @@ func (env *Glisp) LoadFile(file *os.File) error {
 }
 
 func (env *Glisp) DumpEnvironment() {
+	fmt.Println("instructions:")
 	for _, instr := range env.mainfunc {
-		fmt.Println(instr.InstrString())
+		fmt.Println("\t" + instr.InstrString())
+	}
+	fmt.Println("stack:")
+	for !env.datastack.IsEmpty() {
+		expr, _ := env.datastack.PopExpr()
+		fmt.Println("\t" + expr.SexpString())
 	}
 }
 

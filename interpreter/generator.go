@@ -6,6 +6,7 @@ import (
 
 type Generator struct {
 	env *Glisp
+	funcname string
 	instructions []Instruction
 }
 
@@ -22,6 +23,82 @@ func (gen *Generator) AddInstructions(instr []Instruction) {
 
 func (gen *Generator) AddInstruction(instr Instruction) {
 	gen.instructions = append(gen.instructions, instr)
+}
+
+func (gen *Generator) GenerateFn(args []Sexp) error {
+	if len(args) < 2 {
+		return errors.New("malformed function definition")
+	}
+
+	var funcargs SexpArray
+
+	switch expr := args[0].(type) {
+	case SexpArray:
+		funcargs = expr
+	default:
+		return errors.New("function arguments must be in vector")
+	}
+
+	funcbody := args[1:]
+	subgen := NewGenerator(gen.env)
+
+	for i := len(funcargs) - 1; i >= 0; i-- {
+		var argsym SexpSymbol
+		switch expr := funcargs[i].(type) {
+		case SexpSymbol:
+			argsym = expr
+		default:
+			return errors.New("function argument must be symbol")
+		}
+		subgen.AddInstruction(PutInstr{argsym})
+	}
+	err := subgen.GenerateAll(funcbody)
+	if err != nil {
+		return err
+	}
+	subgen.AddInstruction(ReturnInstr{nil})
+
+	newfunc := GlispFunction(subgen.instructions)
+	gen.AddInstruction(PushInstr{newfunc})
+
+	return nil
+}
+
+func (gen *Generator) GenerateDef(args []Sexp) error {
+	if len(args) != 2 {
+		return errors.New("Wrong number of arguments to def")
+	}
+
+	var sym SexpSymbol
+	switch expr := args[0].(type) {
+	case SexpSymbol:
+		sym = expr
+	default:
+		return errors.New("Definition name must by symbol")
+	}
+
+	err := gen.Generate(args[1])
+	if err != nil {
+		return err
+	}
+	gen.AddInstruction(PutInstr{sym})
+	return nil
+}
+
+func (gen *Generator) GenerateDefn(args []Sexp) error {
+	if len(args) < 3 {
+		return errors.New("Wrong number of arguments to defn")
+	}
+	funcdef := MakeList(append([]Sexp{
+		gen.env.MakeSymbol("fn"),
+		args[1],
+	}, args[2:]...))
+	transformation := MakeList([]Sexp{
+		gen.env.MakeSymbol("def"),
+		args[0],
+		funcdef,
+	})
+	return gen.Generate(transformation)
 }
 
 func (gen *Generator) GenerateShortCircuit(or bool, args []Sexp) error {
@@ -101,6 +178,12 @@ func (gen *Generator) GenerateCallBySymbol(sym SexpSymbol, args []Sexp) error {
 		return gen.GenerateCond(args)
 	case "quote":
 		return gen.GenerateQuote(args)
+	case "def":
+		return gen.GenerateDef(args)
+	case "fn":
+		return gen.GenerateFn(args)
+	case "defn":
+		return gen.GenerateDefn(args)
 	}
 	gen.GenerateAll(args)
 	gen.AddInstruction(CallInstr{sym, len(args)})
@@ -109,9 +192,8 @@ func (gen *Generator) GenerateCallBySymbol(sym SexpSymbol, args []Sexp) error {
 
 func (gen *Generator) GenerateDispatch(fun Sexp, args []Sexp) error {
 	gen.GenerateAll(args)
-	gen.AddInstructions([]Instruction{
-		PushInstr{fun},
-		DispatchInstr{len(args)}})
+	gen.Generate(fun)
+	gen.AddInstruction(DispatchInstr{len(args)})
 	return nil
 }
 
