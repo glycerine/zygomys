@@ -82,6 +82,7 @@ func (gen *Generator) GenerateDef(args []Sexp) error {
 		return err
 	}
 	gen.AddInstruction(PutInstr{sym})
+	gen.AddInstruction(PushInstr{SexpNull})
 	return nil
 }
 
