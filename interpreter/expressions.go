@@ -60,7 +60,6 @@ func (pair SexpPair) SexpString() string {
 type SexpArray []Sexp
 type SexpInt int
 type SexpBool bool
-type SexpUint uint
 type SexpFloat float64
 type SexpChar rune
 type SexpStr string
@@ -92,10 +91,6 @@ func (i SexpInt) SexpString() string {
 	return strconv.Itoa(int(i))
 }
 
-func (i SexpUint) SexpString() string {
-	return strconv.Itoa(int(i))
-}
-
 func (f SexpFloat) SexpString() string {
 	return strconv.FormatFloat(float64(f), 'g', 5, SexpFloatSize)
 }
@@ -122,8 +117,6 @@ func IsTruthy(expr Sexp) bool {
 	case SexpBool:
 		return bool(e)
 	case SexpInt:
-		return e != 0
-	case SexpUint:
 		return e != 0
 	case SexpChar:
 		return e != 0

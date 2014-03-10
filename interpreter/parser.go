@@ -134,17 +134,17 @@ func ParseExpression(parser *Parser) (Sexp, error) {
 		}
 		return SexpInt(i), nil
 	case TokenHex:
-		i, err := strconv.ParseUint(tok.str, 16, SexpIntSize)
+		i, err := strconv.ParseInt(tok.str, 16, SexpIntSize)
 		if err != nil {
 			return SexpNull, err
 		}
-		return SexpUint(i), nil
+		return SexpInt(i), nil
 	case TokenBinary:
-		i, err := strconv.ParseUint(tok.str, 2, SexpIntSize)
+		i, err := strconv.ParseInt(tok.str, 2, SexpIntSize)
 		if err != nil {
 			return SexpNull, err
 		}
-		return SexpUint(i), nil
+		return SexpInt(i), nil
 	case TokenChar:
 		return SexpChar(tok.str[0]), nil
 	case TokenString:

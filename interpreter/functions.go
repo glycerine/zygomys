@@ -33,8 +33,6 @@ func compareFloat(f SexpFloat, expr Sexp) (int, error) {
 	switch e := expr.(type) {
 	case SexpInt:
 		return signum(f - SexpFloat(e)), nil
-	case SexpUint:
-		return signum(f - SexpFloat(e)), nil
 	case SexpFloat:
 		return signum(f - e), nil
 	case SexpChar:
@@ -48,8 +46,6 @@ func compareInt(i SexpInt, expr Sexp) (int, error) {
 	switch e := expr.(type) {
 	case SexpInt:
 		return signum(SexpFloat(i - e)), nil
-	case SexpUint:
-		return signum(SexpFloat(i - SexpInt(e))), nil
 	case SexpFloat:
 		return signum(SexpFloat(i) - e), nil
 	case SexpChar:
@@ -59,27 +55,10 @@ func compareInt(i SexpInt, expr Sexp) (int, error) {
 	return 0, errors.New(errmsg)
 }
 
-func compareUint(u SexpUint, expr Sexp) (int, error) {
-	switch e := expr.(type) {
-	case SexpInt:
-		return signum(SexpFloat(SexpInt(u) - e)), nil
-	case SexpUint:
-		return signum(SexpFloat(u - e)), nil
-	case SexpFloat:
-		return signum(SexpFloat(u) - e), nil
-	case SexpChar:
-		return signum(SexpFloat(u - SexpUint(e))), nil
-	}
-	errmsg := fmt.Sprintf("cannot compare %T to %T", u, expr)
-	return 0, errors.New(errmsg)
-}
-
 func compareChar(c SexpChar, expr Sexp) (int, error) {
 	switch e := expr.(type) {
 	case SexpInt:
 		return signum(SexpFloat(SexpInt(c) - e)), nil
-	case SexpUint:
-		return signum(SexpFloat(SexpUint(c) - e)), nil
 	case SexpFloat:
 		return signum(SexpFloat(c) - e), nil
 	case SexpChar:
@@ -102,8 +81,6 @@ func Compare(a Sexp, b Sexp) (int, error) {
 	switch at := a.(type) {
 	case SexpInt:
 		return compareInt(at, b)
-	case SexpUint:
-		return compareUint(at, b)
 	case SexpChar:
 		return compareChar(at, b)
 	case SexpFloat:
