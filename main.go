@@ -88,7 +88,7 @@ func main() {
 		}
 		expr, err := env.Run()
 		if err != nil {
-			fmt.Println("nothing on the stack")
+			env.PrintStackTrace(err)
 			os.Exit(-1)
 		}
 		fmt.Println(expr.SexpString())

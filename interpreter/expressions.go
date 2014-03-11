@@ -112,6 +112,18 @@ func (sym SexpSymbol) SexpString() string {
 	return sym.name
 }
 
+type SexpFunction struct {
+	name string
+	user bool
+	nargs int
+	fun GlispFunction
+	userfun GlispUserFunction
+}
+
+func (sf SexpFunction) SexpString() string {
+	return "fn [" + sf.name + "]"
+}
+
 func IsTruthy(expr Sexp) bool {
 	switch e := expr.(type) {
 	case SexpBool:

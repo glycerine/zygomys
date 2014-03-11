@@ -14,9 +14,9 @@ type Glisp struct {
 	scopestack *Stack
 	addrstack *Stack
 	symtable map[string]int
-	user_functions map[int]GlispUserFunction
-	curfunc GlispFunction
-	mainfunc GlispFunction
+	revsymtable map[int]string
+	curfunc SexpFunction
+	mainfunc SexpFunction
 	pc int
 	nextsymbol int
 }
@@ -28,16 +28,15 @@ func NewGlisp() *Glisp {
 	env.scopestack.PushScope()
 	env.addrstack = NewStack()
 	env.symtable = make(map[string]int)
+	env.revsymtable = make(map[int]string)
 	env.nextsymbol = 1
 
-	env.user_functions = make(map[int]GlispUserFunction)
 	for key, function := range BuiltinFunctions {
-		sym := env.MakeSymbol(key)
-		env.user_functions[sym.number] = function
+		env.AddFunction(key, function)
 	}
 
-	env.curfunc = nil
-	env.mainfunc = make([]Instruction, 0)
+	env.mainfunc = MissingFunction
+	env.curfunc = MissingFunction
 	env.pc = -1
 	return env
 }
@@ -48,23 +47,28 @@ func (env *Glisp) MakeSymbol(name string) SexpSymbol {
 		return SexpSymbol{name, symnum}
 	}
 	symbol := SexpSymbol{name, env.nextsymbol}
-	env.symtable[name] = env.nextsymbol
+	env.symtable[name] = symbol.number
+	env.revsymtable[symbol.number] = name
 	env.nextsymbol++
 	return symbol
 }
 
 func (env *Glisp) CurrentFunctionSize() int {
-	if env.curfunc == nil {
+	if env.curfunc.user {
 		return 0
 	}
-	return len(env.curfunc)
+	return len(env.curfunc.fun)
 }
 
-func (env *Glisp) CallFunction(function GlispFunction) {
+func (env *Glisp) CallFunction(function SexpFunction, nargs int) error {
+	if nargs != function.nargs {
+		return WrongNargs
+	}
 	env.addrstack.PushAddr(env.curfunc, env.pc + 1)
 	env.scopestack.PushScope()
 	env.pc = 0
 	env.curfunc = function
+	return nil
 }
 
 func (env *Glisp) ReturnFromFunction() error {
@@ -77,11 +81,11 @@ func (env *Glisp) ReturnFromFunction() error {
 }
 
 func (env *Glisp) CallUserFunction(
-		function GlispUserFunction, name string, nargs int) error {
+		function SexpFunction, name string, nargs int) error {
 	env.addrstack.PushAddr(env.curfunc, env.pc + 1)
 	env.scopestack.PushScope()
 
-	env.curfunc = nil
+	env.curfunc = function
 	env.pc = -1
 
 	args, err := env.datastack.PopExpressions(nargs)
@@ -89,7 +93,7 @@ func (env *Glisp) CallUserFunction(
 		return err
 	}
 
-	res, err := function(env, name, args)
+	res, err := function.userfun(env, name, args)
 	if err != nil {
 		return err
 	}
@@ -112,7 +116,7 @@ func (env *Glisp) LoadStream(stream io.RuneReader) error {
 	if err != nil {
 		return err
 	}
-	env.mainfunc = gen.instructions
+	env.mainfunc = MakeFunction("__main", 0, gen.instructions)
 	env.pc = -1
 	return nil
 }
@@ -127,7 +131,8 @@ func (env *Glisp) LoadString(str string) error {
 
 func (env *Glisp) AddFunction(name string, function GlispUserFunction) {
 	sym := env.MakeSymbol(name)
-	env.user_functions[sym.number] = function
+	env.scopestack.elements[0].(Scope)[sym.number] =
+		MakeUserFunction(name, function)
 }
 
 func (env *Glisp) ImportEval() {
@@ -136,20 +141,39 @@ func (env *Glisp) ImportEval() {
 
 func (env *Glisp) DumpEnvironment() {
 	fmt.Println("Instructions:")
-	for _, instr := range env.curfunc {
-		fmt.Println("\t" + instr.InstrString())
+	if !env.curfunc.user {
+		for _, instr := range env.curfunc.fun {
+			fmt.Println("\t" + instr.InstrString())
+		}
 	}
 	fmt.Println("Stack:")
-	for !env.datastack.IsEmpty() {
-		expr, _ := env.datastack.PopExpr()
+	for i := 0; i <= env.datastack.tos; i++ {
+		expr, _ := env.datastack.GetExpr(i)
 		fmt.Println("\t" + expr.SexpString())
 	}
 	fmt.Printf("PC: %d\n", env.pc)
+
 	fmt.Println("In Scope:")
+	for i := 0; i <= env.scopestack.tos; i++ {
+		scope := env.scopestack.elements[i].(Scope)
+		for num, expr := range scope {
+			name, _ := env.revsymtable[num]
+			fmt.Printf("%s => %s\n", name, expr.SexpString())
+		}
+	}
 }
 
 func (env *Glisp) ReachedEnd() bool {
 	return env.pc == env.CurrentFunctionSize()
+}
+
+func (env *Glisp) PrintStackTrace(err error) {
+	fmt.Printf("error in %s:%d: %v\n",
+			env.curfunc.name, env.pc, err)
+	for !env.addrstack.IsEmpty() {
+		fun, pos, _ := env.addrstack.PopAddr()
+		fmt.Printf("in %s:%d\n", fun.name, pos)
+	}
 }
 
 func (env *Glisp) Run() (Sexp, error) {
@@ -159,7 +183,7 @@ func (env *Glisp) Run() (Sexp, error) {
 	}
 
 	for env.pc != -1 && !env.ReachedEnd() {
-		instr := env.curfunc[env.pc]
+		instr := env.curfunc.fun[env.pc]
 		err := instr.Execute(env)
 		if err != nil {
 			return SexpNull, err
@@ -168,4 +192,3 @@ func (env *Glisp) Run() (Sexp, error) {
 
 	return env.datastack.PopExpr()
 }
-

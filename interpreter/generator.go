@@ -42,6 +42,29 @@ func (gen *Generator) GenerateBegin(expressions []Sexp) error {
 	return gen.Generate(expressions[size-1])
 }
 
+func buildSexpFun(env *Glisp, funcargs SexpArray, funcbody []Sexp) (SexpFunction, error) {
+	gen := NewGenerator(env)
+
+	for i := len(funcargs) - 1; i >= 0; i-- {
+		var argsym SexpSymbol
+		switch expr := funcargs[i].(type) {
+		case SexpSymbol:
+			argsym = expr
+		default:
+			return MissingFunction, errors.New("function argument must be symbol")
+		}
+		gen.AddInstruction(PutInstr{argsym})
+	}
+	err := gen.GenerateBegin(funcbody)
+	if err != nil {
+		return MissingFunction, err
+	}
+	gen.AddInstruction(ReturnInstr{nil})
+
+	newfunc := GlispFunction(gen.instructions)
+	return MakeFunction("__anon", len(funcargs), newfunc), nil
+}
+
 func (gen *Generator) GenerateFn(args []Sexp) error {
 	if len(args) < 2 {
 		return errors.New("malformed function definition")
@@ -57,26 +80,11 @@ func (gen *Generator) GenerateFn(args []Sexp) error {
 	}
 
 	funcbody := args[1:]
-	subgen := NewGenerator(gen.env)
-
-	for i := len(funcargs) - 1; i >= 0; i-- {
-		var argsym SexpSymbol
-		switch expr := funcargs[i].(type) {
-		case SexpSymbol:
-			argsym = expr
-		default:
-			return errors.New("function argument must be symbol")
-		}
-		subgen.AddInstruction(PutInstr{argsym})
-	}
-	err := subgen.GenerateBegin(funcbody)
+	sfun, err := buildSexpFun(gen.env, funcargs, funcbody)
 	if err != nil {
 		return err
 	}
-	subgen.AddInstruction(ReturnInstr{nil})
-
-	newfunc := GlispFunction(subgen.instructions)
-	gen.AddInstruction(PushInstr{newfunc})
+	gen.AddInstruction(PushInstr{sfun})
 
 	return nil
 }
@@ -107,16 +115,34 @@ func (gen *Generator) GenerateDefn(args []Sexp) error {
 	if len(args) < 3 {
 		return errors.New("Wrong number of arguments to defn")
 	}
-	funcdef := MakeList(append([]Sexp{
-		gen.env.MakeSymbol("fn"),
-		args[1],
-	}, args[2:]...))
-	transformation := MakeList([]Sexp{
-		gen.env.MakeSymbol("def"),
-		args[0],
-		funcdef,
-	})
-	return gen.Generate(transformation)
+
+	var funcargs SexpArray
+	switch expr := args[1].(type) {
+	case SexpArray:
+		funcargs = expr
+	default:
+		return errors.New("function arguments must be in vector")
+	}
+
+	sfun, err := buildSexpFun(gen.env, funcargs, args[2:])
+	if err != nil {
+		return err
+	}
+
+	var sym SexpSymbol
+	switch expr := args[0].(type) {
+	case SexpSymbol:
+		sym = expr
+	default:
+		return errors.New("Definition name must by symbol")
+	}
+
+	sfun.name = sym.name
+	gen.AddInstruction(PushInstr{sfun})
+	gen.AddInstruction(PutInstr{sym})
+	gen.AddInstruction(PushInstr{SexpNull})
+
+	return nil
 }
 
 func (gen *Generator) GenerateShortCircuit(or bool, args []Sexp) error {

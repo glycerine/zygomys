@@ -127,19 +127,16 @@ func (c CallInstr) InstrString() string {
 }
 
 func (c CallInstr) Execute(env *Glisp) error {
-	userfunc, ok := env.user_functions[c.sym.number]
-	if ok {
-		return env.CallUserFunction(userfunc, c.sym.name, c.nargs)
-	}
-
 	funcobj, err := env.scopestack.LookupSymbol(c.sym)
 	if err != nil {
 		return err
 	}
 	switch f := funcobj.(type) {
-	case GlispFunction:
-		env.CallFunction(f)
-		return nil
+	case SexpFunction:
+		if !f.user {
+			return env.CallFunction(f, c.nargs)
+		}
+		return env.CallUserFunction(f, c.sym.name, c.nargs)
 	}
 	return errors.New(fmt.Sprintf("%s is not a function", c.sym.name))
 }
@@ -159,9 +156,11 @@ func (d DispatchInstr) Execute(env *Glisp) error {
 	}
 
 	switch f := funcobj.(type) {
-	case GlispFunction:
-		env.CallFunction(f)
-		return nil
+	case SexpFunction:
+		if !f.user {
+			return env.CallFunction(f, d.nargs)
+		}
+		return env.CallUserFunction(f, f.name, d.nargs)
 	}
 	return errors.New("not a function")
 }
