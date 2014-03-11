@@ -100,7 +100,7 @@ func (c SexpChar) SexpString() string {
 }
 
 func (s SexpStr) SexpString() string {
-	return string(s)
+	return strconv.Quote(string(s))
 }
 
 type SexpSymbol struct {
