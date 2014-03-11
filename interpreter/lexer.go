@@ -231,9 +231,10 @@ func DecodeBrace(brace rune) Token {
 		return Token{TokenRParen, ""}
 	case '[':
 		return Token{TokenLSquare, ""}
-	default:
+	case ']':
 		return Token{TokenRSquare, ""}
 	}
+        return Token{TokenEnd, ""}
 }
 
 func (lexer *Lexer) LexNextRune(r rune) error {
