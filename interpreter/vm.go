@@ -195,3 +195,26 @@ func (r ReturnInstr) InstrString() string {
 	}
 	return "ret \"" + r.err.Error() + "\""
 }
+
+type AddScopeInstr int
+
+func (a AddScopeInstr) InstrString() string {
+	return "add scope"
+}
+
+func (a AddScopeInstr) Execute(env *Glisp) error {
+	env.scopestack.PushScope()
+	env.pc++
+	return nil
+}
+
+type RemoveScopeInstr int
+
+func (a RemoveScopeInstr) InstrString() string {
+	return "rem scope"
+}
+
+func (a RemoveScopeInstr) Execute(env *Glisp) error {
+	env.pc++
+	return env.scopestack.PopScope()
+}

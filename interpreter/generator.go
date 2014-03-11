@@ -230,12 +230,12 @@ func (gen *Generator) GenerateQuote(args []Sexp) error {
 	return nil
 }
 
-func (gen *Generator) GenerateLet(args []Sexp) error {
+func (gen *Generator) GenerateLet(name string, args []Sexp) error {
 	if len(args) < 2 {
 		return errors.New("malformed let statement")
 	}
 
-	lstatements := make([]Sexp, 0)
+	lstatements := make([]SexpSymbol, 0)
 	rstatements := make([]Sexp, 0)
 	var bindings []Sexp
 
@@ -251,17 +251,43 @@ func (gen *Generator) GenerateLet(args []Sexp) error {
 	}
 
 	for i := 0; i < len(bindings)/2; i++ {
-		lstatements = append(lstatements, bindings[2*i])
+		switch t := bindings[2*i].(type) {
+		case SexpSymbol:
+			lstatements = append(lstatements, t)
+		default:
+			return errors.New("cannot bind to non-symbol")
+		}
 		rstatements = append(rstatements, bindings[2*i+1])
 	}
 
-	lambda := MakeList(append([]Sexp{
-		gen.env.MakeSymbol("fn"),
-		SexpArray(lstatements),
-	}, args[1:]...))
+	gen.AddInstruction(AddScopeInstr(0))
 
-	transformation := MakeList(append([]Sexp{lambda}, rstatements...))
-	return gen.Generate(transformation)
+	if name == "let*" {
+		for i, rs := range rstatements {
+			err := gen.Generate(rs)
+			if err != nil {
+				return err
+			}
+			gen.AddInstruction(PutInstr{lstatements[i]})
+		}
+	} else if name == "let" {
+		for _, rs := range rstatements {
+			err := gen.Generate(rs)
+			if err != nil {
+				return err
+			}
+		}
+		for i := len(lstatements) - 1; i >= 0; i-- {
+			gen.AddInstruction(PutInstr{lstatements[i]})
+		}
+	}
+	err := gen.GenerateBegin(args[1:])
+	if err != nil {
+		return err
+	}
+	gen.AddInstruction(RemoveScopeInstr(0))
+
+	return nil
 }
 
 func (gen *Generator) GenerateCallBySymbol(sym SexpSymbol, args []Sexp) error {
@@ -283,7 +309,9 @@ func (gen *Generator) GenerateCallBySymbol(sym SexpSymbol, args []Sexp) error {
 	case "begin":
 		return gen.GenerateBegin(args)
 	case "let":
-		return gen.GenerateLet(args)
+		return gen.GenerateLet("let", args)
+	case "let*":
+		return gen.GenerateLet("let*", args)
 	}
 	oldtail := gen.tail
 	gen.GenerateAll(args)
