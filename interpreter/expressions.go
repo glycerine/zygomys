@@ -84,7 +84,7 @@ func (b SexpBool) SexpString() string {
 	if b {
 		return "true"
 	}
-	return "bool:false"
+	return "false"
 }
 
 func (i SexpInt) SexpString() string {
@@ -109,7 +109,7 @@ type SexpSymbol struct {
 }
 
 func (sym SexpSymbol) SexpString() string {
-	return sym.name + ":" + strconv.Itoa(sym.number)
+	return sym.name
 }
 
 func IsTruthy(expr Sexp) bool {
