@@ -29,6 +29,22 @@ func (j JumpInstr) Execute(env *Glisp) error {
 	return nil
 }
 
+type GotoInstr struct {
+	location int
+}
+
+func (g GotoInstr) InstrString() string {
+	return fmt.Sprintf("goto %d", g.location)
+}
+
+func (g GotoInstr) Execute(env *Glisp) error {
+	if g.location < 0 || g.location > env.CurrentFunctionSize() {
+		return OutOfBounds
+	}
+	env.pc = g.location
+	return nil
+}
+
 type BranchInstr struct {
 	direction bool
 	location  int

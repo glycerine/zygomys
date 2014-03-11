@@ -16,10 +16,10 @@ It is currently very incomplete. Here is a list of what is implemented so far.
  * Lambdas (`fn`)
  * Bindings (`def`, `defn`, and `let`)
  * A Basic Repl
+ * Tail-call optimization
 
 ## In Progress
 
- * Tail-call optimization
  * Channel and goroutine support
  * Sane Go API
  * Better name than "glisp"

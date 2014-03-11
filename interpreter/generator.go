@@ -7,6 +7,7 @@ import (
 type Generator struct {
 	env          *Glisp
 	funcname     string
+	tail         bool
 	instructions []Instruction
 }
 
@@ -14,6 +15,7 @@ func NewGenerator(env *Glisp) *Generator {
 	gen := new(Generator)
 	gen.env = env
 	gen.instructions = make([]Instruction, 0)
+	gen.tail = false
 	return gen
 }
 
@@ -27,6 +29,8 @@ func (gen *Generator) AddInstruction(instr Instruction) {
 
 func (gen *Generator) GenerateBegin(expressions []Sexp) error {
 	size := len(expressions)
+	oldtail := gen.tail
+	gen.tail = false
 	if size == 0 {
 		return errors.New("No expressions found")
 	}
@@ -39,12 +43,20 @@ func (gen *Generator) GenerateBegin(expressions []Sexp) error {
 		// that way the stack remains clean
 		gen.AddInstruction(PopInstr(0))
 	}
+	gen.tail = oldtail
 	return gen.Generate(expressions[size-1])
 }
 
-func buildSexpFun(env *Glisp, funcargs SexpArray,
+func buildSexpFun(env *Glisp, name string, funcargs SexpArray,
 	funcbody []Sexp) (SexpFunction, error) {
 	gen := NewGenerator(env)
+	gen.tail = true
+
+	if len(name) == 0 {
+		gen.funcname = env.GenSymbol("__anon").name
+	} else {
+		gen.funcname = name
+	}
 
 	for i := len(funcargs) - 1; i >= 0; i-- {
 		var argsym SexpSymbol
@@ -64,8 +76,7 @@ func buildSexpFun(env *Glisp, funcargs SexpArray,
 	gen.AddInstruction(ReturnInstr{nil})
 
 	newfunc := GlispFunction(gen.instructions)
-	sym := env.GenSymbol("__anon")
-	return MakeFunction(sym.name, len(funcargs), newfunc), nil
+	return MakeFunction(gen.funcname, len(funcargs), newfunc), nil
 }
 
 func (gen *Generator) GenerateFn(args []Sexp) error {
@@ -83,7 +94,7 @@ func (gen *Generator) GenerateFn(args []Sexp) error {
 	}
 
 	funcbody := args[1:]
-	sfun, err := buildSexpFun(gen.env, funcargs, funcbody)
+	sfun, err := buildSexpFun(gen.env, "", funcargs, funcbody)
 	if err != nil {
 		return err
 	}
@@ -105,6 +116,7 @@ func (gen *Generator) GenerateDef(args []Sexp) error {
 		return errors.New("Definition name must by symbol")
 	}
 
+	gen.tail = false
 	err := gen.Generate(args[1])
 	if err != nil {
 		return err
@@ -127,11 +139,6 @@ func (gen *Generator) GenerateDefn(args []Sexp) error {
 		return errors.New("function arguments must be in vector")
 	}
 
-	sfun, err := buildSexpFun(gen.env, funcargs, args[2:])
-	if err != nil {
-		return err
-	}
-
 	var sym SexpSymbol
 	switch expr := args[0].(type) {
 	case SexpSymbol:
@@ -140,7 +147,11 @@ func (gen *Generator) GenerateDefn(args []Sexp) error {
 		return errors.New("Definition name must by symbol")
 	}
 
-	sfun.name = sym.name
+	sfun, err := buildSexpFun(gen.env, sym.name, funcargs, args[2:])
+	if err != nil {
+		return err
+	}
+
 	gen.AddInstruction(PushInstr{sfun})
 	gen.AddInstruction(PutInstr{sym})
 	gen.AddInstruction(PushInstr{SexpNull})
@@ -174,6 +185,8 @@ func (gen *Generator) GenerateCond(args []Sexp) error {
 	}
 
 	subgen := NewGenerator(gen.env)
+	subgen.tail = gen.tail
+	subgen.funcname = gen.funcname
 	err := subgen.Generate(args[len(args)-1])
 	if err != nil {
 		return err
@@ -189,6 +202,8 @@ func (gen *Generator) GenerateCond(args []Sexp) error {
 		pred_code := subgen.instructions
 
 		subgen.Reset()
+		subgen.tail = gen.tail
+		subgen.funcname = gen.funcname
 		err = subgen.Generate(args[2*i+1])
 		if err != nil {
 			return err
@@ -270,8 +285,13 @@ func (gen *Generator) GenerateCallBySymbol(sym SexpSymbol, args []Sexp) error {
 	case "let":
 		return gen.GenerateLet(args)
 	}
+	oldtail := gen.tail
 	gen.GenerateAll(args)
-	gen.AddInstruction(CallInstr{sym, len(args)})
+	if oldtail && sym.name == gen.funcname {
+		gen.AddInstruction(GotoInstr{0})
+	} else {
+		gen.AddInstruction(CallInstr{sym, len(args)})
+	}
 	return nil
 }
 
@@ -321,4 +341,5 @@ func (gen *Generator) GenerateAll(expressions []Sexp) error {
 
 func (gen *Generator) Reset() {
 	gen.instructions = make([]Instruction, 0)
+	gen.tail = false
 }
