@@ -61,6 +61,7 @@ func getExpression(reader *bufio.Reader) (string, error) {
 
 func main() {
 	env := glisp.NewGlisp()
+	env.ImportEval()
 	reader := bufio.NewReader(os.Stdin)
 
 	fmt.Printf("glisp version %s\n", glisp.Version())

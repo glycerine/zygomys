@@ -183,6 +183,21 @@ func ReadFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	return ParseExpression(&parser)
 }
 
+func EvalFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
+	if len(args) != 1 {
+		return SexpNull, WrongNargs
+	}
+	newenv := NewGlisp()
+	gen := NewGenerator(newenv)
+	err := gen.Generate(args[0])
+	if err != nil {
+		return SexpNull, errors.New("failed to compile expression")
+	}
+	newenv.mainfunc = GlispFunction(gen.instructions)
+	newenv.pc = -1
+	return newenv.Run()
+}
+
 var BuiltinFunctions = map[string]GlispUserFunction {
 	"<" : CompareFunction,
 	">" : CompareFunction,

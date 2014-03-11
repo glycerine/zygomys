@@ -125,6 +125,15 @@ func (env *Glisp) LoadString(str string) error {
 	return env.LoadStream(bytes.NewBuffer([]byte(str)))
 }
 
+func (env *Glisp) AddFunction(name string, function GlispUserFunction) {
+	sym := env.MakeSymbol(name)
+	env.user_functions[sym.number] = function
+}
+
+func (env *Glisp) ImportEval() {
+	env.AddFunction("eval", EvalFunction)
+}
+
 func (env *Glisp) DumpEnvironment() {
 	fmt.Println("Instructions:")
 	for _, instr := range env.curfunc {
