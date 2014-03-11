@@ -5,6 +5,7 @@ import (
 )
 
 type IntegerOp int
+
 const (
 	ShiftLeft IntegerOp = iota
 	ShiftRightArith
@@ -59,6 +60,7 @@ func IntegerDo(op IntegerOp, a, b Sexp) (Sexp, error) {
 }
 
 type NumericOp int
+
 const (
 	Add NumericOp = iota
 	Sub
@@ -89,7 +91,7 @@ func NumericIntDo(op NumericOp, a, b SexpInt) Sexp {
 	case Mult:
 		return a * b
 	case Div:
-		if a % b == 0 {
+		if a%b == 0 {
 			return a / b
 		} else {
 			return SexpFloat(a) / SexpFloat(b)

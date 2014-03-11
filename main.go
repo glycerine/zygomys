@@ -1,10 +1,10 @@
 package main
 
 import (
+	"./interpreter"
+	"bufio"
 	"fmt"
 	"os"
-	"bufio"
-	"./interpreter"
 )
 
 func getLine(reader *bufio.Reader) (string, error) {

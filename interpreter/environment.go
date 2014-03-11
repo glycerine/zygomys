@@ -11,15 +11,15 @@ import (
 )
 
 type Glisp struct {
-	datastack *Stack
-	scopestack *Stack
-	addrstack *Stack
-	symtable map[string]int
+	datastack   *Stack
+	scopestack  *Stack
+	addrstack   *Stack
+	symtable    map[string]int
 	revsymtable map[int]string
-	curfunc SexpFunction
-	mainfunc SexpFunction
-	pc int
-	nextsymbol int
+	curfunc     SexpFunction
+	mainfunc    SexpFunction
+	pc          int
+	nextsymbol  int
 }
 
 func NewGlisp() *Glisp {
@@ -70,7 +70,7 @@ func (env *Glisp) CallFunction(function SexpFunction, nargs int) error {
 	if nargs != function.nargs {
 		return WrongNargs
 	}
-	env.addrstack.PushAddr(env.curfunc, env.pc + 1)
+	env.addrstack.PushAddr(env.curfunc, env.pc+1)
 	env.scopestack.PushScope()
 	env.pc = 0
 	env.curfunc = function
@@ -87,8 +87,8 @@ func (env *Glisp) ReturnFromFunction() error {
 }
 
 func (env *Glisp) CallUserFunction(
-		function SexpFunction, name string, nargs int) error {
-	env.addrstack.PushAddr(env.curfunc, env.pc + 1)
+	function SexpFunction, name string, nargs int) error {
+	env.addrstack.PushAddr(env.curfunc, env.pc+1)
 	env.scopestack.PushScope()
 
 	env.curfunc = function
@@ -175,7 +175,7 @@ func (env *Glisp) ReachedEnd() bool {
 
 func (env *Glisp) PrintStackTrace(err error) {
 	fmt.Printf("error in %s:%d: %v\n",
-			env.curfunc.name, env.pc, err)
+		env.curfunc.name, env.pc, err)
 	for !env.addrstack.IsEmpty() {
 		fun, pos, _ := env.addrstack.PopAddr()
 		fmt.Printf("in %s:%d\n", fun.name, pos)

@@ -7,7 +7,7 @@ import (
 
 type Parser struct {
 	lexer *Lexer
-	env *Glisp
+	env   *Glisp
 }
 
 var UnexpectedEnd error = errors.New("Unexpected end of input")
@@ -112,7 +112,7 @@ func ParseExpression(parser *Parser) (Sexp, error) {
 		return SexpEnd, err
 	}
 
-	switch (tok.typ) {
+	switch tok.typ {
 	case TokenLParen:
 		return ParseList(parser)
 	case TokenLSquare:

@@ -5,8 +5,8 @@ import (
 )
 
 type Generator struct {
-	env *Glisp
-	funcname string
+	env          *Glisp
+	funcname     string
 	instructions []Instruction
 }
 
@@ -42,7 +42,8 @@ func (gen *Generator) GenerateBegin(expressions []Sexp) error {
 	return gen.Generate(expressions[size-1])
 }
 
-func buildSexpFun(env *Glisp, funcargs SexpArray, funcbody []Sexp) (SexpFunction, error) {
+func buildSexpFun(env *Glisp, funcargs SexpArray,
+	funcbody []Sexp) (SexpFunction, error) {
 	gen := NewGenerator(env)
 
 	for i := len(funcargs) - 1; i >= 0; i-- {
@@ -51,7 +52,8 @@ func buildSexpFun(env *Glisp, funcargs SexpArray, funcbody []Sexp) (SexpFunction
 		case SexpSymbol:
 			argsym = expr
 		default:
-			return MissingFunction, errors.New("function argument must be symbol")
+			return MissingFunction,
+				errors.New("function argument must be symbol")
 		}
 		gen.AddInstruction(PutInstr{argsym})
 	}
@@ -150,7 +152,7 @@ func (gen *Generator) GenerateShortCircuit(or bool, args []Sexp) error {
 	size := len(args)
 
 	subgen := NewGenerator(gen.env)
-	subgen.Generate(args[size - 1])
+	subgen.Generate(args[size-1])
 	instructions := subgen.instructions
 
 	for i := size - 2; i >= 0; i-- {
@@ -167,27 +169,27 @@ func (gen *Generator) GenerateShortCircuit(or bool, args []Sexp) error {
 }
 
 func (gen *Generator) GenerateCond(args []Sexp) error {
-	if len(args) % 2 == 0 {
+	if len(args)%2 == 0 {
 		return errors.New("missing default case")
 	}
 
 	subgen := NewGenerator(gen.env)
-	err := subgen.Generate(args[len(args) - 1])
+	err := subgen.Generate(args[len(args)-1])
 	if err != nil {
 		return err
 	}
 	instructions := subgen.instructions
 
-	for i := len(args) / 2 - 1; i >= 0; i-- {
+	for i := len(args)/2 - 1; i >= 0; i-- {
 		subgen.Reset()
-		err := subgen.Generate(args[2 * i])
+		err := subgen.Generate(args[2*i])
 		if err != nil {
 			return err
 		}
 		pred_code := subgen.instructions
 
 		subgen.Reset()
-		err = subgen.Generate(args[2 * i + 1])
+		err = subgen.Generate(args[2*i+1])
 		if err != nil {
 			return err
 		}
@@ -229,13 +231,13 @@ func (gen *Generator) GenerateLet(args []Sexp) error {
 		return errors.New("let bindings must be in array")
 	}
 
-	if len(bindings) % 2 != 0 {
+	if len(bindings)%2 != 0 {
 		return errors.New("uneven let binding list")
 	}
 
-	for i := 0; i < len(bindings) / 2; i++ {
-		lstatements = append(lstatements, bindings[2 * i])
-		rstatements = append(rstatements, bindings[2 * i + 1])
+	for i := 0; i < len(bindings)/2; i++ {
+		lstatements = append(lstatements, bindings[2*i])
+		rstatements = append(rstatements, bindings[2*i+1])
 	}
 
 	lambda := MakeList(append([]Sexp{

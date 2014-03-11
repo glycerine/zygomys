@@ -1,9 +1,9 @@
 package glisp
 
 import (
-	"fmt"
-	"errors"
 	"bytes"
+	"errors"
+	"fmt"
 )
 
 func signumFloat(f SexpFloat) int {
@@ -88,5 +88,3 @@ func Compare(a Sexp, b Sexp) (int, error) {
 	errmsg := fmt.Sprintf("cannot compare %T to %T", a, b)
 	return 0, errors.New(errmsg)
 }
-
-

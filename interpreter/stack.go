@@ -11,7 +11,7 @@ type StackElem interface {
 }
 
 type Stack struct {
-	tos int
+	tos      int
 	elements []StackElem
 }
 
@@ -37,10 +37,10 @@ func (stack *Stack) Push(elem StackElem) {
 }
 
 func (stack *Stack) Get(n int) (StackElem, error) {
-	if stack.tos - n < 0 {
+	if stack.tos-n < 0 {
 		return nil, errors.New("invalid stack access")
 	}
-	return stack.elements[stack.tos - n], nil
+	return stack.elements[stack.tos-n], nil
 }
 
 func (stack *Stack) Pop() (StackElem, error) {

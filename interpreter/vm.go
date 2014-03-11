@@ -1,8 +1,8 @@
 package glisp
 
 import (
-	"fmt"
 	"errors"
+	"fmt"
 )
 
 type Instruction interface {
@@ -31,7 +31,7 @@ func (j JumpInstr) Execute(env *Glisp) error {
 
 type BranchInstr struct {
 	direction bool
-	location int
+	location  int
 }
 
 func (b BranchInstr) InstrString() string {
@@ -118,7 +118,7 @@ func (p PutInstr) Execute(env *Glisp) error {
 }
 
 type CallInstr struct {
-	sym SexpSymbol
+	sym   SexpSymbol
 	nargs int
 }
 

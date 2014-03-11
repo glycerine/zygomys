@@ -71,11 +71,11 @@ const (
 )
 
 type Lexer struct {
-	state LexerState
-	tokens []Token
-	buffer *bytes.Buffer
-	stream io.RuneReader
-	linenum int
+	state    LexerState
+	tokens   []Token
+	buffer   *bytes.Buffer
+	stream   io.RuneReader
+	linenum  int
 	finished bool
 }
 

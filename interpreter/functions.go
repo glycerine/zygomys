@@ -1,8 +1,8 @@
 package glisp
 
 import (
-	"errors"
 	"bytes"
+	"errors"
 	"fmt"
 )
 
@@ -263,36 +263,36 @@ func MakeUserFunction(name string, ufun GlispUserFunction) SexpFunction {
 	return sfun
 }
 
-var BuiltinFunctions = map[string]GlispUserFunction {
-	"<" : CompareFunction,
-	">" : CompareFunction,
-	"<=": CompareFunction,
-	">=": CompareFunction,
-	"=" : CompareFunction,
-	"not=": CompareFunction,
-	"sll": BinaryIntFunction,
-	"sra": BinaryIntFunction,
-	"srl": BinaryIntFunction,
-	"mod": BinaryIntFunction,
-	"+": NumericFunction,
-	"-": NumericFunction,
-	"*": NumericFunction,
-	"/": NumericFunction,
+var BuiltinFunctions = map[string]GlispUserFunction{
+	"<":       CompareFunction,
+	">":       CompareFunction,
+	"<=":      CompareFunction,
+	">=":      CompareFunction,
+	"=":       CompareFunction,
+	"not=":    CompareFunction,
+	"sll":     BinaryIntFunction,
+	"sra":     BinaryIntFunction,
+	"srl":     BinaryIntFunction,
+	"mod":     BinaryIntFunction,
+	"+":       NumericFunction,
+	"-":       NumericFunction,
+	"*":       NumericFunction,
+	"/":       NumericFunction,
 	"bit-and": BitwiseFunction,
-	"bit-or": BitwiseFunction,
+	"bit-or":  BitwiseFunction,
 	"bit-xor": BitwiseFunction,
-	"read": ReadFunction,
-	"cons": ConsFunction,
-	"first": FirstFunction,
-	"rest": RestFunction,
-	"list?": TypeQueryFunction,
-	"null?": TypeQueryFunction,
-	"array?": TypeQueryFunction,
+	"read":    ReadFunction,
+	"cons":    ConsFunction,
+	"first":   FirstFunction,
+	"rest":    RestFunction,
+	"list?":   TypeQueryFunction,
+	"null?":   TypeQueryFunction,
+	"array?":  TypeQueryFunction,
 	"number?": TypeQueryFunction,
-	"int?": TypeQueryFunction,
-	"float?": TypeQueryFunction,
-	"char?": TypeQueryFunction,
+	"int?":    TypeQueryFunction,
+	"float?":  TypeQueryFunction,
+	"char?":   TypeQueryFunction,
 	"symbol?": TypeQueryFunction,
 	"println": PrintFunction,
-	"print": PrintFunction,
+	"print":   PrintFunction,
 }

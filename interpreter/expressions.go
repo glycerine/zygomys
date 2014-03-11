@@ -2,8 +2,8 @@ package glisp
 
 import (
 	"reflect"
-	"strings"
 	"strconv"
+	"strings"
 )
 
 type Sexp interface {
@@ -11,6 +11,7 @@ type Sexp interface {
 }
 
 type SexpSentinel int
+
 const (
 	SexpNull SexpSentinel = iota
 	SexpEnd
@@ -55,7 +56,6 @@ func (pair SexpPair) SexpString() string {
 
 	return str
 }
-
 
 type SexpArray []Sexp
 type SexpInt int
@@ -113,10 +113,10 @@ func (sym SexpSymbol) SexpString() string {
 }
 
 type SexpFunction struct {
-	name string
-	user bool
-	nargs int
-	fun GlispFunction
+	name    string
+	user    bool
+	nargs   int
+	fun     GlispFunction
 	userfun GlispUserFunction
 }
 
