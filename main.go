@@ -5,6 +5,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"strings"
 )
 
 func getLine(reader *bufio.Reader) (string, error) {
@@ -59,6 +60,17 @@ func getExpression(reader *bufio.Reader) (string, error) {
 	return line, nil
 }
 
+func processDumpCommand(env *glisp.Glisp, args []string) {
+	if len(args) == 0 {
+		env.DumpEnvironment()
+	} else {
+		err := env.DumpFunctionByName(args[0])
+		if err != nil {
+			fmt.Println(err)
+		}
+	}
+}
+
 func main() {
 	env := glisp.NewGlisp()
 	env.ImportEval()
@@ -73,11 +85,17 @@ func main() {
 			os.Exit(-1)
 		}
 
-		if line == "quit" {
+		parts := strings.Split(line, " ")
+		if len(parts) == 0  {
+			continue
+		}
+
+		if parts[0] == "quit" {
 			break
 		}
-		if line == "dump" {
-			env.DumpEnvironment()
+
+		if parts[0] == "dump" {
+			processDumpCommand(env, parts[1:])
 			continue
 		}
 

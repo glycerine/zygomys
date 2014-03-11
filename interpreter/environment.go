@@ -145,12 +145,37 @@ func (env *Glisp) ImportEval() {
 	env.AddFunction("eval", EvalFunction)
 }
 
+func (env *Glisp) DumpFunctionByName(name string) error {
+	obj, found := env.FindObject(name)
+	if !found {
+		return errors.New(fmt.Sprintf("%q not found", name))
+	}
+
+	var fun GlispFunction
+	switch t := obj.(type) {
+	case SexpFunction:
+		if !t.user {
+			fun = t.fun
+		} else {
+			return errors.New("not a glisp function")
+		}
+	default:
+		return errors.New("not a function")
+	}
+	env.DumpFunction(fun)
+	return nil
+}
+
+func (env *Glisp) DumpFunction(fun GlispFunction) {
+	for _, instr := range fun {
+		fmt.Println("\t" + instr.InstrString())
+	}
+}
+
 func (env *Glisp) DumpEnvironment() {
 	fmt.Println("Instructions:")
 	if !env.curfunc.user {
-		for _, instr := range env.curfunc.fun {
-			fmt.Println("\t" + instr.InstrString())
-		}
+		env.DumpFunction(env.curfunc.fun)
 	}
 	fmt.Println("Stack:")
 	for i := 0; i <= env.datastack.tos; i++ {
@@ -180,6 +205,15 @@ func (env *Glisp) PrintStackTrace(err error) {
 		fun, pos, _ := env.addrstack.PopAddr()
 		fmt.Printf("in %s:%d\n", fun.name, pos)
 	}
+}
+
+func (env *Glisp) FindObject(name string) (Sexp, bool) {
+	sym := env.MakeSymbol(name)
+	obj, err := env.scopestack.LookupSymbol(sym)
+	if err != nil {
+		return SexpNull, false
+	}
+	return obj, true
 }
 
 func (env *Glisp) Run() (Sexp, error) {
