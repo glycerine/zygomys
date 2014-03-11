@@ -3,6 +3,7 @@ package glisp
 import (
 	"errors"
 	"bytes"
+	"fmt"
 )
 
 var WrongNargs error = errors.New("wrong number of arguments")
@@ -198,6 +199,59 @@ func EvalFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	return newenv.Run()
 }
 
+func TypeQueryFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
+	if len(args) != 1 {
+		return SexpNull, WrongNargs
+	}
+
+	var result bool
+
+	switch name {
+	case "list?":
+		result = IsList(args[0])
+	case "null?":
+		result = (args[0] == SexpNull)
+	case "array?":
+		result = IsArray(args[0])
+	case "number?":
+		result = IsNumber(args[0])
+	case "float?":
+		result = IsFloat(args[0])
+	case "int?":
+		result = IsInt(args[0])
+	case "char?":
+		result = IsChar(args[0])
+	case "symbol?":
+		result = IsSymbol(args[0])
+	}
+
+	return SexpBool(result), nil
+}
+
+func PrintFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
+	if len(args) != 1 {
+		return SexpNull, WrongNargs
+	}
+
+	var str string
+
+	switch expr := args[0].(type) {
+	case SexpStr:
+		str = string(expr)
+	default:
+		str = expr.SexpString()
+	}
+
+	switch name {
+	case "println":
+		fmt.Println(str)
+	case "print":
+		fmt.Print(str)
+	}
+
+	return SexpNull, nil
+}
+
 var BuiltinFunctions = map[string]GlispUserFunction {
 	"<" : CompareFunction,
 	">" : CompareFunction,
@@ -220,4 +274,14 @@ var BuiltinFunctions = map[string]GlispUserFunction {
 	"cons": ConsFunction,
 	"first": FirstFunction,
 	"rest": RestFunction,
+	"list?": TypeQueryFunction,
+	"null?": TypeQueryFunction,
+	"array?": TypeQueryFunction,
+	"number?": TypeQueryFunction,
+	"int?": TypeQueryFunction,
+	"float?": TypeQueryFunction,
+	"char?": TypeQueryFunction,
+	"symbol?": TypeQueryFunction,
+	"println": PrintFunction,
+	"print": PrintFunction,
 }
