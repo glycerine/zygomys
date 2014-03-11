@@ -62,7 +62,8 @@ func buildSexpFun(env *Glisp, funcargs SexpArray, funcbody []Sexp) (SexpFunction
 	gen.AddInstruction(ReturnInstr{nil})
 
 	newfunc := GlispFunction(gen.instructions)
-	return MakeFunction("__anon", len(funcargs), newfunc), nil
+	sym := env.GenSymbol("__anon")
+	return MakeFunction(sym.name, len(funcargs), newfunc), nil
 }
 
 func (gen *Generator) GenerateFn(args []Sexp) error {

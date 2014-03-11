@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strconv"
 )
 
 type Glisp struct {
@@ -51,6 +52,11 @@ func (env *Glisp) MakeSymbol(name string) SexpSymbol {
 	env.revsymtable[symbol.number] = name
 	env.nextsymbol++
 	return symbol
+}
+
+func (env *Glisp) GenSymbol(prefix string) SexpSymbol {
+	symname := prefix + strconv.Itoa(env.nextsymbol)
+	return env.MakeSymbol(symname)
 }
 
 func (env *Glisp) CurrentFunctionSize() int {
