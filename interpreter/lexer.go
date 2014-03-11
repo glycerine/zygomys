@@ -142,6 +142,8 @@ func EscapeChar(char rune) (rune, error) {
 		return '\r', nil
 	case 'a':
 		return '\a', nil
+	case 't':
+		return '\t', nil
 	case '\\':
 		return '\\', nil
 	case '"':
@@ -261,6 +263,7 @@ func (lexer *Lexer) LexNextRune(r rune) error {
 		}
 		lexer.buffer.WriteRune(char)
 		lexer.state = LexerStrLit
+		return nil
 	}
 
 	if r == '"' {
