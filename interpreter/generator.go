@@ -8,6 +8,7 @@ type Generator struct {
 	env          *Glisp
 	funcname     string
 	tail         bool
+	scopes       int
 	instructions []Instruction
 }
 
@@ -15,7 +16,10 @@ func NewGenerator(env *Glisp) *Generator {
 	gen := new(Generator)
 	gen.env = env
 	gen.instructions = make([]Instruction, 0)
+	// tail marks whether or not we are in the tail position
 	gen.tail = false
+	// scopes is the number of extra (non-function) scopes we've created
+	gen.scopes = 0
 	return gen
 }
 
@@ -186,6 +190,7 @@ func (gen *Generator) GenerateCond(args []Sexp) error {
 
 	subgen := NewGenerator(gen.env)
 	subgen.tail = gen.tail
+	subgen.scopes = gen.scopes
 	subgen.funcname = gen.funcname
 	err := subgen.Generate(args[len(args)-1])
 	if err != nil {
@@ -203,6 +208,7 @@ func (gen *Generator) GenerateCond(args []Sexp) error {
 
 		subgen.Reset()
 		subgen.tail = gen.tail
+		subgen.scopes = gen.scopes
 		subgen.funcname = gen.funcname
 		err = subgen.Generate(args[2*i+1])
 		if err != nil {
@@ -261,6 +267,7 @@ func (gen *Generator) GenerateLet(name string, args []Sexp) error {
 	}
 
 	gen.AddInstruction(AddScopeInstr(0))
+	gen.scopes++
 
 	if name == "let*" {
 		for i, rs := range rstatements {
@@ -286,6 +293,7 @@ func (gen *Generator) GenerateLet(name string, args []Sexp) error {
 		return err
 	}
 	gen.AddInstruction(RemoveScopeInstr(0))
+	gen.scopes--
 
 	return nil
 }
@@ -316,6 +324,12 @@ func (gen *Generator) GenerateCallBySymbol(sym SexpSymbol, args []Sexp) error {
 	oldtail := gen.tail
 	gen.GenerateAll(args)
 	if oldtail && sym.name == gen.funcname {
+		// to do a tail call
+		// pop off all the extra scopes
+		// then jump to beginning of function
+		for i := 0; i < gen.scopes; i++ {
+			gen.AddInstruction(RemoveScopeInstr(0))
+		}
 		gen.AddInstruction(GotoInstr{0})
 	} else {
 		gen.AddInstruction(CallInstr{sym, len(args)})
@@ -370,4 +384,5 @@ func (gen *Generator) GenerateAll(expressions []Sexp) error {
 func (gen *Generator) Reset() {
 	gen.instructions = make([]Instruction, 0)
 	gen.tail = false
+	gen.scopes = 0
 }
