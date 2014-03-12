@@ -202,6 +202,9 @@ type ReturnInstr struct {
 }
 
 func (r ReturnInstr) Execute(env *Glisp) error {
+	if r.err != nil {
+		return r.err
+	}
 	return env.ReturnFromFunction()
 }
 

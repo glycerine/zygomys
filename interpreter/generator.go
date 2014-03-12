@@ -2,6 +2,7 @@ package glisp
 
 import (
 	"errors"
+	"fmt"
 )
 
 type Generator struct {
@@ -301,6 +302,23 @@ func (gen *Generator) GenerateLet(name string, args []Sexp) error {
 	return nil
 }
 
+func (gen *Generator) GenerateAssert(args []Sexp) error {
+	if len(args) != 1 {
+		return WrongNargs
+	}
+	err := gen.Generate(args[0])
+	if err != nil {
+		return err
+	}
+
+	reterrmsg := fmt.Sprintf("Assertion failed: %s\n",
+			args[0].SexpString())
+	gen.AddInstruction(BranchInstr{true, 2})
+	gen.AddInstruction(ReturnInstr{errors.New(reterrmsg)})
+	gen.AddInstruction(PushInstr{SexpNull})
+	return nil
+}
+
 func (gen *Generator) GenerateCallBySymbol(sym SexpSymbol, args []Sexp) error {
 	switch sym.name {
 	case "and":
@@ -323,6 +341,8 @@ func (gen *Generator) GenerateCallBySymbol(sym SexpSymbol, args []Sexp) error {
 		return gen.GenerateLet("let", args)
 	case "let*":
 		return gen.GenerateLet("let*", args)
+	case "assert":
+		return gen.GenerateAssert(args)
 	}
 	oldtail := gen.tail
 	gen.GenerateAll(args)
