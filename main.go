@@ -71,12 +71,9 @@ func processDumpCommand(env *glisp.Glisp, args []string) {
 	}
 }
 
-func main() {
-	env := glisp.NewGlisp()
-	env.ImportEval()
-	reader := bufio.NewReader(os.Stdin)
-
+func repl(env *glisp.Glisp) {
 	fmt.Printf("glisp version %s\n", glisp.Version())
+	reader := bufio.NewReader(os.Stdin)
 
 	for {
 		line, err := getExpression(reader)
@@ -111,5 +108,36 @@ func main() {
 		}
 		fmt.Println(expr.SexpString())
 	}
+}
 
+func runScript(env *glisp.Glisp, fname string) {
+	file, err := os.Open(fname)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(-1)
+	}
+	defer file.Close()
+
+	err = env.LoadFile(file)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(-1)
+	}
+
+	_, err = env.Run()
+	if err != nil {
+		env.PrintStackTrace(err)
+		os.Exit(-1)
+	}
+}
+
+func main() {
+	env := glisp.NewGlisp()
+	env.ImportEval()
+
+	if len(os.Args) > 1 {
+		runScript(env, os.Args[1])
+	} else {
+		repl(env)
+	}
 }
