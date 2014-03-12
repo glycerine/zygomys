@@ -240,7 +240,7 @@ func DecodeBrace(brace rune) Token {
 func (lexer *Lexer) LexNextRune(r rune) error {
 	if lexer.state == LexerComment {
 		if r == '\n' {
-			lexer.state = LexerComment
+			lexer.state = LexerNormal
 		}
 		return nil
 	}
