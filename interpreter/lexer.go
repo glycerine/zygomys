@@ -115,7 +115,7 @@ func InitLexer() {
 	if err != nil {
 		panic(err)
 	}
-	FloatRegex, err = regexp.Compile("^-?([0-9]+\\.[0-9]*)|(.[0-9]+)|([0-9]+(\\.[0-9]*)?[eE](-?[0-9]+))$")
+	FloatRegex, err = regexp.Compile("^-?([0-9]+\\.[0-9]*)|(\\.[0-9]+)|([0-9]+(\\.[0-9]*)?[eE](-?[0-9]+))$")
 	if err != nil {
 		panic(err)
 	}
