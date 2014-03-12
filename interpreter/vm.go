@@ -98,6 +98,22 @@ func (p PopInstr) Execute(env *Glisp) error {
 	return err
 }
 
+type DupInstr int
+
+func (d DupInstr) InstrString() string {
+	return "dup"
+}
+
+func (d DupInstr) Execute(env *Glisp) error {
+	expr, err := env.datastack.GetExpr(0)
+	if err != nil {
+		return err
+	}
+	env.datastack.PushExpr(expr)
+	env.pc++
+	return nil
+}
+
 type GetInstr struct {
 	sym SexpSymbol
 }

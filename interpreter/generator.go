@@ -167,16 +167,19 @@ func (gen *Generator) GenerateShortCircuit(or bool, args []Sexp) error {
 	size := len(args)
 
 	subgen := NewGenerator(gen.env)
+	subgen.scopes = gen.scopes
+	subgen.tail = gen.tail
+	subgen.funcname = gen.funcname
 	subgen.Generate(args[size-1])
 	instructions := subgen.instructions
 
 	for i := size - 2; i >= 0; i-- {
 		subgen = NewGenerator(gen.env)
 		subgen.Generate(args[i])
-		branch := BranchInstr{or, len(instructions) + 1}
-		instructions = append(
-			subgen.instructions,
-			append([]Instruction{branch}, instructions...)...)
+		subgen.AddInstruction(DupInstr(0))
+		subgen.AddInstruction(BranchInstr{or, len(instructions) + 2})
+		subgen.AddInstruction(PopInstr(0))
+		instructions = append(subgen.instructions, instructions...)
 	}
 	gen.AddInstructions(instructions)
 
