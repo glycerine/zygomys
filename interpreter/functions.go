@@ -244,6 +244,15 @@ func PrintFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	return SexpNull, nil
 }
 
+func NotFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
+	if len(args) != 1 {
+		return SexpNull, WrongNargs
+	}
+
+	result := SexpBool(!IsTruthy(args[0]))
+	return result, nil
+}
+
 var MissingFunction = SexpFunction{"__missing", true, 0, nil, nil}
 
 func MakeFunction(name string, nargs int, fun GlispFunction) SexpFunction {
@@ -295,4 +304,5 @@ var BuiltinFunctions = map[string]GlispUserFunction{
 	"symbol?": TypeQueryFunction,
 	"println": PrintFunction,
 	"print":   PrintFunction,
+	"not":     NotFunction,
 }
