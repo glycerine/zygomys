@@ -253,6 +253,30 @@ func NotFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	return result, nil
 }
 
+func ApplyFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
+	if len(args) != 2 {
+		return SexpNull, WrongNargs
+	}
+	var fun SexpFunction
+	var funargs SexpArray
+
+	switch e := args[0].(type) {
+	case SexpFunction:
+		fun = e
+	default:
+		return SexpNull, errors.New("first argument must be function")
+	}
+
+	switch e := args[1].(type) {
+	case SexpArray:
+		funargs = e
+	default:
+		return SexpNull, errors.New("second argument must be array")
+	}
+
+	return env.Apply(fun, funargs)
+}
+
 var MissingFunction = SexpFunction{"__missing", true, 0, nil, nil}
 
 func MakeFunction(name string, nargs int, fun GlispFunction) SexpFunction {
@@ -305,4 +329,5 @@ var BuiltinFunctions = map[string]GlispUserFunction{
 	"println": PrintFunction,
 	"print":   PrintFunction,
 	"not":     NotFunction,
+	"apply":   ApplyFunction,
 }

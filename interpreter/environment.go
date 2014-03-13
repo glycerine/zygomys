@@ -216,6 +216,24 @@ func (env *Glisp) FindObject(name string) (Sexp, bool) {
 	return obj, true
 }
 
+func (env *Glisp) Apply(fun SexpFunction, args []Sexp) (Sexp, error) {
+	if fun.user {
+		return fun.userfun(env, fun.name, args)
+	}
+	if len(args) != fun.nargs {
+		return SexpNull, WrongNargs
+	}
+	env.pc = -1
+	for _, expr := range args {
+		env.datastack.PushExpr(expr)
+	}
+	err := env.CallFunction(fun, fun.nargs)
+	if err != nil {
+		return SexpNull, err
+	}
+	return env.Run()
+}
+
 func (env *Glisp) Run() (Sexp, error) {
 	if env.pc == -1 {
 		env.pc = 0
