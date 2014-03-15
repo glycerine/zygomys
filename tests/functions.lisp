@@ -21,5 +21,3 @@
 
 (assert (= 120 (fact-tc 5 1)))
 (assert (= 3628800 (fact-tc 10 1)))
-
-(println "functions.lisp: all tests passed")

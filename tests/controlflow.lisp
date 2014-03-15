@@ -25,5 +25,3 @@
     false 'a
     false 'b
           'c)))
-
-(println "controlflow.lisp: all tests passed")

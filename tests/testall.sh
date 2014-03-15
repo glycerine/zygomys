@@ -2,5 +2,5 @@
 
 for lispfile in tests/*.lisp
 do
-    ./glisp "${lispfile}"
+    ./glisp "${lispfile}" && echo "${lispfile}: All tests passed"
 done

@@ -10,5 +10,3 @@
 (assert (< "abc" "abcd"))
 
 (assert (< '(1 2 3) '(1 2 4)))
-
-(println "comparisons.lisp: all tests passed")
