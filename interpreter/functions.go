@@ -270,11 +270,40 @@ func ApplyFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	switch e := args[1].(type) {
 	case SexpArray:
 		funargs = e
+	case SexpPair:
+		var err error
+		funargs, err = ListToArray(e)
+		if err != nil {
+			return SexpNull, err
+		}
 	default:
-		return SexpNull, errors.New("second argument must be array")
+		return SexpNull, errors.New("second argument must be array or list")
 	}
 
 	return env.Apply(fun, funargs)
+}
+
+func MapFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
+	if len(args) != 2 {
+		return SexpNull, WrongNargs
+	}
+	var fun SexpFunction
+
+	switch e := args[0].(type) {
+	case SexpFunction:
+		fun = e
+	default:
+		return SexpNull, errors.New("first argument must be function")
+	}
+
+	switch e := args[1].(type) {
+	case SexpArray:
+		return MapArray(env, fun, e)
+	case SexpPair:
+		return MapList(env, fun, e)
+	default:
+		return SexpNull, errors.New("second argument must be array")
+	}
 }
 
 var MissingFunction = SexpFunction{"__missing", true, 0, nil, nil}
@@ -330,4 +359,5 @@ var BuiltinFunctions = map[string]GlispUserFunction{
 	"print":   PrintFunction,
 	"not":     NotFunction,
 	"apply":   ApplyFunction,
+	"map":     MapFunction,
 }
