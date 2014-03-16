@@ -160,6 +160,120 @@ func RestFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	return SexpNull, WrongType
 }
 
+func AgetFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
+	if len(args) != 2 {
+		return SexpNull, WrongNargs
+	}
+
+	var arr SexpArray
+	switch t := args[0].(type) {
+	case SexpArray:
+		arr = t
+	default:
+		return SexpNull, errors.New("First argument of aget must be array")
+	}
+
+	var i int
+	switch t := args[1].(type) {
+	case SexpInt:
+		i = int(t)
+	case SexpChar:
+		i = int(t)
+	default:
+		return SexpNull, errors.New("Second argument of aget must be integer")
+	}
+
+	if i < 0 || i >= len(arr) {
+		return SexpNull, errors.New("Array index out of bounds")
+	}
+
+	return arr[i], nil
+}
+
+func AsetFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
+	if len(args) != 3 {
+		return SexpNull, WrongNargs
+	}
+
+	var arr SexpArray
+	switch t := args[0].(type) {
+	case SexpArray:
+		arr = t
+	default:
+		return SexpNull, errors.New("First argument of aset must be array")
+	}
+
+	var i int
+	switch t := args[1].(type) {
+	case SexpInt:
+		i = int(t)
+	case SexpChar:
+		i = int(t)
+	default:
+		return SexpNull, errors.New("Second argument of aset must be integer")
+	}
+
+	if i < 0 || i >= len(arr) {
+		return SexpNull, errors.New("Array index out of bounds")
+	}
+
+	arr[i] = args[2]
+
+	return arr, nil
+}
+
+func SliceFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
+	if len(args) != 3 {
+		return SexpNull, WrongNargs
+	}
+
+	var arr SexpArray
+	switch t := args[0].(type) {
+	case SexpArray:
+		arr = t
+	default:
+		return SexpNull, errors.New("First argument of slice must be array")
+	}
+
+	var start int
+	var end int
+	switch t := args[1].(type) {
+	case SexpInt:
+		start = int(t)
+	case SexpChar:
+		start = int(t)
+	default:
+		return SexpNull, errors.New("Second argument of slice must be integer")
+	}
+
+	switch t := args[2].(type) {
+	case SexpInt:
+		end = int(t)
+	case SexpChar:
+		end = int(t)
+	default:
+		return SexpNull, errors.New("Third argument of slice must be integer")
+	}
+
+	return SexpArray(arr[start:end]), nil
+}
+
+func AppendFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
+	if len(args) != 2 {
+		return SexpNull, WrongNargs
+	}
+
+	var arr SexpArray
+	switch t := args[0].(type) {
+	case SexpArray:
+		arr = t
+	default:
+		return SexpNull, errors.New("First argument of append must be array")
+	}
+
+	return SexpArray(append(arr, args[1])), nil
+}
+
 func ReadFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	if len(args) != 1 {
 		return SexpNull, WrongNargs
@@ -360,4 +474,8 @@ var BuiltinFunctions = map[string]GlispUserFunction{
 	"not":     NotFunction,
 	"apply":   ApplyFunction,
 	"map":     MapFunction,
+	"aget":    AgetFunction,
+	"aset!":   AsetFunction,
+	"slice":   SliceFunction,
+	"append":  AppendFunction,
 }
