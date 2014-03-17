@@ -30,7 +30,7 @@ func MakeList(expressions []Sexp) Sexp {
 }
 
 func MapList(env *Glisp, fun SexpFunction, expr Sexp) (Sexp, error) {
-	if (expr == SexpNull) {
+	if expr == SexpNull {
 		return SexpNull, nil
 	}
 

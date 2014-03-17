@@ -83,7 +83,7 @@ func repl(env *glisp.Glisp) {
 		}
 
 		parts := strings.Split(line, " ")
-		if len(parts) == 0  {
+		if len(parts) == 0 {
 			continue
 		}
 
