@@ -79,48 +79,15 @@ type Lexer struct {
 	finished bool
 }
 
-var BoolRegex *regexp.Regexp
-var DecimalRegex *regexp.Regexp
-var HexRegex *regexp.Regexp
-var BinaryRegex *regexp.Regexp
-var SymbolRegex *regexp.Regexp
-var CharRegex *regexp.Regexp
-var FloatRegex *regexp.Regexp
-var lexInit = false
-
-func InitLexer() {
-	var err error
-
-	BoolRegex, err = regexp.Compile("^(true|false)$")
-	if err != nil {
-		panic(err)
-	}
-	DecimalRegex, err = regexp.Compile("^-?[0-9]+$")
-	if err != nil {
-		panic(err)
-	}
-	HexRegex, err = regexp.Compile("^0x[0-9a-fA-F]+$")
-	if err != nil {
-		panic(err)
-	}
-	BinaryRegex, err = regexp.Compile("^0b[01]+$")
-	if err != nil {
-		panic(err)
-	}
-	SymbolRegex, err = regexp.Compile("^[^'#]+$")
-	if err != nil {
-		panic(err)
-	}
-	CharRegex, err = regexp.Compile("^#\\\\?.$")
-	if err != nil {
-		panic(err)
-	}
-	FloatRegex, err = regexp.Compile("^-?([0-9]+\\.[0-9]*)|(\\.[0-9]+)|([0-9]+(\\.[0-9]*)?[eE](-?[0-9]+))$")
-	if err != nil {
-		panic(err)
-	}
-	lexInit = true
-}
+var (
+	BoolRegex    = regexp.MustCompile("^(true|false)$")
+	DecimalRegex = regexp.MustCompile("^-?[0-9]+$")
+	HexRegex     = regexp.MustCompile("^0x[0-9a-fA-F]+$")
+	BinaryRegex  = regexp.MustCompile("^0b[01]+$")
+	SymbolRegex  = regexp.MustCompile("^[^'#]+$")
+	CharRegex    = regexp.MustCompile("^#\\\\?.$")
+	FloatRegex   = regexp.MustCompile("^-?([0-9]+\\.[0-9]*)|(\\.[0-9]+)|([0-9]+(\\.[0-9]*)?[eE](-?[0-9]+))$")
+)
 
 func StringToRunes(str string) []rune {
 	b := []byte(str)
@@ -349,20 +316,14 @@ func (lexer *Lexer) GetNextToken() (Token, error) {
 }
 
 func NewLexerFromStream(stream io.RuneReader) *Lexer {
-	if !lexInit {
-		InitLexer()
+	return &Lexer{
+		tokens:   make([]Token, 0, 10),
+		buffer:   new(bytes.Buffer),
+		state:    LexerNormal,
+		stream:   stream,
+		linenum:  1,
+		finished: false,
 	}
-
-	lexer := new(Lexer)
-
-	lexer.tokens = make([]Token, 0, 10)
-	lexer.buffer = new(bytes.Buffer)
-	lexer.state = LexerNormal
-	lexer.stream = stream
-	lexer.linenum = 1
-	lexer.finished = false
-
-	return lexer
 }
 
 func (lexer *Lexer) Linenum() int {
