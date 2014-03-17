@@ -1,11 +1,12 @@
 package main
 
 import (
-	"./interpreter"
 	"bufio"
 	"fmt"
 	"os"
 	"strings"
+
+	"github.com/zhemao/glisp/interpreter"
 )
 
 func getLine(reader *bufio.Reader) (string, error) {
