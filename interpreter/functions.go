@@ -274,6 +274,21 @@ func AppendFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	return SexpArray(append(arr, args[1])), nil
 }
 
+func ConcatFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
+	if len(args) != 2 {
+		return SexpNull, WrongNargs
+	}
+
+	switch t := args[0].(type) {
+	case SexpArray:
+		return ConcatArray(t, args[1])
+	case SexpStr:
+		return ConcatStr(t, args[1])
+	}
+
+	return SexpNull, errors.New("expected strings or arrays")
+}
+
 func ReadFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	if len(args) != 1 {
 		return SexpNull, WrongNargs
@@ -478,4 +493,5 @@ var BuiltinFunctions = map[string]GlispUserFunction{
 	"aset!":   AsetFunction,
 	"slice":   SliceFunction,
 	"append":  AppendFunction,
+	"concat":  ConcatFunction,
 }
