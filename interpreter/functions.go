@@ -263,15 +263,14 @@ func AppendFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		return SexpNull, WrongNargs
 	}
 
-	var arr SexpArray
 	switch t := args[0].(type) {
 	case SexpArray:
-		arr = t
-	default:
-		return SexpNull, errors.New("First argument of append must be array")
+		return SexpArray(append(t, args[1])), nil
+	case SexpStr:
+		return AppendStr(t, args[1])
 	}
 
-	return SexpArray(append(arr, args[1])), nil
+	return SexpNull, errors.New("First argument of append must be array or string")
 }
 
 func ConcatFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
