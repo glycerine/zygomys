@@ -227,14 +227,6 @@ func SliceFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		return SexpNull, WrongNargs
 	}
 
-	var arr SexpArray
-	switch t := args[0].(type) {
-	case SexpArray:
-		arr = t
-	default:
-		return SexpNull, errors.New("First argument of slice must be array")
-	}
-
 	var start int
 	var end int
 	switch t := args[1].(type) {
@@ -255,7 +247,14 @@ func SliceFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		return SexpNull, errors.New("Third argument of slice must be integer")
 	}
 
-	return SexpArray(arr[start:end]), nil
+	switch t := args[0].(type) {
+	case SexpArray:
+		return SexpArray(t[start:end]), nil
+	case SexpStr:
+		return SexpStr(t[start:end]), nil
+	}
+
+	return SexpNull, errors.New("First argument of slice must be array or string")
 }
 
 func AppendFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
