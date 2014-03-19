@@ -429,9 +429,8 @@ func MapFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		return MapArray(env, fun, e)
 	case SexpPair:
 		return MapList(env, fun, e)
-	default:
-		return SexpNull, errors.New("second argument must be array")
 	}
+	return SexpNull, errors.New("second argument must be array")
 }
 
 var MissingFunction = SexpFunction{"__missing", true, 0, nil, nil}
