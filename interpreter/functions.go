@@ -473,6 +473,34 @@ func MapFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	return SexpNull, errors.New("second argument must be array")
 }
 
+func MakeArrayFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
+	if len(args) < 1 {
+		return SexpNull, WrongNargs
+	}
+
+	var size int
+	switch e := args[0].(type) {
+	case SexpInt:
+		size = int(e)
+	default:
+		return SexpNull, errors.New("first argument must be integer")
+	}
+
+	var fill Sexp
+	if len(args) == 2 {
+		fill = args[1]
+	} else {
+		fill = SexpNull
+	}
+
+	arr := make([]Sexp, size)
+	for i := range arr {
+		arr[i] = fill
+	}
+
+	return SexpArray(arr), nil
+}
+
 var MissingFunction = SexpFunction{"__missing", true, 0, nil, nil}
 
 func MakeFunction(name string, nargs int, fun GlispFunction) SexpFunction {
@@ -527,6 +555,7 @@ var BuiltinFunctions = map[string]GlispUserFunction{
 	"not":     NotFunction,
 	"apply":   ApplyFunction,
 	"map":     MapFunction,
+	"make-array": MakeArrayFunction,
 	"aget":    AgetFunction,
 	"aset!":   AsetFunction,
 	"sget":    SgetFunction,
