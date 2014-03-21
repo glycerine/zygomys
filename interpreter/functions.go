@@ -283,6 +283,21 @@ func SliceFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	return SexpNull, errors.New("First argument of slice must be array or string")
 }
 
+func LenFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
+	if len(args) != 1 {
+		return SexpNull, WrongNargs
+	}
+
+	switch t := args[0].(type) {
+	case SexpArray:
+		return SexpInt(len(t)), nil
+	case SexpStr:
+		return SexpInt(len(t)), nil
+	}
+
+	return SexpInt(0), errors.New("argument must be string or array")
+}
+
 func AppendFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	if len(args) != 2 {
 		return SexpNull, WrongNargs
@@ -516,6 +531,7 @@ var BuiltinFunctions = map[string]GlispUserFunction{
 	"aset!":   AsetFunction,
 	"sget":    SgetFunction,
 	"slice":   SliceFunction,
+	"len":     LenFunction,
 	"append":  AppendFunction,
 	"concat":  ConcatFunction,
 }
