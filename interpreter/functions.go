@@ -501,6 +501,16 @@ func MakeArrayFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	return SexpArray(arr), nil
 }
 
+func ConstructorFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
+	switch name {
+	case "array":
+		return SexpArray(args), nil
+	case "list":
+		return MakeList(args), nil
+	}
+	return SexpNull, errors.New("invalid constructor")
+}
+
 var MissingFunction = SexpFunction{"__missing", true, 0, nil, nil}
 
 func MakeFunction(name string, nargs int, fun GlispFunction) SexpFunction {
@@ -563,4 +573,6 @@ var BuiltinFunctions = map[string]GlispUserFunction{
 	"len":     LenFunction,
 	"append":  AppendFunction,
 	"concat":  ConcatFunction,
+	"array":   ConstructorFunction,
+	"list":    ConstructorFunction,
 }

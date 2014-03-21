@@ -5,3 +5,6 @@
 (assert (= '(2 3) (rest '(1 2 3))))
 
 (assert (= 2 (first (rest '(1 2 3)))))
+
+(let [a 3]
+  (assert (= '(0 3) (list 0 a))))

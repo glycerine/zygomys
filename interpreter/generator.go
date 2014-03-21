@@ -376,6 +376,15 @@ func (gen *Generator) GenerateCall(expr SexpPair) error {
 	return gen.GenerateDispatch(expr.head, arr)
 }
 
+func (gen *Generator) GenerateArray(arr SexpArray) error {
+	err := gen.GenerateAll(arr)
+	if err != nil {
+		return err
+	}
+	gen.AddInstruction(CallInstr{gen.env.MakeSymbol("array"), len(arr)})
+	return nil
+}
+
 func (gen *Generator) Generate(expr Sexp) error {
 	switch e := expr.(type) {
 	case SexpSymbol:
@@ -387,6 +396,8 @@ func (gen *Generator) Generate(expr Sexp) error {
 		} else {
 			gen.AddInstruction(PushInstr{expr})
 		}
+	case SexpArray:
+		return gen.GenerateArray(e)
 	default:
 		gen.AddInstruction(PushInstr{expr})
 		return nil
