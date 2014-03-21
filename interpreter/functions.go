@@ -222,6 +222,32 @@ func AsetFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	return arr, nil
 }
 
+func SgetFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
+	if len(args) != 2 {
+		return SexpNull, WrongNargs
+	}
+
+	var str SexpStr
+	switch t := args[0].(type) {
+	case SexpStr:
+		str = t
+	default:
+		return SexpNull, errors.New("First argument of sget must be string")
+	}
+
+	var i int
+	switch t := args[1].(type) {
+	case SexpInt:
+		i = int(t)
+	case SexpChar:
+		i = int(t)
+	default:
+		return SexpNull, errors.New("Second argument of sget must be integer")
+	}
+
+	return SexpChar(str[i]), nil
+}
+
 func SliceFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	if len(args) != 3 {
 		return SexpNull, WrongNargs
@@ -488,6 +514,7 @@ var BuiltinFunctions = map[string]GlispUserFunction{
 	"map":     MapFunction,
 	"aget":    AgetFunction,
 	"aset!":   AsetFunction,
+	"sget":    SgetFunction,
 	"slice":   SliceFunction,
 	"append":  AppendFunction,
 	"concat":  ConcatFunction,
