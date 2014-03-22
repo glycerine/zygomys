@@ -97,12 +97,7 @@ func repl(env *glisp.Glisp) {
 			continue
 		}
 
-		err = env.LoadString(line)
-		if err != nil {
-			fmt.Println(err)
-			continue
-		}
-		expr, err := env.Run()
+		expr, err := env.EvalString(line)
 		if err != nil {
 			env.PrintStackTrace(err)
 			continue

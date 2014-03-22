@@ -36,7 +36,7 @@ func NewGlisp() *Glisp {
 		env.AddFunction(key, function)
 	}
 
-	env.mainfunc = MissingFunction
+	env.mainfunc = MakeFunction("__main", 0, make([]Instruction, 0))
 	env.curfunc = MissingFunction
 	env.pc = -1
 	return env
@@ -122,9 +122,18 @@ func (env *Glisp) LoadStream(stream io.RuneReader) error {
 	if err != nil {
 		return err
 	}
-	env.mainfunc = MakeFunction("__main", 0, gen.instructions)
-	env.pc = -1
+	env.mainfunc.fun = append(env.mainfunc.fun, gen.instructions...)
+
 	return nil
+}
+
+func (env *Glisp) EvalString(str string) (Sexp, error) {
+	err := env.LoadString(str)
+	if err != nil {
+		return SexpNull, err
+	}
+
+	return env.Run()
 }
 
 func (env *Glisp) LoadFile(file *os.File) error {
@@ -235,7 +244,7 @@ func (env *Glisp) Apply(fun SexpFunction, args []Sexp) (Sexp, error) {
 }
 
 func (env *Glisp) Run() (Sexp, error) {
-	if env.pc == -1 {
+	if env.pc == -1 || env.ReachedEnd() {
 		env.pc = 0
 		env.curfunc = env.mainfunc
 	}
