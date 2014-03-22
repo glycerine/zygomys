@@ -100,6 +100,7 @@ func repl(env *glisp.Glisp) {
 		expr, err := env.EvalString(line)
 		if err != nil {
 			env.PrintStackTrace(err)
+			env.Clear()
 			continue
 		}
 		fmt.Println(expr.SexpString())

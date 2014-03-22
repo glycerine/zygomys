@@ -37,8 +37,8 @@ func NewGlisp() *Glisp {
 	}
 
 	env.mainfunc = MakeFunction("__main", 0, make([]Instruction, 0))
-	env.curfunc = MissingFunction
-	env.pc = -1
+	env.curfunc = env.mainfunc
+	env.pc = 0
 	return env
 }
 
@@ -123,6 +123,7 @@ func (env *Glisp) LoadStream(stream io.RuneReader) error {
 		return err
 	}
 	env.mainfunc.fun = append(env.mainfunc.fun, gen.instructions...)
+	env.curfunc = env.mainfunc
 
 	return nil
 }
@@ -216,6 +217,14 @@ func (env *Glisp) PrintStackTrace(err error) {
 	}
 }
 
+func (env *Glisp) Clear() {
+	env.datastack.tos = -1
+	env.scopestack.tos = 0
+	env.addrstack.tos = -1
+	env.curfunc = env.mainfunc
+	env.pc = env.CurrentFunctionSize()
+}
+
 func (env *Glisp) FindObject(name string) (Sexp, bool) {
 	sym := env.MakeSymbol(name)
 	obj, err := env.scopestack.LookupSymbol(sym)
@@ -244,11 +253,6 @@ func (env *Glisp) Apply(fun SexpFunction, args []Sexp) (Sexp, error) {
 }
 
 func (env *Glisp) Run() (Sexp, error) {
-	if env.pc == -1 || env.ReachedEnd() {
-		env.pc = 0
-		env.curfunc = env.mainfunc
-	}
-
 	for env.pc != -1 && !env.ReachedEnd() {
 		instr := env.curfunc.fun[env.pc]
 		err := instr.Execute(env)
