@@ -8,3 +8,5 @@
 
 (let [a 3]
   (assert (= '(0 3) (list 0 a))))
+
+(assert (= '(1 2 4 5) (concat '(1 2) '(4 5))))

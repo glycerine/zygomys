@@ -323,6 +323,8 @@ func ConcatFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		return ConcatArray(t, args[1])
 	case SexpStr:
 		return ConcatStr(t, args[1])
+	case SexpPair:
+		return ConcatList(t, args[1])
 	}
 
 	return SexpNull, errors.New("expected strings or arrays")

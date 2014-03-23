@@ -58,3 +58,24 @@ func MapList(env *Glisp, fun SexpFunction, expr Sexp) (Sexp, error) {
 
 	return list, nil
 }
+
+func ConcatList(a SexpPair, b Sexp) (Sexp, error) {
+	if !IsList(b) {
+		return SexpNull, NotAList
+	}
+
+	if a.tail == SexpNull {
+		return SexpPair{a.head, b}, nil
+	}
+
+	switch t := a.tail.(type) {
+	case SexpPair:
+		newtail, err := ConcatList(t, b)
+		if err != nil {
+			return SexpNull, err
+		}
+		return SexpPair{a.head, newtail}, nil
+	}
+
+	return SexpNull, NotAList
+}
