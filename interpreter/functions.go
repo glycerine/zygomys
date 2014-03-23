@@ -87,6 +87,21 @@ func BitwiseFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	return accum, nil
 }
 
+func ComplementFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
+	if len(args) != 1 {
+		return SexpNull, WrongNargs
+	}
+
+	switch t := args[0].(type) {
+	case SexpInt:
+		return ^t, nil
+	case SexpChar:
+		return ^t, nil
+	}
+
+	return SexpNull, errors.New("Argument to bit-not should be integer")
+}
+
 func NumericFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	if len(args) < 1 {
 		return SexpNull, WrongNargs
@@ -550,6 +565,7 @@ var BuiltinFunctions = map[string]GlispUserFunction{
 	"bit-and":    BitwiseFunction,
 	"bit-or":     BitwiseFunction,
 	"bit-xor":    BitwiseFunction,
+	"bit-not":    ComplementFunction,
 	"read":       ReadFunction,
 	"cons":       ConsFunction,
 	"first":      FirstFunction,
