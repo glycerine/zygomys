@@ -33,6 +33,18 @@ type SexpPair struct {
 	tail Sexp
 }
 
+func Cons(a Sexp, b Sexp) SexpPair {
+	return SexpPair{a, b}
+}
+
+func (pair SexpPair) Head() Sexp {
+	return pair.head
+}
+
+func (pair SexpPair) Tail() Sexp {
+	return pair.tail
+}
+
 func (pair SexpPair) SexpString() string {
 	str := "("
 
@@ -110,6 +122,14 @@ type SexpSymbol struct {
 
 func (sym SexpSymbol) SexpString() string {
 	return sym.name
+}
+
+func (sym SexpSymbol) Name() string {
+	return sym.name
+}
+
+func (sym SexpSymbol) Number() int {
+	return sym.number
 }
 
 type SexpFunction struct {
