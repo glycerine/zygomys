@@ -126,7 +126,6 @@ func (env *Glisp) LoadStream(stream io.RuneReader) error {
 		return err
 	}
 
-
 	env.mainfunc.fun = append(env.mainfunc.fun, gen.instructions...)
 	env.curfunc = env.mainfunc
 
