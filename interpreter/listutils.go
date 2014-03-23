@@ -26,7 +26,7 @@ func MakeList(expressions []Sexp) Sexp {
 		return SexpNull
 	}
 
-	return SexpPair{expressions[0], MakeList(expressions[1:])}
+	return Cons(expressions[0], MakeList(expressions[1:]))
 }
 
 func MapList(env *Glisp, fun SexpFunction, expr Sexp) (Sexp, error) {
@@ -65,7 +65,7 @@ func ConcatList(a SexpPair, b Sexp) (Sexp, error) {
 	}
 
 	if a.tail == SexpNull {
-		return SexpPair{a.head, b}, nil
+		return Cons(a.head, b), nil
 	}
 
 	switch t := a.tail.(type) {
@@ -74,7 +74,7 @@ func ConcatList(a SexpPair, b Sexp) (Sexp, error) {
 		if err != nil {
 			return SexpNull, err
 		}
-		return SexpPair{a.head, newtail}, nil
+		return Cons(a.head, newtail), nil
 	}
 
 	return SexpNull, NotAList

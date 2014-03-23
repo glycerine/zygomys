@@ -135,7 +135,7 @@ func ConsFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		return SexpNull, WrongNargs
 	}
 
-	return SexpPair{args[0], args[1]}, nil
+	return Cons(args[0], args[1]), nil
 }
 
 func FirstFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
