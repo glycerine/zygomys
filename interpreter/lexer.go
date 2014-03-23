@@ -22,6 +22,7 @@ const (
 	TokenBool
 	TokenDecimal
 	TokenHex
+	TokenOct
 	TokenBinary
 	TokenFloat
 	TokenChar
@@ -83,6 +84,7 @@ var (
 	BoolRegex    = regexp.MustCompile("^(true|false)$")
 	DecimalRegex = regexp.MustCompile("^-?[0-9]+$")
 	HexRegex     = regexp.MustCompile("^0x[0-9a-fA-F]+$")
+	OctRegex     = regexp.MustCompile("^0o[0-7]+$")
 	BinaryRegex  = regexp.MustCompile("^0b[01]+$")
 	SymbolRegex  = regexp.MustCompile("^[^'#]+$")
 	CharRegex    = regexp.MustCompile("^#\\\\?.$")
@@ -148,6 +150,9 @@ func DecodeAtom(atom string) (Token, error) {
 	}
 	if HexRegex.MatchString(atom) {
 		return Token{TokenHex, atom[2:]}, nil
+	}
+	if OctRegex.MatchString(atom) {
+		return Token{TokenOct, atom[2:]}, nil
 	}
 	if BinaryRegex.MatchString(atom) {
 		return Token{TokenBinary, atom[2:]}, nil

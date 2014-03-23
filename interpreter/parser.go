@@ -139,6 +139,12 @@ func ParseExpression(parser *Parser) (Sexp, error) {
 			return SexpNull, err
 		}
 		return SexpInt(i), nil
+	case TokenOct:
+		i, err := strconv.ParseInt(tok.str, 8, SexpIntSize)
+		if err != nil {
+			return SexpNull, err
+		}
+		return SexpInt(i), nil
 	case TokenBinary:
 		i, err := strconv.ParseInt(tok.str, 2, SexpIntSize)
 		if err != nil {
