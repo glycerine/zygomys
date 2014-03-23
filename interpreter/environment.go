@@ -118,10 +118,15 @@ func (env *Glisp) LoadStream(stream io.RuneReader) error {
 	}
 
 	gen := NewGenerator(env)
+	if !env.ReachedEnd() {
+		gen.AddInstruction(PopInstr(0))
+	}
 	err = gen.GenerateBegin(expressions)
 	if err != nil {
 		return err
 	}
+
+
 	env.mainfunc.fun = append(env.mainfunc.fun, gen.instructions...)
 	env.curfunc = env.mainfunc
 
