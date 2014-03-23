@@ -103,7 +103,10 @@ func repl(env *glisp.Glisp) {
 			env.Clear()
 			continue
 		}
-		fmt.Println(expr.SexpString())
+
+		if expr != glisp.SexpNull {
+			fmt.Println(expr.SexpString())
+		}
 	}
 }
 
