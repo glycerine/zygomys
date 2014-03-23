@@ -226,8 +226,9 @@ func (env *Glisp) Clear() {
 	env.datastack.tos = -1
 	env.scopestack.tos = 0
 	env.addrstack.tos = -1
+	env.mainfunc = MakeFunction("__main", 0, make([]Instruction, 0))
 	env.curfunc = env.mainfunc
-	env.pc = env.CurrentFunctionSize()
+	env.pc = 0
 }
 
 func (env *Glisp) FindObject(name string) (Sexp, bool) {
