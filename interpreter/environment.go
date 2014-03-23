@@ -212,13 +212,14 @@ func (env *Glisp) ReachedEnd() bool {
 	return env.pc == env.CurrentFunctionSize()
 }
 
-func (env *Glisp) PrintStackTrace(err error) {
-	fmt.Printf("error in %s:%d: %v\n",
+func (env *Glisp) GetStackTrace(err error) string {
+	str := fmt.Sprintf("error in %s:%d: %v\n",
 		env.curfunc.name, env.pc, err)
 	for !env.addrstack.IsEmpty() {
 		fun, pos, _ := env.addrstack.PopAddr()
-		fmt.Printf("in %s:%d\n", fun.name, pos)
+		str += fmt.Sprintf("in %s:%d\n", fun.name, pos)
 	}
+	return str
 }
 
 func (env *Glisp) Clear() {

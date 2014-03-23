@@ -99,7 +99,7 @@ func repl(env *glisp.Glisp) {
 
 		expr, err := env.EvalString(line)
 		if err != nil {
-			env.PrintStackTrace(err)
+			fmt.Print(env.GetStackTrace(err))
 			env.Clear()
 			continue
 		}
@@ -126,7 +126,7 @@ func runScript(env *glisp.Glisp, fname string) {
 
 	_, err = env.Run()
 	if err != nil {
-		env.PrintStackTrace(err)
+		fmt.Print(env.GetStackTrace(err))
 		os.Exit(-1)
 	}
 }
