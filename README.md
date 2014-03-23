@@ -24,3 +24,4 @@ It is currently very incomplete. Here is a list of what is implemented so far.
  * Channel and goroutine support
  * Better name than "glisp"
  * Detailed documentation of language and Go API
+ * Macro System
