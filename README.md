@@ -19,9 +19,10 @@ It is currently very incomplete. Here is a list of what is implemented so far.
  * Tail-call optimization
  * Go API
 
+The full documentation can be found in the [Wiki](https://github.com/zhemao/glisp/wiki).
+
 ## In Progress
 
  * Channel and goroutine support
  * Better name than "glisp"
- * Detailed documentation of language and Go API
  * Macro System
