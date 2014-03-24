@@ -13,3 +13,7 @@
 
 (let [a 0]
   (assert (= [a 3] (array 0 3))))
+
+(assert (array? [1 2 3]))
+(assert (empty? []))
+(assert (not (empty? [1])))

@@ -15,3 +15,7 @@
 (assert (= '(1 . 2) (cons 1 2)))
 (assert (= 2 (rest '(1 . 2))))
 (assert (not (list? '(1 . 2))))
+(assert (list? '()))
+(assert (list? '(1 2 3)))
+(assert (empty? '()))
+(assert (not (empty? '(1 2))))
