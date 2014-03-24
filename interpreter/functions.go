@@ -263,6 +263,39 @@ func SgetFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	return SexpChar(str[i]), nil
 }
 
+func HashFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
+	if len(args) < 2 || len(args) > 3 {
+		return SexpNull, WrongNargs
+	}
+
+	var hash SexpHash
+	switch e := args[0].(type) {
+	case SexpHash:
+		hash = e
+	default:
+		return SexpNull, errors.New("first argument of hget must be hash")
+	}
+
+	switch name {
+	case "hget":
+		if len(args) == 3 {
+			return HashGetDefault(hash, args[1], args[2])
+		}
+		return HashGet(hash, args[1])
+	case "hset!":
+		err := HashSet(hash, args[1], args[2])
+		return SexpNull, err
+	case "hdel!":
+		if len(args) != 2 {
+			return SexpNull, WrongNargs
+		}
+		err := HashDelete(hash, args[1])
+		return SexpNull, err
+	}
+
+	return SexpNull, nil
+}
+
 func SliceFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	if len(args) != 3 {
 		return SexpNull, WrongNargs
@@ -524,8 +557,22 @@ func ConstructorFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		return SexpArray(args), nil
 	case "list":
 		return MakeList(args), nil
+	case "hash":
+		return MakeHash(args)
 	}
 	return SexpNull, errors.New("invalid constructor")
+}
+
+func SymnumFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
+	if len(args) != 1 {
+		return SexpNull, WrongNargs
+	}
+
+	switch t := args[0].(type) {
+	case SexpSymbol:
+		return SexpInt(t.number), nil
+	}
+	return SexpNull, errors.New("argument must be symbol")
 }
 
 var MissingFunction = SexpFunction{"__missing", true, 0, nil, nil}
@@ -587,10 +634,15 @@ var BuiltinFunctions = map[string]GlispUserFunction{
 	"aget":       AgetFunction,
 	"aset!":      AsetFunction,
 	"sget":       SgetFunction,
+	"hget":       HashFunction,
+	"hset!":      HashFunction,
+	"hdel!":      HashFunction,
 	"slice":      SliceFunction,
 	"len":        LenFunction,
 	"append":     AppendFunction,
 	"concat":     ConcatFunction,
 	"array":      ConstructorFunction,
 	"list":       ConstructorFunction,
+	"hash":       ConstructorFunction,
+	"symnum":     SymnumFunction,
 }

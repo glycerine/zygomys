@@ -1,0 +1,135 @@
+package glisp
+
+import (
+	"errors"
+	"hash/fnv"
+	"fmt"
+)
+
+func HashExpression(expr Sexp) (int, error) {
+	switch e := expr.(type) {
+	case SexpInt:
+		return int(e), nil
+	case SexpChar:
+		return int(e), nil
+	case SexpSymbol:
+		return e.number, nil
+	case SexpStr:
+		hasher := fnv.New32()
+		_, err := hasher.Write([]byte(e))
+		if err != nil {
+			return 0, err
+		}
+		return int(hasher.Sum32()), nil
+	}
+	return 0, errors.New(fmt.Sprintf("cannot hash type %T", expr))
+}
+
+func MakeHash(args []Sexp) (SexpHash, error) {
+	hash := SexpHash(make(map[int][]SexpPair))
+
+	if len(args) % 2 != 0 {
+		return SexpHash(nil),
+			errors.New("hash requires even number of arguments")
+	}
+
+	for i := 0; i < len(args); i += 2 {
+		key := args[i]
+		val := args[i + 1]
+		err := HashSet(hash, key, val)
+		if err != nil {
+			return hash, err
+		}
+	}
+
+	return hash, nil
+}
+
+func HashGet(hash SexpHash, key Sexp) (Sexp, error) {
+	// this is kind of a hack
+	// SexpEnd can't be created by user
+	// so there is no way it would actually show up in the map
+	val, err := HashGetDefault(hash, key, SexpEnd)
+
+	if err != nil {
+		return SexpNull, err
+	}
+
+	if val == SexpEnd {
+		msg := fmt.Sprintf("key %s not found", key.SexpString())
+		return SexpNull, errors.New(msg)
+	}
+	return val, nil
+}
+
+func HashGetDefault(hash SexpHash, key Sexp, defaultval Sexp) (Sexp, error) {
+	hashval, err := HashExpression(key)
+	if err != nil {
+		return SexpNull, err
+	}
+	arr, ok := hash[hashval]
+
+	if !ok {
+		return defaultval, nil
+	}
+
+	for _, pair := range arr {
+		res, err := Compare(pair.head, key)
+		if err == nil && res == 0 {
+			return pair.tail, nil
+		}
+	}
+	return defaultval, nil
+}
+
+func HashSet(hash SexpHash, key Sexp, val Sexp) error {
+	hashval, err := HashExpression(key)
+	if err != nil {
+		return err
+	}
+	arr, ok := hash[hashval]
+
+	if !ok {
+		hash[hashval] = []SexpPair{Cons(key, val)}
+		return nil
+	}
+
+	found := false
+	for i, pair := range arr {
+		res, err := Compare(pair.head, key)
+		if err == nil && res == 0 {
+			arr[i] = Cons(key, val)
+			found = true
+		}
+	}
+
+	if !found {
+		arr = append(arr, Cons(key, val))
+	}
+	hash[hashval] = arr
+
+	return nil
+}
+
+func HashDelete(hash SexpHash, key Sexp) error {
+	hashval, err := HashExpression(key)
+	if err != nil {
+		return err
+	}
+	arr, ok := hash[hashval]
+
+	// if it doesn't exist, no need to delete it
+	if !ok {
+		return nil
+	}
+
+	for i, pair := range arr {
+		res, err := Compare(pair.head, key)
+		if err == nil && res == 0 {
+			hash[hashval] = append(arr[0:i], arr[i+1:]...)
+			break
+		}
+	}
+
+	return nil
+}

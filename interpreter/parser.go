@@ -104,6 +104,38 @@ func ParseArray(parser *Parser) (Sexp, error) {
 	return SexpArray(arr), nil
 }
 
+func ParseHash(parser *Parser) (Sexp, error) {
+	lexer := parser.lexer
+	arr := make([]Sexp, 0, SliceDefaultCap)
+
+	for {
+		tok, err := lexer.PeekNextToken()
+		if err != nil {
+			return SexpEnd, err
+		}
+		if tok.typ == TokenEnd {
+			return SexpEnd, UnexpectedEnd
+		}
+		if tok.typ == TokenRCurly {
+			// pop off the }
+			_, _ = lexer.GetNextToken()
+			break
+		}
+
+		expr, err := ParseExpression(parser)
+		if err != nil {
+			return SexpNull, err
+		}
+		arr = append(arr, expr)
+	}
+
+	var list SexpPair
+	list.head = parser.env.MakeSymbol("hash")
+	list.tail = MakeList(arr)
+
+	return list, nil
+}
+
 func ParseExpression(parser *Parser) (Sexp, error) {
 	lexer := parser.lexer
 	env := parser.env
@@ -117,6 +149,8 @@ func ParseExpression(parser *Parser) (Sexp, error) {
 		return ParseList(parser)
 	case TokenLSquare:
 		return ParseArray(parser)
+	case TokenLCurly:
+		return ParseHash(parser)
 	case TokenQuote:
 		expr, err := ParseExpression(parser)
 		if err != nil {

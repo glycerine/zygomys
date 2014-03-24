@@ -70,6 +70,7 @@ func (pair SexpPair) SexpString() string {
 }
 
 type SexpArray []Sexp
+type SexpHash map[int][]SexpPair
 type SexpInt int
 type SexpBool bool
 type SexpFloat float64
@@ -89,6 +90,18 @@ func (arr SexpArray) SexpString() string {
 		str += " " + sexp.SexpString()
 	}
 	str += "]"
+	return str
+}
+
+func (hash SexpHash) SexpString() string {
+	str := "{"
+	for _, arr := range hash {
+		for _, pair := range arr {
+			str += pair.head.SexpString() + " "
+			str += pair.tail.SexpString() + " "
+		}
+	}
+	str += "}"
 	return str
 }
 

@@ -16,6 +16,8 @@ const (
 	TokenRParen
 	TokenLSquare
 	TokenRSquare
+	TokenLCurly
+	TokenRCurly
 	TokenDot
 	TokenQuote
 	TokenSymbol
@@ -45,21 +47,25 @@ func (t Token) String() string {
 		return "["
 	case TokenRSquare:
 		return "]"
+	case TokenLCurly:
+		return "{"
+	case TokenRCurly:
+		return "}"
+	case TokenDot:
+		return "."
 	case TokenQuote:
 		return "'"
-	case TokenSymbol:
-		return t.str
-	case TokenDecimal:
-		return t.str
 	case TokenHex:
 		return "0x" + t.str
+	case TokenOct:
+		return "0o" + t.str
 	case TokenBinary:
 		return "0b" + t.str
 	case TokenChar:
 		quoted := strconv.Quote(t.str)
 		return "#" + quoted[1:len(quoted)-1]
 	}
-	return ""
+	return t.str
 }
 
 type LexerState int
@@ -205,6 +211,10 @@ func DecodeBrace(brace rune) Token {
 		return Token{TokenLSquare, ""}
 	case ']':
 		return Token{TokenRSquare, ""}
+	case '{':
+		return Token{TokenLCurly, ""}
+	case '}':
+		return Token{TokenRCurly, ""}
 	}
 	return Token{TokenEnd, ""}
 }
@@ -260,7 +270,7 @@ func (lexer *Lexer) LexNextRune(r rune) error {
 		return nil
 	}
 
-	if r == '(' || r == ')' || r == '[' || r == ']' {
+	if r == '(' || r == ')' || r == '[' || r == ']' || r == '{' || r == '}' {
 		err := lexer.dumpBuffer()
 		if err != nil {
 			return err
