@@ -175,8 +175,8 @@ func RestFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	return SexpNull, WrongType
 }
 
-func AgetFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
-	if len(args) != 2 {
+func ArrayAccessFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
+	if len(args) < 2 {
 		return SexpNull, WrongNargs
 	}
 
@@ -202,39 +202,16 @@ func AgetFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		return SexpNull, errors.New("Array index out of bounds")
 	}
 
-	return arr[i], nil
-}
+	if name == "aget" {
+		return arr[i], nil
+	}
 
-func AsetFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	if len(args) != 3 {
 		return SexpNull, WrongNargs
 	}
-
-	var arr SexpArray
-	switch t := args[0].(type) {
-	case SexpArray:
-		arr = t
-	default:
-		return SexpNull, errors.New("First argument of aset must be array")
-	}
-
-	var i int
-	switch t := args[1].(type) {
-	case SexpInt:
-		i = int(t)
-	case SexpChar:
-		i = int(t)
-	default:
-		return SexpNull, errors.New("Second argument of aset must be integer")
-	}
-
-	if i < 0 || i >= len(arr) {
-		return SexpNull, errors.New("Array index out of bounds")
-	}
-
 	arr[i] = args[2]
 
-	return arr, nil
+	return SexpNull, nil
 }
 
 func SgetFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
@@ -645,8 +622,8 @@ var BuiltinFunctions = map[string]GlispUserFunction{
 	"apply":      ApplyFunction,
 	"map":        MapFunction,
 	"make-array": MakeArrayFunction,
-	"aget":       AgetFunction,
-	"aset!":      AsetFunction,
+	"aget":       ArrayAccessFunction,
+	"aset!":      ArrayAccessFunction,
 	"sget":       SgetFunction,
 	"hget":       HashFunction,
 	"hset!":      HashFunction,
