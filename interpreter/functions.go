@@ -240,7 +240,7 @@ func SgetFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	return SexpChar(str[i]), nil
 }
 
-func HashFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
+func HashAccessFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	if len(args) < 2 || len(args) > 3 {
 		return SexpNull, WrongNargs
 	}
@@ -625,9 +625,9 @@ var BuiltinFunctions = map[string]GlispUserFunction{
 	"aget":       ArrayAccessFunction,
 	"aset!":      ArrayAccessFunction,
 	"sget":       SgetFunction,
-	"hget":       HashFunction,
-	"hset!":      HashFunction,
-	"hdel!":      HashFunction,
+	"hget":       HashAccessFunction,
+	"hset!":      HashAccessFunction,
+	"hdel!":      HashAccessFunction,
 	"slice":      SliceFunction,
 	"len":        LenFunction,
 	"append":     AppendFunction,
