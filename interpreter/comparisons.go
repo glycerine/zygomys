@@ -131,6 +131,29 @@ func compareArray(a SexpArray, b Sexp) (int, error) {
 	return signumInt(SexpInt(len(a) - len(ba))), nil
 }
 
+func compareBool(a SexpBool, b Sexp) (int, error) {
+	var bb SexpBool
+	switch bt := b.(type) {
+	case SexpBool:
+		bb = bt
+	default:
+		errmsg := fmt.Sprintf("cannot compare %T to %T", a, b)
+		return 0, errors.New(errmsg)
+	}
+
+	// true > false
+	if a && bb {
+		return 0, nil
+	}
+	if a {
+		return 1, nil
+	}
+	if bb {
+		return -1, nil
+	}
+	return 0, nil
+}
+
 func Compare(a Sexp, b Sexp) (int, error) {
 	switch at := a.(type) {
 	case SexpInt:
@@ -139,6 +162,8 @@ func Compare(a Sexp, b Sexp) (int, error) {
 		return compareChar(at, b)
 	case SexpFloat:
 		return compareFloat(at, b)
+	case SexpBool:
+		return compareBool(at, b)
 	case SexpStr:
 		return compareString(at, b)
 	case SexpSymbol:
