@@ -70,3 +70,30 @@ func IsHash(expr Sexp) bool {
 	}
 	return false
 }
+
+func IsZero(expr Sexp) bool {
+	switch e := expr.(type) {
+	case SexpInt:
+		return int(e) == 0
+	case SexpChar:
+		return int(e) == 0
+	case SexpFloat:
+		return float64(e) == 0.0
+	}
+	return false
+}
+
+func IsEmpty(expr Sexp) bool {
+	if expr == SexpNull {
+		return true
+	}
+
+	switch e := expr.(type) {
+	case SexpArray:
+		return len(e) == 0
+	case SexpHash:
+		return HashIsEmpty(e)
+	}
+
+	return false
+}

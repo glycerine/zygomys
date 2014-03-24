@@ -133,3 +133,20 @@ func HashDelete(hash SexpHash, key Sexp) error {
 
 	return nil
 }
+
+func HashCountKeys(hash SexpHash) int {
+	var num int
+	for _, arr := range hash {
+		num += len(arr)
+	}
+	return num
+}
+
+func HashIsEmpty(hash SexpHash) bool {
+	for _, arr := range hash {
+		if len(arr) > 0 {
+			return false
+		}
+	}
+	return true
+}

@@ -341,6 +341,8 @@ func LenFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		return SexpInt(len(t)), nil
 	case SexpStr:
 		return SexpInt(len(t)), nil
+	case SexpHash:
+		return SexpInt(HashCountKeys(t)), nil
 	}
 
 	return SexpInt(0), errors.New("argument must be string or array")
@@ -435,6 +437,10 @@ func TypeQueryFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		result = IsSymbol(args[0])
 	case "hash?":
 		result = IsHash(args[0])
+	case "zero?":
+		result = IsZero(args[0])
+	case "empty?":
+		result = IsEmpty(args[0])
 	}
 
 	return SexpBool(result), nil
@@ -628,6 +634,8 @@ var BuiltinFunctions = map[string]GlispUserFunction{
 	"float?":     TypeQueryFunction,
 	"char?":      TypeQueryFunction,
 	"symbol?":    TypeQueryFunction,
+	"zero?":      TypeQueryFunction,
+	"empty?":     TypeQueryFunction,
 	"println":    PrintFunction,
 	"print":      PrintFunction,
 	"not":        NotFunction,
