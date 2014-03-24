@@ -35,6 +35,14 @@ func IsInt(expr Sexp) bool {
 	return false
 }
 
+func IsString(expr Sexp) bool {
+	switch expr.(type) {
+	case SexpStr:
+		return true
+	}
+	return false
+}
+
 func IsChar(expr Sexp) bool {
 	switch expr.(type) {
 	case SexpChar:

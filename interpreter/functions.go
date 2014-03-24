@@ -435,6 +435,8 @@ func TypeQueryFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		result = IsChar(args[0])
 	case "symbol?":
 		result = IsSymbol(args[0])
+	case "string?":
+		result = IsString(args[0])
 	case "hash?":
 		result = IsHash(args[0])
 	case "zero?":
@@ -634,6 +636,7 @@ var BuiltinFunctions = map[string]GlispUserFunction{
 	"float?":     TypeQueryFunction,
 	"char?":      TypeQueryFunction,
 	"symbol?":    TypeQueryFunction,
+	"string?":    TypeQueryFunction,
 	"zero?":      TypeQueryFunction,
 	"empty?":     TypeQueryFunction,
 	"println":    PrintFunction,
