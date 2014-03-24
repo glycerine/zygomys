@@ -101,8 +101,10 @@ func (hash SexpHash) SexpString() string {
 			str += pair.tail.SexpString() + " "
 		}
 	}
-	str += "}"
-	return str
+	if len(str) > 1 {
+		return str[:len(str)-1] + "}"
+	}
+	return str + "}"
 }
 
 func (b SexpBool) SexpString() string {
