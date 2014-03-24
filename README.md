@@ -6,7 +6,7 @@ to all systems and architectures that Go targets.
 
 It is currently very incomplete. Here is a list of what is implemented so far.
 
- * Floats, Ints, Chars, Strings, Symbols, Lists, and Array datatypes
+ * Float, Int, Char, String, Symbol, List, Array, and Hash datatypes
  * Arithmetic (`+`, `-`, `*`, `/`, `mod`)
  * Shift Operators (`sll`, `srl`, `sra`)
  * Bitwise operations (`bit-and`, `bit-or`, `bit-xor`)
