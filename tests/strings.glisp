@@ -3,3 +3,7 @@
 (assert (= "bc" (slice "abcd" 1 3)))
 (assert (= #c (sget "abcd" 2)))
 (assert (= 3 (len "abc")))
+
+(assert (string? "asdfsdaf"))
+(assert (char? #c))
+(assert (symbol? 'a))
