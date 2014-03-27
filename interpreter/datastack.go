@@ -1,5 +1,9 @@
 package glisp
 
+import (
+	"errors"
+)
+
 type DataStackElem struct {
 	expr Sexp
 }
@@ -19,15 +23,15 @@ func (stack *Stack) PopExpr() (Sexp, error) {
 }
 
 func (stack *Stack) PopExpressions(n int) ([]Sexp, error) {
-	arr := make([]Sexp, 0)
-	for i := 0; i < n; i++ {
-		elem, err := stack.Pop()
-		if err != nil {
-			return nil, err
-		}
-		arr = append(arr, elem.(DataStackElem).expr)
+	stack_start := stack.tos - n + 1
+	if stack_start < 0 {
+		return nil, errors.New("not enough items on stack")
 	}
-	ReverseArray(arr)
+	arr := make([]Sexp, n)
+	for i := 0; i < n; i++ {
+		arr[i] = stack.elements[stack_start + i].(DataStackElem).expr
+	}
+	stack.tos = stack_start - 1
 	return arr, nil
 }
 
