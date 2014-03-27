@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"flag"
+	"runtime/pprof"
 
 	"github.com/zhemao/glisp/interpreter"
 	"github.com/zhemao/glisp/extensions"
@@ -132,14 +134,28 @@ func runScript(env *glisp.Glisp, fname string) {
 	}
 }
 
+var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
+
 func main() {
 	env := glisp.NewGlisp()
 	env.ImportEval()
 	glispext.ImportRandom(env)
 	glispext.ImportTime(env)
 
-	if len(os.Args) > 1 {
-		runScript(env, os.Args[1])
+	flag.Parse()
+	if *cpuprofile != "" {
+		f, err := os.Create(*cpuprofile)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(-1)
+		}
+		pprof.StartCPUProfile(f)
+		defer pprof.StopCPUProfile()
+	}
+
+	args := flag.Args()
+	if len(args) > 0 {
+		runScript(env, args[0])
 	} else {
 		repl(env)
 	}
