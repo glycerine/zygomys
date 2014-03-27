@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/zhemao/glisp/interpreter"
+	"github.com/zhemao/glisp/extensions"
 )
 
 func getLine(reader *bufio.Reader) (string, error) {
@@ -134,6 +135,8 @@ func runScript(env *glisp.Glisp, fname string) {
 func main() {
 	env := glisp.NewGlisp()
 	env.ImportEval()
+	glispext.ImportRandom(env)
+	glispext.ImportTime(env)
 
 	if len(os.Args) > 1 {
 		runScript(env, os.Args[1])
