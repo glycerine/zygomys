@@ -4,7 +4,7 @@ import (
 	"errors"
 )
 
-const StackStartSize = 10
+const StackStartSize = 20
 
 type StackElem interface {
 	IsStackElem()
@@ -30,10 +30,13 @@ func (stack *Stack) Push(elem StackElem) {
 	stack.tos++
 
 	if stack.tos == len(stack.elements) {
-		stack.elements = append(stack.elements, elem)
-	} else {
-		stack.elements[stack.tos] = elem
+		newsize := len(stack.elements) * 2
+		newelements := make([]StackElem, newsize)
+		copy(newelements, stack.elements)
+		stack.elements = newelements
 	}
+
+	stack.elements[stack.tos] = elem
 }
 
 func (stack *Stack) Get(n int) (StackElem, error) {
