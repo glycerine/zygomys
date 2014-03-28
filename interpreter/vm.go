@@ -159,7 +159,7 @@ func (c CallInstr) InstrString() string {
 }
 
 func (c CallInstr) Execute(env *Glisp) error {
-	f, ok := env.ufunctions[c.sym.number]
+	f, ok := env.builtins[c.sym.number]
 	if ok {
 		return env.CallUserFunction(f, c.sym.name, c.nargs)
 	}
