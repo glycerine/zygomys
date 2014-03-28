@@ -16,7 +16,7 @@ type Glisp struct {
 	addrstack   *Stack
 	symtable    map[string]int
 	revsymtable map[int]string
-	builtins  map[int]SexpFunction
+	builtins    map[int]SexpFunction
 	curfunc     SexpFunction
 	mainfunc    SexpFunction
 	pc          int
@@ -35,6 +35,8 @@ func NewGlisp() *Glisp {
 	env.nextsymbol = 1
 
 	for key, function := range BuiltinFunctions {
+		sym := env.MakeSymbol(key)
+		env.builtins[sym.number] = MakeUserFunction(key, function)
 		env.AddFunction(key, function)
 	}
 
@@ -154,7 +156,6 @@ func (env *Glisp) LoadString(str string) error {
 
 func (env *Glisp) AddFunction(name string, function GlispUserFunction) {
 	sym := env.MakeSymbol(name)
-	env.builtins[sym.number] = MakeUserFunction(name, function)
 	env.scopestack.elements[0].(Scope)[sym.number] =
 		MakeUserFunction(name, function)
 }
