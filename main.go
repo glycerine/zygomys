@@ -128,6 +128,7 @@ func runScript(env *glisp.Glisp, fname string) {
 	}
 
 	_, err = env.Run()
+
 	if err != nil {
 		fmt.Print(env.GetStackTrace(err))
 		os.Exit(-1)
@@ -135,6 +136,7 @@ func runScript(env *glisp.Glisp, fname string) {
 }
 
 var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
+var memprofile = flag.String("memprofile", "", "write mem profile to file")
 
 func main() {
 	env := glisp.NewGlisp()
@@ -149,7 +151,11 @@ func main() {
 			fmt.Println(err)
 			os.Exit(-1)
 		}
-		pprof.StartCPUProfile(f)
+		err = pprof.StartCPUProfile(f)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(-1)
+		}
 		defer pprof.StopCPUProfile()
 	}
 
@@ -158,5 +164,20 @@ func main() {
 		runScript(env, args[0])
 	} else {
 		repl(env)
+	}
+
+	if *memprofile != "" {
+		f, err := os.Create(*memprofile)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(-1)
+		}
+		defer f.Close()
+
+		err = pprof.Lookup("heap").WriteTo(f, 1)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(-1)
+		}
 	}
 }
