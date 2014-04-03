@@ -604,6 +604,8 @@ var BuiltinFunctions = map[string]GlispUserFunction{
 	"cons":       ConsFunction,
 	"first":      FirstFunction,
 	"rest":       RestFunction,
+	"car":        FirstFunction,
+	"cdr":        RestFunction,
 	"list?":      TypeQueryFunction,
 	"null?":      TypeQueryFunction,
 	"array?":     TypeQueryFunction,
