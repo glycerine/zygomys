@@ -28,13 +28,10 @@ func (stack *Stack) Push(elem StackElem) {
 	stack.tos++
 
 	if stack.tos == len(stack.elements) {
-		newsize := len(stack.elements) * 2
-		newelements := make([]StackElem, newsize)
-		copy(newelements, stack.elements)
-		stack.elements = newelements
+		stack.elements = append(stack.elements, elem)
+	} else {
+		stack.elements[stack.tos] = elem
 	}
-
-	stack.elements[stack.tos] = elem
 }
 
 func (stack *Stack) Get(n int) (StackElem, error) {
