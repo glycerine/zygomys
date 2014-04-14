@@ -4,8 +4,6 @@ import (
 	"errors"
 )
 
-const StackStartSize = 20
-
 type StackElem interface {
 	IsStackElem()
 }
@@ -15,10 +13,10 @@ type Stack struct {
 	elements []StackElem
 }
 
-func NewStack() *Stack {
+func NewStack(size int) *Stack {
 	stack := new(Stack)
 	stack.tos = -1
-	stack.elements = make([]StackElem, StackStartSize)
+	stack.elements = make([]StackElem, size)
 	return stack
 }
 

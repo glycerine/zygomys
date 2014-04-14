@@ -23,12 +23,16 @@ type Glisp struct {
 	nextsymbol  int
 }
 
+const CallStackSize = 25
+const ScopeStackSize = 50
+const DataStackSize = 100
+
 func NewGlisp() *Glisp {
 	env := new(Glisp)
-	env.datastack = NewStack()
-	env.scopestack = NewStack()
+	env.datastack = NewStack(DataStackSize)
+	env.scopestack = NewStack(ScopeStackSize)
 	env.scopestack.PushScope()
-	env.addrstack = NewStack()
+	env.addrstack = NewStack(CallStackSize)
 	env.builtins = make(map[int]SexpFunction)
 	env.symtable = make(map[string]int)
 	env.revsymtable = make(map[int]string)
