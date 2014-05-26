@@ -256,7 +256,7 @@ func (env *Glisp) Apply(fun SexpFunction, args []Sexp) (Sexp, error) {
 	if len(args) != fun.nargs {
 		return SexpNull, WrongNargs
 	}
-	env.pc = -1
+	env.pc = -2
 	for _, expr := range args {
 		env.datastack.PushExpr(expr)
 	}
