@@ -24,5 +24,4 @@ The full documentation can be found in the [Wiki](https://github.com/zhemao/glis
 ## In Progress
 
  * Channel and goroutine support
- * Better name than "glisp"
  * Macro System
