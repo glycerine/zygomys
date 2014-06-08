@@ -2,6 +2,7 @@ package glisp
 
 import (
 	"errors"
+	"fmt"
 )
 
 type DataStackElem struct {
@@ -41,4 +42,12 @@ func (stack *Stack) GetExpr(n int) (Sexp, error) {
 		return nil, err
 	}
 	return elem.(DataStackElem).expr, nil
+}
+
+func (stack *Stack) PrintStack() {
+	fmt.Printf("%d elements\n", stack.tos + 1)
+	for i := 0; i <= stack.tos; i++ {
+		expr := stack.elements[i].(DataStackElem).expr
+		fmt.Println(expr.SexpString())
+	}
 }

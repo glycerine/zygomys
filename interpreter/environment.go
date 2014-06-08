@@ -227,10 +227,7 @@ func (env *Glisp) DumpEnvironment() {
 		env.DumpFunction(env.curfunc.fun)
 	}
 	fmt.Println("Stack:")
-	for i := 0; i <= env.datastack.tos; i++ {
-		expr, _ := env.datastack.GetExpr(i)
-		fmt.Println("\t" + expr.SexpString())
-	}
+	env.datastack.PrintStack()
 	fmt.Printf("PC: %d\n", env.pc)
 }
 
