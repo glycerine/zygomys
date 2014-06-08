@@ -131,7 +131,7 @@ func runScript(env *glisp.Glisp, fname string) {
 
 	if err != nil {
 		fmt.Print(env.GetStackTrace(err))
-		os.Exit(-1)
+		repl(env)
 	}
 }
 
