@@ -164,6 +164,84 @@ func (gen *Generator) GenerateDefn(args []Sexp) error {
 	return nil
 }
 
+func (gen *Generator) GenerateDefmac(args []Sexp) error {
+	if len(args) < 3 {
+		return errors.New("Wrong number of arguments to defmac")
+	}
+
+	var funcargs SexpArray
+	switch expr := args[1].(type) {
+	case SexpArray:
+		funcargs = expr
+	default:
+		return errors.New("function arguments must be in vector")
+	}
+
+	var sym SexpSymbol
+	switch expr := args[0].(type) {
+	case SexpSymbol:
+		sym = expr
+	default:
+		return errors.New("Definition name must by symbol")
+	}
+
+	sfun, err := buildSexpFun(gen.env, sym.name, funcargs, args[2:])
+	if err != nil {
+		return err
+	}
+
+	gen.env.macros[sym.number] = sfun
+	gen.AddInstruction(PushInstr{SexpNull})
+
+	return nil
+}
+
+func (gen *Generator) GenerateMacexpand(args []Sexp) error {
+	if len(args) != 1 {
+		return errors.New("Wrong number of arguments to defmac")
+	}
+
+	var list SexpPair
+	var islist bool
+	var ismacrocall bool
+
+	switch t := args[0].(type) {
+	case SexpPair:
+		if IsList(t.tail) {
+			list = t
+			islist = true
+		}
+	default:
+		islist = false
+	}
+
+	var macro SexpFunction
+	if islist {
+		switch t := list.head.(type) {
+		case SexpSymbol:
+			macro, ismacrocall = gen.env.macros[t.number]
+		default:
+			ismacrocall = false
+		}
+	}
+
+	if !ismacrocall {
+		gen.AddInstruction(PushInstr{args[0]})
+		return nil
+	}
+
+	macargs, err := ListToArray(list.tail)
+	if err != nil {
+		return err
+	}
+	expr, err := gen.env.Apply(macro, macargs)
+	if err != nil {
+		return err
+	}
+	gen.AddInstruction(PushInstr{expr})
+	return nil
+}
+
 func (gen *Generator) GenerateShortCircuit(or bool, args []Sexp) error {
 	size := len(args)
 
@@ -343,7 +421,24 @@ func (gen *Generator) GenerateCallBySymbol(sym SexpSymbol, args []Sexp) error {
 		return gen.GenerateLet("let*", args)
 	case "assert":
 		return gen.GenerateAssert(args)
+	case "defmac":
+		return gen.GenerateDefmac(args)
+	case "macexpand":
+		return gen.GenerateMacexpand(args)
 	}
+
+	macro, found := gen.env.macros[sym.number]
+	if found {
+		// calling Apply on the current environment will screw up
+		// the stack, creating a duplicate environment is safer
+		env := gen.env.Duplicate()
+		expr, err := env.Apply(macro, args)
+		if err != nil {
+			return err
+		}
+		return gen.Generate(expr)
+	}
+
 	oldtail := gen.tail
 	gen.GenerateAll(args)
 	if oldtail && sym.name == gen.funcname {

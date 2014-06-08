@@ -17,6 +17,7 @@ type Glisp struct {
 	symtable    map[string]int
 	revsymtable map[int]string
 	builtins    map[int]SexpFunction
+	macros      map[int]SexpFunction
 	curfunc     SexpFunction
 	mainfunc    SexpFunction
 	pc          int
@@ -34,6 +35,7 @@ func NewGlisp() *Glisp {
 	env.scopestack.PushScope()
 	env.addrstack = NewStack(CallStackSize)
 	env.builtins = make(map[int]SexpFunction)
+	env.macros = make(map[int]SexpFunction)
 	env.symtable = make(map[string]int)
 	env.revsymtable = make(map[int]string)
 	env.nextsymbol = 1
@@ -48,6 +50,28 @@ func NewGlisp() *Glisp {
 	env.curfunc = env.mainfunc
 	env.pc = 0
 	return env
+}
+
+func (env *Glisp) Duplicate() *Glisp {
+	dupenv := new(Glisp)
+	dupenv.datastack = NewStack(DataStackSize)
+	dupenv.scopestack = NewStack(ScopeStackSize)
+	dupenv.scopestack.PushScope()
+	dupenv.addrstack = NewStack(CallStackSize)
+	dupenv.builtins = env.builtins
+	dupenv.macros = env.macros
+	dupenv.symtable = env.symtable
+	dupenv.revsymtable = env.revsymtable
+	dupenv.nextsymbol = env.nextsymbol
+
+	for number, object := range env.scopestack.elements[0].(Scope) {
+		dupenv.scopestack.elements[0].(Scope)[number] = object
+	}
+
+	dupenv.mainfunc = env.mainfunc
+	dupenv.curfunc = dupenv.mainfunc
+	dupenv.pc = 0
+	return dupenv
 }
 
 func (env *Glisp) MakeSymbol(name string) SexpSymbol {
@@ -164,6 +188,11 @@ func (env *Glisp) AddFunction(name string, function GlispUserFunction) {
 		MakeUserFunction(name, function)
 }
 
+func (env *Glisp) AddMacro(name string, function GlispUserFunction) {
+	sym := env.MakeSymbol(name)
+	env.macros[sym.number] = MakeUserFunction(name, function)
+}
+
 func (env *Glisp) ImportEval() {
 	env.AddFunction("eval", EvalFunction)
 }
@@ -206,15 +235,6 @@ func (env *Glisp) DumpEnvironment() {
 		fmt.Println("\t" + expr.SexpString())
 	}
 	fmt.Printf("PC: %d\n", env.pc)
-
-	fmt.Println("In Scope:")
-	for i := 0; i <= env.scopestack.tos; i++ {
-		scope := env.scopestack.elements[i].(Scope)
-		for num, expr := range scope {
-			name, _ := env.revsymtable[num]
-			fmt.Printf("%s => %s\n", name, expr.SexpString())
-		}
-	}
 }
 
 func (env *Glisp) ReachedEnd() bool {

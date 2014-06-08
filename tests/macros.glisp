@@ -1,0 +1,5 @@
+(defmac when [predicate thunk]
+  (list 'cond predicate thunk '(quote ())))
+
+(assert (null? (when false 'a)))
+(assert (= 'a (when true 'a)))
