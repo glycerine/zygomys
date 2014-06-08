@@ -155,6 +155,7 @@ type SexpFunction struct {
 	name    string
 	user    bool
 	nargs   int
+	varargs bool
 	fun     GlispFunction
 	userfun GlispUserFunction
 }

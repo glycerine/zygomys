@@ -46,7 +46,7 @@ func NewGlisp() *Glisp {
 		env.AddFunction(key, function)
 	}
 
-	env.mainfunc = MakeFunction("__main", 0, make([]Instruction, 0))
+	env.mainfunc = MakeFunction("__main", 0, false, make([]Instruction, 0))
 	env.curfunc = env.mainfunc
 	env.pc = 0
 	return env
@@ -65,7 +65,7 @@ func (env *Glisp) Duplicate() *Glisp {
 
 	dupenv.scopestack.Push(env.scopestack.elements[0])
 
-	env.mainfunc = MakeFunction("__main", 0, make([]Instruction, 0))
+	env.mainfunc = MakeFunction("__main", 0, false, make([]Instruction, 0))
 	dupenv.curfunc = dupenv.mainfunc
 	dupenv.pc = 0
 	return dupenv
@@ -95,10 +95,36 @@ func (env *Glisp) CurrentFunctionSize() int {
 	return len(env.curfunc.fun)
 }
 
-func (env *Glisp) CallFunction(function SexpFunction, nargs int) error {
-	if nargs != function.nargs {
-		return WrongNargs
+func (env *Glisp) wrangleOptargs(fnargs, nargs int) error {
+	if nargs < fnargs {
+		return errors.New(
+			fmt.Sprintf("Expected >%d arguments, got %d",
+				fnargs, nargs))
 	}
+	if nargs > fnargs {
+		optargs, err := env.datastack.PopExpressions(nargs - fnargs)
+		if err != nil {
+			return err
+		}
+		env.datastack.PushExpr(MakeList(optargs))
+	} else {
+		env.datastack.PushExpr(SexpNull)
+	}
+	return nil
+}
+
+func (env *Glisp) CallFunction(function SexpFunction, nargs int) error {
+	if function.varargs {
+		err := env.wrangleOptargs(function.nargs, nargs)
+		if err != nil {
+			return err
+		}
+	} else if nargs != function.nargs {
+		return errors.New(
+			fmt.Sprintf("%s expected %d arguments, got %d",
+				function.name, function.nargs, nargs))
+	}
+
 	env.addrstack.PushAddr(env.curfunc, env.pc+1)
 	env.scopestack.PushScope()
 	env.pc = 0
@@ -120,7 +146,8 @@ func (env *Glisp) CallUserFunction(
 
 	args, err := env.datastack.PopExpressions(nargs)
 	if err != nil {
-		return err
+		return errors.New(
+			fmt.Sprintf("Error calling %s: %v", name, err))
 	}
 
 	env.addrstack.PushAddr(env.curfunc, env.pc+1)
@@ -130,7 +157,8 @@ func (env *Glisp) CallUserFunction(
 
 	res, err := function.userfun(env, name, args)
 	if err != nil {
-		return err
+		return errors.New(
+			fmt.Sprintf("Error calling %s: %v", name, err))
 	}
 	env.datastack.PushExpr(res)
 
@@ -211,11 +239,11 @@ func (env *Glisp) DumpFunctionByName(name string) error {
 	default:
 		return errors.New("not a function")
 	}
-	env.DumpFunction(fun)
+	DumpFunction(fun)
 	return nil
 }
 
-func (env *Glisp) DumpFunction(fun GlispFunction) {
+func DumpFunction(fun GlispFunction) {
 	for _, instr := range fun {
 		fmt.Println("\t" + instr.InstrString())
 	}
@@ -224,7 +252,7 @@ func (env *Glisp) DumpFunction(fun GlispFunction) {
 func (env *Glisp) DumpEnvironment() {
 	fmt.Println("Instructions:")
 	if !env.curfunc.user {
-		env.DumpFunction(env.curfunc.fun)
+		DumpFunction(env.curfunc.fun)
 	}
 	fmt.Println("Stack:")
 	env.datastack.PrintStack()
@@ -249,7 +277,7 @@ func (env *Glisp) Clear() {
 	env.datastack.tos = -1
 	env.scopestack.tos = 0
 	env.addrstack.tos = -1
-	env.mainfunc = MakeFunction("__main", 0, make([]Instruction, 0))
+	env.mainfunc = MakeFunction("__main", 0, false, make([]Instruction, 0))
 	env.curfunc = env.mainfunc
 	env.pc = 0
 }
@@ -267,14 +295,11 @@ func (env *Glisp) Apply(fun SexpFunction, args []Sexp) (Sexp, error) {
 	if fun.user {
 		return fun.userfun(env, fun.name, args)
 	}
-	if len(args) != fun.nargs {
-		return SexpNull, WrongNargs
-	}
 	env.pc = -2
 	for _, expr := range args {
 		env.datastack.PushExpr(expr)
 	}
-	err := env.CallFunction(fun, fun.nargs)
+	err := env.CallFunction(fun, len(args))
 	if err != nil {
 		return SexpNull, err
 	}

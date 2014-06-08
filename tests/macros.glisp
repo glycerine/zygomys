@@ -3,8 +3,10 @@
 
 (assert (= `(0 ~@l ~b) '(0 1 2 3 4)))
 
-(defmac when [predicate thunk]
-  `(cond ~predicate ~thunk '()))
+(defmac when [predicate & body]
+  `(cond ~predicate
+      (begin
+        ~@body) '()))
 
-(assert (null? (when false 'a)))
-(assert (= 'a (when true 'a)))
+(assert (null? (when false 'c)))
+(assert (= 'a (when true 'c 'b 'a)))

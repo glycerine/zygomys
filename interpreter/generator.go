@@ -63,16 +63,30 @@ func buildSexpFun(env *Glisp, name string, funcargs SexpArray,
 		gen.funcname = name
 	}
 
-	for i := len(funcargs) - 1; i >= 0; i-- {
-		var argsym SexpSymbol
-		switch expr := funcargs[i].(type) {
+	argsyms := make([]SexpSymbol, len(funcargs))
+
+	for i, expr := range funcargs {
+		switch t := expr.(type) {
 		case SexpSymbol:
-			argsym = expr
+			argsyms[i] = t
 		default:
 			return MissingFunction,
 				errors.New("function argument must be symbol")
 		}
-		gen.AddInstruction(PutInstr{argsym})
+	}
+
+	varargs := false
+	nargs := len(funcargs)
+
+	if len(argsyms) >= 2 && argsyms[len(argsyms) - 2].name == "&" {
+		argsyms[len(argsyms) - 2] = argsyms[len(argsyms) - 1]
+		argsyms = argsyms[0 : len(argsyms) - 1]
+		varargs = true
+		nargs = len(argsyms) - 1
+	}
+
+	for i := len(argsyms) - 1; i >= 0; i-- {
+		gen.AddInstruction(PutInstr{argsyms[i]})
 	}
 	err := gen.GenerateBegin(funcbody)
 	if err != nil {
@@ -81,7 +95,7 @@ func buildSexpFun(env *Glisp, name string, funcargs SexpArray,
 	gen.AddInstruction(ReturnInstr{nil})
 
 	newfunc := GlispFunction(gen.instructions)
-	return MakeFunction(gen.funcname, len(funcargs), newfunc), nil
+	return MakeFunction(gen.funcname, nargs, varargs, newfunc), nil
 }
 
 func (gen *Generator) GenerateFn(args []Sexp) error {
@@ -198,7 +212,7 @@ func (gen *Generator) GenerateDefmac(args []Sexp) error {
 
 func (gen *Generator) GenerateMacexpand(args []Sexp) error {
 	if len(args) != 1 {
-		return errors.New("Wrong number of arguments to defmac")
+		return WrongNargs
 	}
 
 	var list SexpPair
@@ -323,7 +337,7 @@ func (gen *Generator) GenerateSyntaxQuote(args []Sexp) error {
 		return errors.New("syntax-quote takes 1 argument")
 	}
 
-	if !IsList(args[0]) {
+	if args[0] == SexpNull || !IsList(args[0]) {
 		gen.AddInstruction(PushInstr{args[0]})
 		return nil
 	}
@@ -486,7 +500,10 @@ func (gen *Generator) GenerateCallBySymbol(sym SexpSymbol, args []Sexp) error {
 	}
 
 	oldtail := gen.tail
-	gen.GenerateAll(args)
+	err := gen.GenerateAll(args)
+	if err != nil {
+		return err
+	}
 	if oldtail && sym.name == gen.funcname {
 		// to do a tail call
 		// pop off all the extra scopes
@@ -533,7 +550,13 @@ func (gen *Generator) Generate(expr Sexp) error {
 		return nil
 	case SexpPair:
 		if IsList(e) {
-			return gen.GenerateCall(e)
+			err := gen.GenerateCall(e)
+			if err != nil {
+				return errors.New(
+					fmt.Sprintf("Error generating %s:\n%v",
+						expr.SexpString(), err))
+			}
+			return nil
 		} else {
 			gen.AddInstruction(PushInstr{expr})
 		}

@@ -383,7 +383,7 @@ func EvalFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	if err != nil {
 		return SexpNull, errors.New("failed to compile expression")
 	}
-	newenv.mainfunc = MakeFunction("__main", 0, gen.instructions)
+	newenv.mainfunc = MakeFunction("__main", 0, false, gen.instructions)
 	newenv.pc = -1
 	return newenv.Run()
 }
@@ -562,13 +562,15 @@ func SymnumFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	return SexpNull, errors.New("argument must be symbol")
 }
 
-var MissingFunction = SexpFunction{"__missing", true, 0, nil, nil}
+var MissingFunction = SexpFunction{"__missing", true, 0, false, nil, nil}
 
-func MakeFunction(name string, nargs int, fun GlispFunction) SexpFunction {
+func MakeFunction(name string, nargs int, varargs bool,
+		fun GlispFunction) SexpFunction {
 	var sfun SexpFunction
 	sfun.name = name
 	sfun.user = false
 	sfun.nargs = nargs
+	sfun.varargs = varargs
 	sfun.fun = fun
 	return sfun
 }
