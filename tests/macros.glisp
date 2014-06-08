@@ -1,5 +1,10 @@
+(def l '(1 2 3))
+(def b 4)
+
+(assert (= `(0 ~@l ~b) '(0 1 2 3 4)))
+
 (defmac when [predicate thunk]
-  (list 'cond predicate thunk '(quote ())))
+  `(cond ~predicate ~thunk '()))
 
 (assert (null? (when false 'a)))
 (assert (= 'a (when true 'a)))

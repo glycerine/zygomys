@@ -318,6 +318,50 @@ func (gen *Generator) GenerateQuote(args []Sexp) error {
 	return nil
 }
 
+func (gen *Generator) GenerateSyntaxQuote(args []Sexp) error {
+	if len(args) != 1 {
+		return errors.New("syntax-quote takes 1 argument")
+	}
+
+	if !IsList(args[0]) {
+		gen.AddInstruction(PushInstr{args[0]})
+		return nil
+	}
+	quotebody, _ := ListToArray(args[0])
+
+	if len(quotebody) == 2 {
+		var issymbol bool
+		var sym SexpSymbol
+		switch t := quotebody[0].(type) {
+		case SexpSymbol:
+			sym = t
+			issymbol = true
+		default:
+			issymbol = false
+		}
+		if issymbol {
+			if sym.name == "unquote" {
+				gen.Generate(quotebody[1])
+				return nil
+			} else if sym.name == "unquote-splicing" {
+				gen.Generate(quotebody[1])
+				gen.AddInstruction(ExplodeInstr(0))
+				return nil
+			}
+		}
+	}
+
+	gen.AddInstruction(PushInstr{SexpMarker})
+
+	for _, expr := range quotebody {
+		gen.GenerateSyntaxQuote([]Sexp{expr})
+	}
+
+	gen.AddInstruction(SquashInstr(0))
+
+	return nil
+}
+
 func (gen *Generator) GenerateLet(name string, args []Sexp) error {
 	if len(args) < 2 {
 		return errors.New("malformed let statement")
@@ -425,6 +469,8 @@ func (gen *Generator) GenerateCallBySymbol(sym SexpSymbol, args []Sexp) error {
 		return gen.GenerateDefmac(args)
 	case "macexpand":
 		return gen.GenerateMacexpand(args)
+	case "syntax-quote":
+		return gen.GenerateSyntaxQuote(args)
 	}
 
 	macro, found := gen.env.macros[sym.number]

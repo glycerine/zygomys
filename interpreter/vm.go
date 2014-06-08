@@ -242,3 +242,51 @@ func (a RemoveScopeInstr) Execute(env *Glisp) error {
 	env.pc++
 	return env.scopestack.PopScope()
 }
+
+type ExplodeInstr int
+
+func (e ExplodeInstr) InstrString() string {
+	return "explode"
+}
+
+func (e ExplodeInstr) Execute(env *Glisp) error {
+	expr, err := env.datastack.PopExpr()
+	if err != nil {
+		return err
+	}
+
+	arr, err := ListToArray(expr)
+	if err != nil {
+		return err
+	}
+
+	for _, val := range arr {
+		env.datastack.PushExpr(val)
+	}
+	env.pc++
+	return nil
+}
+
+type SquashInstr int
+
+func (s SquashInstr) InstrString() string {
+	return "squash"
+}
+
+func (s SquashInstr) Execute(env *Glisp) error {
+	var list Sexp = SexpNull
+
+	for {
+		expr, err := env.datastack.PopExpr()
+		if err != nil {
+			return err
+		}
+		if expr == SexpMarker {
+			break
+		}
+		list = Cons(expr, list)
+	}
+	env.datastack.PushExpr(list)
+	env.pc++
+	return nil
+}

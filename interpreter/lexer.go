@@ -20,6 +20,9 @@ const (
 	TokenRCurly
 	TokenDot
 	TokenQuote
+	TokenBacktick
+	TokenTilde
+	TokenTildeAt
 	TokenSymbol
 	TokenBool
 	TokenDecimal
@@ -55,6 +58,12 @@ func (t Token) String() string {
 		return "."
 	case TokenQuote:
 		return "'"
+	case TokenBacktick:
+		return "`"
+	case TokenTilde:
+		return "~"
+	case TokenTildeAt:
+		return "~@"
 	case TokenHex:
 		return "0x" + t.str
 	case TokenOct:
@@ -75,6 +84,7 @@ const (
 	LexerComment
 	LexerStrLit
 	LexerStrEscaped
+	LexerUnquote
 )
 
 type Lexer struct {
@@ -248,6 +258,18 @@ func (lexer *Lexer) LexNextRune(r rune) error {
 		lexer.state = LexerStrLit
 		return nil
 	}
+	if lexer.state == LexerUnquote {
+		if r == '@' {
+			lexer.tokens = append(
+				lexer.tokens, Token{TokenTildeAt, ""})
+		} else {
+			lexer.tokens = append(
+				lexer.tokens, Token{TokenTilde, ""})
+			lexer.buffer.WriteRune(r)
+		}
+		lexer.state = LexerNormal
+		return nil
+	}
 
 	if r == '"' {
 		if lexer.buffer.Len() > 0 {
@@ -267,6 +289,22 @@ func (lexer *Lexer) LexNextRune(r rune) error {
 			return errors.New("Unexpected quote")
 		}
 		lexer.tokens = append(lexer.tokens, Token{TokenQuote, ""})
+		return nil
+	}
+
+	if r == '`' {
+		if lexer.buffer.Len() > 0 {
+			return errors.New("Unexpected backtick")
+		}
+		lexer.tokens = append(lexer.tokens, Token{TokenBacktick, ""})
+		return nil
+	}
+
+	if r == '~' {
+		if lexer.buffer.Len() > 0 {
+			return errors.New("Unexpected tilde")
+		}
+		lexer.state = LexerUnquote
 		return nil
 	}
 

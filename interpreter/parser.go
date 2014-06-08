@@ -157,6 +157,24 @@ func ParseExpression(parser *Parser) (Sexp, error) {
 			return SexpNull, err
 		}
 		return MakeList([]Sexp{env.MakeSymbol("quote"), expr}), nil
+	case TokenBacktick:
+		expr, err := ParseExpression(parser)
+		if err != nil {
+			return SexpNull, err
+		}
+		return MakeList([]Sexp{env.MakeSymbol("syntax-quote"), expr}), nil
+	case TokenTilde:
+		expr, err := ParseExpression(parser)
+		if err != nil {
+			return SexpNull, err
+		}
+		return MakeList([]Sexp{env.MakeSymbol("unquote"), expr}), nil
+	case TokenTildeAt:
+		expr, err := ParseExpression(parser)
+		if err != nil {
+			return SexpNull, err
+		}
+		return MakeList([]Sexp{env.MakeSymbol("unquote-splicing"), expr}), nil
 	case TokenSymbol:
 		return env.MakeSymbol(tok.str), nil
 	case TokenBool:
