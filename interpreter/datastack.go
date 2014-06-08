@@ -42,13 +42,3 @@ func (stack *Stack) GetExpr(n int) (Sexp, error) {
 	}
 	return elem.(DataStackElem).expr, nil
 }
-
-// reverse array in-place
-func ReverseArray(arr []Sexp) {
-	size := len(arr)
-	for i := 0; i < size/2; i++ {
-		temp := arr[i]
-		arr[i] = arr[size-i-1]
-		arr[size-i-1] = temp
-	}
-}
