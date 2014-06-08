@@ -56,7 +56,6 @@ func (env *Glisp) Duplicate() *Glisp {
 	dupenv := new(Glisp)
 	dupenv.datastack = NewStack(DataStackSize)
 	dupenv.scopestack = NewStack(ScopeStackSize)
-	dupenv.scopestack.PushScope()
 	dupenv.addrstack = NewStack(CallStackSize)
 	dupenv.builtins = env.builtins
 	dupenv.macros = env.macros
@@ -64,11 +63,9 @@ func (env *Glisp) Duplicate() *Glisp {
 	dupenv.revsymtable = env.revsymtable
 	dupenv.nextsymbol = env.nextsymbol
 
-	for number, object := range env.scopestack.elements[0].(Scope) {
-		dupenv.scopestack.elements[0].(Scope)[number] = object
-	}
+	dupenv.scopestack.Push(env.scopestack.elements[0])
 
-	dupenv.mainfunc = env.mainfunc
+	env.mainfunc = MakeFunction("__main", 0, make([]Instruction, 0))
 	dupenv.curfunc = dupenv.mainfunc
 	dupenv.pc = 0
 	return dupenv
