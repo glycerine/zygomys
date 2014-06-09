@@ -19,7 +19,7 @@ not implemented so far.
  * [x] A Basic Repl
  * [x] Tail-call optimization
  * [x] Go API
- * [ ] Macro System
- * [ ] Channel and goroutine support
+ * [x] Macro System
+ * [x] Channel and goroutine support
 
 The full documentation can be found in the [Wiki](https://github.com/zhemao/glisp/wiki).
