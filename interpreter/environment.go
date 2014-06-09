@@ -166,6 +166,22 @@ func (env *Glisp) CallUserFunction(
 	return nil
 }
 
+func (env *Glisp) LoadExpressions(expressions []Sexp) error {
+	gen := NewGenerator(env)
+	if !env.ReachedEnd() {
+		gen.AddInstruction(PopInstr(0))
+	}
+	err := gen.GenerateBegin(expressions)
+	if err != nil {
+		return err
+	}
+
+	env.mainfunc.fun = append(env.mainfunc.fun, gen.instructions...)
+	env.curfunc = env.mainfunc
+
+	return nil
+}
+
 func (env *Glisp) LoadStream(stream io.RuneReader) error {
 	lexer := NewLexerFromStream(stream)
 
@@ -175,19 +191,7 @@ func (env *Glisp) LoadStream(stream io.RuneReader) error {
 			"Error on line %d: %v\n", lexer.Linenum(), err))
 	}
 
-	gen := NewGenerator(env)
-	if !env.ReachedEnd() {
-		gen.AddInstruction(PopInstr(0))
-	}
-	err = gen.GenerateBegin(expressions)
-	if err != nil {
-		return err
-	}
-
-	env.mainfunc.fun = append(env.mainfunc.fun, gen.instructions...)
-	env.curfunc = env.mainfunc
-
-	return nil
+	return env.LoadExpressions(expressions)
 }
 
 func (env *Glisp) EvalString(str string) (Sexp, error) {

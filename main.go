@@ -148,6 +148,8 @@ func main() {
 	env.ImportEval()
 	glispext.ImportRandom(env)
 	glispext.ImportTime(env)
+	glispext.ImportChannels(env)
+	glispext.ImportCoroutines(env)
 
 	flag.Parse()
 	if *cpuprofile != "" {
