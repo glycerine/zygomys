@@ -19,6 +19,8 @@ Here is a list of what features are implemented and not implemented so far.
  * [x] Tail-call optimization
  * [x] Go API
  * [x] Macro System
+ * [x] Syntax quoting (backticks)
  * [x] Channel and goroutine support
+ * [x] Pre- and Post- function call hooks
 
 The full documentation can be found in the [Wiki](https://github.com/zhemao/glisp/wiki).
