@@ -65,7 +65,7 @@ func (env *Glisp) Duplicate() *Glisp {
 
 	dupenv.scopestack.Push(env.scopestack.elements[0])
 
-	env.mainfunc = MakeFunction("__main", 0, false, make([]Instruction, 0))
+	dupenv.mainfunc = MakeFunction("__main", 0, false, make([]Instruction, 0))
 	dupenv.curfunc = dupenv.mainfunc
 	dupenv.pc = 0
 	return dupenv
