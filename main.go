@@ -77,6 +77,7 @@ func processDumpCommand(env *glisp.Glisp, args []string) {
 
 func repl(env *glisp.Glisp) {
 	fmt.Printf("glisp version %s\n", glisp.Version())
+	fmt.Printf("glispext version %s\n", glispext.Version())
 	reader := bufio.NewReader(os.Stdin)
 
 	for {
