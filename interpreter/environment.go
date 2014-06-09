@@ -10,6 +10,9 @@ import (
 	"strconv"
 )
 
+type PreHook func(*Glisp, string, []Sexp)
+type PostHook func(*Glisp, string, Sexp)
+
 type Glisp struct {
 	datastack   *Stack
 	scopestack  *Stack
@@ -22,6 +25,8 @@ type Glisp struct {
 	mainfunc    SexpFunction
 	pc          int
 	nextsymbol  int
+	before      []PreHook
+	after       []PostHook
 }
 
 const CallStackSize = 25
@@ -39,6 +44,8 @@ func NewGlisp() *Glisp {
 	env.symtable = make(map[string]int)
 	env.revsymtable = make(map[int]string)
 	env.nextsymbol = 1
+	env.before = []PreHook{}
+	env.after = []PostHook{}
 
 	for key, function := range BuiltinFunctions {
 		sym := env.MakeSymbol(key)
@@ -62,6 +69,8 @@ func (env *Glisp) Duplicate() *Glisp {
 	dupenv.symtable = env.symtable
 	dupenv.revsymtable = env.revsymtable
 	dupenv.nextsymbol = env.nextsymbol
+	dupenv.before = env.before
+	dupenv.after = env.after
 
 	dupenv.scopestack.Push(env.scopestack.elements[0])
 
@@ -114,6 +123,13 @@ func (env *Glisp) wrangleOptargs(fnargs, nargs int) error {
 }
 
 func (env *Glisp) CallFunction(function SexpFunction, nargs int) error {
+	for _, prehook := range env.before {
+		expressions, err := env.datastack.GetExpressions(nargs)
+		if err != nil {
+			return err
+		}
+		prehook(env, function.name, expressions)
+	}
 	if function.varargs {
 		err := env.wrangleOptargs(function.nargs, nargs)
 		if err != nil {
@@ -133,6 +149,13 @@ func (env *Glisp) CallFunction(function SexpFunction, nargs int) error {
 }
 
 func (env *Glisp) ReturnFromFunction() error {
+	for _, posthook := range env.after {
+		retval, err := env.datastack.GetExpr(0)
+		if err != nil {
+			return err
+		}
+		posthook(env, env.curfunc.name, retval)
+	}
 	var err error
 	env.curfunc, env.pc, err = env.addrstack.PopAddr()
 	if err != nil {
@@ -143,6 +166,14 @@ func (env *Glisp) ReturnFromFunction() error {
 
 func (env *Glisp) CallUserFunction(
 	function SexpFunction, name string, nargs int) error {
+
+	for _, prehook := range env.before {
+		expressions, err := env.datastack.GetExpressions(nargs)
+		if err != nil {
+			return err
+		}
+		prehook(env, function.name, expressions)
+	}
 
 	args, err := env.datastack.PopExpressions(nargs)
 	if err != nil {
@@ -161,6 +192,10 @@ func (env *Glisp) CallUserFunction(
 			fmt.Sprintf("Error calling %s: %v", name, err))
 	}
 	env.datastack.PushExpr(res)
+
+	for _, posthook := range env.after {
+		posthook(env, name, res)
+	}
 
 	env.curfunc, env.pc, _ = env.addrstack.PopAddr()
 	return nil
@@ -320,4 +355,12 @@ func (env *Glisp) Run() (Sexp, error) {
 	}
 
 	return env.datastack.PopExpr()
+}
+
+func (env *Glisp) AddPreHook(fun PreHook) {
+	env.before = append(env.before, fun)
+}
+
+func (env *Glisp) AddPostHook(fun PostHook) {
+	env.after = append(env.after, fun)
 }

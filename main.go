@@ -12,6 +12,24 @@ import (
 	"github.com/zhemao/glisp/extensions"
 )
 
+var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
+var memprofile = flag.String("memprofile", "", "write mem profile to file")
+var exitOnFailure = flag.Bool("exitonfail", false,
+	"exit on failure instead of starting repl")
+var countFuncCalls = flag.Bool("countcalls", false,
+	"count how many times each function is run")
+
+var precounts map[string]int
+var postcounts map[string]int
+
+func CountPreHook(env *glisp.Glisp, name string, args []glisp.Sexp) {
+	precounts[name] += 1
+}
+
+func CountPostHook(env *glisp.Glisp, name string, retval glisp.Sexp) {
+	postcounts[name] += 1
+}
+
 func getLine(reader *bufio.Reader) (string, error) {
 	line := make([]byte, 0)
 	for {
@@ -129,7 +147,16 @@ func runScript(env *glisp.Glisp, fname string) {
 	}
 
 	_, err = env.Run()
-
+	if *countFuncCalls {
+		fmt.Println("Pre:")
+		for name, count := range precounts {
+			fmt.Printf("\t%s: %d\n", name, count)
+		}
+		fmt.Println("Post:")
+		for name, count := range postcounts {
+			fmt.Printf("\t%s: %d\n", name, count)
+		}
+	}
 	if err != nil {
 		fmt.Print(env.GetStackTrace(err))
 		if *exitOnFailure {
@@ -138,11 +165,6 @@ func runScript(env *glisp.Glisp, fname string) {
 		repl(env)
 	}
 }
-
-var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
-var memprofile = flag.String("memprofile", "", "write mem profile to file")
-var exitOnFailure = flag.Bool("exitonfail", false,
-	"exit on failure instead of starting repl")
 
 func main() {
 	env := glisp.NewGlisp()
@@ -165,6 +187,14 @@ func main() {
 			os.Exit(-1)
 		}
 		defer pprof.StopCPUProfile()
+	}
+
+	precounts = make(map[string]int)
+	postcounts = make(map[string]int)
+
+	if *countFuncCalls {
+		env.AddPreHook(CountPreHook)
+		env.AddPostHook(CountPostHook)
 	}
 
 	args := flag.Args()
