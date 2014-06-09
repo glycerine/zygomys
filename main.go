@@ -131,12 +131,17 @@ func runScript(env *glisp.Glisp, fname string) {
 
 	if err != nil {
 		fmt.Print(env.GetStackTrace(err))
+		if *exitOnFailure {
+			os.Exit(-1)
+		}
 		repl(env)
 	}
 }
 
 var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
 var memprofile = flag.String("memprofile", "", "write mem profile to file")
+var exitOnFailure = flag.Bool("exitonfail", false,
+	"exit on failure instead of starting repl")
 
 func main() {
 	env := glisp.NewGlisp()
