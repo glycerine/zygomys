@@ -4,8 +4,7 @@ This is a LISP dialect designed as an embedded extension language for the Go
 programming language. It is implemented in pure Go, so it can be easily ported
 to all systems and architectures that Go targets.
 
-It is currently very incomplete. Here is a list of what is implemented and
-not implemented so far.
+Here is a list of what features are implemented and not implemented so far.
 
  * [x] Float, Int, Char, String, Symbol, List, Array, and Hash datatypes
  * [x] Arithmetic (`+`, `-`, `*`, `/`, `mod`)
