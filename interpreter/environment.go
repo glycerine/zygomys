@@ -247,9 +247,12 @@ func (env *Glisp) LoadString(str string) error {
 }
 
 func (env *Glisp) AddFunction(name string, function GlispUserFunction) {
+	env.AddGlobal(name, MakeUserFunction(name, function))
+}
+
+func (env *Glisp) AddGlobal(name string, obj Sexp) {
 	sym := env.MakeSymbol(name)
-	env.scopestack.elements[0].(Scope)[sym.number] =
-		MakeUserFunction(name, function)
+	env.scopestack.elements[0].(Scope)[sym.number] = obj
 }
 
 func (env *Glisp) AddMacro(name string, function GlispUserFunction) {
