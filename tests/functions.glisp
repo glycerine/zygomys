@@ -12,6 +12,13 @@
 (assert (= 120 (fact 5)))
 (assert (= 3628800 (fact 10)))
 
+(defn sum [l]
+  (cond (empty? l)
+    0 (+ (first l) (sum (rest l)))))
+
+(assert (= 0 (sum [])))
+(assert (= 6 (sum [1 2 3])))
+
 ; testing tail recursion
 (defn fact-tc [n accum]
   (cond (= n 0) accum
@@ -21,3 +28,10 @@
 
 (assert (= 120 (fact-tc 5 1)))
 (assert (= 3628800 (fact-tc 10 1)))
+
+(defn sum-tc [l a]
+  (cond (empty? l)
+    a (sum-tc (rest l) (+ a (first l)))))
+
+(assert (= 0 (sum-tc [] 0)))
+(assert (= 6 (sum-tc [1 2 3] 0)))

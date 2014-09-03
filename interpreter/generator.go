@@ -500,6 +500,7 @@ func (gen *Generator) GenerateCallBySymbol(sym SexpSymbol, args []Sexp) error {
 	}
 
 	oldtail := gen.tail
+	gen.tail = false
 	err := gen.GenerateAll(args)
 	if err != nil {
 		return err
@@ -515,6 +516,7 @@ func (gen *Generator) GenerateCallBySymbol(sym SexpSymbol, args []Sexp) error {
 	} else {
 		gen.AddInstruction(CallInstr{sym, len(args)})
 	}
+	gen.tail = oldtail
 	return nil
 }
 
