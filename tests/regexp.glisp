@@ -1,0 +1,5 @@
+(let* 
+     [re (regexp.Compile "hello")
+     loc (regexp.FindStringIndex re "012345hello!")]
+  (assert (= (aget loc 0) 6))
+  (assert (= (aget loc 1) 11)))

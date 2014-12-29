@@ -2,14 +2,14 @@ package main
 
 import (
 	"bufio"
+	"flag"
 	"fmt"
 	"os"
-	"strings"
-	"flag"
 	"runtime/pprof"
+	"strings"
 
-	"github.com/zhemao/glisp/interpreter"
 	"github.com/zhemao/glisp/extensions"
+	"github.com/zhemao/glisp/interpreter"
 )
 
 var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
@@ -173,6 +173,7 @@ func main() {
 	glispext.ImportTime(env)
 	glispext.ImportChannels(env)
 	glispext.ImportCoroutines(env)
+	glispext.ImportRegex(env)
 
 	flag.Parse()
 	if *cpuprofile != "" {
