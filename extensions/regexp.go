@@ -12,10 +12,23 @@ type SexpRegexp regexp.Regexp
 
 func (re SexpRegexp) SexpString() string {
 	r := regexp.Regexp(re)
-	return fmt.Sprintf(`(regexp.Compile "%v")`, r.String())
+	return fmt.Sprintf(`(regexp-compile "%v")`, r.String())
 }
 
-func RegexpFindStringIndex(env *glisp.Glisp, name string,
+func regexpFindIndex(
+	needle regexp.Regexp, haystack string) (glisp.Sexp, error) {
+
+	loc := needle.FindStringIndex(haystack)
+
+	arr := make([]glisp.Sexp, len(loc))
+	for i := range arr {
+		arr[i] = glisp.Sexp(glisp.SexpInt(loc[i]))
+	}
+
+	return glisp.SexpArray(arr), nil
+}
+
+func RegexpFind(env *glisp.Glisp, name string,
 	args []glisp.Sexp) (glisp.Sexp, error) {
 	if len(args) != 2 {
 		return glisp.SexpNull, glisp.WrongNargs
@@ -26,7 +39,7 @@ func RegexpFindStringIndex(env *glisp.Glisp, name string,
 		haystack = string(t)
 	default:
 		return glisp.SexpNull,
-			errors.New("2nd argument of regexp.FindStringIndex should be a string to check against the regexp of the first argument.")
+			errors.New(fmt.Sprintf("2nd argument of %v should be a string", name))
 	}
 
 	var needle regexp.Regexp
@@ -35,17 +48,21 @@ func RegexpFindStringIndex(env *glisp.Glisp, name string,
 		needle = regexp.Regexp(t)
 	default:
 		return glisp.SexpNull,
-			errors.New("1st argument of regexp.FindStringIndex should be a compiled regular expression")
+			errors.New(fmt.Sprintf("1st argument of %v should be a compiled regular expression", name))
 	}
 
-	loc := needle.FindStringIndex(haystack)
-
-	arr := make([]glisp.Sexp, len(loc))
-	for i := range arr {
-		arr[i] = glisp.Sexp(glisp.SexpInt(loc[i]))
+	switch name {
+	case "regexp-find":
+		str := needle.FindString(haystack)
+		return glisp.SexpStr(str), nil
+	case "regexp-find-index":
+		return regexpFindIndex(needle, haystack)
+	case "regexp-match":
+		matches := needle.MatchString(haystack)
+		return glisp.SexpBool(matches), nil
 	}
 
-	return glisp.SexpArray(arr), nil
+	return glisp.SexpNull, errors.New("unknown function")
 }
 
 func RegexpCompile(env *glisp.Glisp, name string,
@@ -60,20 +77,22 @@ func RegexpCompile(env *glisp.Glisp, name string,
 		re = string(t)
 	default:
 		return glisp.SexpNull,
-			errors.New("argument of regexp.Compile should be a string")
+			errors.New("argument of regexp-compile should be a string")
 	}
 
 	r, err := regexp.Compile(re)
 
 	if err != nil {
 		return glisp.SexpNull, errors.New(
-			fmt.Sprintf("error during regexp.Compile: '%v'", err))
+			fmt.Sprintf("error during regexp-compile: '%v'", err))
 	}
 
 	return glisp.Sexp(SexpRegexp(*r)), nil
 }
 
 func ImportRegex(env *glisp.Glisp) {
-	env.AddFunction("regexp.Compile", RegexpCompile)
-	env.AddFunction("regexp.FindStringIndex", RegexpFindStringIndex)
+	env.AddFunction("regexp-compile", RegexpCompile)
+	env.AddFunction("regexp-find-index", RegexpFind)
+	env.AddFunction("regexp-find", RegexpFind)
+	env.AddFunction("regexp-match", RegexpFind)
 }
