@@ -59,6 +59,29 @@ func NewGlisp() *Glisp {
 	return env
 }
 
+func (env *Glisp) Clone() *Glisp {
+	dupenv := new(Glisp)
+
+	dupenv.datastack = env.datastack.Clone()
+	dupenv.scopestack = env.scopestack.Clone()
+	dupenv.addrstack = env.addrstack.Clone()
+
+	dupenv.builtins = env.builtins
+	dupenv.macros = env.macros
+	dupenv.symtable = env.symtable
+	dupenv.revsymtable = env.revsymtable
+	dupenv.nextsymbol = env.nextsymbol
+	dupenv.before = env.before
+	dupenv.after = env.after
+
+	dupenv.scopestack.Push(env.scopestack.elements[0])
+
+	dupenv.mainfunc = MakeFunction("__main", 0, false, make([]Instruction, 0))
+	dupenv.curfunc = dupenv.mainfunc
+	dupenv.pc = 0
+	return dupenv
+}
+
 func (env *Glisp) Duplicate() *Glisp {
 	dupenv := new(Glisp)
 	dupenv.datastack = NewStack(DataStackSize)
@@ -130,6 +153,7 @@ func (env *Glisp) CallFunction(function SexpFunction, nargs int) error {
 		}
 		prehook(env, function.name, expressions)
 	}
+
 	if function.varargs {
 		err := env.wrangleOptargs(function.nargs, nargs)
 		if err != nil {
@@ -141,10 +165,15 @@ func (env *Glisp) CallFunction(function SexpFunction, nargs int) error {
 				function.name, function.nargs, nargs))
 	}
 
+	if function.closeScope != nil {
+		function.closeScope.PushAllTo(env.scopestack)
+	}
+
 	env.addrstack.PushAddr(env.curfunc, env.pc+1)
 	env.scopestack.PushScope()
-	env.pc = 0
 	env.curfunc = function
+	env.pc = 0
+
 	return nil
 }
 
@@ -156,12 +185,30 @@ func (env *Glisp) ReturnFromFunction() error {
 		}
 		posthook(env, env.curfunc.name, retval)
 	}
+
+	cScope := env.curfunc.closeScope
+
 	var err error
 	env.curfunc, env.pc, err = env.addrstack.PopAddr()
 	if err != nil {
 		return err
 	}
-	return env.scopestack.PopScope()
+	err = env.scopestack.PopScope()
+	if err != nil {
+		return err
+	}
+
+	if cScope != nil {
+		// remove off the closure scope
+		for i := 0; i < cScope.Top()+1; i++ {
+			err = env.scopestack.PopScope()
+			if err != nil {
+				return err
+			}
+		}
+
+	}
+	return nil
 }
 
 func (env *Glisp) CallUserFunction(
@@ -182,7 +229,6 @@ func (env *Glisp) CallUserFunction(
 	}
 
 	env.addrstack.PushAddr(env.curfunc, env.pc+1)
-
 	env.curfunc = function
 	env.pc = -1
 
@@ -337,14 +383,18 @@ func (env *Glisp) Apply(fun SexpFunction, args []Sexp) (Sexp, error) {
 	if fun.user {
 		return fun.userfun(env, fun.name, args)
 	}
+
 	env.pc = -2
 	for _, expr := range args {
 		env.datastack.PushExpr(expr)
 	}
+
+	//log.Print("Apply Calling ", fun, " with ", len(args))
 	err := env.CallFunction(fun, len(args))
 	if err != nil {
 		return SexpNull, err
 	}
+
 	return env.Run()
 }
 

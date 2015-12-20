@@ -78,9 +78,9 @@ func buildSexpFun(env *Glisp, name string, funcargs SexpArray,
 	varargs := false
 	nargs := len(funcargs)
 
-	if len(argsyms) >= 2 && argsyms[len(argsyms) - 2].name == "&" {
-		argsyms[len(argsyms) - 2] = argsyms[len(argsyms) - 1]
-		argsyms = argsyms[0 : len(argsyms) - 1]
+	if len(argsyms) >= 2 && argsyms[len(argsyms)-2].name == "&" {
+		argsyms[len(argsyms)-2] = argsyms[len(argsyms)-1]
+		argsyms = argsyms[0 : len(argsyms)-1]
 		varargs = true
 		nargs = len(argsyms) - 1
 	}
@@ -117,7 +117,7 @@ func (gen *Generator) GenerateFn(args []Sexp) error {
 	if err != nil {
 		return err
 	}
-	gen.AddInstruction(PushInstr{sfun})
+	gen.AddInstruction(PushInstrClosure{sfun})
 
 	return nil
 }

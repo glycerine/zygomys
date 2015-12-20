@@ -2,6 +2,7 @@ package glisp
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
 )
 
@@ -216,7 +217,7 @@ func ParseExpression(parser *Parser) (Sexp, error) {
 	case TokenEnd:
 		return SexpEnd, nil
 	}
-	return SexpNull, errors.New("Invalid syntax")
+	return SexpNull, errors.New(fmt.Sprint("Invalid syntax, didn't know what to do with ", tok.typ, " ", tok))
 }
 
 func ParseTokens(env *Glisp, lexer *Lexer) ([]Sexp, error) {

@@ -1,8 +1,8 @@
 package glispext
 
 import (
-	"github.com/zhemao/glisp/interpreter"
 	"errors"
+	"github.com/zhemao/glisp/interpreter"
 )
 
 type SexpCoroutine struct {
@@ -14,7 +14,7 @@ func (coro SexpCoroutine) SexpString() string {
 }
 
 func StartCoroutineFunction(env *glisp.Glisp, name string,
-		args []glisp.Sexp) (glisp.Sexp, error) {
+	args []glisp.Sexp) (glisp.Sexp, error) {
 	switch t := args[0].(type) {
 	case SexpCoroutine:
 		go t.env.Run()
@@ -25,7 +25,7 @@ func StartCoroutineFunction(env *glisp.Glisp, name string,
 }
 
 func CreateCoroutineMacro(env *glisp.Glisp, name string,
-		args []glisp.Sexp) (glisp.Sexp, error) {
+	args []glisp.Sexp) (glisp.Sexp, error) {
 	coroenv := env.Duplicate()
 	err := coroenv.LoadExpressions(args)
 	if err != nil {

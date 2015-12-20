@@ -2,6 +2,7 @@ package glisp
 
 import (
 	"errors"
+	"fmt"
 )
 
 type StackElem interface {
@@ -20,6 +21,33 @@ func NewStack(size int) *Stack {
 	return stack
 }
 
+func (stack *Stack) Clone() *Stack {
+	ret := &Stack{}
+	ret.tos = stack.tos
+	ret.elements = make([]StackElem, len(stack.elements))
+	for i := range stack.elements {
+		ret.elements[i] = stack.elements[i]
+	}
+
+	return ret
+}
+
+func (stack *Stack) Top() int {
+	return stack.tos
+}
+
+func (stack *Stack) PushAllTo(target *Stack) int {
+	if stack.tos < 0 {
+		return 0
+	}
+
+	for _, v := range stack.elements[0 : stack.tos+1] {
+		target.Push(v)
+	}
+
+	return stack.tos + 1
+}
+
 func (stack *Stack) IsEmpty() bool {
 	return stack.tos == -1
 }
@@ -36,7 +64,7 @@ func (stack *Stack) Push(elem StackElem) {
 
 func (stack *Stack) Get(n int) (StackElem, error) {
 	if stack.tos-n < 0 {
-		return nil, errors.New("invalid stack access")
+		return nil, errors.New(fmt.Sprint("invalid stack access asked for ", n, " Top was ", stack.tos))
 	}
 	return stack.elements[stack.tos-n], nil
 }

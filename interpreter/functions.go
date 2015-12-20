@@ -498,7 +498,7 @@ func MapFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	case SexpFunction:
 		fun = e
 	default:
-		return SexpNull, errors.New("first argument must be function")
+		return SexpNull, errors.New(fmt.Sprint("first argument must be function had", fmt.Sprintf("%T", e), "  ", e))
 	}
 
 	switch e := args[1].(type) {
@@ -562,10 +562,10 @@ func SymnumFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	return SexpNull, errors.New("argument must be symbol")
 }
 
-var MissingFunction = SexpFunction{"__missing", true, 0, false, nil, nil}
+var MissingFunction = SexpFunction{"__missing", true, 0, false, nil, nil, nil}
 
 func MakeFunction(name string, nargs int, varargs bool,
-		fun GlispFunction) SexpFunction {
+	fun GlispFunction) SexpFunction {
 	var sfun SexpFunction
 	sfun.name = name
 	sfun.user = false

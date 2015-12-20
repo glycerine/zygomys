@@ -1,9 +1,9 @@
 package glispext
 
 import (
-	"github.com/zhemao/glisp/interpreter"
 	"errors"
 	"fmt"
+	"github.com/zhemao/glisp/interpreter"
 )
 
 type SexpChannel chan glisp.Sexp
@@ -13,7 +13,7 @@ func (ch SexpChannel) SexpString() string {
 }
 
 func MakeChanFunction(env *glisp.Glisp, name string,
-		args []glisp.Sexp) (glisp.Sexp, error) {
+	args []glisp.Sexp) (glisp.Sexp, error) {
 	if len(args) > 1 {
 		return glisp.SexpNull, glisp.WrongNargs
 	}
@@ -33,7 +33,7 @@ func MakeChanFunction(env *glisp.Glisp, name string,
 }
 
 func ChanTxFunction(env *glisp.Glisp, name string,
-		args []glisp.Sexp) (glisp.Sexp, error) {
+	args []glisp.Sexp) (glisp.Sexp, error) {
 	if len(args) < 1 {
 		return glisp.SexpNull, glisp.WrongNargs
 	}

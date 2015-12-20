@@ -32,8 +32,7 @@ func (stack *Stack) LookupSymbol(sym SexpSymbol) (Sexp, error) {
 			}
 		}
 	}
-	errmsg := fmt.Sprintf("symbol %s not found", sym.name)
-	return SexpNull, errors.New(errmsg)
+	return SexpNull, errors.New(fmt.Sprint("symbol ", sym, " not found"))
 }
 
 func (stack *Stack) BindSymbol(sym SexpSymbol, expr Sexp) error {

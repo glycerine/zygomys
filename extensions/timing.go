@@ -1,10 +1,10 @@
 package glispext
 
 import (
-	"time"
-	"github.com/zhemao/glisp/interpreter"
 	"errors"
 	"fmt"
+	"github.com/zhemao/glisp/interpreter"
+	"time"
 )
 
 type SexpTime time.Time
@@ -14,12 +14,12 @@ func (t SexpTime) SexpString() string {
 }
 
 func TimeFunction(env *glisp.Glisp, name string,
-		args []glisp.Sexp) (glisp.Sexp, error) {
+	args []glisp.Sexp) (glisp.Sexp, error) {
 	return SexpTime(time.Now()), nil
 }
 
 func TimeitFunction(env *glisp.Glisp, name string,
-		args []glisp.Sexp) (glisp.Sexp, error) {
+	args []glisp.Sexp) (glisp.Sexp, error) {
 	if len(args) != 1 {
 		return glisp.SexpNull, glisp.WrongNargs
 	}
@@ -52,7 +52,7 @@ func TimeitFunction(env *glisp.Glisp, name string,
 	fmt.Printf("ran %d iterations in %f seconds\n",
 		iterations, elapsed.Seconds())
 	fmt.Printf("average %f seconds per run\n",
-		elapsed.Seconds() / float64(iterations))
+		elapsed.Seconds()/float64(iterations))
 
 	return glisp.SexpNull, nil
 }

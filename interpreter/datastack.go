@@ -30,7 +30,7 @@ func (stack *Stack) GetExpressions(n int) ([]Sexp, error) {
 	}
 	arr := make([]Sexp, n)
 	for i := 0; i < n; i++ {
-		arr[i] = stack.elements[stack_start + i].(DataStackElem).expr
+		arr[i] = stack.elements[stack_start+i].(DataStackElem).expr
 	}
 	return arr, nil
 }
@@ -53,7 +53,7 @@ func (stack *Stack) GetExpr(n int) (Sexp, error) {
 }
 
 func (stack *Stack) PrintStack() {
-	fmt.Printf("\t%d elements\n", stack.tos + 1)
+	fmt.Printf("\t%d elements\n", stack.tos+1)
 	for i := 0; i <= stack.tos; i++ {
 		expr := stack.elements[i].(DataStackElem).expr
 		fmt.Println("\t" + expr.SexpString())

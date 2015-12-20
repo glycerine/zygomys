@@ -152,12 +152,13 @@ func (sym SexpSymbol) Number() int {
 }
 
 type SexpFunction struct {
-	name    string
-	user    bool
-	nargs   int
-	varargs bool
-	fun     GlispFunction
-	userfun GlispUserFunction
+	name       string
+	user       bool
+	nargs      int
+	varargs    bool
+	fun        GlispFunction
+	userfun    GlispUserFunction
+	closeScope *Stack
 }
 
 func (sf SexpFunction) SexpString() string {

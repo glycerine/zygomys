@@ -72,6 +72,50 @@ func (b BranchInstr) Execute(env *Glisp) error {
 	return nil
 }
 
+type PushInstrClosure struct {
+	expr SexpFunction
+}
+
+func (p PushInstrClosure) InstrString() string {
+	return "pushC " + p.expr.SexpString()
+}
+
+func (p PushInstrClosure) Execute(env *Glisp) error {
+	if p.expr.fun != nil {
+		p.expr.closeScope = NewStack(ScopeStackSize)
+
+		p.expr.closeScope.PushScope()
+
+		var sym SexpSymbol
+		var exp Sexp
+		var err error
+		for _, v := range p.expr.fun {
+
+			switch it := v.(type) {
+			case GetInstr:
+				sym = it.sym
+			case PutInstr:
+				sym = it.sym
+			case CallInstr:
+				sym = it.sym
+			default:
+				continue
+			}
+
+			exp, err = env.scopestack.LookupSymbol(sym)
+			if err == nil {
+				p.expr.closeScope.BindSymbol(sym, exp)
+			}
+		}
+	} else {
+		p.expr.closeScope = env.scopestack.Clone() // for a non script fuction I have no idea what it accesses, so we clone the whole thing
+	}
+
+	env.datastack.PushExpr(p.expr)
+	env.pc++
+	return nil
+}
+
 type PushInstr struct {
 	expr Sexp
 }

@@ -2,8 +2,8 @@ package glisp
 
 import (
 	"errors"
-	"hash/fnv"
 	"fmt"
+	"hash/fnv"
 )
 
 func HashExpression(expr Sexp) (int, error) {
@@ -28,14 +28,14 @@ func HashExpression(expr Sexp) (int, error) {
 func MakeHash(args []Sexp) (SexpHash, error) {
 	hash := SexpHash(make(map[int][]SexpPair))
 
-	if len(args) % 2 != 0 {
+	if len(args)%2 != 0 {
 		return SexpHash(nil),
 			errors.New("hash requires even number of arguments")
 	}
 
 	for i := 0; i < len(args); i += 2 {
 		key := args[i]
-		val := args[i + 1]
+		val := args[i+1]
 		err := HashSet(hash, key, val)
 		if err != nil {
 			return hash, err
