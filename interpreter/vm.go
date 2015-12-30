@@ -102,7 +102,7 @@ func (p PushInstrClosure) Execute(env *Glisp) error {
 				continue
 			}
 
-			exp, err = env.scopestack.LookupSymbol(sym)
+			exp, err = env.scopestack.LookupSymbolNonGlobal(sym)
 			if err == nil {
 				p.expr.closeScope.BindSymbol(sym, exp)
 			}
