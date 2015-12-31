@@ -68,9 +68,9 @@
 
 (drainStore)
 
+(def a 1)
 (defn enclosure []
-  (let* [a 1
-         func1 (fn [thunk] (let [a 2] (thunk)))
+  (let [func1 (fn [thunk] (let [a 2] (thunk)))
          func2 (fn [] (assert (= a 1)))]
     (func1 func2)))
 

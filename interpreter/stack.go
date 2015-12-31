@@ -77,3 +77,5 @@ func (stack *Stack) Pop() (StackElem, error) {
 	stack.tos--
 	return elem, nil
 }
+
+func (stack *Stack) IsStackElem() {}

@@ -17,6 +17,7 @@ type Glisp struct {
 	datastack   *Stack
 	scopestack  *Stack
 	addrstack   *Stack
+	stackstack  *Stack
 	symtable    map[string]int
 	revsymtable map[int]string
 	builtins    map[int]SexpFunction
@@ -32,12 +33,14 @@ type Glisp struct {
 const CallStackSize = 25
 const ScopeStackSize = 50
 const DataStackSize = 100
+const StackStackSize = 5
 
 func NewGlisp() *Glisp {
 	env := new(Glisp)
 	env.datastack = NewStack(DataStackSize)
 	env.scopestack = NewStack(ScopeStackSize)
 	env.scopestack.PushScope()
+	env.stackstack = NewStack(StackStackSize)
 	env.addrstack = NewStack(CallStackSize)
 	env.builtins = make(map[int]SexpFunction)
 	env.macros = make(map[int]SexpFunction)
@@ -63,6 +66,7 @@ func (env *Glisp) Clone() *Glisp {
 	dupenv := new(Glisp)
 
 	dupenv.datastack = env.datastack.Clone()
+	dupenv.stackstack = env.stackstack.Clone()
 	dupenv.scopestack = env.scopestack.Clone()
 	dupenv.addrstack = env.addrstack.Clone()
 
@@ -86,6 +90,7 @@ func (env *Glisp) Duplicate() *Glisp {
 	dupenv := new(Glisp)
 	dupenv.datastack = NewStack(DataStackSize)
 	dupenv.scopestack = NewStack(ScopeStackSize)
+	dupenv.stackstack = NewStack(StackStackSize)
 	dupenv.addrstack = NewStack(CallStackSize)
 	dupenv.builtins = env.builtins
 	dupenv.macros = env.macros
@@ -165,6 +170,14 @@ func (env *Glisp) CallFunction(function SexpFunction, nargs int) error {
 				function.name, function.nargs, nargs))
 	}
 
+	if env.scopestack.IsEmpty() {
+		panic("where's the global scope?")
+	}
+	globalScope := env.scopestack.elements[0]
+	env.stackstack.Push(env.scopestack)
+	env.scopestack = NewStack(ScopeStackSize)
+	env.scopestack.Push(globalScope)
+
 	if function.closeScope != nil {
 		function.closeScope.PushAllTo(env.scopestack)
 	}
@@ -186,28 +199,17 @@ func (env *Glisp) ReturnFromFunction() error {
 		posthook(env, env.curfunc.name, retval)
 	}
 
-	cScope := env.curfunc.closeScope
-
 	var err error
 	env.curfunc, env.pc, err = env.addrstack.PopAddr()
 	if err != nil {
 		return err
 	}
-	err = env.scopestack.PopScope()
+	scopestack, err := env.stackstack.Pop()
 	if err != nil {
 		return err
 	}
+	env.scopestack = scopestack.(*Stack)
 
-	if cScope != nil {
-		// remove off the closure scope
-		for i := 0; i < cScope.Top()+1; i++ {
-			err = env.scopestack.PopScope()
-			if err != nil {
-				return err
-			}
-		}
-
-	}
 	return nil
 }
 
