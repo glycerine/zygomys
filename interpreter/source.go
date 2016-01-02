@@ -51,6 +51,21 @@ func SourceFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	return SexpNull, nil
 }
 
-func (env *Glisp) ImportSource() {
-	env.AddFunction("source", SourceFunction)
+func (env *Glisp) ImportRequire() {
+	env.AddMacro("require", RequireMacro)
 }
+
+// (require path) avoids the need to put quotes around path
+func RequireMacro(env *Glisp, name string,
+	args []Sexp) (Sexp, error) {
+
+	if len(args) < 1 {
+		return SexpNull, fmt.Errorf("path to source missing. use: "+
+			"(require path-to-source)\n")
+	}
+	
+	// (source "path")
+	return MakeList([]Sexp{env.MakeSymbol("source"),
+		SexpStr(args[0].(SexpSymbol).name)}), nil
+}
+

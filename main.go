@@ -179,6 +179,7 @@ func runScript(env *glisp.Glisp, fname string) {
 func main() {
 	env := glisp.NewGlisp()
 	env.ImportEval()
+	env.ImportRequire()
 	glispext.ImportRandom(env)
 	glispext.ImportTime(env)
 	glispext.ImportChannels(env)
