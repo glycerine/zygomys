@@ -1,0 +1,16 @@
+
+; (println "Here in base ")
+
+(source-file "./tests/inc.g" "./tests/inc1.g")
+
+; (println "Calling function defined in inc.g")
+
+(assert (= (simple) "from include"))
+
+; (println "Calling function defined in inc1.g")
+
+(assert (= (simple1) "from include 1"))
+
+; (println (simple))
+; (println (simple1))
+

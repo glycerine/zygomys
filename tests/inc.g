@@ -1,0 +1,3 @@
+
+(defn simple [] "from include")
+
