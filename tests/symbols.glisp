@@ -1,0 +1,6 @@
+(assert (string? (symbol2string 'abc)))
+(assert (= "abc" (symbol2string 'abc)))
+
+(assert (symbol? (string2symbol "abc")))
+(assert (= 'abc  (string2symbol "abc")))
+
