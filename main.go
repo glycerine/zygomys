@@ -8,8 +8,8 @@ import (
 	"runtime/pprof"
 	"strings"
 
-	"github.com/zhemao/glisp/extensions"
-	"github.com/zhemao/glisp/interpreter"
+	"github.com/glycerine/glisp/extensions"
+	"github.com/glycerine/glisp/interpreter"
 )
 
 var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
@@ -119,6 +119,16 @@ func repl(env *glisp.Glisp) {
 			continue
 		}
 
+		if parts[0] == "source" {
+			if len(parts) < 2 {
+				fmt.Printf("bad source call: filename missing. use: source filename\n")
+				continue
+			}
+			runScript(env, parts[1])
+			continue
+		}
+
+		
 		expr, err := env.EvalString(line)
 		if err != nil {
 			fmt.Print(env.GetStackTrace(err))
@@ -136,14 +146,14 @@ func runScript(env *glisp.Glisp, fname string) {
 	file, err := os.Open(fname)
 	if err != nil {
 		fmt.Println(err)
-		os.Exit(-1)
+		return
 	}
 	defer file.Close()
 
 	err = env.LoadFile(file)
 	if err != nil {
 		fmt.Println(err)
-		os.Exit(-1)
+		return
 	}
 
 	_, err = env.Run()

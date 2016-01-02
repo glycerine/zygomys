@@ -695,4 +695,5 @@ var BuiltinFunctions = map[string]GlispUserFunction{
 	"hash":        ConstructorFunction,
 	"symnum":      SymnumFunction,
 	"source-file": SourceFileFunction,
+	"source":      SourceFunction,
 }

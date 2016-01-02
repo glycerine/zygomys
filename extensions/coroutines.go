@@ -2,7 +2,7 @@ package glispext
 
 import (
 	"errors"
-	"github.com/zhemao/glisp/interpreter"
+	"github.com/glycerine/glisp/interpreter"
 )
 
 type SexpCoroutine struct {

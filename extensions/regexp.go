@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"regexp"
 
-	glisp "github.com/zhemao/glisp/interpreter"
+	glisp "github.com/glycerine/glisp/interpreter"
 )
 
 type SexpRegexp regexp.Regexp
