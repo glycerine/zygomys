@@ -696,4 +696,30 @@ var BuiltinFunctions = map[string]GlispUserFunction{
 	"symnum":      SymnumFunction,
 	"source-file": SourceFileFunction,
 	"source":      SourceFunction,
+	"str2sym":     Str2SymFunction,
+	"sym2str":     Sym2StrFunction,
+}
+
+func Sym2StrFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
+	if len(args) != 1 {
+		return SexpNull, WrongNargs
+	}
+
+	switch t := args[0].(type) {
+	case SexpSymbol:
+		return SexpStr(t.name), nil
+	}
+	return SexpNull, errors.New("argument must be symbol")
+}
+
+func Str2SymFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
+	if len(args) != 1 {
+		return SexpNull, WrongNargs
+	}
+
+	switch t := args[0].(type) {
+	case SexpStr:
+		return env.MakeSymbol(string(t)), nil
+	}
+	return SexpNull, errors.New("argument must be string")
 }
