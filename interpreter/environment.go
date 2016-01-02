@@ -249,6 +249,53 @@ func (env *Glisp) CallUserFunction(
 	return nil
 }
 
+// SourceExpressions, this should be called from a user func context
+func (env *Glisp) SourceExpressions(expressions []Sexp) error {
+	gen := NewGenerator(env)
+	if !env.ReachedEnd() {
+		gen.AddInstruction(PopInstr(0))
+	}
+	err := gen.GenerateBegin(expressions)
+	if err != nil {
+		return err
+	}
+
+	curfunc := env.curfunc
+	curpc := env.pc
+
+	env.curfunc = MakeFunction("__source", 0, false, gen.instructions)
+	env.pc = 0
+
+	env.datastack.PushExpr(SexpNull)
+
+	if _, err = env.Run(); err != nil {
+		return err
+	}
+
+	env.datastack.PopExpr()
+
+	env.pc = curpc
+	env.curfunc = curfunc
+
+	return nil
+}
+
+func (env *Glisp) SourceStream(stream io.RuneReader) error {
+	lexer := NewLexerFromStream(stream)
+
+	expressions, err := ParseTokens(env, lexer)
+	if err != nil {
+		return errors.New(fmt.Sprintf(
+			"Error on line %d: %v\n", lexer.Linenum(), err))
+	}
+
+	return env.SourceExpressions(expressions)
+}
+
+func (env *Glisp) SourceFile(file *os.File) error {
+	return env.SourceStream(bufio.NewReader(file))
+}
+
 func (env *Glisp) LoadExpressions(expressions []Sexp) error {
 	gen := NewGenerator(env)
 	if !env.ReachedEnd() {

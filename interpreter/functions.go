@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"os"
 )
 
 var WrongNargs error = errors.New("wrong number of arguments")
@@ -562,6 +563,59 @@ func SymnumFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	return SexpNull, errors.New("argument must be symbol")
 }
 
+func SourceFileFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
+	if len(args) < 1 {
+		return SexpNull, WrongNargs
+	}
+
+	var sourceItem func(item Sexp) error
+
+	sourceItem = func(item Sexp) error {
+		switch t := item.(type) {
+		case SexpArray:
+			for _, v := range t {
+				if err := sourceItem(v); err != nil {
+					return err
+				}
+			}
+		case SexpPair:
+			expr := item
+			for expr != SexpNull {
+				list := expr.(SexpPair)
+				if err := sourceItem(list.head); err != nil {
+					return err
+				}
+				expr = list.tail
+			}
+		case SexpStr:
+			var f *os.File
+			var err error
+
+			if f, err = os.Open(string(t)); err != nil {
+				return err
+			}
+
+			if err = env.SourceFile(f); err != nil {
+				return err
+			}
+
+			f.Close()
+		default:
+			return fmt.Errorf("%v: Expected `string`, `list`, `array` given type %T val %v", name, item, item)
+		}
+
+		return nil
+	}
+
+	for _, v := range args {
+		if err := sourceItem(v); err != nil {
+			return SexpNull, err
+		}
+	}
+
+	return SexpNull, nil
+}
+
 var MissingFunction = SexpFunction{"__missing", true, 0, false, nil, nil, nil}
 
 func MakeFunction(name string, nargs int, varargs bool,
@@ -584,60 +638,61 @@ func MakeUserFunction(name string, ufun GlispUserFunction) SexpFunction {
 }
 
 var BuiltinFunctions = map[string]GlispUserFunction{
-	"<":          CompareFunction,
-	">":          CompareFunction,
-	"<=":         CompareFunction,
-	">=":         CompareFunction,
-	"=":          CompareFunction,
-	"not=":       CompareFunction,
-	"sll":        BinaryIntFunction,
-	"sra":        BinaryIntFunction,
-	"srl":        BinaryIntFunction,
-	"mod":        BinaryIntFunction,
-	"+":          NumericFunction,
-	"-":          NumericFunction,
-	"*":          NumericFunction,
-	"/":          NumericFunction,
-	"bit-and":    BitwiseFunction,
-	"bit-or":     BitwiseFunction,
-	"bit-xor":    BitwiseFunction,
-	"bit-not":    ComplementFunction,
-	"read":       ReadFunction,
-	"cons":       ConsFunction,
-	"first":      FirstFunction,
-	"rest":       RestFunction,
-	"car":        FirstFunction,
-	"cdr":        RestFunction,
-	"list?":      TypeQueryFunction,
-	"null?":      TypeQueryFunction,
-	"array?":     TypeQueryFunction,
-	"hash?":      TypeQueryFunction,
-	"number?":    TypeQueryFunction,
-	"int?":       TypeQueryFunction,
-	"float?":     TypeQueryFunction,
-	"char?":      TypeQueryFunction,
-	"symbol?":    TypeQueryFunction,
-	"string?":    TypeQueryFunction,
-	"zero?":      TypeQueryFunction,
-	"empty?":     TypeQueryFunction,
-	"println":    PrintFunction,
-	"print":      PrintFunction,
-	"not":        NotFunction,
-	"apply":      ApplyFunction,
-	"map":        MapFunction,
-	"make-array": MakeArrayFunction,
-	"aget":       ArrayAccessFunction,
-	"aset!":      ArrayAccessFunction,
-	"sget":       SgetFunction,
-	"hget":       HashAccessFunction,
-	"hset!":      HashAccessFunction,
-	"hdel!":      HashAccessFunction,
-	"slice":      SliceFunction,
-	"len":        LenFunction,
-	"append":     AppendFunction,
-	"concat":     ConcatFunction,
-	"array":      ConstructorFunction,
-	"list":       ConstructorFunction,
-	"hash":       ConstructorFunction,
-	"symnum":     SymnumFunction,
+	"<":           CompareFunction,
+	">":           CompareFunction,
+	"<=":          CompareFunction,
+	">=":          CompareFunction,
+	"=":           CompareFunction,
+	"not=":        CompareFunction,
+	"sll":         BinaryIntFunction,
+	"sra":         BinaryIntFunction,
+	"srl":         BinaryIntFunction,
+	"mod":         BinaryIntFunction,
+	"+":           NumericFunction,
+	"-":           NumericFunction,
+	"*":           NumericFunction,
+	"/":           NumericFunction,
+	"bit-and":     BitwiseFunction,
+	"bit-or":      BitwiseFunction,
+	"bit-xor":     BitwiseFunction,
+	"bit-not":     ComplementFunction,
+	"read":        ReadFunction,
+	"cons":        ConsFunction,
+	"first":       FirstFunction,
+	"rest":        RestFunction,
+	"car":         FirstFunction,
+	"cdr":         RestFunction,
+	"list?":       TypeQueryFunction,
+	"null?":       TypeQueryFunction,
+	"array?":      TypeQueryFunction,
+	"hash?":       TypeQueryFunction,
+	"number?":     TypeQueryFunction,
+	"int?":        TypeQueryFunction,
+	"float?":      TypeQueryFunction,
+	"char?":       TypeQueryFunction,
+	"symbol?":     TypeQueryFunction,
+	"string?":     TypeQueryFunction,
+	"zero?":       TypeQueryFunction,
+	"empty?":      TypeQueryFunction,
+	"println":     PrintFunction,
+	"print":       PrintFunction,
+	"not":         NotFunction,
+	"apply":       ApplyFunction,
+	"map":         MapFunction,
+	"make-array":  MakeArrayFunction,
+	"aget":        ArrayAccessFunction,
+	"aset!":       ArrayAccessFunction,
+	"sget":        SgetFunction,
+	"hget":        HashAccessFunction,
+	"hset!":       HashAccessFunction,
+	"hdel!":       HashAccessFunction,
+	"slice":       SliceFunction,
+	"len":         LenFunction,
+	"append":      AppendFunction,
+	"concat":      ConcatFunction,
+	"array":       ConstructorFunction,
+	"list":        ConstructorFunction,
+	"hash":        ConstructorFunction,
+	"symnum":      SymnumFunction,
+	"source-file": SourceFileFunction,
 }
