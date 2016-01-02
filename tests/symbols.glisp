@@ -1,6 +1,6 @@
-(assert (string? (symbol2string 'abc)))
-(assert (= "abc" (symbol2string 'abc)))
+(assert (string? (sym2str 'abc)))
+(assert (= "abc" (sym2str 'abc)))
 
-(assert (symbol? (string2symbol "abc")))
-(assert (= 'abc  (string2symbol "abc")))
+(assert (symbol? (str2sym "abc")))
+(assert (= 'abc  (str2sym "abc")))
 
