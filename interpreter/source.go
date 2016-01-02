@@ -38,9 +38,11 @@ func SourceFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		return SexpNull, WrongNargs
 	}
 
+	env2 := env.Duplicate()
+	
 	switch t := args[0].(type) {
 	case SexpStr:		
-		RunScript(env, string(t))
+		RunScript(env2, string(t))
 	default:
 		return SexpNull, errors.New(
 			fmt.Sprintf("argument to %s must be string: the path to source", name))
