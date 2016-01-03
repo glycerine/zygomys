@@ -110,15 +110,6 @@ func Repl(env *Glisp, cfg *GlispConfig) {
 			continue
 		}
 
-		if parts[0] == "source" {
-			if len(parts) < 2 {
-				fmt.Printf("bad source call: filename missing. use: source filename\n")
-				continue
-			}
-			runScript(env, parts[1], cfg)
-			continue
-		}
-
 		expr, err := env.EvalString(line)
 		if err != nil {
 			fmt.Print(env.GetStackTrace(err))

@@ -371,7 +371,8 @@ func ReadFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	}
 	lexer := NewLexerFromStream(bytes.NewBuffer([]byte(str)))
 	parser := Parser{lexer, env}
-	return ParseExpression(&parser)
+	exp, err, _ := ParseExpression(&parser, 0)
+	return exp, err
 }
 
 func EvalFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
@@ -625,7 +626,7 @@ func SourceFileFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	return SexpNull, nil
 }
 
-var MissingFunction = SexpFunction{"__missing", true, 0, false, nil, nil, nil}
+var MissingFunction = SexpFunction{name: "__missing", user: true}
 
 func MakeFunction(name string, nargs int, varargs bool,
 	fun GlispFunction) SexpFunction {

@@ -159,10 +159,12 @@ type SexpFunction struct {
 	fun        GlispFunction
 	userfun    GlispUserFunction
 	closeScope *Stack
+	sourcecode []byte
 }
 
 func (sf SexpFunction) SexpString() string {
-	return "fn [" + sf.name + "]"
+	//return "fn [" + sf.name + "]"
+	return string(sf.sourcecode)
 }
 
 func IsTruthy(expr Sexp) bool {

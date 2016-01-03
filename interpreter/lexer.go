@@ -94,6 +94,13 @@ type Lexer struct {
 	stream   io.RuneReader
 	linenum  int
 	finished bool
+
+	History *bytes.Buffer
+}
+
+// let the parser track the source code for function definitions
+func (lex *Lexer) HistoryPos() int {
+	return len(lex.History.Bytes())
 }
 
 var (
@@ -349,6 +356,7 @@ func (lexer *Lexer) PeekNextToken() (Token, error) {
 			return Token{TokenEnd, ""}, nil
 		}
 
+		lexer.History.WriteRune(r)
 		err = lexer.LexNextRune(r)
 		if err != nil {
 			return Token{TokenEnd, ""}, err
@@ -376,6 +384,7 @@ func NewLexerFromStream(stream io.RuneReader) *Lexer {
 		stream:   stream,
 		linenum:  1,
 		finished: false,
+		History:  new(bytes.Buffer),
 	}
 }
 
