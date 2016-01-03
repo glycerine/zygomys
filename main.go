@@ -16,14 +16,11 @@ func usage(myflags *flag.FlagSet) {
 }
 
 func main() {
-	myflags := flag.NewFlagSet("glisp", flag.ExitOnError)
-	cfg := &glisp.GlispConfig{}
-	cfg.DefineFlags(myflags)
-	//fmt.Printf("Args = %#v\n", os.Args)
-	err := myflags.Parse(os.Args[1:])
+	cfg := glisp.NewGlispConfig("glisp")
+	cfg.DefineFlags()
+	err := cfg.Flags.Parse(os.Args[1:])
 	if err == flag.ErrHelp {
-		//fmt.Printf("\n ErrHelp returned from Parse()\n")
-		usage(myflags)
+		usage(cfg.Flags)
 	}
 	
 	if err != nil {
@@ -32,7 +29,7 @@ func main() {
 	err = cfg.ValidateConfig()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "glisp command line error: '%v'\n", err)
-		usage(myflags)
+		usage(cfg.Flags)
 	}
 
 	registerExts := func(env *glisp.Glisp) {
@@ -42,5 +39,5 @@ func main() {
 		glispext.ImportCoroutines(env)
 		glispext.ImportRegex(env)
 	}
-	glisp.ReplMain(cfg, myflags, registerExts)
+	glisp.ReplMain(cfg, registerExts)
 }

@@ -3,7 +3,6 @@ package glisp
 
 import (
 	"bufio"
-	"flag"
 	"fmt"
 	"os"
 	"runtime/pprof"
@@ -169,7 +168,7 @@ func runScript(env *Glisp, fname string, cfg *GlispConfig) {
 }
 
 // like main() for a standalone repl, now in library
-func ReplMain(cfg *GlispConfig, myflags *flag.FlagSet, registerExtsFunc func(env *Glisp)) {
+func ReplMain(cfg *GlispConfig, registerExtsFunc func(env *Glisp)) {
 	env := NewGlisp()
 	env.ImportEval()
 	env.ImportRequire()
@@ -197,7 +196,7 @@ func ReplMain(cfg *GlispConfig, myflags *flag.FlagSet, registerExtsFunc func(env
 		env.AddPostHook(CountPostHook)
 	}
 
-	args := myflags.Args()
+	args := cfg.Flags.Args()
 	if len(args) > 0 {
 		runScript(env, args[0], cfg)
 	} else {
