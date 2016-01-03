@@ -12,7 +12,7 @@ func RequireMacro(env *Glisp, name string,
 
 	if len(args) < 1 {
 		return SexpNull, fmt.Errorf("path to source missing. use: " +
-			"(require path-to-source)\n")
+			"(req path-to-source) ;;no deep to quote the path\n")
 	}
 
 	// (source "path")
