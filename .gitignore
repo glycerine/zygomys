@@ -1,3 +1,4 @@
 /glisp
 *.prof
 *.mprof
+*~
