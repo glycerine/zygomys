@@ -427,7 +427,7 @@ func TypeQueryFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 }
 
 func PrintFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
-	if len(args) != 1 {
+	if len(args) < 1 {
 		return SexpNull, WrongNargs
 	}
 
@@ -445,6 +445,16 @@ func PrintFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		fmt.Println(str)
 	case "print":
 		fmt.Print(str)
+	case "printf":
+		if len(args) == 1 {
+			fmt.Printf(str)
+		} else {
+			ar := make([]interface{}, len(args)-1)
+			for i := 0; i < len(ar); i++ {
+				ar[i] = args[i+1]
+			}
+			fmt.Printf(str, ar...)
+		}
 	}
 
 	return SexpNull, nil
@@ -594,12 +604,11 @@ func SourceFileFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 			if f, err = os.Open(string(t)); err != nil {
 				return err
 			}
-
+			defer f.Close()
 			if err = env.SourceFile(f); err != nil {
 				return err
 			}
 
-			f.Close()
 		default:
 			return fmt.Errorf("%v: Expected `string`, `list`, `array` given type %T val %v", name, item, item)
 		}
@@ -676,6 +685,7 @@ var BuiltinFunctions = map[string]GlispUserFunction{
 	"empty?":     TypeQueryFunction,
 	"println":    PrintFunction,
 	"print":      PrintFunction,
+	"printf":     PrintFunction,
 	"not":        NotFunction,
 	"apply":      ApplyFunction,
 	"map":        MapFunction,
