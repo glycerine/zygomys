@@ -85,10 +85,11 @@ func processDumpCommand(env *Glisp, args []string) {
 }
 
 func Repl(env *Glisp, cfg *GlispConfig) {
-	fmt.Printf("glisp version %s\n", Version())
-	//fmt.Printf("glispext version %s\n", glispext.Version())
 	reader := bufio.NewReader(os.Stdin)
 
+	fmt.Printf("glisp version %s\n", Version())
+	//fmt.Printf("glispext version %s\n", glispext.Version())
+	
 	for {
 		line, err := getExpression(reader)
 		if err != nil {
@@ -168,19 +169,12 @@ func runScript(env *Glisp, fname string, cfg *GlispConfig) {
 }
 
 // like main() for a standalone repl, now in library
-func ReplMain(cfg *GlispConfig) {
+func ReplMain(cfg *GlispConfig, myflags *flag.FlagSet, registerExtsFunc func(env *Glisp)) {
 	env := NewGlisp()
 	env.ImportEval()
 	env.ImportRequire()
-	/*
-	glispext.ImportRandom(env)
-	glispext.ImportTime(env)
-	glispext.ImportChannels(env)
-	glispext.ImportCoroutines(env)
-	glispext.ImportRegex(env)
-*/
+	registerExtsFunc(env)
 	
-	flag.Parse()
 	if cfg.CpuProfile != "" {
 		f, err := os.Create(cfg.CpuProfile)
 		if err != nil {
@@ -203,7 +197,7 @@ func ReplMain(cfg *GlispConfig) {
 		env.AddPostHook(CountPostHook)
 	}
 
-	args := flag.Args()
+	args := myflags.Args()
 	if len(args) > 0 {
 		runScript(env, args[0], cfg)
 	} else {
