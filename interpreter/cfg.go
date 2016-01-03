@@ -6,11 +6,12 @@ import (
 
 // configure a glisp repl
 type GlispConfig struct {
-	CpuProfile string
-	MemProfile    string
-	ExitOnFailure bool
-	CountFuncCalls bool
-	Flags *flag.FlagSet
+	CpuProfile        string
+	MemProfile        string
+	ExitOnFailure     bool
+	CountFuncCalls    bool
+	Flags             *flag.FlagSet
+	ExtensionsVersion string
 }
 
 func NewGlispConfig(cmdname string) *GlispConfig {

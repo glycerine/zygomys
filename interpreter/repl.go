@@ -87,8 +87,8 @@ func Repl(env *Glisp, cfg *GlispConfig) {
 	reader := bufio.NewReader(os.Stdin)
 
 	fmt.Printf("glisp version %s\n", Version())
-	//fmt.Printf("glispext version %s\n", glispext.Version())
-	
+	fmt.Printf("glispext version %s\n", cfg.ExtensionsVersion)
+
 	for {
 		line, err := getExpression(reader)
 		if err != nil {
@@ -119,7 +119,6 @@ func Repl(env *Glisp, cfg *GlispConfig) {
 			continue
 		}
 
-		
 		expr, err := env.EvalString(line)
 		if err != nil {
 			fmt.Print(env.GetStackTrace(err))
@@ -173,7 +172,7 @@ func ReplMain(cfg *GlispConfig, registerExtsFunc func(env *Glisp)) {
 	env.ImportEval()
 	env.ImportRequire()
 	registerExtsFunc(env)
-	
+
 	if cfg.CpuProfile != "" {
 		f, err := os.Create(cfg.CpuProfile)
 		if err != nil {

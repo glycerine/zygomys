@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/glycerine/glisp/interpreter"
 	"github.com/glycerine/glisp/extensions"
+	"github.com/glycerine/glisp/interpreter"
 )
 
 func usage(myflags *flag.FlagSet) {
@@ -22,7 +22,7 @@ func main() {
 	if err == flag.ErrHelp {
 		usage(cfg.Flags)
 	}
-	
+
 	if err != nil {
 		panic(err)
 	}
@@ -39,5 +39,6 @@ func main() {
 		glispext.ImportCoroutines(env)
 		glispext.ImportRegex(env)
 	}
+	cfg.ExtensionsVersion = glispext.Version()
 	glisp.ReplMain(cfg, registerExts)
 }
