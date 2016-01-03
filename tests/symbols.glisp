@@ -4,7 +4,7 @@
 (assert (symbol? (str2sym "abc")))
 (assert (= 'abc  (str2sym "abc")))
 
-;; req: shorter version of require, using a
+;; require: longer version of req, using a
 ;; macro defined in glisp rather than in go.
-(defmac req [sympath]
+(defmac require [sympath]
     `(source (sym2str (quote ~sympath))))
