@@ -455,6 +455,61 @@ func (gen *Generator) GenerateAssert(args []Sexp) error {
 	return nil
 }
 
+func (gen *Generator) GenerateInclude(args []Sexp) error {
+	if len(args) < 1 {
+		return WrongNargs
+	}
+
+	var err error
+	var exps []Sexp
+
+	var sourceItem func(item Sexp) error
+
+	sourceItem = func(item Sexp) error {
+		switch t := item.(type) {
+		case SexpArray:
+			for _, v := range t {
+				if err := sourceItem(v); err != nil {
+					return err
+				}
+			}
+		case SexpPair:
+			expr := item
+			for expr != SexpNull {
+				list := expr.(SexpPair)
+				if err := sourceItem(list.head); err != nil {
+					return err
+				}
+				expr = list.tail
+			}
+		case SexpStr:
+			exps, err = gen.env.ParseFile(string(t))
+			if err != nil {
+				return err
+			}
+
+			err = gen.GenerateBegin(exps)
+			if err != nil {
+				return err
+			}
+
+		default:
+			return fmt.Errorf("include: Expected `string`, `list`, `array` given type %T val %v", item, item)
+		}
+
+		return nil
+	}
+
+	for _, v := range args {
+		err = sourceItem(v)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func (gen *Generator) GenerateCallBySymbol(sym SexpSymbol, args []Sexp) error {
 	switch sym.name {
 	case "and":
@@ -485,6 +540,8 @@ func (gen *Generator) GenerateCallBySymbol(sym SexpSymbol, args []Sexp) error {
 		return gen.GenerateMacexpand(args)
 	case "syntax-quote":
 		return gen.GenerateSyntaxQuote(args)
+	case "include":
+		return gen.GenerateInclude(args)
 	}
 
 	macro, found := gen.env.macros[sym.number]

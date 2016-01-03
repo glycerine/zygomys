@@ -14,3 +14,7 @@
 ; (println (simple))
 ; (println (simple1))
 
+(include "./tests/inc2.g" "./tests/inc3.g")
+
+(assert (= (inc2) "from inc2.g"))
+(assert (= (inc3) "from inc3.g"))

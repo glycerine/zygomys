@@ -312,13 +312,32 @@ func (env *Glisp) LoadExpressions(expressions []Sexp) error {
 	return nil
 }
 
+func (env *Glisp) ParseFile(file string) ([]Sexp, error) {
+	in, err := os.Open(file)
+	if err != nil {
+		return nil, err
+	}
+
+	lexer := NewLexerFromStream(bufio.NewReader(in))
+
+	var exp []Sexp
+
+	exp, err = ParseTokens(env, lexer)
+	if err != nil {
+		return nil, fmt.Errorf("Error on line %d: %v\n", lexer.Linenum(), err)
+	}
+
+	in.Close()
+
+	return exp, nil
+}
+
 func (env *Glisp) LoadStream(stream io.RuneReader) error {
 	lexer := NewLexerFromStream(stream)
 
 	expressions, err := ParseTokens(env, lexer)
 	if err != nil {
-		return errors.New(fmt.Sprintf(
-			"Error on line %d: %v\n", lexer.Linenum(), err))
+		return fmt.Errorf("Error on line %d: %v\n", lexer.Linenum(), err)
 	}
 
 	return env.LoadExpressions(expressions)
