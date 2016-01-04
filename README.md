@@ -6,6 +6,7 @@ to all systems and architectures that Go targets.
 
 Here is a list of implemented features.
 
+ * [x] Small code base, easy to extend and integrate.
  * [x] Float, Int, Char, String, Symbol, List, Array, and Hash datatypes
  * [x] Arithmetic (`+`, `-`, `*`, `/`, `mod`, `**`)
  * [x] Shift Operators (`sll`, `srl`, `sra`)
@@ -19,7 +20,7 @@ Here is a list of implemented features.
  * [x] Tail-call optimization
  * [x] Go API
  * [x] Macro System
- * [x] Syntax quoting -- with caret ^() instead of backtick.
+ * [x] Syntax quoting -- with caret `^()` instead of backtick.
  * [x] Channel and goroutine support
  * [x] Pre- and Post- function call hooks
  * [x] Clojure like threading `(-> hash field1: field2:)` and `(:field hash)` selection
@@ -27,6 +28,6 @@ Here is a list of implemented features.
  * [x] Record definitions `(defmap)`
  * [x] Read external files with `(source path-to-file)`
  * [x] Go style raw string literals
- * [x] Small code base, easy to extend.
-
+ * [x] JSON and Msgpack interop: serialization and deserialization
+ 
 The full documentation can be found in the [Wiki](https://github.com/glycerine/glisp/wiki).
