@@ -34,6 +34,7 @@ const (
 	TokenString
 	TokenCaret
 	TokenColonOperator
+	TokenThreadingOperator
 	TokenEnd
 )
 
@@ -77,6 +78,10 @@ func (t Token) String() string {
 	case TokenChar:
 		quoted := strconv.Quote(t.str)
 		return "#" + quoted[1:len(quoted)-1]
+	case TokenColonOperator:
+		return ":"
+	case TokenThreadingOperator:
+		return "->"
 	}
 	return t.str
 }

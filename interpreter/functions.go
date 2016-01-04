@@ -5,8 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-
-	//"github.com/shurcooL/go-goon"
 )
 
 var WrongNargs error = errors.New("wrong number of arguments")
@@ -774,6 +772,46 @@ var BuiltinFunctions = map[string]GlispUserFunction{
 	"sym2str":    Sym2StrFunction,
 	"gensym":     GensymFunction,
 	"str":        StringifyFunction,
+	"->":         ThreadMapFunction,
+}
+
+func ThreadMapFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
+	if len(args) < 2 {
+		return SexpNull, WrongNargs
+	}
+
+	h, isHash := args[0].(SexpHash)
+	if !isHash {
+		return SexpNull, fmt.Errorf("-> error: first argument must be a hash or defmap")
+	}
+
+	field, err := threadingHelper(&h, args[1:])
+	if err != nil {
+		return SexpNull, err
+	}
+
+	return field, nil
+}
+
+func threadingHelper(hash *SexpHash, args []Sexp) (Sexp, error) {
+	if len(args) == 0 {
+		panic("should not recur without arguments")
+	}
+	field, err := hash.HashGet(args[0])
+	if err != nil {
+		return SexpNull, fmt.Errorf("-> error: field '%s' not found",
+			args[0].SexpString())
+	}
+	if len(args) > 1 {
+		h, isHash := field.(SexpHash)
+		if !isHash {
+			return SexpNull, fmt.Errorf("request for field '%s' was "+
+				"not on a hash or defmap; instead type %T with value '%#v'",
+				args[1].SexpString(), field, field)
+		}
+		return threadingHelper(&h, args[1:])
+	}
+	return field, nil
 }
 
 func StringifyFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
