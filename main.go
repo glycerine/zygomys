@@ -34,7 +34,6 @@ func main() {
 
 	registerExts := func(env *glisp.Glisp) {
 		glispext.ImportRandom(env)
-		glispext.ImportTime(env)
 		glispext.ImportChannels(env)
 		glispext.ImportCoroutines(env)
 		glispext.ImportRegex(env)

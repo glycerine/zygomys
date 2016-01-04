@@ -1,9 +1,8 @@
-package glispext
+package glisp
 
 import (
 	"errors"
 	"fmt"
-	"github.com/glycerine/glisp/interpreter"
 	"time"
 )
 
@@ -13,23 +12,23 @@ func (t SexpTime) SexpString() string {
 	return time.Time(t).String()
 }
 
-func TimeFunction(env *glisp.Glisp, name string,
-	args []glisp.Sexp) (glisp.Sexp, error) {
+func NowFunction(env *Glisp, name string,
+	args []Sexp) (Sexp, error) {
 	return SexpTime(time.Now()), nil
 }
 
-func TimeitFunction(env *glisp.Glisp, name string,
-	args []glisp.Sexp) (glisp.Sexp, error) {
+func TimeitFunction(env *Glisp, name string,
+	args []Sexp) (Sexp, error) {
 	if len(args) != 1 {
-		return glisp.SexpNull, glisp.WrongNargs
+		return SexpNull, WrongNargs
 	}
 
-	var fun glisp.SexpFunction
+	var fun SexpFunction
 	switch t := args[0].(type) {
-	case glisp.SexpFunction:
+	case SexpFunction:
 		fun = t
 	default:
-		return glisp.SexpNull,
+		return SexpNull,
 			errors.New("argument of timeit should be function")
 	}
 
@@ -39,9 +38,9 @@ func TimeitFunction(env *glisp.Glisp, name string,
 	var iterations int
 
 	for iterations = 0; iterations < 10000; iterations++ {
-		_, err := env.Apply(fun, []glisp.Sexp{})
+		_, err := env.Apply(fun, []Sexp{})
 		if err != nil {
-			return glisp.SexpNull, err
+			return SexpNull, err
 		}
 		elapsed = time.Since(starttime)
 		if elapsed.Seconds() > maxseconds {
@@ -54,10 +53,10 @@ func TimeitFunction(env *glisp.Glisp, name string,
 	fmt.Printf("average %f seconds per run\n",
 		elapsed.Seconds()/float64(iterations))
 
-	return glisp.SexpNull, nil
+	return SexpNull, nil
 }
 
-func ImportTime(env *glisp.Glisp) {
-	env.AddFunction("time", TimeFunction)
+func (env *Glisp) ImportTime() {
+	env.AddFunction("now", NowFunction)
 	env.AddFunction("timeit", TimeitFunction)
 }

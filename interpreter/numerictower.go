@@ -2,6 +2,7 @@ package glisp
 
 import (
 	"errors"
+	"math"
 )
 
 type IntegerOp int
@@ -66,6 +67,7 @@ const (
 	Sub
 	Mult
 	Div
+	Pow
 )
 
 func NumericFloatDo(op NumericOp, a, b SexpFloat) Sexp {
@@ -78,6 +80,8 @@ func NumericFloatDo(op NumericOp, a, b SexpFloat) Sexp {
 		return a * b
 	case Div:
 		return a / b
+	case Pow:
+		return SexpFloat(math.Pow(float64(a), float64(b)))
 	}
 	return SexpNull
 }
@@ -96,6 +100,8 @@ func NumericIntDo(op NumericOp, a, b SexpInt) Sexp {
 		} else {
 			return SexpFloat(a) / SexpFloat(b)
 		}
+	case Pow:
+		return SexpInt(math.Pow(float64(a), float64(b)))
 	}
 	return SexpNull
 }

@@ -120,6 +120,8 @@ func NumericFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		op = Mult
 	case "/":
 		op = Div
+	case "**":
+		op = Pow
 	}
 
 	for _, expr := range args[1:] {
@@ -662,6 +664,7 @@ var BuiltinFunctions = map[string]GlispUserFunction{
 	"+":          NumericFunction,
 	"-":          NumericFunction,
 	"*":          NumericFunction,
+	"**":         NumericFunction,
 	"/":          NumericFunction,
 	"bit-and":    BitwiseFunction,
 	"bit-or":     BitwiseFunction,

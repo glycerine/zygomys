@@ -164,6 +164,7 @@ func ReplMain(cfg *GlispConfig, registerExtsFunc func(env *Glisp)) {
 	env := NewGlisp()
 	env.ImportEval()
 	env.ImportRequire()
+	env.ImportTime()
 	registerExtsFunc(env)
 
 	if cfg.CpuProfile != "" {

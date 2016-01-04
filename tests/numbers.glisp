@@ -27,3 +27,7 @@
 (assert (= '(true false true false) (map int? selection)))
 (assert (= '(false true false true) (map float? selection)))
 (assert (= '(false false true true) (map zero? selection)))
+
+;; exponentiation
+(assert (= 8 (** 2 4)))
+(assert (= 1024.0 (** 2.0 10.0)))
