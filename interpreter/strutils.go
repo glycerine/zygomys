@@ -2,18 +2,21 @@ package glisp
 
 import (
 	"errors"
+	"fmt"
 )
 
-func ConcatStr(str SexpStr, expr Sexp) (SexpStr, error) {
-	var str2 SexpStr
-	switch t := expr.(type) {
-	case SexpStr:
-		str2 = t
-	default:
-		return SexpStr(""), errors.New("second argument is not a string")
+func ConcatStr(str SexpStr, rest []Sexp) (SexpStr, error) {
+	res := str
+	for i, x := range rest {
+		switch t := x.(type) {
+		case SexpStr:
+			res = res + t
+		default:
+			return SexpStr(""), fmt.Errorf("ConcatStr error: %d-th argument (0-based) is not a string", i)
+		}
 	}
 
-	return str + str2, nil
+	return SexpStr(res), nil
 }
 
 func AppendStr(str SexpStr, expr Sexp) (SexpStr, error) {

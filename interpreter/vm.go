@@ -217,7 +217,7 @@ func (c CallInstr) Execute(env *Glisp) error {
 		// allow symbols to refer to functions that we then call
 		indirectFuncName, err := env.scopestack.LookupSymbol(f)
 		if err != nil {
-			return fmt.Errorf("symbol '%s' refers to symbol '%s', but '%s' does not refer to a function.", c.sym.name, f.name, f.name, err)
+			return fmt.Errorf("'%s' refers to symbol '%s', but '%s' does not refer to a function.", c.sym.name, f.name, f.name)
 		}
 		switch g := indirectFuncName.(type) {
 		case SexpFunction:

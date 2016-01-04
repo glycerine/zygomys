@@ -346,20 +346,29 @@ func AppendFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 }
 
 func ConcatFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
-	if len(args) != 2 {
+	if len(args) < 1 {
 		return SexpNull, WrongNargs
 	}
 
 	switch t := args[0].(type) {
 	case SexpArray:
-		return ConcatArray(t, args[1])
+		return ConcatArray(t, args[1:])
 	case SexpStr:
-		return ConcatStr(t, args[1])
+		return ConcatStr(t, args[1:])
 	case SexpPair:
-		return ConcatList(t, args[1])
+		n := len(args)
+		switch {
+		case n == 2:
+			return ConcatList(t, args[1])
+		case n == 1:
+			return t, nil
+		default:
+			return SexpNull, WrongNargs
+
+		}
 	}
 
-	return SexpNull, errors.New("expected strings or arrays")
+	return SexpNull, errors.New("expected strings, lists or arrays")
 }
 
 func ReadFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
