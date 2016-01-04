@@ -278,6 +278,25 @@ func HashAccessFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	return SexpNull, nil
 }
 
+func HashColonFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
+	if len(args) < 2 || len(args) > 3 {
+		return SexpNull, WrongNargs
+	}
+
+	var hash SexpHash
+	switch e := args[1].(type) {
+	case SexpHash:
+		hash = e
+	default:
+		return SexpNull, errors.New("second argument of (:field hash) must be a hash")
+	}
+
+	if len(args) == 3 {
+		return HashGetDefault(hash, args[0], args[2])
+	}
+	return HashGet(hash, args[0])
+}
+
 func SliceFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	if len(args) != 3 {
 		return SexpNull, WrongNargs
@@ -576,7 +595,24 @@ func ConstructorFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	case "raw":
 		return MakeRaw(args)
 	case "msgmap":
-		return MakeHash(args, "msgmap")
+		switch len(args) {
+		case 0:
+			return MakeHash(args, "msgmap")
+		default:
+			arr, err := ListToArray(args[1])
+			if err != nil {
+				return SexpNull, fmt.Errorf("error converting "+
+					"msgmap arguments to an array: '%v'", err)
+			}
+			switch nm := args[0].(type) {
+			case SexpStr:
+				return MakeHash(arr, string(nm))
+			case SexpSymbol:
+				return MakeHash(arr, nm.name)
+			default:
+				return MakeHash(arr, "msgmap")
+			}
+		}
 	}
 	return SexpNull, errors.New("invalid constructor")
 }
@@ -727,8 +763,8 @@ var BuiltinFunctions = map[string]GlispUserFunction{
 	"array":      ConstructorFunction,
 	"list":       ConstructorFunction,
 	"hash":       ConstructorFunction,
-	"raw":        ConstructorFunction,
 	"msgmap":     ConstructorFunction,
+	"raw":        ConstructorFunction,
 	"raw2str":    RawToStringFunction,
 	"symnum":     SymnumFunction,
 	"source":     SourceFileFunction,

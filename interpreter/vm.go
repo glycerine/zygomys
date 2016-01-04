@@ -167,6 +167,11 @@ func (g GetInstr) InstrString() string {
 }
 
 func (g GetInstr) Execute(env *Glisp) error {
+
+	if env.HasMacro(g.sym) {
+		return fmt.Errorf("'%s' is a macro.", g.sym.name)
+	}
+
 	expr, err := env.scopestack.LookupSymbol(g.sym)
 	if err != nil {
 		return err

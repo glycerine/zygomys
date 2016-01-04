@@ -33,6 +33,7 @@ const (
 	TokenChar
 	TokenString
 	TokenCaret
+	TokenColonOperator
 	TokenEnd
 )
 
@@ -320,8 +321,10 @@ func (lexer *Lexer) LexNextRune(r rune) error {
 	// colon terminates a keyword symbol, e.g. mykey: "myvalue"; mykey is the symbol
 	if r == ':' {
 		if lexer.buffer.Len() == 0 {
-			return errors.New("Unexpected colon")
+			lexer.tokens = append(lexer.tokens, lexer.Token(TokenColonOperator, ":"))
+			return nil
 		}
+		// but still allow ':' to be a token terminator at the end of a word.
 		lexer.tokens = append(lexer.tokens, lexer.Token(TokenQuote, ""))
 		err := lexer.dumpBuffer()
 		if err != nil {

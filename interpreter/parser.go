@@ -183,6 +183,8 @@ func ParseExpression(parser *Parser, depth int) (res Sexp, err error) {
 		return MakeList([]Sexp{env.MakeSymbol("unquote-splicing"), expr}), nil
 	case TokenSymbol:
 		return env.MakeSymbol(tok.str), nil
+	case TokenColonOperator:
+		return env.MakeSymbol(tok.str), nil
 	case TokenBool:
 		return SexpBool(tok.str == "true"), nil
 	case TokenDecimal:

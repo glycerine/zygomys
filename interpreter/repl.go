@@ -166,6 +166,15 @@ func ReplMain(cfg *GlispConfig, registerExtsFunc func(env *Glisp)) {
 	env.ImportRequire()
 	env.ImportTime()
 	env.ImportMsgpackMap()
+
+	defmap := `(defmac defmap [name] ^(defn ~name [& rest] (msgmap (quote ~name) rest)))`
+	_, err := env.EvalString(defmap)
+	panicOn(err)
+
+	colonOp := `(defmac : [key hmap] ^(hget ~hmap (quote ~key)))`
+	_, err = env.EvalString(colonOp)
+	panicOn(err)
+
 	registerExtsFunc(env)
 
 	if cfg.CpuProfile != "" {

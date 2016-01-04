@@ -30,3 +30,8 @@
 (assert (hash? h))
 (assert (empty? {}))
 (assert (not (empty? h)))
+
+;; clojure like field access
+(defmap ranch)
+(def lazy8 (ranch cowboy:"Jim" cowgirl:"Jane"))
+(assert (== (:cowboy lazy8) "Jim"))

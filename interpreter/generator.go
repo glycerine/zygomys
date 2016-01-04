@@ -140,6 +140,11 @@ func (gen *Generator) GenerateDef(args []Sexp) error {
 		return errors.New("Definition name must by symbol")
 	}
 
+	if gen.env.HasMacro(sym) {
+		return fmt.Errorf("Already have macro named '%s': refusing "+
+			"to define variable of same name.", sym.name)
+	}
+
 	gen.tail = false
 	err := gen.Generate(args[1])
 	if err != nil {
@@ -169,6 +174,10 @@ func (gen *Generator) GenerateDefn(args []Sexp, orig Sexp) error {
 		sym = expr
 	default:
 		return errors.New("Definition name must by symbol")
+	}
+	if gen.env.HasMacro(sym) {
+		return fmt.Errorf("Already have macro named '%s': refusing"+
+			" to define function of same name.", sym.name)
 	}
 
 	sfun, err := buildSexpFun(gen.env, sym.name, funcargs, args[2:], orig)

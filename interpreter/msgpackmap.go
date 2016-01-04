@@ -10,7 +10,7 @@ func (env *Glisp) ImportMsgpackMap() {
 	env.AddFunction("declare-msgpack-map", DeclareMsgpackMapFunction)
 }
 
-// (req path) avoids the need to put quotes around path you are sourcing.
+// declare a new record type
 func MsgpackMapMacro(env *Glisp, name string,
 	args []Sexp) (Sexp, error) {
 
@@ -19,14 +19,13 @@ func MsgpackMapMacro(env *Glisp, name string,
 			"(msgpack-map struct-name)\n")
 	}
 
-	//	return MakeList([]Sexp{env.MakeSymbol("declare-msgpack-map"),
-	//		SexpStr(args[0].(SexpSymbol).name)}), nil
 	return MakeList([]Sexp{
 		env.MakeSymbol("def"),
 		args[0],
 		MakeList([]Sexp{
 			env.MakeSymbol("quote"),
-			env.MakeSymbol("hash"),
+			env.MakeSymbol("msgmap"),
+			SexpStr(args[0].(SexpSymbol).name),
 		}),
 	}), nil
 }

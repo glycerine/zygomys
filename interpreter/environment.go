@@ -374,6 +374,11 @@ func (env *Glisp) AddMacro(name string, function GlispUserFunction) {
 	env.macros[sym.number] = MakeUserFunction(name, function)
 }
 
+func (env *Glisp) HasMacro(sym SexpSymbol) bool {
+	_, found := env.macros[sym.number]
+	return found
+}
+
 func (env *Glisp) ImportEval() {
 	env.AddFunction("eval", EvalFunction)
 }

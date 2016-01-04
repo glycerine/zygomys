@@ -1,9 +1,14 @@
 (def h (hash a:b:)) ;; check kw: symbols: should not crash
 
-(msgpack-map event)
-(msgpack-map person)
+;(msgpack-map event)
+;(msgpack-map person)
 
-(def recor (event id:"Id" person: (person first:"jason" last:"me!")))
+;(def recor (event id:"Id" person: (person first:"jason" last:"me!")))
 
-(assert (== (hget recor id:) "Id"))
+;(assert (== (hget recor id:) "Id"))
+
+(defmac decl-msgmap [name]
+  ^(defn ~name [& rest] (msgmap (quote ~name) rest)))
+  
+
 

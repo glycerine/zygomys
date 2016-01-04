@@ -78,6 +78,7 @@ type SexpArray []Sexp
 type SexpHash struct {
 	TypeName string
 	Map      map[int][]SexpPair
+	KeyOrder []Sexp
 }
 type SexpInt int
 type SexpBool bool
@@ -103,6 +104,9 @@ func (arr SexpArray) SexpString() string {
 }
 
 func (hash SexpHash) SexpString() string {
+	if hash.TypeName != "hash" {
+		return NamedHashSexpString(hash)
+	}
 	str := "{"
 	for _, arr := range hash.Map {
 		for _, pair := range arr {
@@ -114,6 +118,23 @@ func (hash SexpHash) SexpString() string {
 		return str[:len(str)-1] + "}"
 	}
 	return str + "}"
+}
+
+func NamedHashSexpString(hash SexpHash) string {
+	str := "(" + hash.TypeName + " "
+
+	for _, key := range hash.KeyOrder {
+		//fmt.Printf("namedhash stringification: key = '%#v'\n", key)
+		val, err := HashGet(hash, key)
+		if err == nil {
+			str += key.SexpString() + ":"
+			str += val.SexpString() + " "
+		}
+	}
+	if len(hash.Map) > 0 {
+		return str[:len(str)-1] + ")"
+	}
+	return str + ")"
 }
 
 func (b SexpBool) SexpString() string {

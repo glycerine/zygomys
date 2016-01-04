@@ -34,17 +34,21 @@ func MakeHash(args []Sexp, typename string) (SexpHash, error) {
 	hash := SexpHash{
 		TypeName: typename,
 		Map:      make(map[int][]SexpPair),
+		KeyOrder: make([]Sexp, len(args)/2),
 	}
-
+	k := 0
 	for i := 0; i < len(args); i += 2 {
 		key := args[i]
 		val := args[i+1]
 		err := HashSet(hash, key, val)
+		//fmt.Printf("\n set key -> val: %s -> %s\n", key.SexpString(), val.SexpString())
 		if err != nil {
 			return hash, err
 		}
+		hash.KeyOrder[k] = key
+		k++
 	}
-
+	//fmt.Printf("hash.KeyOrder = %#v'\n", hash.KeyOrder)
 	return hash, nil
 }
 
@@ -94,6 +98,7 @@ func HashSet(hash SexpHash, key Sexp, val Sexp) error {
 
 	if !ok {
 		hash.Map[hashval] = []SexpPair{Cons(key, val)}
+		hash.KeyOrder = append(hash.KeyOrder, key)
 		return nil
 	}
 
@@ -108,6 +113,7 @@ func HashSet(hash SexpHash, key Sexp, val Sexp) error {
 
 	if !found {
 		arr = append(arr, Cons(key, val))
+		hash.KeyOrder = append(hash.KeyOrder, key)
 	}
 	hash.Map[hashval] = arr
 
