@@ -566,6 +566,8 @@ func ConstructorFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		return MakeHash(args)
 	case "raw":
 		return MakeRaw(args)
+	case "msgmap":
+		return MakeHash(args)
 	}
 	return SexpNull, errors.New("invalid constructor")
 }
@@ -717,6 +719,7 @@ var BuiltinFunctions = map[string]GlispUserFunction{
 	"list":       ConstructorFunction,
 	"hash":       ConstructorFunction,
 	"raw":        ConstructorFunction,
+	"msgmap":     ConstructorFunction,
 	"raw2str":    RawToStringFunction,
 	"symnum":     SymnumFunction,
 	"source":     SourceFileFunction,

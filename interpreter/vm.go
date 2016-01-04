@@ -213,6 +213,24 @@ func (c CallInstr) Execute(env *Glisp) error {
 		return err
 	}
 	switch f := funcobj.(type) {
+	case SexpSymbol:
+		// allow symbols to refer to functions that we then call
+		indirectFuncName, err := env.scopestack.LookupSymbol(f)
+		if err != nil {
+			return fmt.Errorf("symbol '%s' refers to symbol '%s', but '%s' does not refer to a function.", c.sym.name, f.name, f.name, err)
+		}
+		switch g := indirectFuncName.(type) {
+		case SexpFunction:
+			if !g.user {
+				return env.CallFunction(g, c.nargs)
+			}
+			return env.CallUserFunction(g, f.name, c.nargs)
+		default:
+			if err != nil {
+				return fmt.Errorf("symbol '%s' refers to '%s' which does not refer to a function.", c.sym.name, f.name)
+			}
+		}
+
 	case SexpFunction:
 		if !f.user {
 			return env.CallFunction(f, c.nargs)

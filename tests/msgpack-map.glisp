@@ -1,0 +1,4 @@
+(def h (hash a:b:)) ;; check kw: symbols: should not crash
+
+(msgpack-map event)
+(assert (== (hget (event id:"Id") 'id) "Id"))

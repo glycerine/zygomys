@@ -317,6 +317,19 @@ func (lexer *Lexer) LexNextRune(r rune) error {
 		return nil
 	}
 
+	// colon terminates a keyword symbol, e.g. mykey: "myvalue"; mykey is the symbol
+	if r == ':' {
+		if lexer.buffer.Len() == 0 {
+			return errors.New("Unexpected colon")
+		}
+		lexer.tokens = append(lexer.tokens, lexer.Token(TokenQuote, ""))
+		err := lexer.dumpBuffer()
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+
 	if r == '\'' {
 		if lexer.buffer.Len() > 0 {
 			return errors.New("Unexpected quote")
