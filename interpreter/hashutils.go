@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"hash/fnv"
+
+	//"github.com/shurcooL/go-goon"
 )
 
 func HashExpression(expr Sexp) (int, error) {
@@ -32,31 +34,30 @@ func MakeHash(args []Sexp, typename string) (SexpHash, error) {
 	}
 
 	hash := SexpHash{
-		TypeName: typename,
+		TypeName: &typename,
 		Map:      make(map[int][]SexpPair),
-		KeyOrder: make([]Sexp, len(args)/2),
+		KeyOrder: &[]Sexp{},
 	}
 	k := 0
 	for i := 0; i < len(args); i += 2 {
 		key := args[i]
 		val := args[i+1]
-		err := HashSet(hash, key, val)
+		err := hash.HashSet(key, val)
 		//fmt.Printf("\n set key -> val: %s -> %s\n", key.SexpString(), val.SexpString())
 		if err != nil {
 			return hash, err
 		}
-		hash.KeyOrder[k] = key
 		k++
 	}
 	//fmt.Printf("hash.KeyOrder = %#v'\n", hash.KeyOrder)
 	return hash, nil
 }
 
-func HashGet(hash SexpHash, key Sexp) (Sexp, error) {
+func (hash *SexpHash) HashGet(key Sexp) (Sexp, error) {
 	// this is kind of a hack
 	// SexpEnd can't be created by user
 	// so there is no way it would actually show up in the map
-	val, err := HashGetDefault(hash, key, SexpEnd)
+	val, err := hash.HashGetDefault(key, SexpEnd)
 
 	if err != nil {
 		return SexpNull, err
@@ -69,7 +70,7 @@ func HashGet(hash SexpHash, key Sexp) (Sexp, error) {
 	return val, nil
 }
 
-func HashGetDefault(hash SexpHash, key Sexp, defaultval Sexp) (Sexp, error) {
+func (hash *SexpHash) HashGetDefault(key Sexp, defaultval Sexp) (Sexp, error) {
 	hashval, err := HashExpression(key)
 	if err != nil {
 		return SexpNull, err
@@ -89,16 +90,23 @@ func HashGetDefault(hash SexpHash, key Sexp, defaultval Sexp) (Sexp, error) {
 	return defaultval, nil
 }
 
-func HashSet(hash SexpHash, key Sexp, val Sexp) error {
+func (hash *SexpHash) HashSet(key Sexp, val Sexp) error {
+	//fmt.Printf("\n\n at top of HashSet, we have:\n")
+	//goon.Dump(hash)
 	hashval, err := HashExpression(key)
 	if err != nil {
 		return err
 	}
 	arr, ok := hash.Map[hashval]
 
+	//fmt.Printf("HashSet, ok found = %v, arr=%v\n", ok, arr)
+
 	if !ok {
 		hash.Map[hashval] = []SexpPair{Cons(key, val)}
-		hash.KeyOrder = append(hash.KeyOrder, key)
+		*hash.KeyOrder = append(*hash.KeyOrder, key)
+		//fmt.Printf("!ok so early hash = %#v   for key='%#v' val='%#v'\n\n\n", hash, key, val)
+		//fmt.Printf("hash.KeyOrder is now: \n")
+		//goon.Dump(hash.KeyOrder)
 		return nil
 	}
 
@@ -111,16 +119,19 @@ func HashSet(hash SexpHash, key Sexp, val Sexp) error {
 		}
 	}
 
+	//fmt.Printf("found =%v\n", found)
 	if !found {
 		arr = append(arr, Cons(key, val))
-		hash.KeyOrder = append(hash.KeyOrder, key)
+		*hash.KeyOrder = append(*hash.KeyOrder, key)
 	}
+	//fmt.Printf("final arr =%#v   hash.KeyOrder='%#v'\n", arr, hash.KeyOrder)
+
 	hash.Map[hashval] = arr
 
 	return nil
 }
 
-func HashDelete(hash SexpHash, key Sexp) error {
+func (hash *SexpHash) HashDelete(key Sexp) error {
 	hashval, err := HashExpression(key)
 	if err != nil {
 		return err

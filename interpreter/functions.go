@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"os"
+
+	//"github.com/shurcooL/go-goon"
 )
 
 var WrongNargs error = errors.New("wrong number of arguments")
@@ -261,17 +263,19 @@ func HashAccessFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	switch name {
 	case "hget":
 		if len(args) == 3 {
-			return HashGetDefault(hash, args[1], args[2])
+			return hash.HashGetDefault(args[1], args[2])
 		}
-		return HashGet(hash, args[1])
+		return hash.HashGet(args[1])
 	case "hset!":
-		err := HashSet(hash, args[1], args[2])
+		err := hash.HashSet(args[1], args[2])
+		//fmt.Printf("done with HashSet, hash = '%#v'\n", hash)
+		//goon.Dump(hash)
 		return SexpNull, err
 	case "hdel!":
 		if len(args) != 2 {
 			return SexpNull, WrongNargs
 		}
-		err := HashDelete(hash, args[1])
+		err := hash.HashDelete(args[1])
 		return SexpNull, err
 	}
 
@@ -292,9 +296,9 @@ func HashColonFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	}
 
 	if len(args) == 3 {
-		return HashGetDefault(hash, args[0], args[2])
+		return hash.HashGetDefault(args[0], args[2])
 	}
-	return HashGet(hash, args[0])
+	return hash.HashGet(args[0])
 }
 
 func SliceFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {

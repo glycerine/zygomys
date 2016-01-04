@@ -5,6 +5,8 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+
+	//"github.com/shurcooL/go-goon"
 )
 
 type Sexp interface {
@@ -76,9 +78,9 @@ func (pair SexpPair) SexpString() string {
 
 type SexpArray []Sexp
 type SexpHash struct {
-	TypeName string
+	TypeName *string
 	Map      map[int][]SexpPair
-	KeyOrder []Sexp
+	KeyOrder *[]Sexp // must user pointer here, else hset! will fail to update.
 }
 type SexpInt int
 type SexpBool bool
@@ -104,7 +106,7 @@ func (arr SexpArray) SexpString() string {
 }
 
 func (hash SexpHash) SexpString() string {
-	if hash.TypeName != "hash" {
+	if *hash.TypeName != "hash" {
 		return NamedHashSexpString(hash)
 	}
 	str := "{"
@@ -121,14 +123,18 @@ func (hash SexpHash) SexpString() string {
 }
 
 func NamedHashSexpString(hash SexpHash) string {
-	str := "(" + hash.TypeName + " "
+	//fmt.Printf("\n\n 888888 at top of NamedHashSexpString, we have hash= %p\n", hash)
+	//goon.Dump(hash)
+	str := "(" + *hash.TypeName + " "
 
-	for _, key := range hash.KeyOrder {
+	for _, key := range *hash.KeyOrder {
 		//fmt.Printf("namedhash stringification: key = '%#v'\n", key)
-		val, err := HashGet(hash, key)
+		val, err := hash.HashGet(key)
 		if err == nil {
 			str += key.SexpString() + ":"
 			str += val.SexpString() + " "
+		} else {
+			panic(err)
 		}
 	}
 	if len(hash.Map) > 0 {

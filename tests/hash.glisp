@@ -38,3 +38,8 @@
 
 ;; not present should return default
 (assert (== (:joker lazy8 "gotaway") "gotaway"))
+
+;; nested access with (->)
+(defmap bunkhouse)
+(hset! lazy8 bunk1:(bunkhouse bed1:"Howie" bed2: "Mamie"))
+;;(assert (== (-> bunk1 bed2 lazy8) "Mamie"))
