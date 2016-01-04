@@ -123,12 +123,9 @@ func (hash SexpHash) SexpString() string {
 }
 
 func NamedHashSexpString(hash SexpHash) string {
-	//fmt.Printf("\n\n 888888 at top of NamedHashSexpString, we have hash= %p\n", hash)
-	//goon.Dump(hash)
 	str := "(" + *hash.TypeName + " "
 
 	for _, key := range *hash.KeyOrder {
-		//fmt.Printf("namedhash stringification: key = '%#v'\n", key)
 		val, err := hash.HashGet(key)
 		if err == nil {
 			str += key.SexpString() + ":"

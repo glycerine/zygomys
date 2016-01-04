@@ -268,8 +268,6 @@ func HashAccessFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		return hash.HashGet(args[1])
 	case "hset!":
 		err := hash.HashSet(args[1], args[2])
-		//fmt.Printf("done with HashSet, hash = '%#v'\n", hash)
-		//goon.Dump(hash)
 		return SexpNull, err
 	case "hdel!":
 		if len(args) != 2 {

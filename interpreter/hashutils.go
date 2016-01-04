@@ -43,13 +43,11 @@ func MakeHash(args []Sexp, typename string) (SexpHash, error) {
 		key := args[i]
 		val := args[i+1]
 		err := hash.HashSet(key, val)
-		//fmt.Printf("\n set key -> val: %s -> %s\n", key.SexpString(), val.SexpString())
 		if err != nil {
 			return hash, err
 		}
 		k++
 	}
-	//fmt.Printf("hash.KeyOrder = %#v'\n", hash.KeyOrder)
 	return hash, nil
 }
 
@@ -91,22 +89,15 @@ func (hash *SexpHash) HashGetDefault(key Sexp, defaultval Sexp) (Sexp, error) {
 }
 
 func (hash *SexpHash) HashSet(key Sexp, val Sexp) error {
-	//fmt.Printf("\n\n at top of HashSet, we have:\n")
-	//goon.Dump(hash)
 	hashval, err := HashExpression(key)
 	if err != nil {
 		return err
 	}
 	arr, ok := hash.Map[hashval]
 
-	//fmt.Printf("HashSet, ok found = %v, arr=%v\n", ok, arr)
-
 	if !ok {
 		hash.Map[hashval] = []SexpPair{Cons(key, val)}
 		*hash.KeyOrder = append(*hash.KeyOrder, key)
-		//fmt.Printf("!ok so early hash = %#v   for key='%#v' val='%#v'\n\n\n", hash, key, val)
-		//fmt.Printf("hash.KeyOrder is now: \n")
-		//goon.Dump(hash.KeyOrder)
 		return nil
 	}
 
@@ -119,12 +110,10 @@ func (hash *SexpHash) HashSet(key Sexp, val Sexp) error {
 		}
 	}
 
-	//fmt.Printf("found =%v\n", found)
 	if !found {
 		arr = append(arr, Cons(key, val))
 		*hash.KeyOrder = append(*hash.KeyOrder, key)
 	}
-	//fmt.Printf("final arr =%#v   hash.KeyOrder='%#v'\n", arr, hash.KeyOrder)
 
 	hash.Map[hashval] = arr
 
