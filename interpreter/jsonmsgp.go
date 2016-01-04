@@ -23,19 +23,35 @@ func ToJson(exp Sexp) string {
 func (hash *SexpHash) jsonHashHelper() string {
 	str := fmt.Sprintf(`{"Atype":"%s", `, *hash.TypeName)
 
+	ko := []string{}
+	n := len(*hash.KeyOrder)
+	if n == 0 {
+		return str[:len(str)-2] + "}"
+	}
+
 	for _, key := range *hash.KeyOrder {
+		keyst := key.SexpString()
+		ko = append(ko, keyst)
 		val, err := hash.HashGet(key)
 		if err == nil {
-			str += `"` + key.SexpString() + `":`
+			str += `"` + keyst + `":`
 			str += string(ToJson(val)) + `, `
 		} else {
 			panic(err)
 		}
 	}
-	if len(hash.Map) > 0 {
-		return str[:len(str)-2] + "}"
+	if n > 1 {
+		str += `"zKeyOrder":[`
+		for _, key := range ko {
+			str += `"` + key + `", `
+		}
+		VPrintf("\n\n final ToJson() str = '%s'\n", str)
+		return str[:len(str)-2] + "]}"
 	}
-	return str + "}"
+	// invar: n == 1, no zKeyOrder needed.
+	str = str[:len(str)-2] + "}"
+	VPrintf("\n\n final ToJson() str = '%s'\n", str)
+	return str
 }
 
 func (arr *SexpArray) jsonArrayHelper() string {
@@ -152,15 +168,18 @@ func FromMsgpack(msgp []byte, env *Glisp) (Sexp, error) {
 	//fmt.Printf("\n decoded type : %T\n", iface)
 	//fmt.Printf("\n decoded value: %#v\n", iface)
 
-	return decodeGoToSexpHelper(iface, 0, env), nil
+	return decodeGoToSexpHelper(iface, 0, env, false), nil
 }
 
-func decodeGoToSexpHelper(r interface{}, depth int, env *Glisp) (s Sexp) {
+func decodeGoToSexpHelper(r interface{}, depth int, env *Glisp, preferSym bool) (s Sexp) {
 
 	VPrintf("decodeHelper() at depth %d, decoded type is %T\n", depth, r)
 	switch val := r.(type) {
 	case string:
 		VPrintf("depth %d found string case: val = %#v\n", depth, val)
+		if preferSym {
+			return env.MakeSymbol(val)
+		}
 		return SexpStr(val)
 
 	case int:
@@ -184,7 +203,7 @@ func decodeGoToSexpHelper(r interface{}, depth int, env *Glisp) (s Sexp) {
 
 		slice := []Sexp{}
 		for i := range val {
-			slice = append(slice, decodeGoToSexpHelper(val[i], depth+1, env))
+			slice = append(slice, decodeGoToSexpHelper(val[i], depth+1, env, preferSym))
 		}
 		return SexpArray(slice)
 
@@ -196,12 +215,16 @@ func decodeGoToSexpHelper(r interface{}, depth int, env *Glisp) (s Sexp) {
 		pairs := make([]Sexp, 0)
 
 		typeName := "hash"
+		var keyOrd Sexp
+		foundzKeyOrder := false
 		for i := range sortedMapKey {
 			// special field storing the name of our record (defmap) type.
 			VPrintf("\n i=%d sortedMapVal type %T, value=%v\n", i, sortedMapVal[i], sortedMapVal[i])
 			VPrintf("\n i=%d sortedMapKey type %T, value=%v\n", i, sortedMapKey[i], sortedMapKey[i])
-			if sortedMapKey[i] == "Atype" {
-
+			if sortedMapKey[i] == "zKeyOrder" {
+				keyOrd = decodeGoToSexpHelper(sortedMapVal[i], depth+1, env, true)
+				foundzKeyOrder = true
+			} else if sortedMapKey[i] == "Atype" {
 				tn, isString := sortedMapVal[i].(string)
 				if isString {
 					typeName = string(tn)
@@ -209,11 +232,15 @@ func decodeGoToSexpHelper(r interface{}, depth int, env *Glisp) (s Sexp) {
 			} else {
 				sym := env.MakeSymbol(sortedMapKey[i])
 				pairs = append(pairs, sym)
-				ele := decodeGoToSexpHelper(sortedMapVal[i], depth+1, env)
+				ele := decodeGoToSexpHelper(sortedMapVal[i], depth+1, env, preferSym)
 				pairs = append(pairs, ele)
 			}
 		}
 		hash, err := MakeHash(pairs, typeName)
+		if foundzKeyOrder {
+			err = SetHashKeyOrder(&hash, keyOrd)
+			panicOn(err)
+		}
 		panicOn(err)
 		return hash
 

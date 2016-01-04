@@ -159,3 +159,18 @@ func HashIsEmpty(hash SexpHash) bool {
 	}
 	return true
 }
+
+func SetHashKeyOrder(hash *SexpHash, keyOrd Sexp) error {
+	// truncate down to zero, then build back up correctly.
+	*(*hash).KeyOrder = (*(*hash).KeyOrder)[:0]
+
+	keys, isArr := keyOrd.(SexpArray)
+	if !isArr {
+		return fmt.Errorf("must have SexpArray for keyOrd, but instead we have: %T with value='%#v'", keyOrd, keyOrd)
+	}
+	for _, key := range keys {
+		*hash.KeyOrder = append(*hash.KeyOrder, key)
+	}
+
+	return nil
+}
