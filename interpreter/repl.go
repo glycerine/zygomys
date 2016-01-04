@@ -35,6 +35,8 @@ func getLine(reader *bufio.Reader) (string, error) {
 	return string(line), nil
 }
 
+// NB at the moment this doesn't track comment and strings state,
+// so it will fail if unbalanced '(' are found in either.
 func isBalanced(str string) bool {
 	parens := 0
 	squares := 0

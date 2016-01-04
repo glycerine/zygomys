@@ -33,7 +33,7 @@ func ParseList(parser *Parser, depth int) (Sexp, error) {
 
 	var start SexpPair
 
-	expr, err, _ := ParseExpression(parser, depth+1)
+	expr, err := ParseExpression(parser, depth+1)
 	if err != nil {
 		return SexpNull, err
 	}
@@ -48,7 +48,7 @@ func ParseList(parser *Parser, depth int) (Sexp, error) {
 	if tok.typ == TokenDot {
 		// eat up the dot
 		_, _ = lexer.GetNextToken()
-		expr, err, _ = ParseExpression(parser, depth+1)
+		expr, err = ParseExpression(parser, depth+1)
 		if err != nil {
 			return SexpNull, err
 		}
@@ -95,7 +95,7 @@ func ParseArray(parser *Parser, depth int) (Sexp, error) {
 			break
 		}
 
-		expr, err, _ := ParseExpression(parser, depth+1)
+		expr, err := ParseExpression(parser, depth+1)
 		if err != nil {
 			return SexpNull, err
 		}
@@ -123,7 +123,7 @@ func ParseHash(parser *Parser, depth int) (Sexp, error) {
 			break
 		}
 
-		expr, err, _ := ParseExpression(parser, depth+1)
+		expr, err := ParseExpression(parser, depth+1)
 		if err != nil {
 			return SexpNull, err
 		}
@@ -137,100 +137,91 @@ func ParseHash(parser *Parser, depth int) (Sexp, error) {
 	return list, nil
 }
 
-func ParseExpression(parser *Parser, depth int) (res Sexp, err error, text []byte) {
+func ParseExpression(parser *Parser, depth int) (res Sexp, err error) {
 	lexer := parser.lexer
 	env := parser.env
 
-	// preserve source code for functions
-	beg := lexer.HistoryPos()
-	defer func() {
-		if err == nil {
-			end := lexer.HistoryPos()
-			text = lexer.History.Bytes()[beg:end]
-		}
-	}()
-
 	tok, err := lexer.GetNextToken()
 	if err != nil {
-		return SexpEnd, err, nil
+		return SexpEnd, err
 	}
 
 	switch tok.typ {
 	case TokenLParen:
 		exp, err := ParseList(parser, depth+1)
-		return exp, err, nil
+		return exp, err
 	case TokenLSquare:
 		exp, err := ParseArray(parser, depth+1)
-		return exp, err, nil
+		return exp, err
 	case TokenLCurly:
 		exp, err := ParseHash(parser, depth+1)
-		return exp, err, nil
+		return exp, err
 	case TokenQuote:
-		expr, err, _ := ParseExpression(parser, depth+1)
+		expr, err := ParseExpression(parser, depth+1)
 		if err != nil {
-			return SexpNull, err, nil
+			return SexpNull, err
 		}
-		return MakeList([]Sexp{env.MakeSymbol("quote"), expr}), nil, nil
+		return MakeList([]Sexp{env.MakeSymbol("quote"), expr}), nil
 	case TokenBacktick:
-		expr, err, _ := ParseExpression(parser, depth+1)
+		expr, err := ParseExpression(parser, depth+1)
 		if err != nil {
-			return SexpNull, err, nil
+			return SexpNull, err
 		}
-		return MakeList([]Sexp{env.MakeSymbol("syntax-quote"), expr}), nil, nil
+		return MakeList([]Sexp{env.MakeSymbol("syntax-quote"), expr}), nil
 	case TokenTilde:
-		expr, err, _ := ParseExpression(parser, depth+1)
+		expr, err := ParseExpression(parser, depth+1)
 		if err != nil {
-			return SexpNull, err, nil
+			return SexpNull, err
 		}
-		return MakeList([]Sexp{env.MakeSymbol("unquote"), expr}), nil, nil
+		return MakeList([]Sexp{env.MakeSymbol("unquote"), expr}), nil
 	case TokenTildeAt:
-		expr, err, _ := ParseExpression(parser, depth+1)
+		expr, err := ParseExpression(parser, depth+1)
 		if err != nil {
-			return SexpNull, err, nil
+			return SexpNull, err
 		}
-		return MakeList([]Sexp{env.MakeSymbol("unquote-splicing"), expr}), nil, nil
+		return MakeList([]Sexp{env.MakeSymbol("unquote-splicing"), expr}), nil
 	case TokenSymbol:
-		return env.MakeSymbol(tok.str), nil, nil
+		return env.MakeSymbol(tok.str), nil
 	case TokenBool:
-		return SexpBool(tok.str == "true"), nil, nil
+		return SexpBool(tok.str == "true"), nil
 	case TokenDecimal:
 		i, err := strconv.ParseInt(tok.str, 10, SexpIntSize)
 		if err != nil {
-			return SexpNull, err, nil
+			return SexpNull, err
 		}
-		return SexpInt(i), nil, nil
+		return SexpInt(i), nil
 	case TokenHex:
 		i, err := strconv.ParseInt(tok.str, 16, SexpIntSize)
 		if err != nil {
-			return SexpNull, err, nil
+			return SexpNull, err
 		}
-		return SexpInt(i), nil, nil
+		return SexpInt(i), nil
 	case TokenOct:
 		i, err := strconv.ParseInt(tok.str, 8, SexpIntSize)
 		if err != nil {
-			return SexpNull, err, nil
+			return SexpNull, err
 		}
-		return SexpInt(i), nil, nil
+		return SexpInt(i), nil
 	case TokenBinary:
 		i, err := strconv.ParseInt(tok.str, 2, SexpIntSize)
 		if err != nil {
-			return SexpNull, err, nil
+			return SexpNull, err
 		}
-		return SexpInt(i), nil, nil
+		return SexpInt(i), nil
 	case TokenChar:
-		return SexpChar(tok.str[0]), nil, nil
+		return SexpChar(tok.str[0]), nil
 	case TokenString:
-		return SexpStr(tok.str), nil, nil
+		return SexpStr(tok.str), nil
 	case TokenFloat:
 		f, err := strconv.ParseFloat(tok.str, SexpFloatSize)
 		if err != nil {
-			return SexpNull, err, nil
+			return SexpNull, err
 		}
-		return SexpFloat(f), nil, nil
+		return SexpFloat(f), nil
 	case TokenEnd:
-		return SexpEnd, nil, nil
+		return SexpEnd, nil
 	}
-	return SexpNull, errors.New(fmt.Sprint("Invalid syntax, didn't know what to do with ", tok.typ, " ", tok)), nil
+	return SexpNull, errors.New(fmt.Sprint("Invalid syntax, didn't know what to do with ", tok.typ, " ", tok))
 }
 
 func ParseTokens(env *Glisp, lexer *Lexer) ([]Sexp, error) {
@@ -238,7 +229,7 @@ func ParseTokens(env *Glisp, lexer *Lexer) ([]Sexp, error) {
 	parser := Parser{lexer, env}
 
 	for {
-		expr, err, _ := ParseExpression(&parser, 0)
+		expr, err := ParseExpression(&parser, 0)
 		if err != nil {
 			return expressions, err
 		}

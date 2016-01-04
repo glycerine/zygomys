@@ -371,7 +371,7 @@ func ReadFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	}
 	lexer := NewLexerFromStream(bytes.NewBuffer([]byte(str)))
 	parser := Parser{lexer, env}
-	exp, err, _ := ParseExpression(&parser, 0)
+	exp, err := ParseExpression(&parser, 0)
 	return exp, err
 }
 
@@ -385,7 +385,7 @@ func EvalFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	if err != nil {
 		return SexpNull, errors.New("failed to compile expression")
 	}
-	newenv.mainfunc = MakeFunction("__main", 0, false, gen.instructions)
+	newenv.mainfunc = MakeFunction("__main", 0, false, gen.instructions, nil)
 	newenv.pc = -1
 	return newenv.Run()
 }
@@ -629,13 +629,14 @@ func SourceFileFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 var MissingFunction = SexpFunction{name: "__missing", user: true}
 
 func MakeFunction(name string, nargs int, varargs bool,
-	fun GlispFunction) SexpFunction {
+	fun GlispFunction, orig Sexp) SexpFunction {
 	var sfun SexpFunction
 	sfun.name = name
 	sfun.user = false
 	sfun.nargs = nargs
 	sfun.varargs = varargs
 	sfun.fun = fun
+	sfun.orig = orig
 	return sfun
 }
 
@@ -709,6 +710,15 @@ var BuiltinFunctions = map[string]GlispUserFunction{
 	"str2sym":    Str2SymFunction,
 	"sym2str":    Sym2StrFunction,
 	"gensym":     GensymFunction,
+	"str":        StringifyFunction,
+}
+
+func StringifyFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
+	if len(args) != 1 {
+		return SexpNull, WrongNargs
+	}
+
+	return SexpStr(args[0].SexpString()), nil
 }
 
 func Sym2StrFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {

@@ -52,8 +52,13 @@ func (gen *Generator) GenerateBegin(expressions []Sexp) error {
 	return gen.Generate(expressions[size-1])
 }
 
-func buildSexpFun(env *Glisp, name string, funcargs SexpArray,
-	funcbody []Sexp) (SexpFunction, error) {
+func buildSexpFun(
+	env *Glisp,
+	name string,
+	funcargs SexpArray,
+	funcbody []Sexp,
+	orig Sexp) (SexpFunction, error) {
+
 	gen := NewGenerator(env)
 	gen.tail = true
 
@@ -95,10 +100,10 @@ func buildSexpFun(env *Glisp, name string, funcargs SexpArray,
 	gen.AddInstruction(ReturnInstr{nil})
 
 	newfunc := GlispFunction(gen.instructions)
-	return MakeFunction(gen.funcname, nargs, varargs, newfunc), nil
+	return MakeFunction(gen.funcname, nargs, varargs, newfunc, orig), nil
 }
 
-func (gen *Generator) GenerateFn(args []Sexp) error {
+func (gen *Generator) GenerateFn(args []Sexp, orig Sexp) error {
 	if len(args) < 2 {
 		return errors.New("malformed function definition")
 	}
@@ -113,7 +118,7 @@ func (gen *Generator) GenerateFn(args []Sexp) error {
 	}
 
 	funcbody := args[1:]
-	sfun, err := buildSexpFun(gen.env, "", funcargs, funcbody)
+	sfun, err := buildSexpFun(gen.env, "", funcargs, funcbody, orig)
 	if err != nil {
 		return err
 	}
@@ -145,7 +150,7 @@ func (gen *Generator) GenerateDef(args []Sexp) error {
 	return nil
 }
 
-func (gen *Generator) GenerateDefn(args []Sexp) error {
+func (gen *Generator) GenerateDefn(args []Sexp, orig Sexp) error {
 	if len(args) < 3 {
 		return errors.New("Wrong number of arguments to defn")
 	}
@@ -166,7 +171,7 @@ func (gen *Generator) GenerateDefn(args []Sexp) error {
 		return errors.New("Definition name must by symbol")
 	}
 
-	sfun, err := buildSexpFun(gen.env, sym.name, funcargs, args[2:])
+	sfun, err := buildSexpFun(gen.env, sym.name, funcargs, args[2:], orig)
 	if err != nil {
 		return err
 	}
@@ -178,7 +183,7 @@ func (gen *Generator) GenerateDefn(args []Sexp) error {
 	return nil
 }
 
-func (gen *Generator) GenerateDefmac(args []Sexp) error {
+func (gen *Generator) GenerateDefmac(args []Sexp, orig Sexp) error {
 	if len(args) < 3 {
 		return errors.New("Wrong number of arguments to defmac")
 	}
@@ -199,7 +204,7 @@ func (gen *Generator) GenerateDefmac(args []Sexp) error {
 		return errors.New("Definition name must by symbol")
 	}
 
-	sfun, err := buildSexpFun(gen.env, sym.name, funcargs, args[2:])
+	sfun, err := buildSexpFun(gen.env, sym.name, funcargs, args[2:], orig)
 	if err != nil {
 		return err
 	}
@@ -510,7 +515,7 @@ func (gen *Generator) GenerateInclude(args []Sexp) error {
 	return nil
 }
 
-func (gen *Generator) GenerateCallBySymbol(sym SexpSymbol, args []Sexp) error {
+func (gen *Generator) GenerateCallBySymbol(sym SexpSymbol, args []Sexp, orig Sexp) error {
 	switch sym.name {
 	case "and":
 		return gen.GenerateShortCircuit(false, args)
@@ -523,9 +528,9 @@ func (gen *Generator) GenerateCallBySymbol(sym SexpSymbol, args []Sexp) error {
 	case "def":
 		return gen.GenerateDef(args)
 	case "fn":
-		return gen.GenerateFn(args)
+		return gen.GenerateFn(args, orig)
 	case "defn":
-		return gen.GenerateDefn(args)
+		return gen.GenerateDefn(args, orig)
 	case "begin":
 		return gen.GenerateBegin(args)
 	case "let":
@@ -535,7 +540,7 @@ func (gen *Generator) GenerateCallBySymbol(sym SexpSymbol, args []Sexp) error {
 	case "assert":
 		return gen.GenerateAssert(args)
 	case "defmac":
-		return gen.GenerateDefmac(args)
+		return gen.GenerateDefmac(args, orig)
 	case "macexpand":
 		return gen.GenerateMacexpand(args)
 	case "syntax-quote":
@@ -588,7 +593,7 @@ func (gen *Generator) GenerateCall(expr SexpPair) error {
 	arr, _ := ListToArray(expr.tail)
 	switch head := expr.head.(type) {
 	case SexpSymbol:
-		return gen.GenerateCallBySymbol(head, arr)
+		return gen.GenerateCallBySymbol(head, arr, expr)
 	}
 	return gen.GenerateDispatch(expr.head, arr)
 }

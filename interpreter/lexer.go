@@ -94,13 +94,18 @@ type Lexer struct {
 	stream   io.RuneReader
 	linenum  int
 	finished bool
-
-	History *bytes.Buffer
 }
 
-// let the parser track the source code for function definitions
-func (lex *Lexer) HistoryPos() int {
-	return len(lex.History.Bytes())
+func (lex *Lexer) EmptyToken() Token {
+	return Token{}
+}
+
+func (lex *Lexer) Token(typ TokenType, str string) Token {
+	t := Token{
+		typ: typ,
+		str: str,
+	}
+	return t
 }
 
 var (
@@ -161,48 +166,49 @@ func DecodeChar(atom string) (string, error) {
 	return "", errors.New("not a char literal")
 }
 
-func DecodeAtom(atom string) (Token, error) {
+func (x *Lexer) DecodeAtom(atom string) (Token, error) {
 	if atom == "." {
-		return Token{TokenDot, ""}, nil
+		return x.Token(TokenDot, ""), nil
 	}
 	if BoolRegex.MatchString(atom) {
-		return Token{TokenBool, atom}, nil
+		return x.Token(TokenBool, atom), nil
 	}
 	if DecimalRegex.MatchString(atom) {
-		return Token{TokenDecimal, atom}, nil
+		return x.Token(TokenDecimal, atom), nil
 	}
 	if HexRegex.MatchString(atom) {
-		return Token{TokenHex, atom[2:]}, nil
+		return x.Token(TokenHex, atom[2:]), nil
 	}
 	if OctRegex.MatchString(atom) {
-		return Token{TokenOct, atom[2:]}, nil
+		return x.Token(TokenOct, atom[2:]), nil
 	}
 	if BinaryRegex.MatchString(atom) {
-		return Token{TokenBinary, atom[2:]}, nil
+		return x.Token(TokenBinary, atom[2:]), nil
 	}
 	if FloatRegex.MatchString(atom) {
-		return Token{TokenFloat, atom}, nil
+		return x.Token(TokenFloat, atom), nil
 	}
 	if SymbolRegex.MatchString(atom) {
-		return Token{TokenSymbol, atom}, nil
+		return x.Token(TokenSymbol, atom), nil
 	}
 	if CharRegex.MatchString(atom) {
 		char, err := DecodeChar(atom)
 		if err != nil {
-			return Token{}, err
+			return x.EmptyToken(), err
 		}
-		return Token{TokenChar, char}, nil
+		return x.Token(TokenChar, char), nil
 	}
 
-	return Token{}, errors.New("Unrecognized atom")
+	return x.EmptyToken(), errors.New("Unrecognized atom")
 }
 
 func (lexer *Lexer) dumpBuffer() error {
-	if lexer.buffer.Len() <= 0 {
+	n := lexer.buffer.Len()
+	if n <= 0 {
 		return nil
 	}
 
-	tok, err := DecodeAtom(lexer.buffer.String())
+	tok, err := lexer.DecodeAtom(lexer.buffer.String())
 	if err != nil {
 		return err
 	}
@@ -215,25 +221,25 @@ func (lexer *Lexer) dumpBuffer() error {
 func (lexer *Lexer) dumpString() {
 	str := lexer.buffer.String()
 	lexer.buffer.Reset()
-	lexer.tokens = append(lexer.tokens, Token{TokenString, str})
+	lexer.tokens = append(lexer.tokens, lexer.Token(TokenString, str))
 }
 
-func DecodeBrace(brace rune) Token {
+func (x *Lexer) DecodeBrace(brace rune) Token {
 	switch brace {
 	case '(':
-		return Token{TokenLParen, ""}
+		return x.Token(TokenLParen, "")
 	case ')':
-		return Token{TokenRParen, ""}
+		return x.Token(TokenRParen, "")
 	case '[':
-		return Token{TokenLSquare, ""}
+		return x.Token(TokenLSquare, "")
 	case ']':
-		return Token{TokenRSquare, ""}
+		return x.Token(TokenRSquare, "")
 	case '{':
-		return Token{TokenLCurly, ""}
+		return x.Token(TokenLCurly, "")
 	case '}':
-		return Token{TokenRCurly, ""}
+		return x.Token(TokenRCurly, "")
 	}
-	return Token{TokenEnd, ""}
+	return x.Token(TokenEnd, "")
 }
 
 func (lexer *Lexer) LexNextRune(r rune) error {
@@ -268,10 +274,10 @@ func (lexer *Lexer) LexNextRune(r rune) error {
 	if lexer.state == LexerUnquote {
 		if r == '@' {
 			lexer.tokens = append(
-				lexer.tokens, Token{TokenTildeAt, ""})
+				lexer.tokens, lexer.Token(TokenTildeAt, ""))
 		} else {
 			lexer.tokens = append(
-				lexer.tokens, Token{TokenTilde, ""})
+				lexer.tokens, lexer.Token(TokenTilde, ""))
 			lexer.buffer.WriteRune(r)
 		}
 		lexer.state = LexerNormal
@@ -295,7 +301,7 @@ func (lexer *Lexer) LexNextRune(r rune) error {
 		if lexer.buffer.Len() > 0 {
 			return errors.New("Unexpected quote")
 		}
-		lexer.tokens = append(lexer.tokens, Token{TokenQuote, ""})
+		lexer.tokens = append(lexer.tokens, lexer.Token(TokenQuote, ""))
 		return nil
 	}
 
@@ -303,7 +309,7 @@ func (lexer *Lexer) LexNextRune(r rune) error {
 		if lexer.buffer.Len() > 0 {
 			return errors.New("Unexpected backtick")
 		}
-		lexer.tokens = append(lexer.tokens, Token{TokenBacktick, ""})
+		lexer.tokens = append(lexer.tokens, lexer.Token(TokenBacktick, ""))
 		return nil
 	}
 
@@ -320,7 +326,7 @@ func (lexer *Lexer) LexNextRune(r rune) error {
 		if err != nil {
 			return err
 		}
-		lexer.tokens = append(lexer.tokens, DecodeBrace(r))
+		lexer.tokens = append(lexer.tokens, lexer.DecodeBrace(r))
 		return nil
 	}
 	if r == ' ' || r == '\n' || r == '\t' || r == '\r' {
@@ -343,23 +349,24 @@ func (lexer *Lexer) LexNextRune(r rune) error {
 
 func (lexer *Lexer) PeekNextToken() (Token, error) {
 	if lexer.finished {
-		return Token{TokenEnd, ""}, nil
+		return lexer.Token(TokenEnd, ""), nil
 	}
+
 	for len(lexer.tokens) == 0 {
 		r, _, err := lexer.stream.ReadRune()
+
 		if err != nil {
 			lexer.finished = true
 			if lexer.buffer.Len() > 0 {
 				lexer.dumpBuffer()
 				return lexer.tokens[0], nil
 			}
-			return Token{TokenEnd, ""}, nil
+			return lexer.Token(TokenEnd, ""), nil
 		}
 
-		lexer.History.WriteRune(r)
 		err = lexer.LexNextRune(r)
 		if err != nil {
-			return Token{TokenEnd, ""}, err
+			return lexer.Token(TokenEnd, ""), err
 		}
 	}
 
@@ -370,7 +377,7 @@ func (lexer *Lexer) PeekNextToken() (Token, error) {
 func (lexer *Lexer) GetNextToken() (Token, error) {
 	tok, err := lexer.PeekNextToken()
 	if err != nil || tok.typ == TokenEnd {
-		return Token{TokenEnd, ""}, err
+		return lexer.Token(TokenEnd, ""), err
 	}
 	lexer.tokens = lexer.tokens[1:]
 	return tok, nil
@@ -384,7 +391,6 @@ func NewLexerFromStream(stream io.RuneReader) *Lexer {
 		stream:   stream,
 		linenum:  1,
 		finished: false,
-		History:  new(bytes.Buffer),
 	}
 }
 

@@ -56,7 +56,7 @@ func NewGlisp() *Glisp {
 		env.AddFunction(key, function)
 	}
 
-	env.mainfunc = MakeFunction("__main", 0, false, make([]Instruction, 0))
+	env.mainfunc = MakeFunction("__main", 0, false, make([]Instruction, 0), nil)
 	env.curfunc = env.mainfunc
 	env.pc = 0
 	return env
@@ -80,7 +80,7 @@ func (env *Glisp) Clone() *Glisp {
 
 	dupenv.scopestack.Push(env.scopestack.elements[0])
 
-	dupenv.mainfunc = MakeFunction("__main", 0, false, make([]Instruction, 0))
+	dupenv.mainfunc = MakeFunction("__main", 0, false, make([]Instruction, 0), nil)
 	dupenv.curfunc = dupenv.mainfunc
 	dupenv.pc = 0
 	return dupenv
@@ -102,7 +102,7 @@ func (env *Glisp) Duplicate() *Glisp {
 
 	dupenv.scopestack.Push(env.scopestack.elements[0])
 
-	dupenv.mainfunc = MakeFunction("__main", 0, false, make([]Instruction, 0))
+	dupenv.mainfunc = MakeFunction("__main", 0, false, make([]Instruction, 0), nil)
 	dupenv.curfunc = dupenv.mainfunc
 	dupenv.pc = 0
 	return dupenv
@@ -263,7 +263,7 @@ func (env *Glisp) SourceExpressions(expressions []Sexp) error {
 	curfunc := env.curfunc
 	curpc := env.pc
 
-	env.curfunc = MakeFunction("__source", 0, false, gen.instructions)
+	env.curfunc = MakeFunction("__source", 0, false, gen.instructions, nil)
 	env.pc = 0
 
 	env.datastack.PushExpr(SexpNull)
@@ -433,7 +433,7 @@ func (env *Glisp) Clear() {
 	env.datastack.tos = -1
 	env.scopestack.tos = 0
 	env.addrstack.tos = -1
-	env.mainfunc = MakeFunction("__main", 0, false, make([]Instruction, 0))
+	env.mainfunc = MakeFunction("__main", 0, false, make([]Instruction, 0), nil)
 	env.curfunc = env.mainfunc
 	env.pc = 0
 }
