@@ -159,9 +159,7 @@ func runScript(env *Glisp, fname string, cfg *GlispConfig) {
 	}
 }
 
-// like main() for a standalone repl, now in library
-func ReplMain(cfg *GlispConfig, registerExtsFunc func(env *Glisp)) {
-	env := NewGlisp()
+func (env *Glisp) StandardSetup() {
 	env.ImportEval()
 	env.ImportRequire()
 	env.ImportTime()
@@ -174,6 +172,12 @@ func ReplMain(cfg *GlispConfig, registerExtsFunc func(env *Glisp)) {
 	colonOp := `(defmac : [key hmap & def] ^(hget ~hmap (quote ~key) ~@def))`
 	_, err = env.EvalString(colonOp)
 	panicOn(err)
+}
+
+// like main() for a standalone repl, now in library
+func ReplMain(cfg *GlispConfig, registerExtsFunc func(env *Glisp)) {
+	env := NewGlisp()
+	env.StandardSetup()
 
 	registerExtsFunc(env)
 

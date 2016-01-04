@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/shurcooL/go-goon"
 	cv "github.com/smartystreets/goconvey/convey"
 )
 
@@ -18,7 +17,7 @@ func Test001LexerPositionRecordingWorks(t *testing.T) {
 		lexer := NewLexerFromStream(stream)
 		expressions, err := ParseTokens(env, lexer)
 		panicOn(err)
-		goon.Dump(expressions[0])
+		//goon.Dump(expressions[0])
 		cv.So(expressions[0].SexpString(), cv.ShouldEqual, `(defn hello [] "greetings!")`)
 	})
 }

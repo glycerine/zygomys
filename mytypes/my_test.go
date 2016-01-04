@@ -3,8 +3,8 @@ package mytypes
 import (
 	"testing"
 
+	"github.com/glycerine/glisp/interpreter"
 	cv "github.com/glycerine/goconvey/convey"
-	"github.com/zhemao/glisp/interpreter"
 )
 
 /*
@@ -29,13 +29,14 @@ type Event struct {
 	Id     string
 	User   string
 	Flight string
-	Pilot  string
+	Pilot  []string
 }
 
  Event{}, and fill in its fields`, t, func() {
-		activate := `(msgpack-map event)`
-		event := `(event id:"abc" user:"Liz" flight:"AZD234"  pilot:"Roger")`
+		activate := `(defmap event)`
+		event := `(event id:"abc" user:"Liz" flight:"AZD234"  pilot:["Roger" "Ernie"])`
 		env := glisp.NewGlisp()
+		env.StandardSetup()
 
 		_, err := env.EvalString(activate)
 		panicOn(err)
@@ -43,7 +44,11 @@ type Event struct {
 		x, err := env.EvalString(event)
 		panicOn(err)
 
-		cv.So(x.SexpString(), cv.ShouldEqual, `(event id:"abc" user:"Liz" flight:"AZD234"  pilot:"Roger")`)
+		cv.So(x.SexpString(), cv.ShouldEqual, ` (event id:"abc" user:"Liz" flight:"AZD234" pilot:["Roger" "Ernie"])`)
+
+		json := glisp.ToJson(x)
+		cv.So(string(json), cv.ShouldEqual, `{"id":"abc", "user":"Liz", "flight":"AZD234", "pilot":["Roger", "Ernie"]}`)
+		//msgpack := x.ToMsgpack()
 	})
 }
 

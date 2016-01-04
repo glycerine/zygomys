@@ -4,5 +4,5 @@ type Event struct {
 	Id     string
 	User   string
 	Flight string
-	Pilot  string
+	Pilot  []string
 }
