@@ -1,6 +1,7 @@
 package glisp
 
 import (
+	"fmt"
 	"reflect"
 	"strconv"
 	"strings"
@@ -80,6 +81,7 @@ type SexpBool bool
 type SexpFloat float64
 type SexpChar rune
 type SexpStr string
+type SexpRaw []byte
 
 var SexpIntSize = reflect.TypeOf(SexpInt(0)).Bits()
 var SexpFloatSize = reflect.TypeOf(SexpFloat(0.0)).Bits()
@@ -132,6 +134,10 @@ func (c SexpChar) SexpString() string {
 
 func (s SexpStr) SexpString() string {
 	return strconv.Quote(string(s))
+}
+
+func (r SexpRaw) SexpString() string {
+	return fmt.Sprintf("%#v", []byte(r))
 }
 
 type SexpSymbol struct {

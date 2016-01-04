@@ -111,6 +111,8 @@ func IsEmpty(expr Sexp) bool {
 func TypeOf(expr Sexp) SexpStr {
 	v := ""
 	switch e := expr.(type) {
+	case SexpRaw:
+		v = "raw"
 	case SexpArray:
 		v = "array"
 	case SexpInt:
