@@ -32,9 +32,13 @@ func CompareFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		cond = res <= 0
 	case ">=":
 		cond = res >= 0
+	case "==":
+		cond = res == 0
 	case "=":
 		cond = res == 0
 	case "not=":
+		cond = res != 0
+	case "!=":
 		cond = res != 0
 	}
 
@@ -400,6 +404,8 @@ func TypeQueryFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	var result bool
 
 	switch name {
+	case "type":
+		return TypeOf(args[0]), nil
 	case "list?":
 		result = IsList(args[0])
 	case "null?":
@@ -655,8 +661,10 @@ var BuiltinFunctions = map[string]GlispUserFunction{
 	">":          CompareFunction,
 	"<=":         CompareFunction,
 	">=":         CompareFunction,
+	"==":         CompareFunction,
 	"=":          CompareFunction,
 	"not=":       CompareFunction,
+	"!=":         CompareFunction,
 	"sll":        BinaryIntFunction,
 	"sra":        BinaryIntFunction,
 	"srl":        BinaryIntFunction,
@@ -676,6 +684,7 @@ var BuiltinFunctions = map[string]GlispUserFunction{
 	"rest":       RestFunction,
 	"car":        FirstFunction,
 	"cdr":        RestFunction,
+	"type":       TypeQueryFunction,
 	"list?":      TypeQueryFunction,
 	"null?":      TypeQueryFunction,
 	"array?":     TypeQueryFunction,

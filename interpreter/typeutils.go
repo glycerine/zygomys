@@ -1,5 +1,7 @@
 package glisp
 
+import "fmt"
+
 func IsArray(expr Sexp) bool {
 	switch expr.(type) {
 	case SexpArray:
@@ -104,4 +106,33 @@ func IsEmpty(expr Sexp) bool {
 	}
 
 	return false
+}
+
+func TypeOf(expr Sexp) SexpStr {
+	v := ""
+	switch e := expr.(type) {
+	case SexpArray:
+		v = "array"
+	case SexpInt:
+		v = "int"
+	case SexpStr:
+		v = "string"
+	case SexpChar:
+		v = "char"
+	case SexpFloat:
+		v = "float64"
+	case SexpHash:
+		v = "hash"
+	case SexpPair:
+		v = "list"
+	case SexpSymbol:
+		v = "symbol"
+	case SexpFunction:
+		v = "function"
+	case SexpSentinel:
+		v = "nil"
+	default:
+		fmt.Printf("\n error: unknown type: %T in '%#v'\n", e, e)
+	}
+	return SexpStr(v)
 }

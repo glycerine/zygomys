@@ -29,5 +29,5 @@
 (assert (= '(false false true true) (map zero? selection)))
 
 ;; exponentiation
-(assert (= 8 (** 2 4)))
+(assert (= 16 (** 2 4)))
 (assert (= 1024.0 (** 2.0 10.0)))
