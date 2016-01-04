@@ -40,6 +40,14 @@
 (assert (== (:joker lazy8 "gotaway") "gotaway"))
 
 ;; nested access with (->)
+;; notice that we do field: while clojure does :field
+;;
 (defmap bunkhouse)
 (hset! lazy8 bunk1:(bunkhouse bed1:"Howie" bed2: "Mamie"))
-;;(assert (== (-> bunk1 bed2 lazy8) "Mamie"))
+(assert (== (->lazy8 bunk1: bed2:) "Mamie"))
+
+(defmap closet)
+(hset! (:bunk1 lazy8) closet1:(closet broom:"Nimbuz2"))
+(assert (== (-> lazy8 bunk1: closet1: broom:) "Nimbuz2"))
+(assert (== (-> lazy8 bunk1:closet1:broom:) "Nimbuz2"))
+
