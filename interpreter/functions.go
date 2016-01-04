@@ -411,14 +411,12 @@ func EvalFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	if len(args) != 1 {
 		return SexpNull, WrongNargs
 	}
-	newenv := NewGlisp()
-	gen := NewGenerator(newenv)
-	err := gen.Generate(args[0])
+	newenv := env.Duplicate()
+	err := newenv.LoadExpressions(args)
 	if err != nil {
 		return SexpNull, errors.New("failed to compile expression")
 	}
-	newenv.mainfunc = MakeFunction("__main", 0, false, gen.instructions, nil)
-	newenv.pc = -1
+	newenv.pc = 0
 	return newenv.Run()
 }
 

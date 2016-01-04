@@ -49,7 +49,7 @@ func (stack *Stack) PushAllTo(target *Stack) int {
 }
 
 func (stack *Stack) IsEmpty() bool {
-	return stack.tos == -1
+	return stack.tos < 0
 }
 
 func (stack *Stack) Push(elem StackElem) {
