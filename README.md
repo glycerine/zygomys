@@ -22,8 +22,8 @@ Here is a list of implemented features.
  * [x] Syntax quoting -- with caret ^() instead of backtick.
  * [x] Channel and goroutine support
  * [x] Pre- and Post- function call hooks
- * [x] Clojure like threading `(-> hash field1: field2:)` and (:field hash) selection
- * [x] Raw bytes type `SexpRaw` lets you do zero-copy []byte manipulation
+ * [x] Clojure like threading `(-> hash field1: field2:)` and `(:field hash)` selection
+ * [x] Raw bytes type `(raw string)` lets you do zero-copy []byte manipulation
  * [x] Record definitions `(defmap)`
  * [x] Read external files with `(source path-to-file)`
  * [x] Go style raw string literals

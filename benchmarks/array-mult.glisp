@@ -1,5 +1,5 @@
 (defn mult-array-loop [a b res i]
-  (cond (= i (len a)) res
+  (cond (== i (len a)) res
     (begin
       (aset! res i (* (aget a i) (aget b i)))
       (mult-array-loop a b res (+ i 1)))))
@@ -8,18 +8,20 @@
   (mult-array-loop a b (make-array (len a)) 0))
 
 (defn random-array [arr i]
-  (cond (= i (len arr))
+  (cond (== i (len arr))
         arr
         (begin
           (aset! arr i (random))
           (random-array arr (+ i 1)))))
 
 (defn do-in-loop [func times]
-  (cond (= times 0) '()
+  (cond (== times 0) '()
     (begin
       (func)
       (do-in-loop func (- times 1)))))
 
-(let [a (random-array (make-array 1000) 0)
+(timeit (fn [] (let [a (random-array (make-array 1000) 0)    
       b (random-array (make-array 1000) 0)]
-  (do-in-loop (fn [] (mult-array a b)) 1000))
+  (do-in-loop (fn [] (mult-array a b)) 1000))))
+
+
