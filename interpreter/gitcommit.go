@@ -1,2 +1,2 @@
 package glisp
-func init() { GITLASTTAG = "v0.7.0"; GITLASTCOMMIT = "7162f6512323fad161549a7f4db14e98b344d08b" }
+func init() { GITLASTTAG = "v0.8.0"; GITLASTCOMMIT = "deddee30f4816a8de2dc3c8979f2ecd5a1cb4ffd" }

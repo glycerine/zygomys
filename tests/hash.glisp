@@ -35,3 +35,6 @@
 (defmap ranch)
 (def lazy8 (ranch cowboy:"Jim" cowgirl:"Jane"))
 (assert (== (:cowboy lazy8) "Jim"))
+
+;; not present should return default
+(assert (== (:joker lazy8 "gotaway") "gotaway"))

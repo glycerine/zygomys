@@ -171,7 +171,7 @@ func ReplMain(cfg *GlispConfig, registerExtsFunc func(env *Glisp)) {
 	_, err := env.EvalString(defmap)
 	panicOn(err)
 
-	colonOp := `(defmac : [key hmap] ^(hget ~hmap (quote ~key)))`
+	colonOp := `(defmac : [key hmap & def] ^(hget ~hmap (quote ~key) ~@def))`
 	_, err = env.EvalString(colonOp)
 	panicOn(err)
 
