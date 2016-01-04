@@ -1,10 +1,9 @@
-package mytypes
+package glisp
 
 import (
 	"fmt"
 	"testing"
 
-	"github.com/glycerine/glisp/interpreter"
 	cv "github.com/glycerine/goconvey/convey"
 )
 
@@ -22,7 +21,7 @@ import (
 (3) provided by tinylib/msgp, and by ugorji/go/codec
 
 */
-func Test001TypeReflectionOnMytypeEvent(t *testing.T) {
+func Test005ConversionToAndFromMsgpackAndJson(t *testing.T) {
 
 	cv.Convey(`from gl we should be able to create a known Go struct,
 
@@ -37,7 +36,7 @@ type Event struct {
 		activate := `(defmap event)`
 		activate2 := `(defmap person)`
 		event := `(event id:123 user: (person first:"Liz" last:"C") flight:"AZD234"  pilot:["Roger" "Ernie"])`
-		env := glisp.NewGlisp()
+		env := NewGlisp()
 		env.StandardSetup()
 
 		_, err := env.EvalString(activate)
@@ -51,13 +50,13 @@ type Event struct {
 
 		cv.So(x.SexpString(), cv.ShouldEqual, ` (event id:123 user: (person first:"Liz" last:"C") flight:"AZD234" pilot:["Roger" "Ernie"])`)
 
-		json := glisp.ToJson(x)
+		json := ToJson(x)
 		//cv.So(string(json), cv.ShouldEqual, `{"Atype":"event", "id":123, "user":{"Atype":"person", "first":"Liz", "last":"C"}, "flight":"AZD234", "pilot":["Roger", "Ernie"]}`)
 		cv.So(string(json), cv.ShouldEqual, `{"Atype":"event", "id":123, "user":{"Atype":"person", "first":"Liz", "last":"C"}, "flight":"AZD234", "pilot":["Roger", "Ernie"]}`)
-		msgpack, goObj := glisp.ToMsgpack(x)
+		msgpack, goObj := ToMsgpack(x)
 		//cv.So(msgpack, cv.ShouldResemble, expectedMsgpack)
 
-		_, goObj2 := glisp.MsgpackToJson(msgpack)
+		_, goObj2 := MsgpackToJson(msgpack)
 		// the ordering of jsonBack is canonical, so won't match ours
 		// cv.So(string(jsonBack), cv.ShouldResemble, `{"id":123, "user":{"first":"Liz", "last":"C"}, "flight":"AZD234", "pilot":["Roger", "Ernie"]}`)
 
@@ -66,18 +65,12 @@ type Event struct {
 
 		cv.So(goObj, cv.ShouldResemble, goObj2)
 
-		sexp, err := glisp.FromMsgpack(msgpack, env)
+		sexp, err := FromMsgpack(msgpack, env)
 		panicOn(err)
 		// must get into same order to have sane comparison, so borrow the KeyOrder to be sure.
-		ko := sexp.(glisp.SexpHash).KeyOrder
-		*ko = *x.(glisp.SexpHash).KeyOrder
+		ko := sexp.(SexpHash).KeyOrder
+		*ko = *x.(SexpHash).KeyOrder
 		sexpStr := sexp.SexpString()
 		cv.So(sexpStr, cv.ShouldResemble, ` (event id:123 user: (person first:"Liz" last:"C") flight:"AZD234" pilot:["Roger" "Ernie"])`)
 	})
-}
-
-func panicOn(err error) {
-	if err != nil {
-		panic(err)
-	}
 }

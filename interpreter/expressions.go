@@ -128,7 +128,15 @@ func NamedHashSexpString(hash SexpHash) string {
 	for _, key := range *hash.KeyOrder {
 		val, err := hash.HashGet(key)
 		if err == nil {
-			str += key.SexpString() + ":"
+			switch s := key.(type) {
+			case SexpStr:
+				str += string(s) + ":"
+			case SexpSymbol:
+				str += s.name + ":"
+			default:
+				str += key.SexpString() + ":"
+			}
+
 			str += val.SexpString() + " "
 		} else {
 			panic(err)

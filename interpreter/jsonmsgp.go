@@ -21,7 +21,8 @@ func ToJson(exp Sexp) string {
 }
 
 func (hash *SexpHash) jsonHashHelper() string {
-	str := "{"
+	str := fmt.Sprintf(`{"Atype":"%s", `, *hash.TypeName)
+
 	for _, key := range *hash.KeyOrder {
 		val, err := hash.HashGet(key)
 		if err == nil {
@@ -139,22 +140,22 @@ func MsgpackToJson(msgp []byte) ([]byte, interface{}) {
 }
 
 // returns both the msgpack []bytes and the go intermediary
-func FromMsgpack(msgp []byte) Sexp {
+func FromMsgpack(msgp []byte, env *Glisp) (Sexp, error) {
 
 	var iface interface{}
 	dec := codec.NewDecoderBytes(msgp, &msgpHelper.mh)
 	err := dec.Decode(&iface)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	//fmt.Printf("\n decoded type : %T\n", iface)
 	//fmt.Printf("\n decoded value: %#v\n", iface)
 
-	return decodeGoToSexpHelper(iface, 0)
+	return decodeGoToSexpHelper(iface, 0, env), nil
 }
 
-func decodeGoToSexpHelper(r interface{}, depth int) (s Sexp) {
+func decodeGoToSexpHelper(r interface{}, depth int, env *Glisp) (s Sexp) {
 
 	VPrintf("decodeHelper() at depth %d, decoded type is %T\n", depth, r)
 	switch val := r.(type) {
@@ -183,7 +184,7 @@ func decodeGoToSexpHelper(r interface{}, depth int) (s Sexp) {
 
 		slice := []Sexp{}
 		for i := range val {
-			slice = append(slice, decodeGoToSexpHelper(val[i], depth+1))
+			slice = append(slice, decodeGoToSexpHelper(val[i], depth+1, env))
 		}
 		return SexpArray(slice)
 
@@ -194,12 +195,25 @@ func decodeGoToSexpHelper(r interface{}, depth int) (s Sexp) {
 
 		pairs := make([]Sexp, 0)
 
+		typeName := "hash"
 		for i := range sortedMapKey {
-			pairs = append(pairs, SexpStr(sortedMapKey[i]))
-			ele := decodeGoToSexpHelper(sortedMapVal[i], depth+1)
-			pairs = append(pairs, ele)
+			// special field storing the name of our record (defmap) type.
+			VPrintf("\n i=%d sortedMapVal type %T, value=%v\n", i, sortedMapVal[i], sortedMapVal[i])
+			VPrintf("\n i=%d sortedMapKey type %T, value=%v\n", i, sortedMapKey[i], sortedMapKey[i])
+			if sortedMapKey[i] == "Atype" {
+
+				tn, isString := sortedMapVal[i].(string)
+				if isString {
+					typeName = string(tn)
+				}
+			} else {
+				sym := env.MakeSymbol(sortedMapKey[i])
+				pairs = append(pairs, sym)
+				ele := decodeGoToSexpHelper(sortedMapVal[i], depth+1, env)
+				pairs = append(pairs, ele)
+			}
 		}
-		hash, err := MakeHash(pairs, "hash")
+		hash, err := MakeHash(pairs, typeName)
 		panicOn(err)
 		return hash
 
