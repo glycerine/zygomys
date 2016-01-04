@@ -7,7 +7,7 @@ to all systems and architectures that Go targets.
 Here is a list of what features are implemented and not implemented so far.
 
  * [x] Float, Int, Char, String, Symbol, List, Array, and Hash datatypes
- * [x] Arithmetic (`+`, `-`, `*`, `/`, `mod`)
+ * [x] Arithmetic (`+`, `-`, `*`, `/`, `mod`, `**`)
  * [x] Shift Operators (`sll`, `srl`, `sra`)
  * [x] Bitwise operations (`bit-and`, `bit-or`, `bit-xor`)
  * [x] Comparison operations (`<`, `>`, `<=`, `>=`, `=`, and `not=`)
@@ -23,4 +23,4 @@ Here is a list of what features are implemented and not implemented so far.
  * [x] Channel and goroutine support
  * [x] Pre- and Post- function call hooks
 
-The full documentation can be found in the [Wiki](https://github.com/zhemao/glisp/wiki).
+The full documentation can be found in the [Wiki](https://github.com/glycerine/glisp/wiki).
