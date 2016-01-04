@@ -2,7 +2,6 @@ package mytypes
 
 import (
 	"fmt"
-	"os"
 	"testing"
 
 	"github.com/glycerine/glisp/interpreter"
@@ -66,17 +65,17 @@ type Event struct {
 		fmt.Printf("goObj2 = '%#v'\n", goObj2)
 
 		cv.So(goObj, cv.ShouldResemble, goObj2)
-
-		f, err := os.Create("./test.msgpack")
-		if err != nil {
-			panic(err)
-		}
-		defer f.Close()
-		_, err = f.Write(msgpack)
-		if err != nil {
-			panic(err)
-		}
-
+		/*
+			f, err := os.Create("./test.msgpack")
+			if err != nil {
+				panic(err)
+			}
+			defer f.Close()
+			_, err = f.Write(msgpack)
+			if err != nil {
+				panic(err)
+			}
+		*/
 	})
 }
 
