@@ -3,4 +3,4 @@
 
 (def a (fn [] (println "a says hi")))
 
-(assert (= (str a) "(fn [] (println \"a says hi\"))"))
+(assert (== (str a) "(fn [] (println \"a says hi\"))"))

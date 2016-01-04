@@ -2,7 +2,7 @@
 (defn f [] 23)
 (defn g []
       (let [f (fn [] 11)]
-           (assert (= (f) 11)))
+           (assert (== (f) 11)))
            45)
 g()
 
@@ -12,4 +12,4 @@ g()
 (defn c [] 88)
 
 (defn c [] 33)
-(assert (= (a) 33))
+(assert (== (a) 33))

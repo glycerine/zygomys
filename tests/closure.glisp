@@ -21,7 +21,7 @@
         (number? x)
             (cond
                 (float? x) false
-                (= (bit-and x 1) 0))
+                (== (bit-and x 1) 0))
             false
             ))
 
@@ -42,14 +42,14 @@
 (def evens (newStore [2 4 6 8 10]))
 
 (map (fn [x]
-		(assert (= x (evens))))
+		(assert (== x (evens))))
     (filter [1 2 3 4 5 6 7 8 9 10] even?)
 )
 
 (def s (newStore [10 9 8 7 6 5 4 3 2 1]))
-(g-map (fn [x] (assert (= x (s)))) [10 9 8 7 6 5 4 3 2 1])
+(g-map (fn [x] (assert (== x (s)))) [10 9 8 7 6 5 4 3 2 1])
 (def s (newStore [10 9 8 7 6 5 4 3 2 1]))
-(map (fn [x] (assert (= x (s)))) [10 9 8 7 6 5 4 3 2 1])
+(map (fn [x] (assert (== x (s)))) [10 9 8 7 6 5 4 3 2 1])
 
 (def decending (newStore [10 9 8 7 6 5 4 3 2 1]))
 
@@ -59,9 +59,9 @@
 (defn drainStore []
 	(let [ v (s) ]
 		(cond
-			(empty? v) (assert (= (decending) ()))
+			(empty? v) (assert (== (decending) ()))
 			((begin
-				(assert (= (decending) v))
+				(assert (== (decending) v))
 				(drainStore)))))
 	)
 		
@@ -71,7 +71,7 @@
 (def a 1)
 (defn enclosure []
   (let [func1 (fn [thunk] (let [a 2] (thunk)))
-         func2 (fn [] (assert (= a 1)))]
+         func2 (fn [] (assert (== a 1)))]
     (func1 func2)))
 
 (enclosure)

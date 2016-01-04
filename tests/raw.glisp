@@ -1,1 +1,1 @@
-(assert (= (raw2str (raw `sup`)) "sup"))
+(assert (== (raw2str (raw `sup`)) "sup"))

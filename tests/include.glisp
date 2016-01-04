@@ -6,11 +6,11 @@
 
 ; (println "Calling function defined in inc.g")
 
-(assert (= (simple) "from include"))
+(assert (== (simple) "from include"))
 
 ; (println "Calling function defined in inc1.g")
 
-(assert (= (simple1) "from include 1"))
+(assert (== (simple1) "from include 1"))
 
 ; (println (simple))
 ; (println (simple1))
@@ -18,8 +18,8 @@
 ;; recursively includes inc3.g as well
 (include "./tests/inc2.g")
 
-(assert (= (inc2) "from inc2.g"))
-(assert (= (inc3) "from inc3.g"))
+(assert (== (inc2) "from inc2.g"))
+(assert (== (inc3) "from inc3.g"))
 
 ;; check that we are impacting the global env with our includes
 ;; and confirm that req macro works too. req is same as source
@@ -28,4 +28,4 @@
 (def a 10)
 (req tests/incr.g)
 (req tests/incr.g)
-(assert (= a 12))
+(assert (== a 12))
