@@ -34,20 +34,24 @@ type Event struct {
 
  Event{}, and fill in its fields`, t, func() {
 		activate := `(defmap event)`
-		event := `(event id:"abc" user:"Liz" flight:"AZD234"  pilot:["Roger" "Ernie"])`
+		activate2 := `(defmap person)`
+		event := `(event id:123 user: (person first:"Liz" last:"C") flight:"AZD234"  pilot:["Roger" "Ernie"])`
 		env := glisp.NewGlisp()
 		env.StandardSetup()
 
 		_, err := env.EvalString(activate)
 		panicOn(err)
 
+		_, err = env.EvalString(activate2)
+		panicOn(err)
+
 		x, err := env.EvalString(event)
 		panicOn(err)
 
-		cv.So(x.SexpString(), cv.ShouldEqual, ` (event id:"abc" user:"Liz" flight:"AZD234" pilot:["Roger" "Ernie"])`)
+		cv.So(x.SexpString(), cv.ShouldEqual, ` (event id:123 user: (person first:"Liz" last:"C") flight:"AZD234" pilot:["Roger" "Ernie"])`)
 
 		json := glisp.ToJson(x)
-		cv.So(string(json), cv.ShouldEqual, `{"id":"abc", "user":"Liz", "flight":"AZD234", "pilot":["Roger", "Ernie"]}`)
+		cv.So(string(json), cv.ShouldEqual, `{"id":123, "user":{"first":"Liz", "last":"C"}, "flight":"AZD234", "pilot":["Roger", "Ernie"]}`)
 		//msgpack := x.ToMsgpack()
 	})
 }
