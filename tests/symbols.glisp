@@ -7,4 +7,4 @@
 ;; require: longer version of req, using a
 ;; macro defined in glisp rather than in go.
 (defmac require [sympath]
-    `(source (sym2str (quote ~sympath))))
+    ^(source (sym2str (quote ~sympath))))

@@ -4,7 +4,7 @@
 (assert (= (type 5.5) "float64"))
 (assert (= (type {}) "hash"))
 (assert (= (type []) "array"))
-(assert (= (type ()) "nil"))
+(assert (= (type ()) "null"))
 (assert (= (type '('a . 'b)) "list"))
 
 

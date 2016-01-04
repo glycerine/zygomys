@@ -130,7 +130,7 @@ func TypeOf(expr Sexp) SexpStr {
 	case SexpFunction:
 		v = "function"
 	case SexpSentinel:
-		v = "nil"
+		v = "null"
 	default:
 		fmt.Printf("\n error: unknown type: %T in '%#v'\n", e, e)
 	}

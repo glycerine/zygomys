@@ -32,6 +32,7 @@ const (
 	TokenFloat
 	TokenChar
 	TokenString
+	TokenCaret
 	TokenEnd
 )
 
@@ -60,6 +61,8 @@ func (t Token) String() string {
 		return "'"
 	case TokenBacktick:
 		return "`"
+	case TokenCaret:
+		return "^"
 	case TokenTilde:
 		return "~"
 	case TokenTildeAt:
@@ -85,6 +88,7 @@ const (
 	LexerStrLit
 	LexerStrEscaped
 	LexerUnquote
+	LexerBacktickString
 )
 
 type Lexer struct {
@@ -249,6 +253,15 @@ func (lexer *Lexer) LexNextRune(r rune) error {
 		}
 		return nil
 	}
+	if lexer.state == LexerBacktickString {
+		if r == '`' {
+			lexer.dumpString()
+			lexer.state = LexerNormal
+			return nil
+		}
+		lexer.buffer.WriteRune(r)
+		return nil
+	}
 	if lexer.state == LexerStrLit {
 		if r == '\\' {
 			lexer.state = LexerStrEscaped
@@ -283,6 +296,13 @@ func (lexer *Lexer) LexNextRune(r rune) error {
 		lexer.state = LexerNormal
 		return nil
 	}
+	if r == '`' {
+		if lexer.buffer.Len() > 0 {
+			return errors.New("Unexpected backtick")
+		}
+		lexer.state = LexerBacktickString
+		return nil
+	}
 
 	if r == '"' {
 		if lexer.buffer.Len() > 0 {
@@ -305,11 +325,13 @@ func (lexer *Lexer) LexNextRune(r rune) error {
 		return nil
 	}
 
-	if r == '`' {
+	// caret '^' replaces backtick '`' as the start of a macro template, so
+	// we can use `` as in Go for verbatim strings (strings with newlines, etc).
+	if r == '^' {
 		if lexer.buffer.Len() > 0 {
-			return errors.New("Unexpected backtick")
+			return errors.New("Unexpected ^ caret")
 		}
-		lexer.tokens = append(lexer.tokens, lexer.Token(TokenBacktick, ""))
+		lexer.tokens = append(lexer.tokens, lexer.Token(TokenCaret, ""))
 		return nil
 	}
 

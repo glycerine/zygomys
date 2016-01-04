@@ -162,7 +162,8 @@ func ParseExpression(parser *Parser, depth int) (res Sexp, err error) {
 			return SexpNull, err
 		}
 		return MakeList([]Sexp{env.MakeSymbol("quote"), expr}), nil
-	case TokenBacktick:
+	case TokenCaret:
+		// '^' is now our syntax-quote symbol, not TokenBacktick, to allow go-style `string literals`.
 		expr, err := ParseExpression(parser, depth+1)
 		if err != nil {
 			return SexpNull, err
