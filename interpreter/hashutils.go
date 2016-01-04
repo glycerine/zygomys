@@ -25,12 +25,15 @@ func HashExpression(expr Sexp) (int, error) {
 	return 0, errors.New(fmt.Sprintf("cannot hash type %T", expr))
 }
 
-func MakeHash(args []Sexp) (SexpHash, error) {
-	hash := SexpHash(make(map[int][]SexpPair))
-
+func MakeHash(args []Sexp, typename string) (SexpHash, error) {
 	if len(args)%2 != 0 {
-		return SexpHash(nil),
+		return SexpHash{},
 			errors.New("hash requires even number of arguments")
+	}
+
+	hash := SexpHash{
+		TypeName: typename,
+		Map:      make(map[int][]SexpPair),
 	}
 
 	for i := 0; i < len(args); i += 2 {
@@ -67,7 +70,7 @@ func HashGetDefault(hash SexpHash, key Sexp, defaultval Sexp) (Sexp, error) {
 	if err != nil {
 		return SexpNull, err
 	}
-	arr, ok := hash[hashval]
+	arr, ok := hash.Map[hashval]
 
 	if !ok {
 		return defaultval, nil
@@ -87,10 +90,10 @@ func HashSet(hash SexpHash, key Sexp, val Sexp) error {
 	if err != nil {
 		return err
 	}
-	arr, ok := hash[hashval]
+	arr, ok := hash.Map[hashval]
 
 	if !ok {
-		hash[hashval] = []SexpPair{Cons(key, val)}
+		hash.Map[hashval] = []SexpPair{Cons(key, val)}
 		return nil
 	}
 
@@ -106,7 +109,7 @@ func HashSet(hash SexpHash, key Sexp, val Sexp) error {
 	if !found {
 		arr = append(arr, Cons(key, val))
 	}
-	hash[hashval] = arr
+	hash.Map[hashval] = arr
 
 	return nil
 }
@@ -116,7 +119,7 @@ func HashDelete(hash SexpHash, key Sexp) error {
 	if err != nil {
 		return err
 	}
-	arr, ok := hash[hashval]
+	arr, ok := hash.Map[hashval]
 
 	// if it doesn't exist, no need to delete it
 	if !ok {
@@ -126,7 +129,7 @@ func HashDelete(hash SexpHash, key Sexp) error {
 	for i, pair := range arr {
 		res, err := Compare(pair.head, key)
 		if err == nil && res == 0 {
-			hash[hashval] = append(arr[0:i], arr[i+1:]...)
+			hash.Map[hashval] = append(arr[0:i], arr[i+1:]...)
 			break
 		}
 	}
@@ -136,14 +139,14 @@ func HashDelete(hash SexpHash, key Sexp) error {
 
 func HashCountKeys(hash SexpHash) int {
 	var num int
-	for _, arr := range hash {
+	for _, arr := range hash.Map {
 		num += len(arr)
 	}
 	return num
 }
 
 func HashIsEmpty(hash SexpHash) bool {
-	for _, arr := range hash {
+	for _, arr := range hash.Map {
 		if len(arr) > 0 {
 			return false
 		}

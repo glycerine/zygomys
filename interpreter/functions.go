@@ -572,11 +572,11 @@ func ConstructorFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	case "list":
 		return MakeList(args), nil
 	case "hash":
-		return MakeHash(args)
+		return MakeHash(args, "hash")
 	case "raw":
 		return MakeRaw(args)
 	case "msgmap":
-		return MakeHash(args)
+		return MakeHash(args, "msgmap")
 	}
 	return SexpNull, errors.New("invalid constructor")
 }

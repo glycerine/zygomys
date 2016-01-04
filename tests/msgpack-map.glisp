@@ -1,4 +1,9 @@
 (def h (hash a:b:)) ;; check kw: symbols: should not crash
 
 (msgpack-map event)
-(assert (== (hget (event id:"Id") 'id) "Id"))
+(msgpack-map person)
+
+(def recor (event id:"Id" person: (person first:"jason" last:"me!")))
+
+(assert (== (hget recor id:) "Id"))
+
