@@ -9,6 +9,31 @@ import (
 	"github.com/ugorji/go/codec"
 )
 
+/*
+ Conversion map
+
+ Go map[string]interface{}  <--(1)--> lisp
+   ^                                  ^
+   |                                 /
+  (2)   ------------ (4) -----------/
+   |   /
+   V  V
+ msgpack <--(3)--> go struct, strongly typed
+
+(1) we provide these herein
+     (a) SexpToGo()
+     (b) GoToSexp()
+(2) provided by ugorji/go/codec; see examples also herein
+     (a) MsgpackToGo() / JsonToGo()
+     (b) GoToMsgpack() / GoToJson()
+(3) provided by tinylib/msgp, and by ugorji/go/codec
+     by using pre-compiled or just decoding into an instance
+     of the struct.
+(4) see herein
+     (a) SexpToMsgpack() and SexpToJson()
+     (b) MsgpackToSexp(); uses (4) = (2) + (1)
+*/
+
 // json -> sexp. env is needed to handle symbols correctly
 func JsonToSexp(json []byte, env *Glisp) (Sexp, error) {
 	iface, err := JsonToGo(json)
