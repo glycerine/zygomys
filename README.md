@@ -1,8 +1,9 @@
 # GoDiesel
 
 GoDiesel is an embeddable scheme REPL focused on Domain Specific Language
-creation. It is written in Go and a great Go interface. It was derived from
-and inspired by [Howard Mao's terrific Glisp project](https://github.com/zhemao/glisp).
+creation. It is written in Go and plays easily with Go programs
+and structs defined within them. It was originally derived from
+[Howard Mao's terrific Glisp project](https://github.com/zhemao/glisp).
 
 GoDiesel's features have evolved to the point where it is a now distinct dialect.
 This was done to support certain critical features like raw string literals,
