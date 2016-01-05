@@ -1,4 +1,4 @@
-package glisp
+package gdsl
 
 import (
 	"bufio"
@@ -35,7 +35,7 @@ const ScopeStackSize = 50
 const DataStackSize = 100
 const StackStackSize = 5
 
-func NewGlisp() *Glisp {
+func NewGdsl() *Glisp {
 	env := new(Glisp)
 	env.datastack = NewStack(DataStackSize)
 	env.scopestack = NewStack(ScopeStackSize)

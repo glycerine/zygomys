@@ -1,11 +1,11 @@
-package glispext
+package gdslext
 
 import (
 	"errors"
 	"fmt"
 	"regexp"
 
-	glisp "github.com/glycerine/glisp/interpreter"
+	gdsl "github.com/glycerine/godiesel/interpreter"
 )
 
 type SexpRegexp regexp.Regexp
@@ -16,29 +16,29 @@ func (re SexpRegexp) SexpString() string {
 }
 
 func regexpFindIndex(
-	needle regexp.Regexp, haystack string) (glisp.Sexp, error) {
+	needle regexp.Regexp, haystack string) (gdsl.Sexp, error) {
 
 	loc := needle.FindStringIndex(haystack)
 
-	arr := make([]glisp.Sexp, len(loc))
+	arr := make([]gdsl.Sexp, len(loc))
 	for i := range arr {
-		arr[i] = glisp.Sexp(glisp.SexpInt(loc[i]))
+		arr[i] = gdsl.Sexp(gdsl.SexpInt(loc[i]))
 	}
 
-	return glisp.SexpArray(arr), nil
+	return gdsl.SexpArray(arr), nil
 }
 
-func RegexpFind(env *glisp.Glisp, name string,
-	args []glisp.Sexp) (glisp.Sexp, error) {
+func RegexpFind(env *gdsl.Glisp, name string,
+	args []gdsl.Sexp) (gdsl.Sexp, error) {
 	if len(args) != 2 {
-		return glisp.SexpNull, glisp.WrongNargs
+		return gdsl.SexpNull, gdsl.WrongNargs
 	}
 	var haystack string
 	switch t := args[1].(type) {
-	case glisp.SexpStr:
+	case gdsl.SexpStr:
 		haystack = string(t)
 	default:
-		return glisp.SexpNull,
+		return gdsl.SexpNull,
 			errors.New(fmt.Sprintf("2nd argument of %v should be a string", name))
 	}
 
@@ -47,50 +47,50 @@ func RegexpFind(env *glisp.Glisp, name string,
 	case SexpRegexp:
 		needle = regexp.Regexp(t)
 	default:
-		return glisp.SexpNull,
+		return gdsl.SexpNull,
 			errors.New(fmt.Sprintf("1st argument of %v should be a compiled regular expression", name))
 	}
 
 	switch name {
 	case "regexp-find":
 		str := needle.FindString(haystack)
-		return glisp.SexpStr(str), nil
+		return gdsl.SexpStr(str), nil
 	case "regexp-find-index":
 		return regexpFindIndex(needle, haystack)
 	case "regexp-match":
 		matches := needle.MatchString(haystack)
-		return glisp.SexpBool(matches), nil
+		return gdsl.SexpBool(matches), nil
 	}
 
-	return glisp.SexpNull, errors.New("unknown function")
+	return gdsl.SexpNull, errors.New("unknown function")
 }
 
-func RegexpCompile(env *glisp.Glisp, name string,
-	args []glisp.Sexp) (glisp.Sexp, error) {
+func RegexpCompile(env *gdsl.Glisp, name string,
+	args []gdsl.Sexp) (gdsl.Sexp, error) {
 	if len(args) < 1 {
-		return glisp.SexpNull, glisp.WrongNargs
+		return gdsl.SexpNull, gdsl.WrongNargs
 	}
 
 	var re string
 	switch t := args[0].(type) {
-	case glisp.SexpStr:
+	case gdsl.SexpStr:
 		re = string(t)
 	default:
-		return glisp.SexpNull,
+		return gdsl.SexpNull,
 			errors.New("argument of regexp-compile should be a string")
 	}
 
 	r, err := regexp.Compile(re)
 
 	if err != nil {
-		return glisp.SexpNull, errors.New(
+		return gdsl.SexpNull, errors.New(
 			fmt.Sprintf("error during regexp-compile: '%v'", err))
 	}
 
-	return glisp.Sexp(SexpRegexp(*r)), nil
+	return gdsl.Sexp(SexpRegexp(*r)), nil
 }
 
-func ImportRegex(env *glisp.Glisp) {
+func ImportRegex(env *gdsl.Glisp) {
 	env.AddFunction("regexp-compile", RegexpCompile)
 	env.AddFunction("regexp-find-index", RegexpFind)
 	env.AddFunction("regexp-find", RegexpFind)

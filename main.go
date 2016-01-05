@@ -5,18 +5,18 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/glycerine/glisp/extensions"
-	"github.com/glycerine/glisp/interpreter"
+	"github.com/glycerine/godiesel/extensions"
+	"github.com/glycerine/godiesel/interpreter"
 )
 
 func usage(myflags *flag.FlagSet) {
-	fmt.Printf("glisp command line help:\n")
+	fmt.Printf("gdsl command line help:\n")
 	myflags.PrintDefaults()
 	os.Exit(1)
 }
 
 func main() {
-	cfg := glisp.NewGlispConfig("glisp")
+	cfg := gdsl.NewGdslConfig("gdsl")
 	cfg.DefineFlags()
 	err := cfg.Flags.Parse(os.Args[1:])
 	if err == flag.ErrHelp {
@@ -28,16 +28,16 @@ func main() {
 	}
 	err = cfg.ValidateConfig()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "glisp command line error: '%v'\n", err)
+		fmt.Fprintf(os.Stderr, "gdsl command line error: '%v'\n", err)
 		usage(cfg.Flags)
 	}
 
-	registerExts := func(env *glisp.Glisp) {
-		glispext.ImportRandom(env)
-		glispext.ImportChannels(env)
-		glispext.ImportCoroutines(env)
-		glispext.ImportRegex(env)
+	registerExts := func(env *gdsl.Glisp) {
+		gdslext.ImportRandom(env)
+		gdslext.ImportChannels(env)
+		gdslext.ImportCoroutines(env)
+		gdslext.ImportRegex(env)
 	}
-	cfg.ExtensionsVersion = glispext.Version()
-	glisp.ReplMain(cfg, registerExts)
+	cfg.ExtensionsVersion = gdslext.Version()
+	gdsl.ReplMain(cfg, registerExts)
 }

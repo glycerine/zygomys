@@ -1,6 +1,0 @@
-;; should be able to show function defintions, at
-;; the repl and with (str)
-
-(def a (fn [] (println "a says hi")))
-
-(assert (== (str a) "(fn [] (println \"a says hi\"))"))

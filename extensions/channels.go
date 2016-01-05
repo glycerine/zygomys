@@ -1,63 +1,63 @@
-package glispext
+package gdslext
 
 import (
 	"errors"
 	"fmt"
-	"github.com/glycerine/glisp/interpreter"
+	"github.com/glycerine/godiesel/interpreter"
 )
 
-type SexpChannel chan glisp.Sexp
+type SexpChannel chan gdsl.Sexp
 
 func (ch SexpChannel) SexpString() string {
 	return "[chan]"
 }
 
-func MakeChanFunction(env *glisp.Glisp, name string,
-	args []glisp.Sexp) (glisp.Sexp, error) {
+func MakeChanFunction(env *gdsl.Glisp, name string,
+	args []gdsl.Sexp) (gdsl.Sexp, error) {
 	if len(args) > 1 {
-		return glisp.SexpNull, glisp.WrongNargs
+		return gdsl.SexpNull, gdsl.WrongNargs
 	}
 
 	size := 0
 	if len(args) == 1 {
 		switch t := args[0].(type) {
-		case glisp.SexpInt:
+		case gdsl.SexpInt:
 			size = int(t)
 		default:
-			return glisp.SexpNull, errors.New(
+			return gdsl.SexpNull, errors.New(
 				fmt.Sprintf("argument to %s must be int", name))
 		}
 	}
 
-	return SexpChannel(make(chan glisp.Sexp, size)), nil
+	return SexpChannel(make(chan gdsl.Sexp, size)), nil
 }
 
-func ChanTxFunction(env *glisp.Glisp, name string,
-	args []glisp.Sexp) (glisp.Sexp, error) {
+func ChanTxFunction(env *gdsl.Glisp, name string,
+	args []gdsl.Sexp) (gdsl.Sexp, error) {
 	if len(args) < 1 {
-		return glisp.SexpNull, glisp.WrongNargs
+		return gdsl.SexpNull, gdsl.WrongNargs
 	}
-	var channel chan glisp.Sexp
+	var channel chan gdsl.Sexp
 	switch t := args[0].(type) {
 	case SexpChannel:
-		channel = chan glisp.Sexp(t)
+		channel = chan gdsl.Sexp(t)
 	default:
-		return glisp.SexpNull, errors.New(
+		return gdsl.SexpNull, errors.New(
 			fmt.Sprintf("argument 0 of %s must be channel", name))
 	}
 
 	if name == "send!" {
 		if len(args) != 2 {
-			return glisp.SexpNull, glisp.WrongNargs
+			return gdsl.SexpNull, gdsl.WrongNargs
 		}
 		channel <- args[1]
-		return glisp.SexpNull, nil
+		return gdsl.SexpNull, nil
 	}
 
 	return <-channel, nil
 }
 
-func ImportChannels(env *glisp.Glisp) {
+func ImportChannels(env *gdsl.Glisp) {
 	env.AddFunction("make-chan", MakeChanFunction)
 	env.AddFunction("send!", ChanTxFunction)
 	env.AddFunction("<!", ChanTxFunction)

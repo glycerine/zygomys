@@ -1,8 +1,8 @@
 #!/bin/sh
 
-for lispfile in tests/*.glisp
+for lispfile in tests/*.dsl
 do
-    ./gl -exitonfail "${lispfile}" && \
+    ./gdsl -exitonfail "${lispfile}" && \
         echo "${lispfile} passed" || \
         echo "${lispfile} failed"
 done

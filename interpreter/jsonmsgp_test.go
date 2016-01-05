@@ -1,4 +1,4 @@
-package glisp
+package gdsl
 
 import (
 	"fmt"
@@ -57,7 +57,7 @@ type Event struct {
 		activate := `(defmap event)`
 		activate2 := `(defmap person)`
 		event := `(event id:123 user: (person first:"Liz" last:"C") flight:"AZD234"  pilot:["Roger" "Ernie"])`
-		env := NewGlisp()
+		env := NewGdsl()
 		env.StandardSetup()
 
 		_, err := env.EvalString(activate)

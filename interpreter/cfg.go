@@ -1,4 +1,4 @@
-package glisp
+package gdsl
 
 import (
 	"flag"
@@ -14,7 +14,7 @@ type GlispConfig struct {
 	ExtensionsVersion string
 }
 
-func NewGlispConfig(cmdname string) *GlispConfig {
+func NewGdslConfig(cmdname string) *GlispConfig {
 	return &GlispConfig{
 		Flags: flag.NewFlagSet(cmdname, flag.ExitOnError),
 	}

@@ -1,4 +1,4 @@
-package glisp
+package gdsl
 
 func panicOn(err error) {
 	if err != nil {

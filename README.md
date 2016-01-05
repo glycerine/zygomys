@@ -12,6 +12,8 @@ to use as a library within a larger program.
 
 It is ideally suited for driving complex configurations and providng
 your project with a domain specific language customized to your challenges.
+The example snippets in the tests/*.dsl provide many examples.
+The full documentation can be found in the [Wiki](https://github.com/glycerine/godiesel/wiki).
 
 Brief list of implemented features.
 
@@ -42,4 +44,4 @@ Features in GoDiesel v0.9.5:
  * [x] Go style raw string literals
  * [x] JSON and Msgpack interop: serialization and deserialization
  
-The full documentation can be found in the [Wiki](https://github.com/glycerine/glisp/wiki).
+

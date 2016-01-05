@@ -1,4 +1,4 @@
-package glisp
+package gdsl
 
 import (
 	"bytes"

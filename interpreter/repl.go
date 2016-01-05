@@ -1,5 +1,5 @@
 // make even the Repl() available from the glisp library
-package glisp
+package gdsl
 
 import (
 	"bufio"
@@ -176,7 +176,7 @@ func (env *Glisp) StandardSetup() {
 
 // like main() for a standalone repl, now in library
 func ReplMain(cfg *GlispConfig, registerExtsFunc func(env *Glisp)) {
-	env := NewGlisp()
+	env := NewGdsl()
 	env.StandardSetup()
 
 	registerExtsFunc(env)

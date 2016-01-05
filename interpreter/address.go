@@ -1,4 +1,4 @@
-package glisp
+package gdsl
 
 type Address struct {
 	function SexpFunction
