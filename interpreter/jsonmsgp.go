@@ -80,6 +80,8 @@ func SexpToJson(exp Sexp) string {
 		return e.jsonHashHelper()
 	case SexpArray:
 		return e.jsonArrayHelper()
+	case SexpSymbol:
+		return `"` + e.name + `"`
 	default:
 		return exp.SexpString()
 	}
