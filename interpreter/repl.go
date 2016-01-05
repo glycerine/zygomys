@@ -88,8 +88,8 @@ func processDumpCommand(env *Glisp, args []string) {
 func Repl(env *Glisp, cfg *GlispConfig) {
 	reader := bufio.NewReader(os.Stdin)
 
-	fmt.Printf("glisp version %s\n", Version())
-	fmt.Printf("glispext version %s\n", cfg.ExtensionsVersion)
+	fmt.Printf("gdsl version %s\n", Version())
+	fmt.Printf("gdslext version %s\n", cfg.ExtensionsVersion)
 
 	for {
 		line, err := getExpression(reader)
