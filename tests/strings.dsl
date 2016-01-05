@@ -1,0 +1,17 @@
+(assert (== "abc" (append "ab" #c)))
+(assert (== "abcd" (concat "ab" "cd")))
+(assert (== "bc" (slice "abcd" 1 3)))
+(assert (== #c (sget "abcd" 2)))
+(assert (== 3 (len "abc")))
+
+(assert (string? "asdfsdaf"))
+(assert (char? #c))
+(assert (symbol? 'a))
+
+;; back tick quoted strings work too now.
+(assert (== (type `hello`) "string"))
+
+(assert (== (type `hello
+world
+with newlines
+inside`) "string"))
