@@ -35,7 +35,7 @@ const ScopeStackSize = 50
 const DataStackSize = 100
 const StackStackSize = 5
 
-func NewGdsl() *Glisp {
+func NewGlisp() *Glisp {
 	env := new(Glisp)
 	env.datastack = NewStack(DataStackSize)
 	env.scopestack = NewStack(ScopeStackSize)

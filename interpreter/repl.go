@@ -176,7 +176,7 @@ func (env *Glisp) StandardSetup() {
 
 // like main() for a standalone repl, now in library
 func ReplMain(cfg *GlispConfig, registerExtsFunc func(env *Glisp)) {
-	env := NewGdsl()
+	env := NewGlisp()
 	env.StandardSetup()
 
 	registerExtsFunc(env)

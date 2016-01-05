@@ -16,7 +16,7 @@ func usage(myflags *flag.FlagSet) {
 }
 
 func main() {
-	cfg := gdsl.NewGdslConfig("gdsl")
+	cfg := gdsl.NewGlispConfig("gdsl")
 	cfg.DefineFlags()
 	err := cfg.Flags.Parse(os.Args[1:])
 	if err == flag.ErrHelp {

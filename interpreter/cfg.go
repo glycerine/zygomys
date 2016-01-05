@@ -14,7 +14,7 @@ type GlispConfig struct {
 	ExtensionsVersion string
 }
 
-func NewGdslConfig(cmdname string) *GlispConfig {
+func NewGlispConfig(cmdname string) *GlispConfig {
 	return &GlispConfig{
 		Flags: flag.NewFlagSet(cmdname, flag.ExitOnError),
 	}
