@@ -771,6 +771,10 @@ var BuiltinFunctions = map[string]GlispUserFunction{
 	"gensym":     GensymFunction,
 	"str":        StringifyFunction,
 	"->":         ThreadMapFunction,
+	"json":       JsonFunction,
+	"unjson":     JsonFunction,
+	"msgpack":    JsonFunction,
+	"unmsgpack":  JsonFunction,
 }
 
 func ThreadMapFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
