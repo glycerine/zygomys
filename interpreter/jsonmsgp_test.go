@@ -1,7 +1,10 @@
 package gdsl
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"io"
 	"testing"
 
 	cv "github.com/glycerine/goconvey/convey"
@@ -59,10 +62,11 @@ type Event struct {
 
 		cv.So(x.SexpString(), cv.ShouldEqual, ` (event id:123 user: (person first:"Liz" last:"C") flight:"AZD234" pilot:["Roger" "Ernie"])`)
 
-		json := SexpToJson(x)
+		jsonBy := SexpToJson(x)
 		//cv.So(string(json), cv.ShouldEqual, `{"Atype":"event", "id":123, "user":{"Atype":"person", "first":"Liz", "last":"C"}, "flight":"AZD234", "pilot":["Roger", "Ernie"]}`)
-		cv.So(string(json), cv.ShouldEqual, `{"Atype":"event", "id":123, "user":{"Atype":"person", "first":"Liz", "last":"C", "zKeyOrder":["first", "last"]}, "flight":"AZD234", "pilot":["Roger", "Ernie"], "zKeyOrder":["id", "user", "flight", "pilot"]}`)
+		cv.So(string(jsonBy), cv.ShouldEqual, `{"Atype":"event", "id":123, "user":{"Atype":"person", "first":"Liz", "last":"C", "zKeyOrder":["first", "last"]}, "flight":"AZD234", "pilot":["Roger", "Ernie"], "zKeyOrder":["id", "user", "flight", "pilot"]}`)
 		msgpack, goObj := SexpToMsgpack(x)
+		// msgpack field ordering is random, so can't expect a match
 		//cv.So(msgpack, cv.ShouldResemble, expectedMsgpack)
 
 		goObj2, err := MsgpackToGo(msgpack)
@@ -101,7 +105,7 @@ type Event struct {
 		cv.So(goEvent.User.Last, cv.ShouldEqual, "C")
 
 		goEvent = Event{}
-		jdec := codec.NewDecoderBytes([]byte(json), &msgpHelper.jh)
+		jdec := codec.NewDecoderBytes([]byte(jsonBy), &msgpHelper.jh)
 		err = jdec.Decode(&goEvent)
 		panicOn(err)
 		fmt.Printf("from json, goEvent = '%#v'\n", goEvent)
@@ -131,5 +135,39 @@ type Event struct {
 			cv.So(v3, cv.ShouldResemble, v2)
 		}
 
+		fmt.Printf("\n Directly Sexp -> msgpack -> pre-established Go struct Event{} should work.\n")
+
+		switch asHash := sexp2.(type) {
+		default:
+			err = fmt.Errorf("value must be a hash or defmap")
+			panic(err)
+		case SexpHash:
+			tn := *(asHash.TypeName)
+			factory, hasMaker := MakerRegistry[tn]
+			if !hasMaker {
+				err = fmt.Errorf("type '%s' not registered in MakerRegistry", tn)
+				panic(err)
+			}
+			newStruct := factory.Make()
+
+			// What didn't work here was going through msgpack, because
+			// ugorji msgpack encode will write turn signed ints into unsigned ints,
+			// which is a problem for msgp decoding. Hence cut out the middle men
+			// and decode straight from jsonBytes into our newStruct.
+			jsonBytes := []byte(SexpToJson(asHash))
+
+			jsonDecoder := json.NewDecoder(bytes.NewBuffer(jsonBytes))
+			err := jsonDecoder.Decode(newStruct)
+			switch err {
+			case io.EOF:
+			case nil:
+			default:
+				panic(fmt.Errorf("error during jsonDecoder.Decode() on type '%s': '%s'", tn, err))
+			}
+			(*asHash.GoStruct) = newStruct
+
+			fmt.Printf("from json via factory.Make(), newStruct = '%#v'\n", newStruct)
+			cv.So(newStruct, cv.ShouldResemble, &goEvent)
+		}
 	})
 }

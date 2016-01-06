@@ -45,6 +45,7 @@ func ParseList(parser *Parser, depth int) (Sexp, error) {
 		return SexpNull, err
 	}
 
+	// backslash '\' replaces dot '.' in our lisp.
 	if tok.typ == TokenBackslash {
 		// eat up the backslash
 		_, _ = lexer.GetNextToken()

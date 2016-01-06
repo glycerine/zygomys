@@ -33,10 +33,12 @@ func MakeHash(args []Sexp, typename string) (SexpHash, error) {
 			errors.New("hash requires even number of arguments")
 	}
 
+	var iface interface{}
 	hash := SexpHash{
 		TypeName: &typename,
 		Map:      make(map[int][]SexpPair),
 		KeyOrder: &[]Sexp{},
+		GoStruct: &iface,
 	}
 	k := 0
 	for i := 0; i < len(args); i += 2 {

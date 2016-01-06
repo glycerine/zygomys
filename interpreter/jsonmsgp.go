@@ -2,11 +2,13 @@ package gdsl
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
+	"github.com/shurcooL/go-goon"
+	"github.com/ugorji/go/codec"
+	"io"
 	"reflect"
 	"sort"
-
-	"github.com/ugorji/go/codec"
 )
 
 //go:generate msgp
@@ -209,7 +211,7 @@ func JsonToGo(json []byte) (interface{}, error) {
 	}
 	//fmt.Printf("\n decoded type : %T\n", iface)
 	//fmt.Printf("\n decoded value: %#v\n", iface)
-
+	//goon.Dump(iface)
 	return iface, nil
 }
 
@@ -447,4 +449,48 @@ func SexpToGo(sexp Sexp, env *Glisp) interface{} {
 		fmt.Printf("\n error: unknown type: %T in '%#v'\n", e, e)
 	}
 	return nil
+}
+
+func ToGoFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
+	if len(args) != 1 {
+		return SexpNull, WrongNargs
+	}
+	switch asHash := args[0].(type) {
+	default:
+		return SexpNull, fmt.Errorf("value must be a hash or defmap")
+	case SexpHash:
+		tn := *(asHash.TypeName)
+		factory, hasMaker := MakerRegistry[tn]
+		if !hasMaker {
+			return SexpNull, fmt.Errorf("type '%s' not registered in MakerRegistry", tn)
+		}
+		newStruct := factory.Make()
+
+		// What didn't work here was going through msgpack, because
+		// ugorji msgpack encode will write turn signed ints into unsigned ints,
+		// which is a problem for msgp decoding. Hence cut out the middle men
+		// and decode straight from jsonBytes into our newStruct.
+		jsonBytes := []byte(SexpToJson(asHash))
+
+		jsonDecoder := json.NewDecoder(bytes.NewBuffer(jsonBytes))
+		err := jsonDecoder.Decode(newStruct)
+		switch err {
+		case io.EOF:
+		case nil:
+		default:
+			return SexpNull, fmt.Errorf("error during jsonDecoder.Decode() on type '%s': '%s'", tn, err)
+		}
+		//fmt.Printf("\n debug: setting GoInstance to '%#v'\n", newStruct)
+		*asHash.GoStruct = newStruct
+	}
+	return args[0], nil
+}
+
+func GoonDumpFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
+	if len(args) != 1 {
+		return SexpNull, WrongNargs
+	}
+	fmt.Printf("\n")
+	goon.Dump(args[0])
+	return SexpNull, nil
 }

@@ -775,6 +775,8 @@ var BuiltinFunctions = map[string]GlispUserFunction{
 	"unjson":     JsonFunction,
 	"msgpack":    JsonFunction,
 	"unmsgpack":  JsonFunction,
+	"togo":       ToGoFunction,
+	"dump":       GoonDumpFunction,
 }
 
 func ThreadMapFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {

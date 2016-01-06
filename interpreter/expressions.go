@@ -81,6 +81,7 @@ type SexpHash struct {
 	TypeName *string
 	Map      map[int][]SexpPair
 	KeyOrder *[]Sexp // must user pointer here, else hset! will fail to update.
+	GoStruct *interface{}
 }
 type SexpInt int
 type SexpBool bool
