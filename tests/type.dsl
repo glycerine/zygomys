@@ -5,6 +5,6 @@
 (assert (== (type {}) "hash"))
 (assert (== (type []) "array"))
 (assert (== (type ()) "null"))
-(assert (== (type '('a . 'b)) "list"))
+(assert (== (type '('a \ 'b)) "list"))
 
 

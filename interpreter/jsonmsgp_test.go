@@ -8,18 +8,6 @@ import (
 	"github.com/ugorji/go/codec"
 )
 
-type Event struct {
-	Id     int      `json:"id" msg:"id"`
-	User   Person   `json:"user" msg:"user"`
-	Flight string   `json:"flight" msg:"flight"`
-	Pilot  []string `json:"pilot" msg:"pilot"`
-}
-
-type Person struct {
-	First string `json:"first" msg:"first"`
-	Last  string `json:"last" msg:"last"`
-}
-
 /*
  Go map[string]interface{}  <--(1)--> lisp
    ^                                  ^

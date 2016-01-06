@@ -45,8 +45,8 @@ func ParseList(parser *Parser, depth int) (Sexp, error) {
 		return SexpNull, err
 	}
 
-	if tok.typ == TokenDot {
-		// eat up the dot
+	if tok.typ == TokenBackslash {
+		// eat up the backslash
 		_, _ = lexer.GetNextToken()
 		expr, err = ParseExpression(parser, depth+1)
 		if err != nil {

@@ -35,6 +35,7 @@ const (
 	TokenCaret
 	TokenColonOperator
 	TokenThreadingOperator
+	TokenBackslash
 	TokenEnd
 )
 
@@ -82,6 +83,8 @@ func (t Token) String() string {
 		return ":"
 	case TokenThreadingOperator:
 		return "->"
+	case TokenBackslash:
+		return "\\"
 	}
 	return t.str
 }
@@ -179,6 +182,9 @@ func DecodeChar(atom string) (string, error) {
 func (x *Lexer) DecodeAtom(atom string) (Token, error) {
 	if atom == "." {
 		return x.Token(TokenDot, ""), nil
+	}
+	if atom == "\\" {
+		return x.Token(TokenBackslash, ""), nil
 	}
 	if BoolRegex.MatchString(atom) {
 		return x.Token(TokenBool, atom), nil

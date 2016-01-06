@@ -9,6 +9,24 @@ import (
 	"github.com/ugorji/go/codec"
 )
 
+//go:generate msgp
+
+type Event struct {
+	Id     int      `json:"id" msg:"id"`
+	User   Person   `json:"user" msg:"user"`
+	Flight string   `json:"flight" msg:"flight"`
+	Pilot  []string `json:"pilot" msg:"pilot"`
+}
+
+type Person struct {
+	First string `json:"first" msg:"first"`
+	Last  string `json:"last" msg:"last"`
+}
+
+func (ev *Event) DisplayEvent(from string) {
+	fmt.Printf("%s %#v", from, ev)
+}
+
 /*
  Conversion map
 
