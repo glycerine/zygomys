@@ -5,7 +5,7 @@ GoDiesel is an embeddable Lisp REPL focused on Domain Specific Language
 and structs defined within them. It was originally derived from
 [Howard Mao's terrific Glisp project](https://github.com/zhemao/glisp).
 
-GoDiesel's features have evolved to the point where it is a now distinct dialect.
+GoDiesel's features have evolved to the point where it is a distinct dialect.
 This was done to support certain critical features like raw string literals,
 to support for certain scheme and clojure idioms, and to make it easier
 to use as a library within a larger program.
