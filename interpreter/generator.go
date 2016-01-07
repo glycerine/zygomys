@@ -150,8 +150,11 @@ func (gen *Generator) GenerateDef(args []Sexp) error {
 	if err != nil {
 		return err
 	}
+	// duplicate the value so def leaves its value
+	// on the stack and becomes an expression rather
+	// than a statement.
+	gen.AddInstruction(DupInstr(0))
 	gen.AddInstruction(PutInstr{sym})
-	gen.AddInstruction(PushInstr{SexpNull})
 	return nil
 }
 
@@ -869,11 +872,11 @@ func (gen *Generator) GenerateSet(args []Sexp) error {
 	if err != nil {
 		return err
 	}
-	// def does PutInstr which pops the top of the datastack,
-	// and assigns it to its symbol in the top of the scope stack.
 
+	// leaving a copy on the stack makes set an expression
+	// with a value. Useful for chaining.
+	gen.AddInstruction(DupInstr(0))
 	gen.AddInstruction(UpdateInstr{lhs})
-	gen.AddInstruction(PushInstr{SexpNull})
 	return nil
 
 }
