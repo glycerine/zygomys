@@ -246,7 +246,7 @@ func SgetFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 }
 
 func HashAccessFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
-	if len(args) < 2 || len(args) > 3 {
+	if len(args) < 1 || len(args) > 3 {
 		return SexpNull, WrongNargs
 	}
 
@@ -265,6 +265,9 @@ func HashAccessFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		}
 		return hash.HashGet(args[1])
 	case "hset!":
+		if len(args) != 3 {
+			return SexpNull, WrongNargs
+		}
 		err := hash.HashSet(args[1], args[2])
 		return SexpNull, err
 	case "hdel!":
@@ -273,6 +276,16 @@ func HashAccessFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		}
 		err := hash.HashDelete(args[1])
 		return SexpNull, err
+	case "keys":
+		if len(args) != 1 {
+			return SexpNull, WrongNargs
+		}
+		keys := make([]Sexp, 0)
+		n := len(*(hash.KeyOrder))
+		for i := 0; i < n; i++ {
+			keys = append(keys, (*hash.KeyOrder)[i])
+		}
+		return SexpArray(keys), nil
 	}
 
 	return SexpNull, nil
@@ -754,6 +767,7 @@ var BuiltinFunctions = map[string]GlispUserFunction{
 	"hget":       HashAccessFunction,
 	"hset!":      HashAccessFunction,
 	"hdel!":      HashAccessFunction,
+	"keys":       HashAccessFunction,
 	"slice":      SliceFunction,
 	"len":        LenFunction,
 	"append":     AppendFunction,
