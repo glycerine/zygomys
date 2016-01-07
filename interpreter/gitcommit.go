@@ -1,2 +1,2 @@
 package gdsl
-func init() { GITLASTTAG = "v1.0.0"; GITLASTCOMMIT = "28149586f2c1fff76e437e06a54aa9c5aab47ad1" }
+func init() { GITLASTTAG = "v1.0.1"; GITLASTCOMMIT = "842f9b001a50a10fd94f8f1ec58c8b138a33c68c" }
