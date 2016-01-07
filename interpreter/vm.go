@@ -102,13 +102,13 @@ func (p PushInstrClosure) Execute(env *Glisp) error {
 				continue
 			}
 
-			exp, err = env.scopestack.LookupSymbolNonGlobal(sym)
+			exp, err, _ = env.scopestack.LookupSymbolNonGlobal(sym)
 			if err == nil {
 				p.expr.closeScope.BindSymbol(sym, exp)
 			}
 		}
 	} else {
-		p.expr.closeScope = env.scopestack.Clone() // for a non script fuction I have no idea what it accesses, so we clone the whole thing
+		p.expr.closeScope = env.scopestack.Clone() // for a non script function I have no idea what it accesses, so we clone the whole thing
 	}
 
 	env.datastack.PushExpr(p.expr)
@@ -172,7 +172,7 @@ func (g GetInstr) Execute(env *Glisp) error {
 		return fmt.Errorf("'%s' is a macro.", g.sym.name)
 	}
 
-	expr, err := env.scopestack.LookupSymbol(g.sym)
+	expr, err, _ := env.scopestack.LookupSymbol(g.sym)
 	if err != nil {
 		return err
 	}
@@ -198,6 +198,37 @@ func (p PutInstr) Execute(env *Glisp) error {
 	return env.scopestack.BindSymbol(p.sym, expr)
 }
 
+// Update takes top of datastack and
+// assigns it to sym when sym is found
+// already in the current scope or
+// up the stack. Used
+// to implement (set v 10) when v is
+// not in the local scope.
+type UpdateInstr struct {
+	sym SexpSymbol
+}
+
+func (p UpdateInstr) InstrString() string {
+	return fmt.Sprintf("putup %s", p.sym.name)
+}
+
+func (p UpdateInstr) Execute(env *Glisp) error {
+	expr, err := env.datastack.PopExpr()
+	if err != nil {
+		return err
+	}
+	env.pc++
+
+	_, err, scope := env.scopestack.LookupSymbol(p.sym)
+	if err != nil {
+		// not found up the stack, so treat like (def)
+		// instead of (set)
+		return env.scopestack.BindSymbol(p.sym, expr)
+	}
+	// found up the stack, so (set)
+	return scope.UpdateSymbolInScope(p.sym, expr)
+}
+
 type CallInstr struct {
 	sym   SexpSymbol
 	nargs int
@@ -213,14 +244,14 @@ func (c CallInstr) Execute(env *Glisp) error {
 		return env.CallUserFunction(f, c.sym.name, c.nargs)
 	}
 
-	funcobj, err := env.scopestack.LookupSymbol(c.sym)
+	funcobj, err, _ := env.scopestack.LookupSymbol(c.sym)
 	if err != nil {
 		return err
 	}
 	switch f := funcobj.(type) {
 	case SexpSymbol:
 		// allow symbols to refer to functions that we then call
-		indirectFuncName, err := env.scopestack.LookupSymbol(f)
+		indirectFuncName, err, _ := env.scopestack.LookupSymbol(f)
 		if err != nil {
 			return fmt.Errorf("'%s' refers to symbol '%s', but '%s' does not refer to a function.", c.sym.name, f.name, f.name)
 		}

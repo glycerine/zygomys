@@ -445,7 +445,7 @@ func (env *Glisp) Clear() {
 
 func (env *Glisp) FindObject(name string) (Sexp, bool) {
 	sym := env.MakeSymbol(name)
-	obj, err := env.scopestack.LookupSymbol(sym)
+	obj, err, _ := env.scopestack.LookupSymbol(sym)
 	if err != nil {
 		return SexpNull, false
 	}
@@ -482,6 +482,7 @@ func (env *Glisp) Run() (Sexp, error) {
 
 	if env.datastack.IsEmpty() {
 		env.DumpEnvironment()
+		panic("env.datastack was empty!!")
 		os.Exit(-1)
 	}
 

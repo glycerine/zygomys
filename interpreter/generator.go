@@ -556,6 +556,10 @@ func (gen *Generator) GenerateCallBySymbol(sym SexpSymbol, args []Sexp, orig Sex
 		return gen.GenerateSyntaxQuote(args)
 	case "include":
 		return gen.GenerateInclude(args)
+	case "for":
+		return gen.GenerateForLoop(args)
+	case "set":
+		return gen.GenerateSet(args)
 	}
 
 	macro, found := gen.env.macros[sym.number]
@@ -656,4 +660,216 @@ func (gen *Generator) Reset() {
 	gen.instructions = make([]Instruction, 0)
 	gen.tail = false
 	gen.scopes = 0
+}
+
+// (for-range [k v map_or_array] (expr)*)
+// still todo
+/*
+func (gen *Generator) GenerateForRange(name string, args []Sexp) error {
+	if len(args) < 2 {
+		return errors.New("malformed for-range statement")
+	}
+
+	var rangeargs SexpArray
+	switch expr := args[0].(type) {
+	case SexpArray:
+		rangeargs = expr
+	default:
+		return errors.New("for-range first argument must be a vector of [key-symbol value-symbol array-or-hash]")
+	}
+
+	if len(rangeargs) != 3 {
+		return errors.New("for-range first argument must be a vector of exactly three symbols [key-symbol value-symbol array-or-hash-value-or-symbol]")
+	}
+
+	var keysym SexpSymbol
+	switch expr := rangeargs[0].(type) {
+	case SexpSymbol:
+		keysym = expr
+	default:
+		return errors.New("first (key) positition in for-range vector must be symbol, e.g. (for-range [key-symbol value-symbol hash-or-array] (body)*)")
+	}
+
+	var valsym SexpSymbol
+	switch expr := rangeargs[1].(type) {
+	case SexpSymbol:
+		valsym = expr
+	default:
+		return errors.New("second (value) positition in for-range vector must be symbol, e.g. (for-range [key-symbol value-symbol hash-or-array] (body)*)")
+	}
+
+	isHash := false
+	isArray := false
+	var hash SexpHash
+	var arr SexpArray
+	var hasym SexpSymbol
+	switch expr := rangeargs[2].(type) {
+	case SexpHash:
+	case SexpArray:
+	case SexpSymbol:
+		keysym = expr
+	default:
+		return errors.New("third (hash-or-value) positition in for-range vector must be a hash or an array, e.g. (for-range [key-symbol value-symbol hash-or-array] (body)*)")
+	}
+
+	gen.AddInstruction(AddScopeInstr(0))
+	gen.scopes++
+
+	if name == "let*" {
+		for i, rs := range rstatements {
+			err := gen.Generate(rs)
+			if err != nil {
+				return err
+			}
+			gen.AddInstruction(PutInstr{lstatements[i]})
+		}
+	} else if name == "let" {
+		for _, rs := range rstatements {
+			err := gen.Generate(rs)
+			if err != nil {
+				return err
+			}
+		}
+		for i := len(lstatements) - 1; i >= 0; i-- {
+			gen.AddInstruction(PutInstr{lstatements[i]})
+		}
+	}
+
+	err := gen.GenerateBegin(args[1:])
+	if err != nil {
+		return err
+	}
+	gen.AddInstruction(RemoveScopeInstr(0))
+	gen.scopes--
+
+	return nil
+}
+
+*/
+
+// for loops: Just like in C.
+//
+// (for [init predicate advance] (expr)*)
+//
+// Each of init, predicate, and advance are expressions
+// that are evaluated during the running of the for loop.
+// The init expression is evaluated once at the top.
+// The predicate is tested. If it is true then
+// the body expressions are run. Then the advance
+// expression is evaluated, and we return to the
+// predicate test.
+func (gen *Generator) GenerateForLoop(args []Sexp) error {
+	narg := len(args)
+	if narg < 2 {
+		return errors.New("malformed for loop")
+	}
+
+	var controlargs SexpArray
+	switch expr := args[0].(type) {
+	case SexpArray:
+		controlargs = expr
+	default:
+		return errors.New("for loop: first argument must be a vector of [init predicate advance]")
+	}
+
+	if len(controlargs) != 3 {
+		return errors.New("for loop: first argument wrong size; must be a vector of three [init predicate advance]")
+	}
+
+	// generate the body of the loop
+	subgen := NewGenerator(gen.env)
+	subgen.tail = gen.tail
+	subgen.scopes = gen.scopes
+	subgen.funcname = gen.funcname
+	err := subgen.GenerateBegin(args[1:])
+	if err != nil {
+		return err
+	}
+	body_code := subgen.instructions
+
+	// generate the init code
+	subgen.Reset()
+	subgen.tail = gen.tail
+	subgen.scopes = gen.scopes
+	subgen.funcname = gen.funcname
+	err = subgen.Generate(controlargs[0])
+	if err != nil {
+		return err
+	}
+	init_code := subgen.instructions
+
+	// generate the predicate
+	subgen.Reset()
+	subgen.tail = gen.tail
+	subgen.scopes = gen.scopes
+	subgen.funcname = gen.funcname
+	err = subgen.Generate(controlargs[1])
+	if err != nil {
+		return err
+	}
+	pred_code := subgen.instructions
+
+	// generate the increment code
+	subgen.Reset()
+	subgen.tail = gen.tail
+	subgen.scopes = gen.scopes
+	subgen.funcname = gen.funcname
+	err = subgen.Generate(controlargs[2])
+	if err != nil {
+		return err
+	}
+	incr_code := subgen.instructions
+
+	gen.AddInstruction(AddScopeInstr(0))
+	gen.scopes++
+
+	top_of_loop := -(len(pred_code) + 1 + len(body_code) + len(incr_code))
+	exit_loop := len(body_code) + len(incr_code) + 2
+
+	gen.AddInstructions(init_code)
+	// top of loop starts with pred_code:
+	gen.AddInstructions(pred_code)
+	gen.AddInstruction(BranchInstr{false, exit_loop})
+	gen.AddInstructions(body_code)
+	gen.AddInstructions(incr_code)
+	gen.AddInstruction(JumpInstr{top_of_loop})
+
+	gen.AddInstruction(RemoveScopeInstr(0))
+	gen.scopes--
+
+	return nil
+}
+
+func (gen *Generator) GenerateSet(args []Sexp) error {
+	narg := len(args)
+	if narg != 2 {
+		return errors.New("malformed set statement, need 2 arguments")
+	}
+
+	var lhs SexpSymbol
+	switch expr := args[0].(type) {
+	case SexpSymbol:
+		lhs = expr
+	default:
+		return errors.New("set: left-hand-side must be a symbol")
+	}
+
+	if gen.env.HasMacro(lhs) {
+		return fmt.Errorf("Already have macro named '%s': refusing "+
+			"to set variable of same name.", lhs.name)
+	}
+
+	rhs := args[1]
+	gen.tail = false
+	err := gen.Generate(rhs)
+	if err != nil {
+		return err
+	}
+	// def does PutInstr which pops the top of the datastack,
+	// and assigns it to its symbol in the top of the scope stack.
+
+	gen.AddInstruction(UpdateInstr{lhs})
+	gen.AddInstruction(PushInstr{SexpNull})
+	return nil
+
 }
