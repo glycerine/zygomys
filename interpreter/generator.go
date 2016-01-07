@@ -820,8 +820,11 @@ func (gen *Generator) GenerateForLoop(args []Sexp) error {
 	}
 	incr_code := subgen.instructions
 
-	gen.AddInstruction(AddScopeInstr(0))
-	gen.scopes++
+	// Don't add a new scope for a for-loop, as
+	// it makes it hard to update variables
+	// just outside the loop. So none of this:
+	//	gen.AddInstruction(AddScopeInstr(0))
+	//	gen.scopes++
 
 	top_of_loop := -(len(pred_code) + 1 + len(body_code) + len(incr_code))
 	exit_loop := len(body_code) + len(incr_code) + 2
@@ -834,8 +837,9 @@ func (gen *Generator) GenerateForLoop(args []Sexp) error {
 	gen.AddInstructions(incr_code)
 	gen.AddInstruction(JumpInstr{top_of_loop})
 
-	gen.AddInstruction(RemoveScopeInstr(0))
-	gen.scopes--
+	// vestiges of trying to have a scope for the for-loop:
+	//	gen.AddInstruction(RemoveScopeInstr(0))
+	//	gen.scopes--
 
 	return nil
 }
