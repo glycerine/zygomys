@@ -34,11 +34,13 @@ func MakeHash(args []Sexp, typename string) (SexpHash, error) {
 	}
 
 	var iface interface{}
+	var memberCount int
 	hash := SexpHash{
 		TypeName: &typename,
 		Map:      make(map[int][]SexpPair),
 		KeyOrder: &[]Sexp{},
 		GoStruct: &iface,
+		NumKeys:  &memberCount,
 	}
 	k := 0
 	for i := 0; i < len(args); i += 2 {
@@ -100,6 +102,7 @@ func (hash *SexpHash) HashSet(key Sexp, val Sexp) error {
 	if !ok {
 		hash.Map[hashval] = []SexpPair{Cons(key, val)}
 		*hash.KeyOrder = append(*hash.KeyOrder, key)
+		(*hash.NumKeys)++
 		return nil
 	}
 
@@ -115,6 +118,7 @@ func (hash *SexpHash) HashSet(key Sexp, val Sexp) error {
 	if !found {
 		arr = append(arr, Cons(key, val))
 		*hash.KeyOrder = append(*hash.KeyOrder, key)
+		(*hash.NumKeys)++
 	}
 
 	hash.Map[hashval] = arr
@@ -134,6 +138,7 @@ func (hash *SexpHash) HashDelete(key Sexp) error {
 		return nil
 	}
 
+	(*hash.NumKeys)--
 	for i, pair := range arr {
 		res, err := Compare(pair.head, key)
 		if err == nil && res == 0 {
@@ -149,6 +154,9 @@ func HashCountKeys(hash SexpHash) int {
 	var num int
 	for _, arr := range hash.Map {
 		num += len(arr)
+	}
+	if num != (*hash.NumKeys) {
+		panic(fmt.Errorf("HashCountKeys disagreement on count: num=%d, (*hash.NumKeys)=%d", num, (*hash.NumKeys)))
 	}
 	return num
 }
@@ -175,4 +183,13 @@ func SetHashKeyOrder(hash *SexpHash, keyOrd Sexp) error {
 	}
 
 	return nil
+}
+
+func (hash *SexpHash) HashPairi(pos int) (SexpPair, error) {
+	key := (*hash.KeyOrder)[pos]
+	val, err := hash.HashGet(key)
+	if err != nil {
+		return SexpPair{}, fmt.Errorf("hpair error on HashGet for key '%s' at pos %d", key.SexpString(), pos)
+	}
+	return Cons(key, SexpPair{head: val, tail: SexpNull}), nil
 }

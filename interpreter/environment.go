@@ -462,7 +462,7 @@ func (env *Glisp) Apply(fun SexpFunction, args []Sexp) (Sexp, error) {
 		env.datastack.PushExpr(expr)
 	}
 
-	//log.Print("Apply Calling ", fun, " with ", len(args))
+	//fmt.Printf("\nApply Calling '%s'\n", fun.SexpString())
 	err := env.CallFunction(fun, len(args))
 	if err != nil {
 		return SexpNull, err
@@ -483,7 +483,7 @@ func (env *Glisp) Run() (Sexp, error) {
 	if env.datastack.IsEmpty() {
 		env.DumpEnvironment()
 		panic("env.datastack was empty!!")
-		os.Exit(-1)
+		//os.Exit(-1)
 	}
 
 	return env.datastack.PopExpr()

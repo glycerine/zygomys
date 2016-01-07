@@ -14,3 +14,11 @@
 
 (assert (null? (when false 'c)))
 (assert (== 'a (when true 'c 'b 'a)))
+
+(def h (hash a:1 b:2))
+;; check that arrays and hashes are getting scanned for ~ syntax unquotes.
+(defmac sizer [my-hash] ^(let [n (len ~my-hash) g {sz: (len ~my-hash)}] (+ n (:sz g))))
+(assert (== (sizer h) 4))
+
+;; this shouldn't give an error, but it was: error in __main:5: Error on line 1: Unexpected end of input
+(defn greet [name] ^(hello ~name))

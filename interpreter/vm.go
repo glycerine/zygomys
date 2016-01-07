@@ -3,6 +3,7 @@ package gdsl
 import (
 	"errors"
 	"fmt"
+	//"github.com/shurcooL/go-goon"
 )
 
 type Instruction interface {
@@ -385,6 +386,99 @@ func (s SquashInstr) Execute(env *Glisp) error {
 		list = Cons(expr, list)
 	}
 	env.datastack.PushExpr(list)
+	env.pc++
+	return nil
+}
+
+// bind these symbols to the SexpPair list found at
+// datastack top.
+type BindlistInstr struct {
+	syms []SexpSymbol
+}
+
+func (b BindlistInstr) InstrString() string {
+	joined := ""
+	for _, s := range b.syms {
+		joined += s.name + " "
+	}
+	return fmt.Sprintf("bindlist %s", joined)
+}
+
+func (b BindlistInstr) Execute(env *Glisp) error {
+	expr, err := env.datastack.PopExpr()
+	if err != nil {
+		return err
+	}
+
+	arr, err := ListToArray(expr)
+	if err != nil {
+		return err
+	}
+
+	nsym := len(b.syms)
+	narr := len(arr)
+	if narr < nsym {
+		return fmt.Errorf("bindlist failing: %d targets but only %d sources", nsym, narr)
+	}
+
+	for i, bindThisSym := range b.syms {
+		env.scopestack.BindSymbol(bindThisSym, arr[i])
+	}
+	env.pc++
+	return nil
+}
+
+type VectorizeInstr int
+
+func (s VectorizeInstr) InstrString() string {
+	return "vectorize"
+}
+
+func (s VectorizeInstr) Execute(env *Glisp) error {
+	vec := make([]Sexp, 0)
+
+	for {
+		expr, err := env.datastack.PopExpr()
+		if err != nil {
+			return err
+		}
+		if expr == SexpMarker {
+			break
+		}
+		vec = append([]Sexp{expr}, vec...)
+	}
+	env.datastack.PushExpr(SexpArray(vec))
+	env.pc++
+	return nil
+}
+
+type HashizeInstr struct {
+	HashLen  int
+	TypeName string
+}
+
+func (s HashizeInstr) InstrString() string {
+	return "hashize"
+}
+
+func (s HashizeInstr) Execute(env *Glisp) error {
+	a := make([]Sexp, 0)
+
+	for {
+		expr, err := env.datastack.PopExpr()
+		if err != nil {
+			return err
+		}
+		if expr == SexpMarker {
+			break
+		}
+		a = append(a, expr)
+	}
+	hash, err := MakeHash(a, s.TypeName)
+	if err != nil {
+		return err
+	}
+	env.datastack.PushExpr(hash)
 	env.pc++
 	return nil
 }

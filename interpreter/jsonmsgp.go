@@ -80,8 +80,6 @@ func JsonFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	default:
 		return SexpNull, fmt.Errorf("JsonFunction error: unrecognized function name: '%s'", name)
 	}
-
-	return nil, nil
 }
 
 // json -> sexp. env is needed to handle symbols correctly

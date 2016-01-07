@@ -147,14 +147,15 @@ func FirstFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	if len(args) != 1 {
 		return SexpNull, WrongNargs
 	}
-
 	switch expr := args[0].(type) {
 	case SexpPair:
 		return expr.head, nil
 	case SexpArray:
-		return expr[0], nil
+		if len(expr) > 0 {
+			return expr[0], nil
+		}
+		return SexpNull, fmt.Errorf("first called on empty array")
 	}
-
 	return SexpNull, WrongType
 }
 
@@ -175,6 +176,28 @@ func RestFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		if expr == SexpNull {
 			return SexpNull, nil
 		}
+	}
+
+	return SexpNull, WrongType
+}
+
+func SecondFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
+	if len(args) != 1 {
+		return SexpNull, WrongNargs
+	}
+	switch expr := args[0].(type) {
+	case SexpPair:
+		tail := expr.tail
+		switch p := tail.(type) {
+		case SexpPair:
+			return p.head, nil
+		}
+		return SexpNull, fmt.Errorf("list too small for second")
+	case SexpArray:
+		if len(expr) >= 2 {
+			return expr[1], nil
+		}
+		return SexpNull, fmt.Errorf("array too small for second")
 	}
 
 	return SexpNull, WrongType
@@ -255,7 +278,7 @@ func HashAccessFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	case SexpHash:
 		hash = e
 	default:
-		return SexpNull, errors.New("first argument of hget must be hash")
+		return SexpNull, errors.New("first argument of to h* function must be hash")
 	}
 
 	switch name {
@@ -286,6 +309,20 @@ func HashAccessFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 			keys = append(keys, (*hash.KeyOrder)[i])
 		}
 		return SexpArray(keys), nil
+	case "hpair":
+		if len(args) != 2 {
+			return SexpNull, WrongNargs
+		}
+		switch posreq := args[1].(type) {
+		case SexpInt:
+			pos := int(posreq)
+			if pos < 0 || pos >= len(*hash.KeyOrder) {
+				return SexpNull, fmt.Errorf("hpair position request %d out of bounds", pos)
+			}
+			return hash.HashPairi(pos)
+		default:
+			return SexpNull, fmt.Errorf("hpair position request must be an integer")
+		}
 	}
 
 	return SexpNull, nil
@@ -359,7 +396,7 @@ func LenFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		return SexpInt(HashCountKeys(t)), nil
 	}
 
-	return SexpInt(0), errors.New("argument must be string or array")
+	return SexpInt(0), errors.New("argument must be string, hash, or array")
 }
 
 func AppendFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
@@ -738,6 +775,7 @@ var BuiltinFunctions = map[string]GlispUserFunction{
 	"read":       ReadFunction,
 	"cons":       ConsFunction,
 	"first":      FirstFunction,
+	"second":     SecondFunction,
 	"rest":       RestFunction,
 	"car":        FirstFunction,
 	"cdr":        RestFunction,
@@ -768,6 +806,7 @@ var BuiltinFunctions = map[string]GlispUserFunction{
 	"hset!":      HashAccessFunction,
 	"hdel!":      HashAccessFunction,
 	"keys":       HashAccessFunction,
+	"hpair":      HashAccessFunction,
 	"slice":      SliceFunction,
 	"len":        LenFunction,
 	"append":     AppendFunction,
