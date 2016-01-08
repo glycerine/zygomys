@@ -172,6 +172,16 @@ func (env *Glisp) StandardSetup() {
 	colonOp := `(defmac : [key hmap & def] ^(hget ~hmap (quote ~key) ~@def))`
 	_, err = env.EvalString(colonOp)
 	panicOn(err)
+
+	rangeMacro := `(defmac range [key value my-hash & body]
+  ^(let [n (len ~my-hash)]
+      (for [(def i 0) (< i n) (def i (+ i 1))]
+        (begin
+          (mdef (quote ~key) (quote ~value) (hpair ~my-hash i))
+          ~@body))))`
+	_, err = env.EvalString(rangeMacro)
+	panicOn(err)
+
 }
 
 // like main() for a standalone repl, now in library

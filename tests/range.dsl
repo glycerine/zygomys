@@ -25,12 +25,6 @@
           (mdef (quote ~key) (quote ~value) (hpair ~my-hash i))
           ~@body))))
 
-;;problem with macro:
-;;(defmac sizer [my-hash]
-;;  ^(let [n (len ~my-hash)] (println n)))
-;;(def h (hash 'a 1 'b 2))
-;;(sizer h)
-;;error in __main:1: symbol {my-hash 117} not found
 
 ;; verify that range over hashes works
 (def h (hash a:44 b:55 c:77 d:99))
