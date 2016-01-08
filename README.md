@@ -41,7 +41,7 @@ Features in GoDiesel v1.1.1:
  * [x] Raw bytes type `(raw string)` lets you do zero-copy []byte manipulation
  * [x] Record definitions `(defmap)`
  * [x] Read external files with `(req path-to-file)`
- * [x] Go style raw string literals
+ * [x] Go style raw string literals, using `backticks`.
  * [x] JSON and Msgpack interop: serialization and deserialization
  * [x] `(range key value hash (body))` range loops mirror for-range over a hash in Go.
  * [x] `(for [(initializer) (test) (advance)] (body))` for-loops match those in C.
