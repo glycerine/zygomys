@@ -44,3 +44,5 @@ Features in GoDiesel v1.1.1:
  * [x] Go style raw string literals
  * [x] JSON and Msgpack interop: serialization and deserialization
  * [x] `(range key value hash (body))` loops match those in Go.
+ * [x] `(for [initializer  test  advance])` for-loops match those in C.
+ 
