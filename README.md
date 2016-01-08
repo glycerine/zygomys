@@ -35,7 +35,7 @@ Brief list of implemented features.
  * [x] Channel and goroutine support
  * [x] Pre- and Post- function call hooks
 
-Features in GoDiesel v0.9.7:
+Features in GoDiesel v1.1.1:
 
  * [x] Clojure like threading `(-> hash field1: field2:)` and `(:field hash)` selection
  * [x] Raw bytes type `(raw string)` lets you do zero-copy []byte manipulation
@@ -43,5 +43,4 @@ Features in GoDiesel v0.9.7:
  * [x] Read external files with `(req path-to-file)`
  * [x] Go style raw string literals
  * [x] JSON and Msgpack interop: serialization and deserialization
- 
-
+ * [x] `(range key value hash (body))` loops match those in Go.
