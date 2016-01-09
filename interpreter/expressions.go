@@ -19,6 +19,7 @@ const (
 	SexpNull SexpSentinel = iota
 	SexpEnd
 	SexpMarker
+	SexpLabel
 )
 
 func (sent SexpSentinel) SexpString() string {
@@ -30,6 +31,9 @@ func (sent SexpSentinel) SexpString() string {
 	}
 	if sent == SexpMarker {
 		return "Marker"
+	}
+	if sent == SexpLabel {
+		return "Label"
 	}
 
 	return ""

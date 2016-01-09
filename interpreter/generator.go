@@ -528,6 +528,8 @@ func (gen *Generator) GenerateCallBySymbol(sym SexpSymbol, args []Sexp, orig Sex
 		return gen.GenerateForLoop(args)
 	case "set":
 		return gen.GenerateSet(args)
+	case "label":
+		return gen.GenerateLabel(args)
 	}
 
 	// this is where macros are run
@@ -657,7 +659,7 @@ func (gen *Generator) GenerateForLoop(args []Sexp) error {
 	}
 
 	if len(controlargs) != 3 {
-		return errors.New("for loop: first argument wrong size; must be a vector of three [init predicate advance]")
+		return errors.New("for loop: first argument wrong size; must be a vector of three [init test advance]")
 	}
 
 	// generate the body of the loop
@@ -710,16 +712,34 @@ func (gen *Generator) GenerateForLoop(args []Sexp) error {
 	//	gen.AddInstruction(AddScopeInstr(0))
 	//	gen.scopes++
 
-	top_of_loop := -(len(pred_code) + 1 + len(body_code) + len(incr_code))
-	exit_loop := len(body_code) + len(incr_code) + 2
+	/*
+		top_of_loop := -(len(pred_code) + 1 + len(body_code) + len(incr_code))
+		exit_loop := len(body_code) + len(incr_code) + 2
+
+			gen.AddInstructions(init_code)
+			// top of loop starts with pred_code: (continue) target.
+			gen.AddInstructions(pred_code)
+			gen.AddInstruction(BranchInstr{false, exit_loop})
+			gen.AddInstructions(body_code)
+			gen.AddInstructions(incr_code)
+			gen.AddInstruction(JumpInstr{top_of_loop})
+			// bottom is (break) target
+	*/
+
+	top_of_loop := -(len(incr_code) + len(pred_code) + 1 + len(body_code))
+	exit_loop := len(body_code) + 2
+
+	jump_to_test := len(incr_code) + 1
 
 	gen.AddInstructions(init_code)
-	// top of loop starts with pred_code:
+	gen.AddInstruction(JumpInstr{jump_to_test})
+	// top of loop starts with pred_code: (continue) target.
+	gen.AddInstructions(incr_code)
 	gen.AddInstructions(pred_code)
 	gen.AddInstruction(BranchInstr{false, exit_loop})
 	gen.AddInstructions(body_code)
-	gen.AddInstructions(incr_code)
 	gen.AddInstruction(JumpInstr{top_of_loop})
+	// bottom is (break) target
 
 	// vestiges of trying to have a scope for the for-loop:
 	//	gen.AddInstruction(RemoveScopeInstr(0))
@@ -967,5 +987,31 @@ func (gen *Generator) generateSyntaxQuoteHash(arg Sexp) error {
 		HashLen:  n,
 		TypeName: *(hash.TypeName),
 	})
+	return nil
+}
+
+func (gen *Generator) GenerateLabel(args []Sexp) error {
+	if len(args) < 1 {
+		return errors.New("malformed label statement")
+	}
+
+	var label LabelInstr
+
+	switch sym := args[0].(type) {
+	case SexpSymbol:
+		label.Label = sym
+	default:
+		return errors.New("label name must be a symbol")
+	}
+
+	gen.AddInstruction(label)
+	err := gen.GenerateBegin(args[1:])
+	if err != nil {
+		return err
+	}
+	var removing = label
+	removing.Removing = true
+	gen.AddInstruction(removing)
+
 	return nil
 }

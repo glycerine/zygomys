@@ -486,3 +486,86 @@ func (s HashizeInstr) Execute(env *Glisp) error {
 	env.pc++
 	return nil
 }
+
+type LabelInstr struct {
+	Label    SexpSymbol
+	Removing bool // if true, pop the datastack until Label is gone.
+	Continue SexpInt
+	Break    SexpInt
+}
+
+func (s LabelInstr) InstrString() string {
+	return fmt.Sprintf("label %s removing: %v continue:%d break:%d",
+		s.Label.SexpString(), s.Removing, s.Continue, s.Break)
+}
+
+func (s LabelInstr) Execute(env *Glisp) error {
+	if s.Removing {
+	doneRemoving:
+		for {
+			expr, err := env.datastack.PopExpr()
+			if err != nil {
+				return err
+			}
+			switch a := expr.(type) {
+			case SexpArray:
+				switch sent := a[0].(type) {
+				case SexpSentinel:
+					if sent == SexpLabel {
+						switch sym := a[1].(type) {
+						case SexpSymbol:
+							if sym.number == s.Label.number {
+								break doneRemoving
+							}
+						}
+					}
+				}
+			}
+		}
+	} else {
+		a := make([]Sexp, 4)
+		a[0] = SexpLabel
+		a[1] = s.Label
+		a[2] = s.Continue
+		a[3] = s.Break
+		env.datastack.PushExpr(SexpArray(a))
+	}
+	env.pc++
+	return nil
+}
+
+type BreakInstr struct {
+	Label    SexpSymbol
+	location int
+}
+
+func (s BreakInstr) InstrString() string {
+	return fmt.Sprintf("break %s %v", s.Label, s.location)
+}
+
+func (s BreakInstr) Execute(env *Glisp) error {
+	newpc := env.pc + s.location
+	if newpc < 0 || newpc > env.CurrentFunctionSize() {
+		return OutOfBounds
+	}
+	env.pc = newpc
+	return nil
+}
+
+type ContinueInstr struct {
+	Label    SexpSymbol
+	location int
+}
+
+func (s ContinueInstr) InstrString() string {
+	return fmt.Sprintf("continue %s %v", s.Label, s.location)
+}
+
+func (s ContinueInstr) Execute(env *Glisp) error {
+	newpc := env.pc + s.location
+	if newpc < 0 || newpc > env.CurrentFunctionSize() {
+		return OutOfBounds
+	}
+	env.pc = newpc
+	return nil
+}
