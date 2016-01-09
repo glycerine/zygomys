@@ -265,11 +265,18 @@ func (gen *Generator) GenerateMacexpand(args []Sexp) error {
 	if err != nil {
 		return err
 	}
-	expr, err := gen.env.Apply(macro, macargs)
+
+	// don't mess up the previous environment
+	// just to run a macroexpand.
+	newenv := gen.env.Duplicate()
+
+	expr, err := newenv.Apply(macro, macargs)
 	if err != nil {
 		return err
 	}
-	gen.AddInstruction(PushInstr{expr})
+	quotedExpansion := Cons(gen.env.MakeSymbol("quote"), expr)
+
+	gen.AddInstruction(PushInstr{quotedExpansion})
 	return nil
 }
 
@@ -623,91 +630,6 @@ func (gen *Generator) Reset() {
 	gen.tail = false
 	gen.scopes = 0
 }
-
-// (for-range [k v map_or_array] (expr)*)
-// still todo
-/*
-func (gen *Generator) GenerateForRange(name string, args []Sexp) error {
-	if len(args) < 2 {
-		return errors.New("malformed for-range statement")
-	}
-
-	var rangeargs SexpArray
-	switch expr := args[0].(type) {
-	case SexpArray:
-		rangeargs = expr
-	default:
-		return errors.New("for-range first argument must be a vector of [key-symbol value-symbol array-or-hash]")
-	}
-
-	if len(rangeargs) != 3 {
-		return errors.New("for-range first argument must be a vector of exactly three symbols [key-symbol value-symbol array-or-hash-value-or-symbol]")
-	}
-
-	var keysym SexpSymbol
-	switch expr := rangeargs[0].(type) {
-	case SexpSymbol:
-		keysym = expr
-	default:
-		return errors.New("first (key) positition in for-range vector must be symbol, e.g. (for-range [key-symbol value-symbol hash-or-array] (body)*)")
-	}
-
-	var valsym SexpSymbol
-	switch expr := rangeargs[1].(type) {
-	case SexpSymbol:
-		valsym = expr
-	default:
-		return errors.New("second (value) positition in for-range vector must be symbol, e.g. (for-range [key-symbol value-symbol hash-or-array] (body)*)")
-	}
-
-	isHash := false
-	isArray := false
-	var hash SexpHash
-	var arr SexpArray
-	var hasym SexpSymbol
-	switch expr := rangeargs[2].(type) {
-	case SexpHash:
-	case SexpArray:
-	case SexpSymbol:
-		keysym = expr
-	default:
-		return errors.New("third (hash-or-value) positition in for-range vector must be a hash or an array, e.g. (for-range [key-symbol value-symbol hash-or-array] (body)*)")
-	}
-
-	gen.AddInstruction(AddScopeInstr(0))
-	gen.scopes++
-
-	if name == "let*" {
-		for i, rs := range rstatements {
-			err := gen.Generate(rs)
-			if err != nil {
-				return err
-			}
-			gen.AddInstruction(PutInstr{lstatements[i]})
-		}
-	} else if name == "let" {
-		for _, rs := range rstatements {
-			err := gen.Generate(rs)
-			if err != nil {
-				return err
-			}
-		}
-		for i := len(lstatements) - 1; i >= 0; i-- {
-			gen.AddInstruction(PutInstr{lstatements[i]})
-		}
-	}
-
-	err := gen.GenerateBegin(args[1:])
-	if err != nil {
-		return err
-	}
-	gen.AddInstruction(RemoveScopeInstr(0))
-	gen.scopes--
-
-	return nil
-}
-
-*/
 
 // for loops: Just like in C.
 //

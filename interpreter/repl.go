@@ -112,6 +112,18 @@ func Repl(env *Glisp, cfg *GlispConfig) {
 			continue
 		}
 
+		if parts[0] == "debug" {
+			env.debugExec = true
+			fmt.Printf("instruction debugging on.\n")
+			continue
+		}
+
+		if parts[0] == "undebug" {
+			env.debugExec = false
+			fmt.Printf("instruction debugging off.\n")
+			continue
+		}
+
 		expr, err := env.EvalString(line)
 		if err != nil {
 			fmt.Print(env.GetStackTrace(err))
@@ -161,7 +173,6 @@ func runScript(env *Glisp, fname string, cfg *GlispConfig) {
 
 func (env *Glisp) StandardSetup() {
 	env.ImportEval()
-	env.ImportRequire()
 	env.ImportTime()
 	env.ImportMsgpackMap()
 
@@ -182,6 +193,9 @@ func (env *Glisp) StandardSetup() {
 	_, err = env.EvalString(rangeMacro)
 	panicOn(err)
 
+	reqMacro := `(defmac req [a] ^(source (sym2str (quote ~a))))`
+	_, err = env.EvalString(reqMacro)
+	panicOn(err)
 }
 
 // like main() for a standalone repl, now in library

@@ -28,6 +28,8 @@ type Glisp struct {
 	nextsymbol  int
 	before      []PreHook
 	after       []PostHook
+
+	debugExec bool
 }
 
 const CallStackSize = 25
@@ -400,24 +402,35 @@ func (env *Glisp) DumpFunctionByName(name string) error {
 	default:
 		return errors.New("not a function")
 	}
-	DumpFunction(fun)
+	DumpFunction(fun, -1)
 	return nil
 }
 
-func DumpFunction(fun GlispFunction) {
-	for _, instr := range fun {
-		fmt.Println("\t" + instr.InstrString())
+// if pc is -1, don't show it.
+func DumpFunction(fun GlispFunction, pc int) {
+	blank := "      "
+	extra := blank
+	for i, instr := range fun {
+		if i == pc {
+			extra = " PC-> "
+		} else {
+			extra = blank
+		}
+		fmt.Printf("%s %d: %s\n", extra, i, instr.InstrString())
+	}
+	if pc == len(fun) {
+		fmt.Printf(" PC just past end at %d -----\n\n", pc)
 	}
 }
 
 func (env *Glisp) DumpEnvironment() {
+	fmt.Printf("PC: %d\n", env.pc)
 	fmt.Println("Instructions:")
 	if !env.curfunc.user {
-		DumpFunction(env.curfunc.fun)
+		DumpFunction(env.curfunc.fun, env.pc)
 	}
-	fmt.Println("Stack:")
+	fmt.Printf("Stack: (length %d)\n", env.datastack.tos+1)
 	env.datastack.PrintStack()
-	fmt.Printf("PC: %d\n", env.pc)
 }
 
 func (env *Glisp) ReachedEnd() bool {
@@ -474,13 +487,28 @@ func (env *Glisp) Apply(fun SexpFunction, args []Sexp) (Sexp, error) {
 func (env *Glisp) Run() (Sexp, error) {
 	for env.pc != -1 && !env.ReachedEnd() {
 		instr := env.curfunc.fun[env.pc]
+		if env.debugExec {
+			fmt.Printf("\n ====== in '%s', about to run instr: %#v\n",
+				env.curfunc.name, instr)
+			env.DumpEnvironment()
+			fmt.Printf("\n ====== in '%s', now running %#v\n",
+				env.curfunc.name, instr)
+		}
 		err := instr.Execute(env)
 		if err != nil {
 			return SexpNull, err
 		}
+		if env.debugExec {
+			fmt.Printf("\n ****** in '%s', after running '%#v', stack is: \n",
+				env.curfunc.name, instr)
+			env.DumpEnvironment()
+			fmt.Printf("\n ****** \n")
+
+		}
 	}
 
 	if env.datastack.IsEmpty() {
+		fmt.Printf("env.datastack was empty!!\n")
 		env.DumpEnvironment()
 		panic("env.datastack was empty!!")
 		//os.Exit(-1)

@@ -171,7 +171,10 @@ func (g GetInstr) Execute(env *Glisp) error {
 
 	macxpr, isMacro := env.macros[g.sym.number]
 	if isMacro {
-		return fmt.Errorf("'%s' is a macro, with definition: %s\n", g.sym.name, macxpr.orig.SexpString())
+		if macxpr.orig != nil {
+			return fmt.Errorf("'%s' is a macro, with definition: %s\n", g.sym.name, macxpr.orig.SexpString())
+		}
+		return fmt.Errorf("'%s' is a builtin macro.\n", g.sym.name)
 	}
 
 	expr, err, _ := env.scopestack.LookupSymbol(g.sym)

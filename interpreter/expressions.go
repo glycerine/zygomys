@@ -70,7 +70,7 @@ func (pair SexpPair) SexpString() string {
 	if pair.tail == SexpNull {
 		str += ")"
 	} else {
-		str += " . " + pair.tail.SexpString() + ")"
+		str += " \\ " + pair.tail.SexpString() + ")"
 	}
 
 	return str
