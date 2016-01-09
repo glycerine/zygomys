@@ -523,6 +523,7 @@ func (gen *Generator) GenerateCallBySymbol(sym SexpSymbol, args []Sexp, orig Sex
 		return gen.GenerateSet(args)
 	}
 
+	// this is where macros are run
 	macro, found := gen.env.macros[sym.number]
 	if found {
 		// calling Apply on the current environment will screw up
