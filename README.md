@@ -18,7 +18,7 @@ The full [documentation can be found in the Wiki](https://github.com/glycerine/z
 
 The standalone REPL is called simply `zygo`.
 
-### Not your Grandfather's LISP... features in Zygomys 1.1.7 include
+### Not your Grandfather's Parenthesis... features in Zygomys 1.1.7 include
 
  * [x] Clojure like threading `(-> hash field1: field2:)` and `(:field hash)` selection
  * [x] Raw bytes type `(raw string)` lets you do zero-copy `[]byte` manipulation
@@ -53,6 +53,8 @@ The standalone REPL is called simply `zygo`.
  * [x] Pre- and Post- function call hooks
 
 [See the wiki for lots of details and a full description of the Zygomys language.](https://github.com/glycerine/zygomys/wiki).
+
+![Obligatory XKCD: "elegant weapons... for a more civilized age"](http://imgs.xkcd.com/comics/lisp_cycles.png)
 
 ### where did the name Zygomys come from?
 
