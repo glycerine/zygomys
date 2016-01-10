@@ -1,0 +1,11 @@
+;; simple for [init test advance]
+(def b (slurp tests/lines))
+(assert (== 3 (len b)))
+(def sum 0)
+(for [(def i 0) (< i (len b)) (def i (+ i 1))]
+     (def cur (aget b i))
+     (def sum (+ sum (len cur)))
+     (println cur))
+(printf "sum is %v\n" sum)
+(assert (== sum 9))
+

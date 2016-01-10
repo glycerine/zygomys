@@ -230,6 +230,10 @@ func (env *Glisp) StandardSetup() {
 	_, err = env.EvalString(reqMacro)
 	panicOn(err)
 
+	slurpMacro := `(defmac slurp [a] ^(slurpf (sym2str (quote ~a))))`
+	_, err = env.EvalString(slurpMacro)
+	panicOn(err)
+
 	env.ImportChannels()
 	env.ImportGoroutines()
 	env.ImportRegex()

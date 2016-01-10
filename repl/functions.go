@@ -830,6 +830,7 @@ var BuiltinFunctions = map[string]GlispUserFunction{
 	"unmsgpack":  JsonFunction,
 	"togo":       ToGoFunction,
 	"dump":       GoonDumpFunction,
+	"slurpf":     SlurpfileFunction,
 }
 
 func ThreadMapFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
