@@ -8,8 +8,8 @@ Zygomys is focused on Domain Specific Language (DSL) creation for your
 scripting and configuration needs. It is written in Go and plays easily with Go programs
 and structs defined within them. It counts as its original ancestor
 [Howard Mao's inspiring Glisp project](https://github.com/zhemao/glisp).
-It borrows certain constructs from Clojure, and aims to make scripting
-and configuration very easy with a minimal footprint.
+It borrows certain constructs from Clojure, and others from Go, and
+aims to make scripting and configuration very easy with a minimal footprint.
 
 Zygomys is ideally suited for driving complex configurations and providng
 your project with a domain specific language customized to your challenges.
