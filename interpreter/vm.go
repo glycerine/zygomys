@@ -503,19 +503,51 @@ func (s LabelInstr) Execute(env *Glisp) error {
 
 type BreakInstr struct {
 	loop *Loop
+	pos  int
 }
 
 func (s BreakInstr) InstrString() string {
-	return fmt.Sprintf("break %s", s.loop.stmtname.name)
+	if s.pos == 0 {
+		return fmt.Sprintf("break %s", s.loop.stmtname.name)
+	}
+	return fmt.Sprintf("break %s (loop is at %d)", s.loop.stmtname.name, s.pos)
 }
 
-func (s BreakInstr) Execute(env *Glisp) error {
-
-	pos, err := env.FindLoop(s.loop)
-	if err != nil {
-		return err
+func (s *BreakInstr) Execute(env *Glisp) error {
+	if s.pos == 0 {
+		pos, err := env.FindLoop(s.loop)
+		if err != nil {
+			return err
+		}
+		s.pos = pos
 	}
-	env.pc = pos + s.loop.breakOffset
+	env.pc = s.pos + s.loop.breakOffset
+	return nil
+}
+
+type ContinueInstr struct {
+	loop *Loop
+	pos  int
+}
+
+func (s ContinueInstr) InstrString() string {
+	if s.pos == 0 {
+		return fmt.Sprintf("continue %s", s.loop.stmtname.name)
+	}
+	return fmt.Sprintf("continue %s (loop is at pos %d)", s.loop.stmtname.name, s.pos)
+}
+
+func (s *ContinueInstr) Execute(env *Glisp) error {
+	VPrintf("\n executing ContinueInstr with loop: '%#v'\n", s.loop)
+	if s.pos == 0 {
+		pos, err := env.FindLoop(s.loop)
+		if err != nil {
+			return err
+		}
+		s.pos = pos
+	}
+	env.pc = s.pos + s.loop.continueOffset
+	VPrintf("\n  more detail ContinueInstr pos=%d, setting pc = %d\n", s.pos, env.pc)
 	return nil
 }
 

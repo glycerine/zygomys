@@ -680,6 +680,8 @@ func (gen *Generator) GenerateForLoop(args []Sexp) error {
 	gen.env.loopstack.Push(loop)
 	defer gen.env.loopstack.Pop()
 
+	startPos := len(gen.instructions)
+
 	gen.AddInstruction(LoopStartInstr{loop: loop})
 	gen.AddInstruction(PushStackmarkInstr{sym: loop.stmtname})
 
@@ -740,8 +742,7 @@ func (gen *Generator) GenerateForLoop(args []Sexp) error {
 	// had to use (set) it would be dangerous and
 	// more error prone.
 
-	startPos := len(gen.instructions)
-	exit_loop := len_body_code + 2
+	exit_loop := len_body_code + 3
 	jump_to_test := len(incr_code) + 2
 
 	gen.AddInstruction(LabelInstr{label: "start of init for " + loop.stmtname.name})
@@ -778,6 +779,9 @@ func (gen *Generator) GenerateForLoop(args []Sexp) error {
 	loop.loopLen = len(gen.instructions) - startPos
 	loop.breakOffset = loop.loopLen
 	loop.continueOffset = continuePos - startPos
+
+	VPrintf("\n debug at end of for loop generation, loop = %#v at address %p\n",
+		loop, loop)
 
 	return nil
 }
@@ -1042,10 +1046,7 @@ func (gen *Generator) GenerateContinue(args []Sexp) error {
 
 	myPos := len(gen.instructions)
 	VPrintf("\n debug GenerateContinue() : myPos =%d  loop=%#v\n", myPos, loop)
-	gen.AddInstruction(
-		JumpInstr{
-			addpc: loop.loopStart + loop.continueOffset - myPos,
-			where: "continue"})
+	gen.AddInstruction(&ContinueInstr{loop: loop})
 	return nil
 }
 
@@ -1068,7 +1069,7 @@ func (gen *Generator) GenerateBreak(args []Sexp) error {
 	}
 
 	VPrintf("\n debug GenerateBreak() : loop=%#v\n", loop)
-	gen.AddInstruction(BreakInstr{loop: loop})
+	gen.AddInstruction(&BreakInstr{loop: loop})
 
 	return nil
 }
