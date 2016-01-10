@@ -1,4 +1,3 @@
-// make even the Repl() available from the glisp library
 package zygo
 
 import (
@@ -92,7 +91,6 @@ func Repl(env *Glisp, cfg *GlispConfig) {
 	// env.debugExec = true
 
 	fmt.Printf("zygo version %s\n", Version())
-	fmt.Printf("zygoext version %s\n", cfg.ExtensionsVersion)
 
 	for {
 		line, err := getExpression(reader)

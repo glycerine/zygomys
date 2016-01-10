@@ -3,10 +3,8 @@ package main
 import (
 	"flag"
 	"fmt"
-	"os"
-
-	"github.com/glycerine/zygomys/extensions"
 	"github.com/glycerine/zygomys/repl"
+	"os"
 )
 
 func usage(myflags *flag.FlagSet) {
@@ -33,11 +31,9 @@ func main() {
 	}
 
 	registerExts := func(env *zygo.Glisp) {
-		//zygoext.ImportRandom(env)
-		zygoext.ImportChannels(env)
-		zygoext.ImportCoroutines(env)
-		zygoext.ImportRegex(env)
+		// this mechanism not used at the moment, but the
+		// syntax would be: zygoext.ImportRandom(env)
 	}
-	cfg.ExtensionsVersion = zygoext.Version()
+	//cfg.ExtensionsVersion = zygoext.Version()
 	zygo.ReplMain(cfg, registerExts)
 }

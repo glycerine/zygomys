@@ -1,8 +1,8 @@
 #!/bin/sh
 
-for lispfile in tests/*.dsl
+for lispfile in tests/*.zy
 do
-    ./gdsl -exitonfail "${lispfile}" && \
+    ./zygo -exitonfail "${lispfile}" && \
         echo "${lispfile} passed" || \
         echo "${lispfile} failed"
 done
