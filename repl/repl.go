@@ -206,11 +206,9 @@ func (env *Glisp) StandardSetup() {
 }
 
 // like main() for a standalone repl, now in library
-func ReplMain(cfg *GlispConfig, registerExtsFunc func(env *Glisp)) {
+func ReplMain(cfg *GlispConfig) {
 	env := NewGlisp()
 	env.StandardSetup()
-
-	registerExtsFunc(env)
 
 	if cfg.CpuProfile != "" {
 		f, err := os.Create(cfg.CpuProfile)

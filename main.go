@@ -31,5 +31,5 @@ func main() {
 	}
 
 	// the library does all the heavy lifting.
-	zygo.ReplMain(cfg, registerExts)
+	zygo.ReplMain(cfg)
 }
