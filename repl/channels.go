@@ -56,7 +56,7 @@ func ChanTxFunction(env *Glisp, name string,
 	return <-channel, nil
 }
 
-func ImportChannels(env *Glisp) {
+func (env *Glisp) ImportChannels() {
 	env.AddFunction("make-chan", MakeChanFunction)
 	env.AddFunction("send!", ChanTxFunction)
 	env.AddFunction("<!", ChanTxFunction)

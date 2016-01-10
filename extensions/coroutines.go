@@ -1,44 +1,43 @@
-package gdslext
+package zygo
 
 import (
 	"errors"
-	"github.com/glycerine/godiesel/interpreter"
 )
 
 type SexpCoroutine struct {
-	env *gdsl.Glisp
+	env *Glisp
 }
 
 func (coro SexpCoroutine) SexpString() string {
 	return "[coroutine]"
 }
 
-func StartCoroutineFunction(env *gdsl.Glisp, name string,
-	args []gdsl.Sexp) (gdsl.Sexp, error) {
+func StartCoroutineFunction(env *Glisp, name string,
+	args []Sexp) (Sexp, error) {
 	switch t := args[0].(type) {
 	case SexpCoroutine:
 		go t.env.Run()
 	default:
-		return gdsl.SexpNull, errors.New("not a coroutine")
+		return SexpNull, errors.New("not a coroutine")
 	}
-	return gdsl.SexpNull, nil
+	return SexpNull, nil
 }
 
-func CreateCoroutineMacro(env *gdsl.Glisp, name string,
-	args []gdsl.Sexp) (gdsl.Sexp, error) {
+func CreateCoroutineMacro(env *Glisp, name string,
+	args []Sexp) (Sexp, error) {
 	coroenv := env.Duplicate()
 	err := coroenv.LoadExpressions(args)
 	if err != nil {
-		return gdsl.SexpNull, nil
+		return SexpNull, nil
 	}
 	coro := SexpCoroutine{coroenv}
 
 	// (apply StartCoroutineFunction [coro])
-	return gdsl.MakeList([]gdsl.Sexp{env.MakeSymbol("apply"),
-		gdsl.MakeUserFunction("__start", StartCoroutineFunction),
-		gdsl.SexpArray([]gdsl.Sexp{coro})}), nil
+	return MakeList([]Sexp{env.MakeSymbol("apply"),
+		MakeUserFunction("__start", StartCoroutineFunction),
+		SexpArray([]Sexp{coro})}), nil
 }
 
-func ImportCoroutines(env *gdsl.Glisp) {
+func ImportCoroutines(env *Glisp) {
 	env.AddMacro("go", CreateCoroutineMacro)
 }

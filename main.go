@@ -6,7 +6,7 @@ import (
 	"os"
 
 	"github.com/glycerine/zygomys/extensions"
-	"github.com/glycerine/zygomys/interpreter"
+	"github.com/glycerine/zygomys/repl"
 )
 
 func usage(myflags *flag.FlagSet) {
@@ -33,7 +33,7 @@ func main() {
 	}
 
 	registerExts := func(env *zygo.Glisp) {
-		zygoext.ImportRandom(env)
+		//zygoext.ImportRandom(env)
 		zygoext.ImportChannels(env)
 		zygoext.ImportCoroutines(env)
 		zygoext.ImportRegex(env)

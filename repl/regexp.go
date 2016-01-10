@@ -88,7 +88,7 @@ func RegexpCompile(env *Glisp, name string,
 	return Sexp(SexpRegexp(*r)), nil
 }
 
-func ImportRegex(env *Glisp) {
+func (env *Glisp) ImportRegex() {
 	env.AddFunction("regexp-compile", RegexpCompile)
 	env.AddFunction("regexp-find-index", RegexpFind)
 	env.AddFunction("regexp-find", RegexpFind)

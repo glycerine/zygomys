@@ -12,6 +12,6 @@ func RandomFunction(env *Glisp, name string,
 	return SexpFloat(defaultRand.Float64()), nil
 }
 
-func ImportRandom(env *Glisp) {
+func (env *Glisp) ImportRandom() {
 	env.AddFunction("random", RandomFunction)
 }

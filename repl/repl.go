@@ -199,6 +199,11 @@ func (env *Glisp) StandardSetup() {
 	reqMacro := `(defmac req [a] ^(source (sym2str (quote ~a))))`
 	_, err = env.EvalString(reqMacro)
 	panicOn(err)
+
+	env.ImportChannels()
+	env.ImportGoroutines()
+	env.ImportRegex()
+
 }
 
 // like main() for a standalone repl, now in library
