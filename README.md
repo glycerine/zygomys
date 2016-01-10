@@ -55,3 +55,6 @@ The full documentation can be found in the [Wiki](https://github.com/glycerine/z
 
 Zygomys is a contraction of Zygogeomys, a [genus of pocket gophers whose natural habitat is high-altitude forests.](https://en.wikipedia.org/wiki/Michoacan_pocket_gopher)
 
+### License
+
+Two-clause BSD, see LICENSE file.
