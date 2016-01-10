@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"github.com/shurcooL/go-goon"
 	"os"
 )
 
@@ -601,9 +602,13 @@ func MapFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	case SexpArray:
 		return MapArray(env, fun, e)
 	case SexpPair:
-		return MapList(env, fun, e)
+		x, err := MapList(env, fun, e)
+		fmt.Printf("\n debug Map: output from MapList upon return = '%#v'\n", x)
+		goon.Dump(x)
+		return x, err
+	default:
+		return SexpNull, fmt.Errorf("second argument must be array or list; we saw %T / val = %#v", e, e)
 	}
-	return SexpNull, errors.New("second argument must be array")
 }
 
 func MakeArrayFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
@@ -892,7 +897,9 @@ func Sym2StrFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 
 	switch t := args[0].(type) {
 	case SexpSymbol:
-		return SexpStr(t.name), nil
+		r := SexpStr(t.name)
+		fmt.Printf("\n debug Sym2Str: returning '%T'/ val=%#v\n", r, r)
+		return r, nil
 	}
 	return SexpNull, errors.New("argument must be symbol")
 }

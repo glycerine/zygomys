@@ -242,7 +242,7 @@ func (env *Glisp) StandardSetup() {
 	_, err = env.EvalString(writeMacro)
 	panicOn(err)
 
-	systemMacro := `(defmac $ [ & body] ^(system (map sym2str (quote ~@body))))`
+	systemMacro := `(defmac $ [ & body] ^(system (map sym2str (quote ~body))))`
 	_, err = env.EvalString(systemMacro)
 	panicOn(err)
 

@@ -11,30 +11,69 @@ func SystemFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	if len(args) == 0 {
 		return SexpNull, WrongNargs
 	}
-	cmd := ""
-	stringArgs := []string{}
-	switch c := args[0].(type) {
-	case SexpStr:
-		many := strings.Split(string(c), " ")
-		cmd = string(many[0])
-		stringArgs = append(stringArgs, many[1:]...)
-	default:
-		return SexpNull, fmt.Errorf("arguments to system must be strings")
+
+	flat, err := flattenToWordsHelper(args)
+	if err != nil {
+		return SexpNull, fmt.Errorf("flatten on '%#v' failed with error '%s'", args, err)
+	}
+	if len(flat) == 0 {
+		return SexpNull, WrongNargs
 	}
 
-	for _, word := range args[1:] {
-		switch s := word.(type) {
-		case SexpStr:
-			many := strings.Split(string(s), " ")
-			stringArgs = append(stringArgs, many...)
-		default:
-			return SexpNull, fmt.Errorf("arguments to system must be strings")
-		}
-	}
+	cmd := flat[0]
 
-	out, err := exec.Command(cmd, stringArgs...).CombinedOutput()
+	out, err := exec.Command(cmd, flat[1:]...).CombinedOutput()
 	if err != nil {
 		return SexpNull, err
 	}
 	return SexpStr(string(out)), nil
+}
+
+// given strings/lists of strings with possible whitespace
+// flatten out to a array of SexpStr with no internal whitespace,
+// suitable for passing along to (system) / exec.Command()
+func FlattenToWordsFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
+	if len(args) == 0 {
+		return SexpNull, WrongNargs
+	}
+	stringArgs, err := flattenToWordsHelper(args)
+	if err != nil {
+		return SexpNull, err
+	}
+
+	// Now convert to []Sexp{SexpStr}
+	res := make([]Sexp, len(stringArgs))
+	for i := range stringArgs {
+		res[i] = SexpStr(stringArgs[i])
+	}
+	return SexpArray(res), nil
+}
+func flattenToWordsHelper(args []Sexp) ([]string, error) {
+	stringArgs := []string{}
+
+	for i := range args {
+		switch c := args[i].(type) {
+		case SexpStr:
+			many := strings.Split(string(c), " ")
+			stringArgs = append(stringArgs, many...)
+		case SexpPair:
+			carry, err := ListToArray(c)
+			if err != nil {
+				return []string{}, fmt.Errorf("tried to convert list of strings to array but failed with error '%s'. Input was type %T / val = '%#v'", c, c)
+			}
+			for _, sexp := range carry {
+				switch c := sexp.(type) {
+				case SexpStr:
+					many := strings.Split(string(c), " ")
+					stringArgs = append(stringArgs, many...)
+				default:
+					return []string{}, fmt.Errorf("arguments to system must be strings; instead we have, inside a list, a value with type %T / val = '%#v'", c, c)
+				}
+			}
+		default:
+			return []string{}, fmt.Errorf("arguments to system must be strings; instead we have %T / val = '%#v'", c, c)
+		}
+	} // end i over args
+	// INVAR: stringArgs has our flattened list.
+	return stringArgs, nil
 }
