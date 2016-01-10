@@ -3,6 +3,7 @@ package zygo
 import (
 	"errors"
 	"fmt"
+	"strings"
 )
 
 type Scope map[int]Sexp
@@ -62,4 +63,12 @@ func (scope *Scope) UpdateSymbolInScope(sym SexpSymbol, expr Sexp) error {
 	}
 	(*scope)[sym.number] = expr
 	return nil
+}
+
+func (s *Scope) Show(env *Glisp, indent int) {
+	for symbolNumber, val := range *s {
+		symbolName := env.revsymtable[symbolNumber]
+		fmt.Printf("%s %s -> %s\n", strings.Repeat(" ", indent),
+			symbolName, val.SexpString())
+	}
 }

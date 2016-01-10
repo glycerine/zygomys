@@ -1,17 +1,17 @@
 ![Image of Gopher flying](https://github.com/glycerine/zygomys/blob/master/biplane.png)
 
-# Zygomys - fast, high level control
+# zygomys - fast, high level control
 
-Zygomys is an embeddable Lisp interpreter and REPL (Read-Eval-Print-Loop;
+zygomys is an embeddable Lisp interpreter and REPL (Read-Eval-Print-Loop;
 that is, it comes with a command line interactive interface).
-Zygomys is focused on Domain Specific Language (DSL) creation for your
+zygomys is focused on Domain Specific Language (DSL) creation for your
 scripting and configuration needs. It is written in Go and plays easily with Go programs
 and structs defined within them. It counts as its original ancestor
 [Howard Mao's inspiring Glisp project](https://github.com/zhemao/glisp).
 It borrows certain constructs from Clojure, and others from Go, and
 aims to make scripting and configuration very easy with a minimal footprint.
 
-Because it speaks JSON and Msgpack fluently, Zygomys is ideally suited for driving
+Because it speaks JSON and Msgpack fluently, zygomys is ideally suited for driving
 complex configurations and providing projects with a domain specific
 language customized to your challenges and driving other code.
 The example snippets in the tests/*.zy provide many examples.
@@ -19,7 +19,7 @@ The full [documentation can be found in the Wiki](https://github.com/glycerine/z
 
 The standalone REPL is called simply `zygo`.
 
-### Not your Grandfather's Parentheses... features in Zygomys 1.2.1 include
+### Not your Grandfather's Parentheses... features in zygomys 1.2.1 include
 
  * [x] JSON and Msgpack interop: serialization and deserialization.
  * [x] `(range key value hash (body))` range loops mirror for-range over a hash in Go.
@@ -40,7 +40,7 @@ The standalone REPL is called simply `zygo`.
 
 ### Additional features
 
- * [x] Zygomys is a small Go library, easy to integrate and use/extend.
+ * [x] zygomys is a small Go library, easy to integrate and use/extend.
  * [x] Float, Int, Char, String, Symbol, List, Array, and Hash datatypes builtin.
  * [x] Arithmetic (`+`, `-`, `*`, `/`, `mod`, `**`)
  * [x] Shift Operators (`sll`, `srl`, `sra`)
@@ -59,11 +59,11 @@ The standalone REPL is called simply `zygo`.
  * [x] Channel and goroutine support
  * [x] Pre- and Post- function call hooks
 
-[See the wiki for lots of details and a full description of the Zygomys language.](https://github.com/glycerine/zygomys/wiki).
+[See the wiki for lots of details and a full description of the zygomys language.](https://github.com/glycerine/zygomys/wiki).
 
-### where did the name Zygomys come from?
+### where did the name zygomys come from?
 
-Zygomys is a contraction of Zygogeomys, [a genus of pocket gophers. The Michoacan pocket gopher (Zygogeomys trichopus) finds its natural habitat in high-altitude forests.](https://en.wikipedia.org/wiki/Michoacan_pocket_gopher)
+zygomys is a contraction of Zygogeomys, [a genus of pocket gophers. The Michoacan pocket gopher (Zygogeomys trichopus) finds its natural habitat in high-altitude forests.](https://en.wikipedia.org/wiki/Michoacan_pocket_gopher)
 
 ### License
 

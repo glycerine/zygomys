@@ -434,6 +434,9 @@ func (env *Glisp) DumpEnvironment() {
 	}
 	fmt.Printf("Stack: (length %d)\n", env.datastack.tos+1)
 	env.datastack.PrintStack()
+
+	fmt.Printf("\nScopes:\n")
+	env.ShowScopes()
 }
 
 func (env *Glisp) ReachedEnd() bool {
@@ -544,4 +547,27 @@ func (env *Glisp) FindLoop(target *Loop) (int, error) {
 		}
 	}
 	return -1, fmt.Errorf("could not find loop target '%s'", target.stmtname.name)
+}
+
+func (env *Glisp) ShowScopes() error {
+	top := env.scopestack.Top()
+	fmt.Printf("\n ShowScopes has top=%d\n", top)
+	for i := 0; i <= top; i++ {
+		scop, err := env.scopestack.Get(i)
+		if err != nil {
+			return err
+		}
+
+		var s Scope
+		switch sc := scop.(type) {
+		case Scope:
+			s = sc
+		default:
+			return fmt.Errorf("unexpected type %T / val = %#v on scopestack", sc, sc)
+		}
+
+		fmt.Printf("====  scope # %d  in  env %p\n", i, env)
+		s.Show(env, i*6)
+	}
+	return nil
 }
