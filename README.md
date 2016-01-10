@@ -24,7 +24,7 @@ The standalone REPL is called simply `zygo`.
  * [x] Raw bytes type `(raw string)` lets you do zero-copy `[]byte` manipulation
  * [x] Record definitions `(defmap)`
  * [x] Read external files with `(req path-to-file)`
- * [x] Go style raw string literals, using `` backticks ``, as in Go.
+ * [x] Go style raw string literals, using `` `backticks` ``, as in Go.
  * [x] JSON and Msgpack interop: serialization and deserialization
  * [x] `(range key value hash (body))` range loops mirror for-range over a hash in Go.
  * [x] `(for [(initializer) (test) (advance)] (body))` for-loops match those in C and Go. Both `(break)` and `(continue)` are available for additional loop control.
