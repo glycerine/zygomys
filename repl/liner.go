@@ -11,20 +11,34 @@ import (
 
 var history_fn = filepath.Join("~/.zygohist")
 
-var completion_keywords = []string{"and", "or", "cond", "quote", "mdef", "fn", "defn", "begin", "let", "let*", "defmac", "assert", "macexpand", "syntax-quote", "include", "source", "req", "for", "set", "break", "continue", "now", "time"}
+var completion_keywords = []string{"(and ", "(or ", "(cond ", "(quote ", "(mdef ", "(fn ", "(defn ", "(begin ", "(let ", "(let* ", "(defmac ", "(assert ", "(macexpand ", "(syntax-quote ", "(include ", "(source ", "(req ", "(for ", "(set ", "(break ", "(continue ", "(now ", "(timeit "}
 
 type Prompter struct {
 	prompt   string
 	prompter *liner.State
+	origMode liner.ModeApplier
+	rawMode  liner.ModeApplier
 }
 
 func NewPrompter() *Prompter {
+	origMode, err := liner.TerminalMode()
+	if err != nil {
+		panic(err)
+	}
+
 	p := &Prompter{
 		prompt:   "zygo> ",
 		prompter: liner.NewLiner(),
+		origMode: origMode,
 	}
 
-	p.prompter.SetCtrlCAborts(true)
+	rawMode, err := liner.TerminalMode()
+	if err != nil {
+		panic(err)
+	}
+	p.rawMode = rawMode
+
+	p.prompter.SetCtrlCAborts(false)
 	//p.prompter.SetTabCompletionStyle(liner.TabPrints)
 
 	p.prompter.SetCompleter(func(line string) (c []string) {
@@ -55,6 +69,17 @@ func (p *Prompter) Close() {
 }
 
 func (p *Prompter) Getline(prompt *string) (line string, err error) {
+	applyErr := p.rawMode.ApplyMode()
+	if applyErr != nil {
+		panic(applyErr)
+	}
+	defer func() {
+		applyErr := p.origMode.ApplyMode()
+		if applyErr != nil {
+			panic(applyErr)
+		}
+	}()
+
 	if prompt == nil {
 		line, err = p.prompter.Prompt(p.prompt)
 	} else {
@@ -63,10 +88,6 @@ func (p *Prompter) Getline(prompt *string) (line string, err error) {
 	if err == nil {
 		p.prompter.AppendHistory(line)
 		return line, nil
-	} else if err == liner.ErrPromptAborted {
-		log.Print("Aborted")
-	} else {
-		log.Print("Error reading line: ", err)
 	}
 	return "", err
 }

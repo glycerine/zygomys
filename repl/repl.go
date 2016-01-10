@@ -58,21 +58,33 @@ func isBalanced(str string) bool {
 
 var continuationPrompt = ">> "
 
-func getExpression(reader *bufio.Reader, pr *Prompter) (string, error) {
+func (pr *Prompter) getExpressionOrig(reader *bufio.Reader) (string, error) {
 
-	/*	line, err := getLine(reader)
+	line, err := getLine(reader)
+	if err != nil {
+		return "", err
+	}
+
+	for !isBalanced(line) {
+		fmt.Printf(continuationPrompt)
+		nextline, err := getLine(reader)
 		if err != nil {
 			return "", err
 		}
-	*/
+		line += "\n" + nextline
+	}
+	return line, nil
+}
+
+// reads Stdin only
+func (pr *Prompter) getExpressionWithLiner() (string, error) {
+
 	line, err := pr.Getline(nil)
 	if err != nil {
 		return "", err
 	}
 
 	for !isBalanced(line) {
-		//		fmt.Printf(">> ")
-		//		nextline, err := getLine(reader)
 		nextline, err := pr.Getline(&continuationPrompt)
 		if err != nil {
 			return "", err
@@ -94,7 +106,9 @@ func processDumpCommand(env *Glisp, args []string) {
 }
 
 func Repl(env *Glisp, cfg *GlispConfig) {
-	reader := bufio.NewReader(os.Stdin)
+	// used if one wishes to drop the liner library and use
+	// pr.getExpressionOrig() instead.
+	//reader := bufio.NewReader(os.Stdin)
 
 	// debug
 	// env.debugExec = true
@@ -105,7 +119,8 @@ func Repl(env *Glisp, cfg *GlispConfig) {
 	defer pr.Close()
 
 	for {
-		line, err := getExpression(reader, pr)
+		//line, err := pr.getExpressionOrig(reader)
+		line, err := pr.getExpressionWithLiner()
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(-1)
