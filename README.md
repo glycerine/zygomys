@@ -27,10 +27,10 @@ The standalone REPL is called simply `zygo`.
  * [x] Raw bytes type `(raw string)` lets you do zero-copy `[]byte` manipulation.
  * [x] Record definitions `(defmap)` make configuration a breeze.
  * [x] Files can be recursively sourced with `(req path)` or `(source "path-string")`.
- * [x] Go style raw string literals, using `` `backticks` ``, as in Go.
+ * [x] Go style raw string literals, using `` `backticks` ``, can contain newlines and `"` double quotes directly. Easy templating.
  * [x] Easy to extend. See the `repl/random.go`, `repl/regexp.go`, and `repl/time.go` files for examples.
  * [x] Clojure like threading `(-> hash field1: field2:)` and `(:field hash)` selection. 
- * [x] Macros for your DSL. Syntax-quote macro templates work inside `[]` arrays and `{}` hashes.
+ * [x] Macros for your DSL. Syntax-quote templates work *anywhere*; inside lists, `[]` arrays and `{}` hashes.
  * [x] Use `zygo` to configure trees of Go structs, and then run methods on them at natively-compiled speed (since you are calling into Go code).
 
 ### Obligatory XKCD
