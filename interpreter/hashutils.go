@@ -186,10 +186,28 @@ func SetHashKeyOrder(hash *SexpHash, keyOrd Sexp) error {
 }
 
 func (hash *SexpHash) HashPairi(pos int) (SexpPair, error) {
-	key := (*hash.KeyOrder)[pos]
-	val, err := hash.HashGet(key)
-	if err != nil {
-		return SexpPair{}, fmt.Errorf("hpair error on HashGet for key '%s' at pos %d", key.SexpString(), pos)
+	nk := (*hash.NumKeys)
+	if pos > nk {
+		return SexpPair{}, fmt.Errorf("hpair error: pos %d is beyond our key count %d",
+			pos, nk)
 	}
+	lenKeyOrder := len(*hash.KeyOrder)
+	var err error
+	var key, val Sexp
+	found := false
+	for k := pos; k < lenKeyOrder; k++ {
+		key = (*hash.KeyOrder)[k]
+		val, err = hash.HashGet(key)
+
+		if err == nil {
+			found = true
+			break
+		}
+		// what about deleted keys? just skip to the next!
+	}
+	if !found {
+		panic(fmt.Errorf("hpair internal error: could not get element at pos %d in lenKeyOrder=%d", pos, lenKeyOrder))
+	}
+
 	return Cons(key, SexpPair{head: val, tail: SexpNull}), nil
 }

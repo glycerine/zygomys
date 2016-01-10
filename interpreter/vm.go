@@ -12,17 +12,18 @@ type Instruction interface {
 }
 
 type JumpInstr struct {
-	location int
+	addpc int
+	where string
 }
 
 var OutOfBounds error = errors.New("jump out of bounds")
 
 func (j JumpInstr) InstrString() string {
-	return fmt.Sprintf("jump %d", j.location)
+	return fmt.Sprintf("jump %d %s", j.addpc, j.where)
 }
 
 func (j JumpInstr) Execute(env *Glisp) error {
-	newpc := env.pc + j.location
+	newpc := env.pc + j.addpc
 	if newpc < 0 || newpc > env.CurrentFunctionSize() {
 		return OutOfBounds
 	}
@@ -67,7 +68,7 @@ func (b BranchInstr) Execute(env *Glisp) error {
 		return err
 	}
 	if b.direction == IsTruthy(expr) {
-		return JumpInstr{b.location}.Execute(env)
+		return JumpInstr{addpc: b.location}.Execute(env)
 	}
 	env.pc++
 	return nil
@@ -93,9 +94,9 @@ func (p PushInstrClosure) Execute(env *Glisp) error {
 		for _, v := range p.expr.fun {
 
 			switch it := v.(type) {
-			case GetInstr:
+			case EnvToStackInstr:
 				sym = it.sym
-			case PutInstr:
+			case PopStackPutEnvInstr:
 				sym = it.sym
 			case CallInstr:
 				sym = it.sym
@@ -159,15 +160,15 @@ func (d DupInstr) Execute(env *Glisp) error {
 	return nil
 }
 
-type GetInstr struct {
+type EnvToStackInstr struct {
 	sym SexpSymbol
 }
 
-func (g GetInstr) InstrString() string {
-	return fmt.Sprintf("get %s", g.sym.name)
+func (g EnvToStackInstr) InstrString() string {
+	return fmt.Sprintf("envToStack %s", g.sym.name)
 }
 
-func (g GetInstr) Execute(env *Glisp) error {
+func (g EnvToStackInstr) Execute(env *Glisp) error {
 
 	macxpr, isMacro := env.macros[g.sym.number]
 	if isMacro {
@@ -186,15 +187,15 @@ func (g GetInstr) Execute(env *Glisp) error {
 	return nil
 }
 
-type PutInstr struct {
+type PopStackPutEnvInstr struct {
 	sym SexpSymbol
 }
 
-func (p PutInstr) InstrString() string {
-	return fmt.Sprintf("put %s", p.sym.name)
+func (p PopStackPutEnvInstr) InstrString() string {
+	return fmt.Sprintf("popStackPutEnv %s", p.sym.name)
 }
 
-func (p PutInstr) Execute(env *Glisp) error {
+func (p PopStackPutEnvInstr) Execute(env *Glisp) error {
 	expr, err := env.datastack.PopExpr()
 	if err != nil {
 		return err
@@ -302,7 +303,7 @@ func (d DispatchInstr) Execute(env *Glisp) error {
 		}
 		return env.CallUserFunction(f, f.name, d.nargs)
 	}
-	return errors.New("not a function")
+	return fmt.Errorf("not a function on top of datastack: '%T/%#v'", funcobj, funcobj)
 }
 
 type ReturnInstr struct {
@@ -488,84 +489,121 @@ func (s HashizeInstr) Execute(env *Glisp) error {
 }
 
 type LabelInstr struct {
-	Label    SexpSymbol
-	Removing bool // if true, pop the datastack until Label is gone.
-	Continue SexpInt
-	Break    SexpInt
+	label string
 }
 
 func (s LabelInstr) InstrString() string {
-	return fmt.Sprintf("label %s removing: %v continue:%d break:%d",
-		s.Label.SexpString(), s.Removing, s.Continue, s.Break)
+	return fmt.Sprintf("label %s", s.label)
 }
 
 func (s LabelInstr) Execute(env *Glisp) error {
-	if s.Removing {
-	doneRemoving:
-		for {
-			expr, err := env.datastack.PopExpr()
-			if err != nil {
-				return err
-			}
-			switch a := expr.(type) {
-			case SexpArray:
-				switch sent := a[0].(type) {
-				case SexpSentinel:
-					if sent == SexpLabel {
-						switch sym := a[1].(type) {
-						case SexpSymbol:
-							if sym.number == s.Label.number {
-								break doneRemoving
-							}
-						}
-					}
-				}
-			}
-		}
-	} else {
-		a := make([]Sexp, 4)
-		a[0] = SexpLabel
-		a[1] = s.Label
-		a[2] = s.Continue
-		a[3] = s.Break
-		env.datastack.PushExpr(SexpArray(a))
-	}
 	env.pc++
 	return nil
 }
 
 type BreakInstr struct {
-	Label    SexpSymbol
-	location int
+	loop *Loop
 }
 
 func (s BreakInstr) InstrString() string {
-	return fmt.Sprintf("break %s %v", s.Label, s.location)
+	return fmt.Sprintf("break %s", s.loop.stmtname.name)
 }
 
 func (s BreakInstr) Execute(env *Glisp) error {
-	newpc := env.pc + s.location
-	if newpc < 0 || newpc > env.CurrentFunctionSize() {
-		return OutOfBounds
+
+	pos, err := env.FindLoop(s.loop)
+	if err != nil {
+		return err
 	}
-	env.pc = newpc
+	env.pc = pos + s.loop.breakOffset
 	return nil
 }
 
-type ContinueInstr struct {
-	Label    SexpSymbol
-	location int
+type LoopStartInstr struct {
+	loop *Loop
 }
 
-func (s ContinueInstr) InstrString() string {
-	return fmt.Sprintf("continue %s %v", s.Label, s.location)
+func (s LoopStartInstr) InstrString() string {
+	return fmt.Sprintf("loopstart %s", s.loop.stmtname.name)
 }
 
-func (s ContinueInstr) Execute(env *Glisp) error {
-	newpc := env.pc + s.location
-	if newpc < 0 || newpc > env.CurrentFunctionSize() {
-		return OutOfBounds
+func (s LoopStartInstr) Execute(env *Glisp) error {
+	env.pc++
+	return nil
+}
+
+// stack cleanup discipline instructions let us
+// ensure the stack gets reset to a previous
+// known good level. The sym designates
+// how far down to clean up, in a unique and
+// distinguishable gensym-ed manner.
+
+// create a stack mark
+type PushStackmarkInstr struct {
+	sym SexpSymbol
+}
+
+func (s PushStackmarkInstr) InstrString() string {
+	return fmt.Sprintf("push-stack-mark %s", s.sym.name)
+}
+
+func (s PushStackmarkInstr) Execute(env *Glisp) error {
+	env.datastack.PushExpr(SexpStackmark{sym: s.sym})
+	env.pc++
+	return nil
+}
+
+// cleanup until our stackmark, but leave it in place
+type PopUntilStackmarkInstr struct {
+	sym SexpSymbol
+}
+
+func (s PopUntilStackmarkInstr) InstrString() string {
+	return fmt.Sprintf("pop-until-stack-mark %s", s.sym.name)
+}
+
+func (s PopUntilStackmarkInstr) Execute(env *Glisp) error {
+toploop:
+	for {
+		expr, err := env.datastack.PopExpr()
+		if err != nil {
+			return err
+		}
+		switch m := expr.(type) {
+		case SexpStackmark:
+			if m.sym.number == s.sym.number {
+				env.datastack.PushExpr(m)
+				break toploop
+			}
+		}
 	}
-	env.pc = newpc
+	env.pc++
+	return nil
+}
+
+// erase everything up-to-and-including our mark
+type ClearStackmarkInstr struct {
+	sym SexpSymbol
+}
+
+func (s ClearStackmarkInstr) InstrString() string {
+	return fmt.Sprintf("clear-stack-mark %s", s.sym.name)
+}
+
+func (s ClearStackmarkInstr) Execute(env *Glisp) error {
+toploop:
+	for {
+		expr, err := env.datastack.PopExpr()
+		if err != nil {
+			return err
+		}
+		switch m := expr.(type) {
+		case SexpStackmark:
+			if m.sym.number == s.sym.number {
+				break toploop
+			}
+		}
+	}
+	env.pc++
 	return nil
 }

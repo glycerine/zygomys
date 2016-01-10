@@ -19,7 +19,6 @@ const (
 	SexpNull SexpSentinel = iota
 	SexpEnd
 	SexpMarker
-	SexpLabel
 )
 
 func (sent SexpSentinel) SexpString() string {
@@ -31,9 +30,6 @@ func (sent SexpSentinel) SexpString() string {
 	}
 	if sent == SexpMarker {
 		return "Marker"
-	}
-	if sent == SexpLabel {
-		return "Label"
 	}
 
 	return ""
@@ -228,4 +224,12 @@ func IsTruthy(expr Sexp) bool {
 		return e != SexpNull
 	}
 	return true
+}
+
+type SexpStackmark struct {
+	sym SexpSymbol
+}
+
+func (mark SexpStackmark) SexpString() string {
+	return "stackmark " + mark.sym.name
 }

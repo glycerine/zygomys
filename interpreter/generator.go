@@ -13,6 +13,16 @@ type Generator struct {
 	instructions []Instruction
 }
 
+type Loop struct {
+	stmtname       SexpSymbol
+	loopStart      int
+	loopLen        int
+	breakOffset    int // i.e. relative to loopStart
+	continueOffset int // i.e. relative to loopStart
+}
+
+func (loop *Loop) IsStackElem() {}
+
 func NewGenerator(env *Glisp) *Generator {
 	gen := new(Generator)
 	gen.env = env
@@ -91,7 +101,7 @@ func buildSexpFun(
 	}
 
 	for i := len(argsyms) - 1; i >= 0; i-- {
-		gen.AddInstruction(PutInstr{argsyms[i]})
+		gen.AddInstruction(PopStackPutEnvInstr{argsyms[i]})
 	}
 	err := gen.GenerateBegin(funcbody)
 	if err != nil {
@@ -154,7 +164,7 @@ func (gen *Generator) GenerateDef(args []Sexp) error {
 	// on the stack and becomes an expression rather
 	// than a statement.
 	gen.AddInstruction(DupInstr(0))
-	gen.AddInstruction(PutInstr{sym})
+	gen.AddInstruction(PopStackPutEnvInstr{sym})
 	return nil
 }
 
@@ -189,7 +199,7 @@ func (gen *Generator) GenerateDefn(args []Sexp, orig Sexp) error {
 	}
 
 	gen.AddInstruction(PushInstr{sfun})
-	gen.AddInstruction(PutInstr{sym})
+	gen.AddInstruction(PopStackPutEnvInstr{sym})
 	gen.AddInstruction(PushInstr{SexpNull})
 
 	return nil
@@ -340,7 +350,7 @@ func (gen *Generator) GenerateCond(args []Sexp) error {
 		subgen.AddInstructions(pred_code)
 		subgen.AddInstruction(BranchInstr{false, len(body_code) + 2})
 		subgen.AddInstructions(body_code)
-		subgen.AddInstruction(JumpInstr{len(instructions) + 1})
+		subgen.AddInstruction(JumpInstr{addpc: len(instructions) + 1})
 		subgen.AddInstructions(instructions)
 		instructions = subgen.instructions
 	}
@@ -395,7 +405,7 @@ func (gen *Generator) GenerateLet(name string, args []Sexp) error {
 			if err != nil {
 				return err
 			}
-			gen.AddInstruction(PutInstr{lstatements[i]})
+			gen.AddInstruction(PopStackPutEnvInstr{lstatements[i]})
 		}
 	} else if name == "let" {
 		for _, rs := range rstatements {
@@ -405,7 +415,7 @@ func (gen *Generator) GenerateLet(name string, args []Sexp) error {
 			}
 		}
 		for i := len(lstatements) - 1; i >= 0; i-- {
-			gen.AddInstruction(PutInstr{lstatements[i]})
+			gen.AddInstruction(PopStackPutEnvInstr{lstatements[i]})
 		}
 	}
 	err := gen.GenerateBegin(args[1:])
@@ -528,8 +538,10 @@ func (gen *Generator) GenerateCallBySymbol(sym SexpSymbol, args []Sexp, orig Sex
 		return gen.GenerateForLoop(args)
 	case "set":
 		return gen.GenerateSet(args)
-	case "label":
-		return gen.GenerateLabel(args)
+	case "break":
+		return gen.GenerateBreak(args)
+	case "continue":
+		return gen.GenerateContinue(args)
 	}
 
 	// this is where macros are run
@@ -594,7 +606,7 @@ func (gen *Generator) GenerateArray(arr SexpArray) error {
 func (gen *Generator) Generate(expr Sexp) error {
 	switch e := expr.(type) {
 	case SexpSymbol:
-		gen.AddInstruction(GetInstr{e})
+		gen.AddInstruction(EnvToStackInstr{e})
 		return nil
 	case SexpPair:
 		if IsList(e) {
@@ -662,88 +674,110 @@ func (gen *Generator) GenerateForLoop(args []Sexp) error {
 		return errors.New("for loop: first argument wrong size; must be a vector of three [init test advance]")
 	}
 
+	loop := &Loop{
+		stmtname: gen.env.GenSymbol("__loop"),
+	}
+	gen.env.loopstack.Push(loop)
+	defer gen.env.loopstack.Pop()
+
+	gen.AddInstruction(LoopStartInstr{loop: loop})
+	gen.AddInstruction(PushStackmarkInstr{sym: loop.stmtname})
+
 	// generate the body of the loop
-	subgen := NewGenerator(gen.env)
-	subgen.tail = gen.tail
-	subgen.scopes = gen.scopes
-	subgen.funcname = gen.funcname
-	err := subgen.GenerateBegin(args[1:])
+	subgenBody := NewGenerator(gen.env)
+	subgenBody.tail = gen.tail
+	subgenBody.scopes = gen.scopes
+	subgenBody.funcname = gen.funcname
+	err := subgenBody.GenerateBegin(args[1:])
 	if err != nil {
 		return err
 	}
-	body_code := subgen.instructions
+	// insert pop so the stack remains clean
+	subgenBody.AddInstruction(PopUntilStackmarkInstr{sym: loop.stmtname})
+	len_body_code := len(subgenBody.instructions)
 
 	// generate the init code
-	subgen.Reset()
-	subgen.tail = gen.tail
-	subgen.scopes = gen.scopes
-	subgen.funcname = gen.funcname
-	err = subgen.Generate(controlargs[0])
+	subgenInit := NewGenerator(gen.env)
+	subgenInit.tail = gen.tail
+	subgenInit.scopes = gen.scopes
+	subgenInit.funcname = gen.funcname
+	err = subgenInit.Generate(controlargs[0])
 	if err != nil {
 		return err
 	}
-	init_code := subgen.instructions
+	// insert pop so the stack remains clean
+	subgenInit.AddInstruction(PopUntilStackmarkInstr{sym: loop.stmtname})
+	init_code := subgenInit.instructions
 
-	// generate the predicate
-	subgen.Reset()
-	subgen.tail = gen.tail
-	subgen.scopes = gen.scopes
-	subgen.funcname = gen.funcname
-	err = subgen.Generate(controlargs[1])
+	// generate the test
+	subgenT := NewGenerator(gen.env)
+	subgenT.tail = gen.tail
+	subgenT.scopes = gen.scopes
+	subgenT.funcname = gen.funcname
+	err = subgenT.Generate(controlargs[1])
 	if err != nil {
 		return err
 	}
-	pred_code := subgen.instructions
+	// need to leave value on stack to branch on
+	// so do not popuntil stackmark here!
+	test_code := subgenT.instructions
 
 	// generate the increment code
-	subgen.Reset()
-	subgen.tail = gen.tail
-	subgen.scopes = gen.scopes
-	subgen.funcname = gen.funcname
-	err = subgen.Generate(controlargs[2])
+	subgenIncr := NewGenerator(gen.env)
+	subgenIncr.tail = gen.tail
+	subgenIncr.scopes = gen.scopes
+	subgenIncr.funcname = gen.funcname
+	err = subgenIncr.Generate(controlargs[2])
 	if err != nil {
 		return err
 	}
-	incr_code := subgen.instructions
+	subgenIncr.AddInstruction(PopUntilStackmarkInstr{sym: loop.stmtname})
+	incr_code := subgenIncr.instructions
 
-	// Don't add a new scope for a for-loop, as
-	// it makes it hard to update variables
-	// just outside the loop. So none of this:
-	//	gen.AddInstruction(AddScopeInstr(0))
-	//	gen.scopes++
+	// Don't add a new scope for a for-loop.
+	// A new scope would make it hard to update variables
+	// just outside the loop using (def). If we
+	// had to use (set) it would be dangerous and
+	// more error prone.
 
-	/*
-		top_of_loop := -(len(pred_code) + 1 + len(body_code) + len(incr_code))
-		exit_loop := len(body_code) + len(incr_code) + 2
+	startPos := len(gen.instructions)
+	exit_loop := len_body_code + 2
+	jump_to_test := len(incr_code) + 2
 
-			gen.AddInstructions(init_code)
-			// top of loop starts with pred_code: (continue) target.
-			gen.AddInstructions(pred_code)
-			gen.AddInstruction(BranchInstr{false, exit_loop})
-			gen.AddInstructions(body_code)
-			gen.AddInstructions(incr_code)
-			gen.AddInstruction(JumpInstr{top_of_loop})
-			// bottom is (break) target
-	*/
-
-	top_of_loop := -(len(incr_code) + len(pred_code) + 1 + len(body_code))
-	exit_loop := len(body_code) + 2
-
-	jump_to_test := len(incr_code) + 1
-
+	gen.AddInstruction(LabelInstr{label: "start of init for " + loop.stmtname.name})
 	gen.AddInstructions(init_code)
-	gen.AddInstruction(JumpInstr{jump_to_test})
-	// top of loop starts with pred_code: (continue) target.
+	gen.AddInstruction(JumpInstr{addpc: jump_to_test, where: "to-test"})
+	// top of loop starts with test_code: (continue) target.
+	continuePos := len(gen.instructions)
+	gen.AddInstruction(LabelInstr{label: "start of increment for " + loop.stmtname.name})
 	gen.AddInstructions(incr_code)
-	gen.AddInstructions(pred_code)
+	gen.AddInstruction(LabelInstr{label: "start of test for " + loop.stmtname.name})
+	gen.AddInstructions(test_code)
 	gen.AddInstruction(BranchInstr{false, exit_loop})
-	gen.AddInstructions(body_code)
-	gen.AddInstruction(JumpInstr{top_of_loop})
+	bodyPos := len(gen.instructions)
+
+	// Set the break/continue offsets.
+	//
+	// The final coordinates are relative to gen, but the
+	// break statement will only know its own position with
+	// respect to subgenBody, so we use loopStart to tell it
+	// the additional (negative) distance to startPos.
+
+	gen.AddInstruction(LabelInstr{label: "start of body for " + loop.stmtname.name})
+	gen.AddInstructions(subgenBody.instructions)
+	gen.AddInstruction(JumpInstr{addpc: continuePos - len(gen.instructions),
+		where: "to-continue-position-aka-increment"})
+	gen.AddInstruction(LabelInstr{label: "end of body for " + loop.stmtname.name})
 	// bottom is (break) target
 
-	// vestiges of trying to have a scope for the for-loop:
-	//	gen.AddInstruction(RemoveScopeInstr(0))
-	//	gen.scopes--
+	// cleanup
+	gen.AddInstruction(ClearStackmarkInstr{sym: loop.stmtname})
+	gen.AddInstruction(PushInstr{SexpNull}) // for is a statement; leave null on the stack.
+
+	loop.loopStart = startPos - bodyPos // offset; should be negative.
+	loop.loopLen = len(gen.instructions) - startPos
+	loop.breakOffset = loop.loopLen
+	loop.continueOffset = continuePos - startPos
 
 	return nil
 }
@@ -990,28 +1024,51 @@ func (gen *Generator) generateSyntaxQuoteHash(arg Sexp) error {
 	return nil
 }
 
-func (gen *Generator) GenerateLabel(args []Sexp) error {
-	if len(args) < 1 {
-		return errors.New("malformed label statement")
+func (gen *Generator) GenerateContinue(args []Sexp) error {
+	if len(args) != 0 {
+		return fmt.Errorf("(continue) takes no arguments")
 	}
-
-	var label LabelInstr
-
-	switch sym := args[0].(type) {
-	case SexpSymbol:
-		label.Label = sym
+	lse, err := gen.env.loopstack.Get(gen.env.loopstack.Top())
+	if err != nil || lse == nil {
+		return fmt.Errorf("(continue) found but not inside a loop.")
+	}
+	var loop *Loop
+	switch e := lse.(type) {
+	case *Loop:
+		loop = e
 	default:
-		return errors.New("label name must be a symbol")
+		panic(fmt.Errorf("unexpected type found on loopstack: type=%T  value='%#v'", e, e))
 	}
 
-	gen.AddInstruction(label)
-	err := gen.GenerateBegin(args[1:])
-	if err != nil {
-		return err
+	myPos := len(gen.instructions)
+	VPrintf("\n debug GenerateContinue() : myPos =%d  loop=%#v\n", myPos, loop)
+	gen.AddInstruction(
+		JumpInstr{
+			addpc: loop.loopStart + loop.continueOffset - myPos,
+			where: "continue"})
+	return nil
+}
+
+func (gen *Generator) GenerateBreak(args []Sexp) error {
+	if len(args) != 0 {
+		return fmt.Errorf("(break) takes no arguments")
 	}
-	var removing = label
-	removing.Removing = true
-	gen.AddInstruction(removing)
+
+	lse, err := gen.env.loopstack.Get(gen.env.loopstack.Top())
+	if err != nil || lse == nil {
+		return fmt.Errorf("(break) found but not inside a loop.")
+	}
+
+	var loop *Loop
+	switch e := lse.(type) {
+	case *Loop:
+		loop = e
+	default:
+		panic(fmt.Errorf("unexpected type found on loopstack: type=%T  value='%#v'", e, e))
+	}
+
+	VPrintf("\n debug GenerateBreak() : loop=%#v\n", loop)
+	gen.AddInstruction(BreakInstr{loop: loop})
 
 	return nil
 }

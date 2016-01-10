@@ -18,6 +18,7 @@ type Glisp struct {
 	scopestack  *Stack
 	addrstack   *Stack
 	stackstack  *Stack
+	loopstack   *Stack
 	symtable    map[string]int
 	revsymtable map[int]string
 	builtins    map[int]SexpFunction
@@ -36,6 +37,7 @@ const CallStackSize = 25
 const ScopeStackSize = 50
 const DataStackSize = 100
 const StackStackSize = 5
+const LoopStackSize = 5
 
 func NewGlisp() *Glisp {
 	env := new(Glisp)
@@ -44,6 +46,7 @@ func NewGlisp() *Glisp {
 	env.scopestack.PushScope()
 	env.stackstack = NewStack(StackStackSize)
 	env.addrstack = NewStack(CallStackSize)
+	env.loopstack = NewStack(LoopStackSize)
 	env.builtins = make(map[int]SexpFunction)
 	env.macros = make(map[int]SexpFunction)
 	env.symtable = make(map[string]int)
@@ -400,7 +403,7 @@ func (env *Glisp) DumpFunctionByName(name string) error {
 			return errors.New("not a glisp function")
 		}
 	default:
-		return errors.New("not a function")
+		return errors.New("dump by name error: not a function")
 	}
 	DumpFunction(fun, -1)
 	return nil
@@ -523,4 +526,21 @@ func (env *Glisp) AddPreHook(fun PreHook) {
 
 func (env *Glisp) AddPostHook(fun PostHook) {
 	env.after = append(env.after, fun)
+}
+
+// scan the instruction stream to locate loop start
+func (env *Glisp) FindLoop(target *Loop) (int, error) {
+	if env.curfunc.user {
+		panic(fmt.Errorf("impossible in user-defined-function to find a loop '%s'", target.stmtname.name))
+	}
+	instruc := env.curfunc.fun
+	for i := range instruc {
+		switch loop := instruc[i].(type) {
+		case LoopStartInstr:
+			if loop.loop == target {
+				return i, nil
+			}
+		}
+	}
+	return -1, fmt.Errorf("could not find loop target '%s'", target.stmtname.name)
 }
