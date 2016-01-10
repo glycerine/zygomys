@@ -61,15 +61,11 @@ func flattenToWordsHelper(args []Sexp) ([]string, error) {
 			if err != nil {
 				return []string{}, fmt.Errorf("tried to convert list of strings to array but failed with error '%s'. Input was type %T / val = '%#v'", c, c)
 			}
-			for _, sexp := range carry {
-				switch c := sexp.(type) {
-				case SexpStr:
-					many := strings.Split(string(c), " ")
-					stringArgs = append(stringArgs, many...)
-				default:
-					return []string{}, fmt.Errorf("arguments to system must be strings; instead we have, inside a list, a value with type %T / val = '%#v'", c, c)
-				}
+			moreWords, err := flattenToWordsHelper(carry)
+			if err != nil {
+				return []string{}, err
 			}
+			stringArgs = append(stringArgs, moreWords...)
 		default:
 			return []string{}, fmt.Errorf("arguments to system must be strings; instead we have %T / val = '%#v'", c, c)
 		}
