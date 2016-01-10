@@ -21,17 +21,17 @@ The standalone REPL is called simply `zygo`.
 
 ### Not your Grandfather's Parentheses... features in Zygomys 1.1.7 include
 
- * [x] Clojure like threading `(-> hash field1: field2:)` and `(:field hash)` selection
- * [x] Raw bytes type `(raw string)` lets you do zero-copy `[]byte` manipulation
- * [x] Record definitions `(defmap)`
- * [x] Read external files with `(req path-to-file)`
- * [x] Go style raw string literals, using `` `backticks` ``, as in Go.
- * [x] JSON and Msgpack interop: serialization and deserialization
+ * [x] JSON and Msgpack interop: serialization and deserialization.
  * [x] `(range key value hash (body))` range loops mirror for-range over a hash in Go.
  * [x] `(for [(initializer) (test) (advance)] (body))` for-loops match those in C and Go. Both `(break)` and `(continue)` are available for additional loop control.
+ * [x] Raw bytes type `(raw string)` lets you do zero-copy `[]byte` manipulation.
+ * [x] Record definitions `(defmap)` make configuration a breeze.
  * [x] Files can be recursively sourced with `(req path)` or `(source "path-string")`.
- * [x] Syntax-quote macro templates work inside `[]` arrays and `{}` hashes. `(macexpand)` is available for macro debugging.
+ * [x] Go style raw string literals, using `` `backticks` ``, as in Go.
  * [x] Easy to extend. See the `repl/random.go`, `repl/regexp.go`, and `repl/time.go` files for examples.
+ * [x] Clojure like threading `(-> hash field1: field2:)` and `(:field hash)` selection. 
+ * [x] Macros for your DSL. Syntax-quote macro templates work inside `[]` arrays and `{}` hashes.
+ * [x] Use `zygo` to configure trees of Go structs, and then run methods on them at natively-compiled speed (since you are calling into Go code).
 
 ### Obligatory XKCD
 
@@ -40,8 +40,8 @@ The standalone REPL is called simply `zygo`.
 
 ### Additional features
 
- * [x] Small code base, easy to integrate and use.
- * [x] Float, Int, Char, String, Symbol, List, Array, and Hash datatypes
+ * [x] Zygomys is a small Go library, easy to integrate and use/extend.
+ * [x] Float, Int, Char, String, Symbol, List, Array, and Hash datatypes builtin.
  * [x] Arithmetic (`+`, `-`, `*`, `/`, `mod`, `**`)
  * [x] Shift Operators (`sll`, `srl`, `sra`)
  * [x] Bitwise operations (`bit-and`, `bit-or`, `bit-xor`)
@@ -54,6 +54,7 @@ The standalone REPL is called simply `zygo`.
  * [x] Tail-call optimization
  * [x] Go API
  * [x] Macro System
+ * [x] An actual *working* macexpand. `(macexpand your-macro)` makes writing/debugging macros easy. 
  * [x] Syntax quoting -- with caret `^()` instead of backtick.
  * [x] Channel and goroutine support
  * [x] Pre- and Post- function call hooks
