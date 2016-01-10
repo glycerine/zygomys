@@ -1,6 +1,4 @@
-/glisp
 *.prof
 *.mprof
 *~
-/gl
-/gdsl
+/zygo
