@@ -1,6 +1,6 @@
 ![Image of Gopher flying](https://github.com/glycerine/zygomys/blob/master/biplane.jpg)
 
-# Zygomys
+# Zygomys - fast, high level control
 
 Zygomys is an embeddable Lisp interpreter and REPL (Read-Eval-Print-Loop;
 that is, it comes with a command line interactive interface).
