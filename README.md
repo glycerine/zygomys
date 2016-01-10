@@ -15,7 +15,7 @@ to use as a library within a larger program.
 It is ideally suited for driving complex configurations and providng
 your project with a domain specific language customized to your challenges.
 The example snippets in the tests/*.zy provide many examples.
-The full documentation can be found in the [Wiki](https://github.com/glycerine/zygomys/wiki).
+The full [documentation can be found in the Wiki](https://github.com/glycerine/zygomys/wiki).
 
 
 ### Features in Zygomys v1.1.3:
