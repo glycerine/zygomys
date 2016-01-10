@@ -32,6 +32,11 @@ The standalone REPL is called simply `zygo`.
  * [x] Syntax-quote macro templates work inside `[]` arrays and `{}` hashes. `(macexpand)` is available for macro debugging.
  * [x] Easy to extend. See the `repl/random.go`, `repl/regexp.go`, and `repl/time.go` files for examples.
 
+### Obligatory XKCD
+
+![Obligatory XKCD: "elegant weapons... for a more civilized age"](http://imgs.xkcd.com/comics/lisp_cycles.png)
+
+
 ### Additional features
 
  * [x] Small code base, easy to integrate and use.
@@ -53,10 +58,6 @@ The standalone REPL is called simply `zygo`.
  * [x] Pre- and Post- function call hooks
 
 [See the wiki for lots of details and a full description of the Zygomys language.](https://github.com/glycerine/zygomys/wiki).
-
-### Obligatory XKCD
-
-![Obligatory XKCD: "elegant weapons... for a more civilized age"](http://imgs.xkcd.com/comics/lisp_cycles.png)
 
 ### where did the name Zygomys come from?
 
