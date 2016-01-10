@@ -49,7 +49,7 @@ The standalone REPL is called simply `zygo`.
 
 ### where did the name Zygomys come from?
 
-Zygomys is a contraction of Zygogeomys, a [genus of pocket gophers whose natural habitat is high-altitude forests.](https://en.wikipedia.org/wiki/Michoacan_pocket_gopher)
+Zygomys is a contraction of Zygogeomys, [a genus of pocket gophers. The Michoacan pocket gopher (Zygogeomys trichopus) finds its natural habitat in high-altitude forests.](https://en.wikipedia.org/wiki/Michoacan_pocket_gopher)
 
 ### License
 
