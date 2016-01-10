@@ -11,7 +11,7 @@ import (
 
 var history_fn = filepath.Join("~/.zygohist")
 
-var completion_keywords = []string{"(and ", "(or ", "(cond ", "(quote ", "(mdef ", "(fn ", "(defn ", "(begin ", "(let ", "(let* ", "(defmac ", "(assert ", "(macexpand ", "(syntax-quote ", "(include ", "(source ", "(req ", "(for ", "(set ", "(break ", "(continue ", "(now ", "(timeit "}
+var completion_keywords = []string{`(`, `(aget `, `(and `, `(append `, `(apply `, `(array `, `(array? `, `(aset! `, `(assert `, `(begin `, `(bit-and `, `(bit-not `, `(bit-or `, `(bit-xor `, `(break `, `(car `, `(cdr `, `(char? `, `(concat `, `(cond `, `(cons `, `(continue `, `(defmac `, `(defn `, `(dump `, `(empty? `, `(first `, `(float? `, `(fn `, `(for `, `(gensym `, `(hash `, `(hash? `, `(hdel! `, `(hget `, `(hpair `, `(hset! `, `(include `, `(int? `, `(json `, `(keys `, `(len `, `(let `, `(let* `, `(list `, `(list? `, `(macexpand `, `(make-array `, `(map `, `(mdef `, `(mod `, `(msgmap `, `(msgpack `, `(not `, `(not= `, `(now `, `(null? `, `(number? `, `(or `, `(print `, `(print `, `(printf `, `(printf `, `(println `, `(println `, `(quote `, `(raw `, `(raw2str `, `(read `, `(req `, `(rest `, `(second `, `(set `, `(sget `, `(slice `, `(sll `, `(source `, `(source `, `(sra `, `(srl `, `(str `, `(str2sym `, `(string? `, `(sym2str `, `(symbol? `, `(symnum `, `(syntax-quote `, `(timeit `, `(togo `, `(type `, `(unjson `, `(unmsgpack `, `(zero? `, `(!= `, `(* `, `(** `, `(+ `, `(- `, `(-> `, `(/ `, `(< `, `(<= `, `(== `, `(> `, `(>= `, `(\ `}
 
 type Prompter struct {
 	prompt   string

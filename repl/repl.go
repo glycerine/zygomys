@@ -114,7 +114,7 @@ func Repl(env *Glisp, cfg *GlispConfig) {
 	// env.debugExec = true
 
 	fmt.Printf("zygo version %s\n", Version())
-
+	fmt.Printf("press tab (repeatedly) to get completion suggestions. Shift-tab goes back.\n")
 	pr := NewPrompter()
 	defer pr.Close()
 
