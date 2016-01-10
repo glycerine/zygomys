@@ -48,6 +48,7 @@ func FlattenToWordsFunction(env *Glisp, name string, args []Sexp) (Sexp, error) 
 	}
 	return SexpArray(res), nil
 }
+
 func flattenToWordsHelper(args []Sexp) ([]string, error) {
 	stringArgs := []string{}
 
@@ -56,6 +57,8 @@ func flattenToWordsHelper(args []Sexp) ([]string, error) {
 		case SexpStr:
 			many := strings.Split(string(c), " ")
 			stringArgs = append(stringArgs, many...)
+		case SexpSymbol:
+			stringArgs = append(stringArgs, c.name)
 		case SexpPair:
 			carry, err := ListToArray(c)
 			if err != nil {
