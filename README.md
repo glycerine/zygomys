@@ -78,3 +78,5 @@ The ancestor dialect, [Glisp](https://github.com/zhemao/glisp), was designed and
 The Go gopher was designed by Renee French. (http://reneefrench.blogspot.com/)
 The design is licensed under the Creative Commons 3.0 Attributions license.
 Read this article for more details: https://blog.golang.org/gopher
+
+[XKCD https://xkcd.com/297/](https://xkcd.com/297/) licensed under a Creative Commons Attribution-NonCommercial 2.5 License(https://xkcd.com/license.html).
