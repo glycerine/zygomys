@@ -1,0 +1,5 @@
+;; owrite writes lines out to a file
+(def b (slurp tests/lines))
+(owrite b tests/lines2)
+(assert (== "" (system "/usr/bin/diff tests/lines tests/lines2")))
+

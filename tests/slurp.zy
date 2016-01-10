@@ -1,4 +1,4 @@
-;; simple for [init test advance]
+;; slurp reads lines from a file. It ignores the newlines.
 (def b (slurp tests/lines))
 (assert (== 3 (len b)))
 (def sum 0)

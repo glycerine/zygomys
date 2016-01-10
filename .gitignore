@@ -2,3 +2,4 @@
 *.mprof
 *~
 /zygo
+tests/lines2

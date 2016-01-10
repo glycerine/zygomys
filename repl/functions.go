@@ -588,11 +588,13 @@ func MapFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	}
 	var fun SexpFunction
 
+	fmt.Printf("\n debug Map: args = '%#v'\n", args)
+
 	switch e := args[0].(type) {
 	case SexpFunction:
 		fun = e
 	default:
-		return SexpNull, errors.New(fmt.Sprint("first argument must be function had", fmt.Sprintf("%T", e), "  ", e))
+		return SexpNull, fmt.Errorf("first argument must be function, but we had %T / val = '%#v'", e, e)
 	}
 
 	switch e := args[1].(type) {
@@ -831,6 +833,9 @@ var BuiltinFunctions = map[string]GlispUserFunction{
 	"togo":       ToGoFunction,
 	"dump":       GoonDumpFunction,
 	"slurpf":     SlurpfileFunction,
+	"writef":     WriteToFileFunction,
+	"owritef":    WriteToFileFunction,
+	"system":     SystemFunction,
 }
 
 func ThreadMapFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
