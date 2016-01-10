@@ -7,7 +7,7 @@ and structs defined within them. It counts as its original ancestor
 It borrows certain constructs from Clojure, and aims to make scripting
 and configuration very easy with a minimal footprint.
 
-Zygo is ideally suited for driving complex configurations and providng
+Zygomys is ideally suited for driving complex configurations and providng
 your project with a domain specific language customized to your challenges.
 The example snippets in the tests/*.zy provide many examples.
 The full [documentation can be found in the Wiki](https://github.com/glycerine/zygomys/wiki).
@@ -54,3 +54,11 @@ Zygomys is a contraction of Zygogeomys, a [genus of pocket gophers whose natural
 ### License
 
 Two-clause BSD, see LICENSE file.
+
+### Author
+
+Jason E. Aten, Ph.D.
+
+### Credits
+
+The grandparent LISP, [Glisp](https://github.com/zhemao/glisp), was designed and implemented by Howard Mao.
