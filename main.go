@@ -5,18 +5,18 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/glycerine/godiesel/extensions"
-	"github.com/glycerine/godiesel/interpreter"
+	"github.com/glycerine/zygomys/extensions"
+	"github.com/glycerine/zygomys/interpreter"
 )
 
 func usage(myflags *flag.FlagSet) {
-	fmt.Printf("gdsl command line help:\n")
+	fmt.Printf("zygo command line help:\n")
 	myflags.PrintDefaults()
 	os.Exit(1)
 }
 
 func main() {
-	cfg := gdsl.NewGlispConfig("gdsl")
+	cfg := zygo.NewGlispConfig("zygo")
 	cfg.DefineFlags()
 	err := cfg.Flags.Parse(os.Args[1:])
 	if err == flag.ErrHelp {
@@ -28,16 +28,16 @@ func main() {
 	}
 	err = cfg.ValidateConfig()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "gdsl command line error: '%v'\n", err)
+		fmt.Fprintf(os.Stderr, "zygo command line error: '%v'\n", err)
 		usage(cfg.Flags)
 	}
 
-	registerExts := func(env *gdsl.Glisp) {
-		gdslext.ImportRandom(env)
-		gdslext.ImportChannels(env)
-		gdslext.ImportCoroutines(env)
-		gdslext.ImportRegex(env)
+	registerExts := func(env *zygo.Glisp) {
+		zygoext.ImportRandom(env)
+		zygoext.ImportChannels(env)
+		zygoext.ImportCoroutines(env)
+		zygoext.ImportRegex(env)
 	}
-	cfg.ExtensionsVersion = gdslext.Version()
-	gdsl.ReplMain(cfg, registerExts)
+	cfg.ExtensionsVersion = zygoext.Version()
+	zygo.ReplMain(cfg, registerExts)
 }
