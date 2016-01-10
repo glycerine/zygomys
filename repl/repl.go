@@ -1,5 +1,5 @@
 // make even the Repl() available from the glisp library
-package gdsl
+package zygo
 
 import (
 	"bufio"
@@ -91,8 +91,8 @@ func Repl(env *Glisp, cfg *GlispConfig) {
 	// debug
 	// env.debugExec = true
 
-	fmt.Printf("gdsl version %s\n", Version())
-	fmt.Printf("gdslext version %s\n", cfg.ExtensionsVersion)
+	fmt.Printf("zygo version %s\n", Version())
+	fmt.Printf("zygoext version %s\n", cfg.ExtensionsVersion)
 
 	for {
 		line, err := getExpression(reader)

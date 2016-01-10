@@ -1,4 +1,4 @@
-package gdsl
+package zygo
 
 type Address struct {
 	function SexpFunction

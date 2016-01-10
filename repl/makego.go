@@ -1,4 +1,4 @@
-package gdsl
+package zygo
 
 // a maker simply creates a go struct
 // and returns a pointer to it.

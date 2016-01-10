@@ -1,4 +1,4 @@
-package gdsl
+package zygo
 
 import "fmt"
 
