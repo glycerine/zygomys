@@ -1,7 +1,9 @@
 # Zygomys
 
-Zygomys is an embeddable Lisp REPL focused on Domain Specific Language
-(DSL) creation. It is written in Go and plays easily with Go programs
+Zygomys is an embeddable Lisp interpreter and REPL (Read-Eval-Print-Loop;
+that is, it comes with a command line interactive interface).
+Zygomys is focused on Domain Specific Language (DSL) creation for your
+scripting and configuration needs. It is written in Go and plays easily with Go programs
 and structs defined within them. It counts as its original ancestor
 [Howard Mao's inspiring Glisp project](https://github.com/zhemao/glisp).
 It borrows certain constructs from Clojure, and aims to make scripting
@@ -23,11 +25,14 @@ The standalone REPL is called simply `zygo`.
  * [x] Go style raw string literals, using `backticks`.
  * [x] JSON and Msgpack interop: serialization and deserialization
  * [x] `(range key value hash (body))` range loops mirror for-range over a hash in Go.
- * [x] `(for [(initializer) (test) (advance)] (body))` for-loops match those in C. Use `(break)` and `(continue)` for loop control.
+ * [x] `(for [(initializer) (test) (advance)] (body))` for-loops match those in C. Both `(break)` and `(continue)` are available for additional loop control.
+ * [x] Files can be recursively sourced with `(req path)` or `(source "path-string")`.
+ * [x] Syntax-quote macro templates work inside `[]` arrays and `{}` hashes, and `(macexpand)` is available for macro debugging.
+ * [x] Easy to extend. See the `repl/random.go`, `repl/regexp.go`, and `repl/time.go` files for examples.
 
 ### Additional features
 
- * [x] Small code base, easy to extend and integrate.
+ * [x] Small code base, easy to integrate and use.
  * [x] Float, Int, Char, String, Symbol, List, Array, and Hash datatypes
  * [x] Arithmetic (`+`, `-`, `*`, `/`, `mod`, `**`)
  * [x] Shift Operators (`sll`, `srl`, `sra`)
