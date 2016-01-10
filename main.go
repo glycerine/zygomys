@@ -30,10 +30,6 @@ func main() {
 		usage(cfg.Flags)
 	}
 
-	registerExts := func(env *zygo.Glisp) {
-		// this mechanism not used at the moment, but the
-		// syntax would be: zygoext.ImportRandom(env)
-	}
-	//cfg.ExtensionsVersion = zygoext.Version()
+	// the library does all the heavy lifting.
 	zygo.ReplMain(cfg, registerExts)
 }
