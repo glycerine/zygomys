@@ -61,4 +61,4 @@ Jason E. Aten, Ph.D.
 
 ### Credits
 
-The grandparent LISP, [Glisp](https://github.com/zhemao/glisp), was designed and implemented by Howard Mao.
+The grandparent LISP, [Glisp](https://github.com/zhemao/glisp), was designed and implemented by [Howard Mao](https://zhehaomao.com/).
