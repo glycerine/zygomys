@@ -469,7 +469,7 @@ func (env *Glisp) FindObject(name string) (Sexp, bool) {
 }
 
 func (env *Glisp) Apply(fun SexpFunction, args []Sexp) (Sexp, error) {
-	fmt.Printf("\n\n debug Apply not working on user funcs: fun = '%#v'   and args = '%#v'\n\n", fun, args)
+	VPrintf("\n\n debug Apply not working on user funcs: fun = '%#v'   and args = '%#v'\n\n", fun, args)
 	if fun.user {
 		return fun.userfun(env, fun.name, args)
 	}
