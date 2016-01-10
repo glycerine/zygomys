@@ -11,8 +11,9 @@ and structs defined within them. It counts as its original ancestor
 It borrows certain constructs from Clojure, and others from Go, and
 aims to make scripting and configuration very easy with a minimal footprint.
 
-Zygomys is ideally suited for driving complex configurations and providng
-your project with a domain specific language customized to your challenges.
+Because it speaks JSON and Msgpack fluently, Zygomys is ideally suited for driving
+complex configurations and providing projects with a domain specific
+language customized to your challenges and driving other code.
 The example snippets in the tests/*.zy provide many examples.
 The full [documentation can be found in the Wiki](https://github.com/glycerine/zygomys/wiki).
 
