@@ -18,7 +18,7 @@ The full [documentation can be found in the Wiki](https://github.com/glycerine/z
 
 The standalone REPL is called simply `zygo`.
 
-### Features in Zygomys v1.1.7:
+### Not your Grandfather's LISP... features in Zygomys 1.1.7 include
 
  * [x] Clojure like threading `(-> hash field1: field2:)` and `(:field hash)` selection
  * [x] Raw bytes type `(raw string)` lets you do zero-copy `[]byte` manipulation
@@ -29,7 +29,7 @@ The standalone REPL is called simply `zygo`.
  * [x] `(range key value hash (body))` range loops mirror for-range over a hash in Go.
  * [x] `(for [(initializer) (test) (advance)] (body))` for-loops match those in C. Both `(break)` and `(continue)` are available for additional loop control.
  * [x] Files can be recursively sourced with `(req path)` or `(source "path-string")`.
- * [x] Syntax-quote macro templates work inside `[]` arrays and `{}` hashes, and `(macexpand)` is available for macro debugging.
+ * [x] Syntax-quote macro templates work inside `[]` arrays and `{}` hashes. `(macexpand)` is available for macro debugging.
  * [x] Easy to extend. See the `repl/random.go`, `repl/regexp.go`, and `repl/time.go` files for examples.
 
 ### Additional features
