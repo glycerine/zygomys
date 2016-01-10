@@ -54,6 +54,8 @@ The standalone REPL is called simply `zygo`.
 
 [See the wiki for lots of details and a full description of the Zygomys language.](https://github.com/glycerine/zygomys/wiki).
 
+### Obligatory XKCD
+
 ![Obligatory XKCD: "elegant weapons... for a more civilized age"](http://imgs.xkcd.com/comics/lisp_cycles.png)
 
 ### where did the name Zygomys come from?
