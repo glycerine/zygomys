@@ -201,6 +201,7 @@ func (env *Glisp) StandardSetup() {
 	env.ImportChannels()
 	env.ImportGoroutines()
 	env.ImportRegex()
+	env.ImportRandom()
 
 }
 
