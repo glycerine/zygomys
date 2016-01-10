@@ -45,4 +45,5 @@ Features in GoDiesel v1.1.3:
  * [x] JSON and Msgpack interop: serialization and deserialization
  * [x] `(range key value hash (body))` range loops mirror for-range over a hash in Go.
  * [x] `(for [(initializer) (test) (advance)] (body))` for-loops match those in C. Use `(break)` and `(continue)` for loop control.
- 
+
+[See the wiki for lots of details and a full description of the GoDiesel language.](https://github.com/glycerine/godiesel/wiki).
