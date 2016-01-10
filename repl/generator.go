@@ -5,6 +5,8 @@ import (
 	"fmt"
 )
 
+var NoExpressionsFound = errors.New("No expressions found")
+
 type Generator struct {
 	env          *Glisp
 	funcname     string
@@ -47,7 +49,7 @@ func (gen *Generator) GenerateBegin(expressions []Sexp) error {
 	oldtail := gen.tail
 	gen.tail = false
 	if size == 0 {
-		return errors.New("No expressions found")
+		return NoExpressionsFound
 	}
 	for _, expr := range expressions[:size-1] {
 		err := gen.Generate(expr)

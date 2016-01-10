@@ -56,15 +56,24 @@ func isBalanced(str string) bool {
 	return parens == 0 && squares == 0
 }
 
-func getExpression(reader *bufio.Reader) (string, error) {
-	fmt.Printf("> ")
-	line, err := getLine(reader)
+var continuationPrompt = ">> "
+
+func getExpression(reader *bufio.Reader, pr *Prompter) (string, error) {
+
+	/*	line, err := getLine(reader)
+		if err != nil {
+			return "", err
+		}
+	*/
+	line, err := pr.Getline(nil)
 	if err != nil {
 		return "", err
 	}
+
 	for !isBalanced(line) {
-		fmt.Printf(">> ")
-		nextline, err := getLine(reader)
+		//		fmt.Printf(">> ")
+		//		nextline, err := getLine(reader)
+		nextline, err := pr.Getline(&continuationPrompt)
 		if err != nil {
 			return "", err
 		}
@@ -92,8 +101,11 @@ func Repl(env *Glisp, cfg *GlispConfig) {
 
 	fmt.Printf("zygo version %s\n", Version())
 
+	pr := NewPrompter()
+	defer pr.Close()
+
 	for {
-		line, err := getExpression(reader)
+		line, err := getExpression(reader, pr)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(-1)
@@ -126,7 +138,12 @@ func Repl(env *Glisp, cfg *GlispConfig) {
 		}
 
 		expr, err := env.EvalString(line)
-		if err != nil {
+		switch err {
+		case nil:
+		case NoExpressionsFound:
+			env.Clear()
+			continue
+		default:
 			fmt.Print(env.GetStackTrace(err))
 			env.Clear()
 			continue
