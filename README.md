@@ -1,4 +1,4 @@
-![Image of Gopher flying](https://github.com/glycerine/zygomys/biplane.png)
+![Image of Gopher flying](https://github.com/glycerine/zygomys/biplane.jpg)
 
 # Zygomys
 
