@@ -19,7 +19,7 @@ The full [documentation can be found in the Wiki](https://github.com/glycerine/z
 
 The standalone REPL is called simply `zygo`.
 
-### Not your Grandfather's Parenthesis... features in Zygomys 1.1.7 include
+### Not your Grandfather's Parentheses... features in Zygomys 1.1.7 include
 
  * [x] Clojure like threading `(-> hash field1: field2:)` and `(:field hash)` selection
  * [x] Raw bytes type `(raw string)` lets you do zero-copy `[]byte` manipulation
