@@ -7,16 +7,12 @@ and structs defined within them. It counts as its original ancestor
 It borrows certain constructs from Clojure, and aims to make scripting
 and configuration very easy with a minimal footprint.
 
-Zygomys's features have evolved to the point where it is a distinct dialect.
-This was done to support certain critical features like raw string literals,
-to support for certain scheme and clojure idioms, and to make it easier
-to use as a library within a larger program.
-
-It is ideally suited for driving complex configurations and providng
+Zygo is ideally suited for driving complex configurations and providng
 your project with a domain specific language customized to your challenges.
 The example snippets in the tests/*.zy provide many examples.
 The full [documentation can be found in the Wiki](https://github.com/glycerine/zygomys/wiki).
 
+The standalone REPL is called simply `zygo`.
 
 ### Features in Zygomys v1.1.3:
 
