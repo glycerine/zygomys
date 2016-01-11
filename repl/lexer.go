@@ -3,6 +3,7 @@ package zygo
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"io"
 	"regexp"
 	"strconv"
@@ -59,7 +60,7 @@ func (t Token) String() string {
 	case TokenRCurly:
 		return "}"
 	case TokenDot:
-		return "."
+		return t.str
 	case TokenQuote:
 		return "'"
 	case TokenBacktick:
@@ -127,9 +128,14 @@ var (
 	HexRegex     = regexp.MustCompile("^0x[0-9a-fA-F]+$")
 	OctRegex     = regexp.MustCompile("^0o[0-7]+$")
 	BinaryRegex  = regexp.MustCompile("^0b[01]+$")
-	SymbolRegex  = regexp.MustCompile("^[^'#]+$")
-	CharRegex    = regexp.MustCompile("^#\\\\?.$")
-	FloatRegex   = regexp.MustCompile("^-?([0-9]+\\.[0-9]*)|(\\.[0-9]+)|([0-9]+(\\.[0-9]*)?[eE](-?[0-9]+))$")
+
+	// SymbolRegex = regexp.MustCompile("^[^'#]+$")
+	// Symbols cannot contain whitespace nor `~`, `@`, `(`, `)`, `[`, `]`,
+	// `{`, `}`, `'`, `#`, `:`, `^`, `\`, `|`, `%`, `"`, `;`
+	// Nor, obviously, can they contain backticks, "`".
+	SymbolRegex = regexp.MustCompile(`^[^'#:;\\~@\[\]{}\^|"()%]+$`)
+	CharRegex   = regexp.MustCompile("^#\\\\?.$")
+	FloatRegex  = regexp.MustCompile("^-?([0-9]+\\.[0-9]*)|(\\.[0-9]+)|([0-9]+(\\.[0-9]*)?[eE](-?[0-9]+))$")
 )
 
 func StringToRunes(str string) []rune {
@@ -180,8 +186,8 @@ func DecodeChar(atom string) (string, error) {
 }
 
 func (x *Lexer) DecodeAtom(atom string) (Token, error) {
-	if atom == "." {
-		return x.Token(TokenDot, ""), nil
+	if atom[0] == '.' {
+		return x.Token(TokenSymbol, atom), nil
 	}
 	if atom == "\\" {
 		return x.Token(TokenBackslash, ""), nil
@@ -215,7 +221,7 @@ func (x *Lexer) DecodeAtom(atom string) (Token, error) {
 		return x.Token(TokenChar, char), nil
 	}
 
-	return x.EmptyToken(), errors.New("Unrecognized atom")
+	return x.EmptyToken(), fmt.Errorf("Unrecognized atom: '%s'", atom)
 }
 
 func (lexer *Lexer) dumpBuffer() error {
