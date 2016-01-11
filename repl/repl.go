@@ -131,22 +131,34 @@ func Repl(env *Glisp, cfg *GlispConfig) {
 			continue
 		}
 
-		if parts[0] == "quit" {
+		if parts[0] == ".quit" {
 			break
 		}
 
-		if parts[0] == "dump" {
+		if parts[0] == ".dump" {
 			processDumpCommand(env, parts[1:])
 			continue
 		}
 
-		if parts[0] == "debug" {
+		if parts[0] == ".gls" {
+			fmt.Printf("\nScopes:\n")
+			env.ShowScopes(0)
+			continue
+		}
+
+		if parts[0] == ".ls" {
+			fmt.Printf("\nScopes:\n")
+			env.ShowScopes(1)
+			continue
+		}
+
+		if parts[0] == ".debug" {
 			env.debugExec = true
 			fmt.Printf("instruction debugging on.\n")
 			continue
 		}
 
-		if parts[0] == "undebug" {
+		if parts[0] == ".undebug" {
 			env.debugExec = false
 			fmt.Printf("instruction debugging off.\n")
 			continue

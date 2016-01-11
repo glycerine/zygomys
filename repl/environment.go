@@ -434,9 +434,6 @@ func (env *Glisp) DumpEnvironment() {
 	}
 	fmt.Printf("Stack: (length %d)\n", env.datastack.tos+1)
 	env.datastack.PrintStack()
-
-	fmt.Printf("\nScopes:\n")
-	env.ShowScopes()
 }
 
 func (env *Glisp) ReachedEnd() bool {
@@ -549,10 +546,13 @@ func (env *Glisp) FindLoop(target *Loop) (int, error) {
 	return -1, fmt.Errorf("could not find loop target '%s'", target.stmtname.name)
 }
 
-func (env *Glisp) ShowScopes() error {
+// startat = 0 to show everything starting with global bindings
+// startat = 1 to show one scope inside the global.
+// startat = 2, 3, ... show deeper scopes only.
+func (env *Glisp) ShowScopes(startat int) error {
 	top := env.scopestack.Top()
-	fmt.Printf("\n ShowScopes has top=%d\n", top)
-	for i := 0; i <= top; i++ {
+	VPrintf("\n ShowScopes has top=%d\n", top)
+	for i := startat; i <= top; i++ {
 		scop, err := env.scopestack.Get(i)
 		if err != nil {
 			return err

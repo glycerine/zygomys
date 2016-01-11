@@ -840,6 +840,7 @@ var BuiltinFunctions = map[string]GlispUserFunction{
 	"owritef":    WriteToFileFunction,
 	"system":     SystemFunction,
 	"flatten":    FlattenToWordsFunction,
+	"nsplit":     SplitStringOnNewlinesFunction,
 }
 
 func ThreadMapFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {

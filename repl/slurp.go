@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 )
 
 // read new-line delimited text from a file into an array (slurpf "path-to-file")
@@ -116,4 +117,26 @@ func WriteToFileFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	}
 
 	return SexpNull, nil
+}
+
+// (nsplit "a\nb") -> ["a" "b"]
+func SplitStringOnNewlinesFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
+	if len(args) != 1 {
+		return SexpNull, WrongNargs
+	}
+	var fn string
+	switch fna := args[0].(type) {
+	case SexpStr:
+		fn = string(fna)
+	default:
+		return SexpNull, fmt.Errorf("newlinesplit requires a string to split. we got type %T / value = %v", args[0], args[0])
+	}
+
+	a := make([]Sexp, 0)
+
+	str := strings.Split(fn, "\n")
+	for i := range str {
+		a = append(a, SexpStr(str[i]))
+	}
+	return SexpArray(a), nil
 }

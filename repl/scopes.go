@@ -3,6 +3,7 @@ package zygo
 import (
 	"errors"
 	"fmt"
+	"sort"
 	"strings"
 )
 
@@ -65,10 +66,27 @@ func (scope *Scope) UpdateSymbolInScope(sym SexpSymbol, expr Sexp) error {
 	return nil
 }
 
+type SymtabE struct {
+	Key string
+	Val string
+}
+
+type SymtabSorter []*SymtabE
+
+func (a SymtabSorter) Len() int           { return len(a) }
+func (a SymtabSorter) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a SymtabSorter) Less(i, j int) bool { return a[i].Key < a[j].Key }
+
 func (s *Scope) Show(env *Glisp, indent int) {
+	sortme := []*SymtabE{}
 	for symbolNumber, val := range *s {
 		symbolName := env.revsymtable[symbolNumber]
-		fmt.Printf("%s %s -> %s\n", strings.Repeat(" ", indent),
-			symbolName, val.SexpString())
+		sortme = append(sortme, &SymtabE{Key: symbolName, Val: val.SexpString()})
+	}
+	sort.Sort(SymtabSorter(sortme))
+	rep := strings.Repeat(" ", indent)
+	for i := range sortme {
+		fmt.Printf("%s %s -> %s\n", rep,
+			sortme[i].Key, sortme[i].Val)
 	}
 }
