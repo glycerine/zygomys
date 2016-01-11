@@ -842,6 +842,7 @@ var BuiltinFunctions = map[string]GlispUserFunction{
 	"flatten":    FlattenToWordsFunction,
 	"nsplit":     SplitStringOnNewlinesFunction,
 	"methodls":   GoMethodListFunction,
+	"fieldls":    GoFieldListFunction,
 }
 
 func ThreadMapFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {

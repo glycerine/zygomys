@@ -50,7 +50,9 @@ func MakeHash(args []Sexp, typename string) (SexpHash, error) {
 	var iface interface{}
 	var memberCount int
 	var arr SexpArray
+	var fld SexpArray
 	var meth = []reflect.Method{}
+	var field = []reflect.StructField{}
 	num := -1
 	var got reflect.Type
 	hash := SexpHash{
@@ -61,6 +63,8 @@ func MakeHash(args []Sexp, typename string) (SexpHash, error) {
 		NumKeys:   &memberCount,
 		GoMethods: &meth,
 		GoMethSx:  &arr,
+		GoFieldSx: &fld,
+		GoFields:  &field,
 		NumMethod: &num,
 		GoType:    &got,
 	}
@@ -268,6 +272,7 @@ func GoMethodListFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	h.SetMethodList()
 	return SexpArray(*h.GoMethSx), nil
 }
+
 func (h *SexpHash) SetMethodList() error {
 	VPrintf("hash.SetMethodList() called.\n")
 
@@ -291,5 +296,39 @@ func (h *SexpHash) SetMethodList() error {
 	}
 	*h.GoMethSx = sx
 	*h.GoMethods = sl
+
+	// do the fields too
+
+	// gotta get the struct, not a pointer to it
+	e := rs.Elem()
+	var notAStruct = reflect.Value{}
+	if e == notAStruct {
+		return fmt.Errorf("registered GoStruct was not a struct?!")
+	}
+	tye := e.Type()
+	m := tye.NumField()
+	fx := make([]Sexp, m)
+	fl := make([]reflect.StructField, m)
+	for i := 0; i < m; i++ {
+		fl[i] = tye.Field(i)
+		fx[i] = SexpStr(fl[i].Name + " " + fl[i].Type.String())
+	}
+	*h.GoFieldSx = fx
+	*h.GoFields = fl
 	return nil
+}
+
+func GoFieldListFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
+	if len(args) != 1 {
+		return SexpNull, WrongNargs
+	}
+	h, isHash := args[0].(SexpHash)
+	if !isHash {
+		return SexpNull, fmt.Errorf("hash/record required, but saw %T/val=%v", args[0], args[0])
+	}
+	rs := reflect.ValueOf(h.GoStruct)
+	if rs.IsNil() {
+		return SexpNull, NoAttachedGoStruct
+	}
+	return SexpArray(*h.GoFieldSx), nil
 }

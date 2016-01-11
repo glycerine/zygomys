@@ -84,7 +84,9 @@ type SexpHash struct {
 	GoStruct  *interface{}
 	NumKeys   *int
 	GoMethods *[]reflect.Method
+	GoFields  *[]reflect.StructField
 	GoMethSx  *SexpArray
+	GoFieldSx *SexpArray
 	GoType    *reflect.Type
 	NumMethod *int
 }
