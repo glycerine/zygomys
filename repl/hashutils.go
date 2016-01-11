@@ -4,9 +4,23 @@ import (
 	"errors"
 	"fmt"
 	"hash/fnv"
-
+	"reflect"
 	//"github.com/shurcooL/go-goon"
 )
+
+var NoAttachedGoStruct = fmt.Errorf("hash has no attach Go struct")
+
+var GostructRegistry = map[string]interface{}{}
+
+// builtin known Go Structs
+func init() {
+	GostructRegistry["event"] = &Event{}
+	GostructRegistry["person"] = &Person{}
+
+	GostructRegistry["snoopy"] = &Snoopy{}
+	GostructRegistry["hornet"] = &Hornet{}
+	GostructRegistry["hellcat"] = &Hellcat{}
+}
 
 func HashExpression(expr Sexp) (int, error) {
 	switch e := expr.(type) {
@@ -35,12 +49,20 @@ func MakeHash(args []Sexp, typename string) (SexpHash, error) {
 
 	var iface interface{}
 	var memberCount int
+	var arr SexpArray
+	var meth = []reflect.Method{}
+	num := -1
+	var got reflect.Type
 	hash := SexpHash{
-		TypeName: &typename,
-		Map:      make(map[int][]SexpPair),
-		KeyOrder: &[]Sexp{},
-		GoStruct: &iface,
-		NumKeys:  &memberCount,
+		TypeName:  &typename,
+		Map:       make(map[int][]SexpPair),
+		KeyOrder:  &[]Sexp{},
+		GoStruct:  &iface,
+		NumKeys:   &memberCount,
+		GoMethods: &meth,
+		GoMethSx:  &arr,
+		NumMethod: &num,
+		GoType:    &got,
 	}
 	k := 0
 	for i := 0; i < len(args); i += 2 {
@@ -52,6 +74,20 @@ func MakeHash(args []Sexp, typename string) (SexpHash, error) {
 		}
 		k++
 	}
+
+	stct, foundGoStruct := GostructRegistry[typename]
+	if foundGoStruct {
+		VPrintf("\n in MakeHash: found struct associated with '%s': %T/val=%#v\n", typename, stct, stct)
+		hash.SetGoStruct(stct)
+		err := hash.SetMethodList()
+		if err != nil {
+			return SexpHash{}, fmt.Errorf("unexpected error "+
+				"from hash.SetMethodList(): %s", err)
+		}
+	} else {
+		VPrintf("\n in MakeHash: did not find Go struct with '%s'\n", typename)
+	}
+
 	return hash, nil
 }
 
@@ -210,4 +246,50 @@ func (hash *SexpHash) HashPairi(pos int) (SexpPair, error) {
 	}
 
 	return Cons(key, SexpPair{head: val, tail: SexpNull}), nil
+}
+
+func GoMethodListFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
+	if len(args) != 1 {
+		return SexpNull, WrongNargs
+	}
+	h, isHash := args[0].(SexpHash)
+	if !isHash {
+		return SexpNull, fmt.Errorf("hash/record required, but saw %T/val=%v", args[0], args[0])
+	}
+	if *h.NumMethod != -1 {
+		// use cached results
+		return *h.GoMethSx, nil
+	}
+	rs := reflect.ValueOf(h.GoStruct)
+	if rs.IsNil() {
+		return SexpNull, NoAttachedGoStruct
+	}
+
+	h.SetMethodList()
+	return SexpArray(*h.GoMethSx), nil
+}
+func (h *SexpHash) SetMethodList() error {
+	VPrintf("hash.SetMethodList() called.\n")
+
+	rs := reflect.ValueOf(*h.GoStruct)
+	VPrintf("\n in SetMethodList() rs = '%#v'\n", rs)
+	if rs.IsNil() {
+		return NoAttachedGoStruct
+	}
+	ty := rs.Type()
+	n := ty.NumMethod()
+
+	VPrintf("hash.SetMethodList() sees %d methods\n", n)
+	*h.NumMethod = n
+	*h.GoType = ty
+
+	sx := make([]Sexp, n)
+	sl := make([]reflect.Method, n)
+	for i := 0; i < n; i++ {
+		sl[i] = ty.Method(i)
+		sx[i] = SexpStr(sl[i].Name + " " + sl[i].Type.String())
+	}
+	*h.GoMethSx = sx
+	*h.GoMethods = sl
+	return nil
 }

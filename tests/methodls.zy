@@ -1,0 +1,3 @@
+(defmap snoopy)
+(def s (snoopy))
+(assert (== ["Fly func(*zygo.Snoopy, *zygo.Weather) (string, error)" "Sideeffect func(*zygo.Snoopy)"] (methodls s)))

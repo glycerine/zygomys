@@ -143,12 +143,12 @@ type Event struct {
 			panic(err)
 		case SexpHash:
 			tn := *(asHash.TypeName)
-			factory, hasMaker := MakerRegistry[tn]
+			factory, hasMaker := GostructRegistry[tn]
 			if !hasMaker {
-				err = fmt.Errorf("type '%s' not registered in MakerRegistry", tn)
+				err = fmt.Errorf("type '%s' not registered in GostructRegistry", tn)
 				panic(err)
 			}
-			newStruct := factory.Make()
+			newStruct := factory
 
 			// What didn't work here was going through msgpack, because
 			// ugorji msgpack encode will write turn signed ints into unsigned ints,
@@ -164,7 +164,7 @@ type Event struct {
 			default:
 				panic(fmt.Errorf("error during jsonDecoder.Decode() on type '%s': '%s'", tn, err))
 			}
-			(*asHash.GoStruct) = newStruct
+			asHash.SetGoStruct(newStruct)
 
 			fmt.Printf("from json via factory.Make(), newStruct = '%#v'\n", newStruct)
 			cv.So(newStruct, cv.ShouldResemble, &goEvent)

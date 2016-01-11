@@ -458,11 +458,11 @@ func ToGoFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		return SexpNull, fmt.Errorf("value must be a hash or defmap")
 	case SexpHash:
 		tn := *(asHash.TypeName)
-		factory, hasMaker := MakerRegistry[tn]
+		factory, hasMaker := GostructRegistry[tn]
 		if !hasMaker {
-			return SexpNull, fmt.Errorf("type '%s' not registered in MakerRegistry", tn)
+			return SexpNull, fmt.Errorf("type '%s' not registered in GostructRegistry", tn)
 		}
-		newStruct := factory.Make()
+		newStruct := factory
 
 		// What didn't work here was going through msgpack, because
 		// ugorji msgpack encode will write turn signed ints into unsigned ints,

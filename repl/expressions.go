@@ -78,12 +78,21 @@ func (pair SexpPair) SexpString() string {
 
 type SexpArray []Sexp
 type SexpHash struct {
-	TypeName *string
-	Map      map[int][]SexpPair
-	KeyOrder *[]Sexp // must user pointer here, else hset! will fail to update.
-	GoStruct *interface{}
-	NumKeys  *int
+	TypeName  *string
+	Map       map[int][]SexpPair
+	KeyOrder  *[]Sexp // must user pointer here, else hset! will fail to update.
+	GoStruct  *interface{}
+	NumKeys   *int
+	GoMethods *[]reflect.Method
+	GoMethSx  *SexpArray
+	GoType    *reflect.Type
+	NumMethod *int
 }
+
+func (h *SexpHash) SetGoStruct(str interface{}) {
+	*h.GoStruct = str
+}
+
 type SexpInt int
 type SexpBool bool
 type SexpFloat float64
