@@ -37,6 +37,7 @@ const (
 	TokenColonOperator
 	TokenThreadingOperator
 	TokenBackslash
+	TokenDollar
 	TokenEnd
 )
 
@@ -86,6 +87,8 @@ func (t Token) String() string {
 		return "->"
 	case TokenBackslash:
 		return "\\"
+	case TokenDollar:
+		return "$"
 	}
 	return t.str
 }
@@ -133,6 +136,7 @@ var (
 	// Symbols cannot contain whitespace nor `~`, `@`, `(`, `)`, `[`, `]`,
 	// `{`, `}`, `'`, `#`, `:`, `^`, `\`, `|`, `%`, `"`, `;`
 	// Nor, obviously, can they contain backticks, "`".
+	// '$' is always a symbol on its own, handled specially.
 	SymbolRegex = regexp.MustCompile(`^[^'#:;\\~@\[\]{}\^|"()%]+$`)
 	CharRegex   = regexp.MustCompile("^#\\\\?.$")
 	FloatRegex  = regexp.MustCompile("^-?([0-9]+\\.[0-9]*)|(\\.[0-9]+)|([0-9]+(\\.[0-9]*)?[eE](-?[0-9]+))$")
@@ -186,8 +190,8 @@ func DecodeChar(atom string) (string, error) {
 }
 
 func (x *Lexer) DecodeAtom(atom string) (Token, error) {
-	if atom[0] == '.' {
-		return x.Token(TokenSymbol, atom), nil
+	if atom == "$" {
+		return x.Token(TokenSymbol, "$"), nil
 	}
 	if atom == "\\" {
 		return x.Token(TokenBackslash, ""), nil
@@ -347,6 +351,19 @@ func (lexer *Lexer) LexNextRune(r rune) error {
 		if err != nil {
 			return err
 		}
+		return nil
+	}
+
+	// $ is always a token and symbol on its own, there
+	// is implicit whitespace around it.
+	if r == '$' {
+		if lexer.buffer.Len() > 0 {
+			err := lexer.dumpBuffer()
+			if err != nil {
+				return err
+			}
+		}
+		lexer.tokens = append(lexer.tokens, lexer.Token(TokenDollar, "$"))
 		return nil
 	}
 

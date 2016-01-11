@@ -1,0 +1,2 @@
+;; $ is always parsed as a token on its own
+(assert (== (str '($$$a$b)) "($ $ $ a $ b)"))

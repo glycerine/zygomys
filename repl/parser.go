@@ -186,6 +186,8 @@ func ParseExpression(parser *Parser, depth int) (res Sexp, err error) {
 		return env.MakeSymbol(tok.str), nil
 	case TokenColonOperator:
 		return env.MakeSymbol(tok.str), nil
+	case TokenDollar:
+		return env.MakeSymbol(tok.str), nil
 	case TokenBool:
 		return SexpBool(tok.str == "true"), nil
 	case TokenDecimal:
