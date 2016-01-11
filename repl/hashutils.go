@@ -303,7 +303,8 @@ func (h *SexpHash) SetMethodList() error {
 	e := rs.Elem()
 	var notAStruct = reflect.Value{}
 	if e == notAStruct {
-		return fmt.Errorf("registered GoStruct was not a struct?!")
+		panic(fmt.Errorf("registered GoStruct for '%s' was not a struct?!",
+			h.TypeName))
 	}
 	tye := e.Type()
 	m := tye.NumField()
