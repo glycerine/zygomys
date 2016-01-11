@@ -479,7 +479,7 @@ func (s HashizeInstr) Execute(env *Glisp) error {
 		}
 		a = append(a, expr)
 	}
-	hash, err := MakeHash(a, s.TypeName)
+	hash, err := MakeHash(a, s.TypeName, env)
 	if err != nil {
 		return err
 	}

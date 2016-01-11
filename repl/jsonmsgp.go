@@ -2,13 +2,14 @@ package zygo
 
 import (
 	"bytes"
-	"encoding/json"
+	//"encoding/json"
 	"fmt"
 	"github.com/shurcooL/go-goon"
 	"github.com/ugorji/go/codec"
-	"io"
+	//"io"
 	"reflect"
 	"sort"
+	"strings"
 )
 
 //go:generate msgp
@@ -144,9 +145,9 @@ func (arr *SexpArray) jsonArrayHelper() string {
 		return "[]"
 	}
 
-	str := "[" + (*arr)[0].SexpString()
+	str := "[" + SexpToJson((*arr)[0])
 	for _, sexp := range (*arr)[1:] {
-		str += ", " + sexp.SexpString()
+		str += ", " + SexpToJson(sexp)
 	}
 	return str + "]"
 }
@@ -333,7 +334,7 @@ func decodeGoToSexpHelper(r interface{}, depth int, env *Glisp, preferSym bool) 
 				pairs = append(pairs, ele)
 			}
 		}
-		hash, err := MakeHash(pairs, typeName)
+		hash, err := MakeHash(pairs, typeName, env)
 		if foundzKeyOrder {
 			err = SetHashKeyOrder(&hash, keyOrd)
 			panicOn(err)
@@ -462,26 +463,15 @@ func ToGoFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		if !hasMaker {
 			return SexpNull, fmt.Errorf("type '%s' not registered in GostructRegistry", tn)
 		}
-		newStruct := factory
-
-		// What didn't work here was going through msgpack, because
-		// ugorji msgpack encode will write turn signed ints into unsigned ints,
-		// which is a problem for msgp decoding. Hence cut out the middle men
-		// and decode straight from jsonBytes into our newStruct.
-		jsonBytes := []byte(SexpToJson(asHash))
-
-		jsonDecoder := json.NewDecoder(bytes.NewBuffer(jsonBytes))
-		err := jsonDecoder.Decode(newStruct)
-		switch err {
-		case io.EOF:
-		case nil:
-		default:
-			return SexpNull, fmt.Errorf("error during jsonDecoder.Decode() on type '%s': '%s'", tn, err)
+		newStruct := factory(env)
+		_, err := SexpToGoStructs(asHash, newStruct, env)
+		if err != nil {
+			return SexpNull, err
 		}
-		//fmt.Printf("\n debug: setting GoInstance to '%#v'\n", newStruct)
-		*asHash.GoStruct = newStruct
+		asHash.GoShadowStruct = newStruct
+		return SexpStr(fmt.Sprintf("%#v", newStruct)), nil
 	}
-	return args[0], nil
+	return SexpNull, nil
 }
 
 func GoonDumpFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
@@ -492,3 +482,391 @@ func GoonDumpFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	goon.Dump(args[0])
 	return SexpNull, nil
 }
+
+// try to convert to registered go structs if possible,
+// filling in the structure of target (should be a pointer).
+func SexpToGoStructs(sexp Sexp, target interface{}, env *Glisp) (interface{}, error) {
+	VPrintf("\n 88888 entering SexpToGoStructs() with sexp=%v and target=%#v of type %s\n", sexp, target, reflect.ValueOf(target).Type())
+	defer func() {
+		VPrintf("\n 99999 leaving SexpToGoStructs() with sexp=%v and target=%#v\n", sexp, target)
+	}()
+
+	if !IsExactlySinglePointer(target) {
+		panic(fmt.Errorf("SexpToGoStructs() got bad target: was not *T single level pointer, but rather %s", reflect.ValueOf(target).Type()))
+	}
+
+	// target is a pointer to our payload.
+	// targVa is a pointer to that same payload.
+	targVa := reflect.ValueOf(target)
+	targTyp := targVa.Type()
+	targKind := targVa.Kind()
+	targElemTyp := targTyp.Elem()
+	targElemKind := targElemTyp.Kind()
+
+	VPrintf("\n targVa is '%#v'\n", targVa)
+
+	if targKind != reflect.Ptr {
+		//		panic(fmt.Errorf("SexpToGoStructs got non-pointer type! was type %T/val=%#v.  targKind=%#v targTyp=%#v targVa=%#v", target, target, targKind, targTyp, targVa))
+	}
+
+	switch src := sexp.(type) {
+	case SexpRaw:
+		panic("unimplemented") //return []byte(src)
+	case SexpArray:
+		VPrintf("\n\n starting 5555555555 on SexpArray\n")
+		if targElemKind != reflect.Array && targElemKind != reflect.Slice {
+			panic(fmt.Errorf("tried to translate from SexpArray into non-array/type: %v", targKind))
+		}
+		// allocate the slice
+		n := len(src)
+		slc := reflect.MakeSlice(targElemTyp, 0, n)
+		VPrintf("\n slc starts out as %v/type = %T\n", slc, slc.Interface())
+		// if targ is *[]int, then targElem is []int, targElem.Elem() is int.
+		eTyp := targElemTyp.Elem()
+		for i, ele := range src {
+			goElem := reflect.New(eTyp) // returns pointer to new value
+			VPrintf("\n goElem = %#v before filling i=%d\n", goElem, i)
+			if _, err := SexpToGoStructs(ele, goElem.Interface(), env); err != nil {
+				return nil, err
+			}
+			VPrintf("\n goElem = %#v after filling i=%d\n", goElem, i)
+			VPrintf("\n goElem.Elem() = %#v after filling i=%d\n", goElem.Elem(), i)
+			slc = reflect.Append(slc, goElem.Elem())
+			VPrintf("\n slc after i=%d is now %v\n", i, slc)
+		}
+		targVa.Elem().Set(slc)
+		VPrintf("\n targVa is now %v\n", targVa)
+
+	case SexpInt:
+		// ugorji msgpack will give us int64 not int,
+		// so match that to make the decodings comparable.
+		targVa.Elem().SetInt(int64(src))
+	case SexpStr:
+		targVa.Elem().SetString(string(src))
+	case SexpChar:
+		panic("unimplemented") //return rune(src)
+	case SexpFloat:
+		targVa.Elem().SetFloat(float64(src))
+	case SexpHash:
+		VPrintf("\n ==== found SexpHash\n\n")
+		tn := *(src.TypeName)
+		if tn == "hash" {
+			panic("not done here yet")
+			// TODO: don't try to translate into a Go struct,
+			// but instead... what? just a map[string]interface{}
+			return nil, nil
+		}
+
+		switch targTyp.Elem().Kind() {
+		case reflect.Interface:
+			// could be an Interface like Flyer here, that contains the struct.
+		case reflect.Struct:
+			// typical case
+		default:
+			panic(fmt.Errorf("tried to translate from SexpHash record into non-struct/type: %v  / targType.Elem().Kind()=%v", targKind, targTyp.Elem().Kind()))
+		}
+
+		// use targVa, but check against the type in the registry for sanity/type checking.
+		factory, hasMaker := GostructRegistry[tn]
+		if !hasMaker {
+			panic(fmt.Errorf("type '%s' not registered in GostructRegistry", tn))
+			return nil, fmt.Errorf("type '%s' not registered in GostructRegistry", tn)
+		}
+		VPrintf("factory = %#v  targTyp.Kind=%s\n", factory, targTyp.Kind())
+		checkPtrStruct := factory(env)
+		factOutputVal := reflect.ValueOf(checkPtrStruct)
+		factType := factOutputVal.Type()
+		if targTyp.Kind() == reflect.Ptr && targTyp.Elem().Kind() == reflect.Interface && factType.Implements(targTyp.Elem()) {
+			VPrintf("\n accepting type check: %v implements %v\n", factType, targTyp)
+
+			// also here we need to allocate an actual struct in place of
+			// the interface
+
+			// caller has a pointer to an interface
+			// and we just want to set that interface to point to us.
+			targVa.Elem().Set(factOutputVal) // tell our caller
+
+			// now fill into this concrete type
+			targVa = factOutputVal // tell the code below
+			targTyp = targVa.Type()
+			targKind = targVa.Kind()
+
+		} else if factType != targTyp {
+			panic(fmt.Errorf("type checking failed compare the factor associated with SexpHash and the provided target *T: expected '%s' (associated with typename '%s' in the GostructRegistry) but saw '%s' type in target", tn, factType, targTyp))
+		}
+		//maploop:
+		for _, arr := range src.Map {
+			for _, pair := range arr {
+				var recordKey string
+				switch k := pair.head.(type) {
+				case SexpStr:
+					recordKey = string(k)
+				case SexpSymbol:
+					recordKey = k.name
+				default:
+					fmt.Printf("\n skipping field '%#v' which we don't know how to lookup.\n", pair.head)
+					continue
+				}
+				// We've got to match pair.head to
+				// one of the struct fields: we'll use
+				// the json tags for that. Or their
+				// full exact name if they didn't have
+				// a json tag.
+				VPrintf("\n JsonTagMap = %#v\n", (*src.JsonTagMap))
+				det, found := (*src.JsonTagMap)[recordKey]
+				if !found {
+					// try once more, with uppercased version
+					// of record key
+					upperKey := strings.ToUpper(recordKey[:1]) + recordKey[1:]
+					det, found = (*src.JsonTagMap)[upperKey]
+					if !found {
+						fmt.Printf("\n skipping field '%s' in this hash/which we could not find in the JsonTagMap\n", recordKey)
+						continue
+					}
+				}
+				VPrintf("\n\n ****  recordKey = '%s'\n\n", recordKey)
+				VPrintf("\n we found in pair.tail: %T !\n", pair.tail)
+
+				dref := targVa.Elem()
+				VPrintf("\n deref = %#v / type %T\n", dref, dref)
+
+				VPrintf("\n det = %#v\n", det)
+
+				// fld should hold our target when
+				// done recursing through any embedded structs.
+				// TODO: handle embedded pointers to structs too.
+				var fld reflect.Value
+				VPrintf("\n we have an det.EmbedPath of '%#v'\n", det.EmbedPath)
+				// drill down to the actual target
+				fld = dref
+				for i, p := range det.EmbedPath {
+					VPrintf("about to call fld.Field(%d) on fld = '%#v'/type=%T\n", p.ChildFieldNum, fld, fld)
+					fld = fld.Field(p.ChildFieldNum)
+					VPrintf("\n dropping down i=%d through EmbedPath at '%s', fld = %#v \n", i, p.ChildName, fld)
+				}
+				VPrintf("\n fld = %#v \n", fld)
+
+				// INVAR: fld points at our target to fill
+				ptrFld := fld.Addr()
+				VPrintf("\n ptrFld = %#v \n", ptrFld)
+
+				_, err := SexpToGoStructs(pair.tail, ptrFld.Interface(), env)
+				if err != nil {
+					panic(err)
+					return nil, err
+				}
+			}
+		}
+	case SexpPair:
+		panic("unimplemented")
+		// no conversion
+		//return src
+	case SexpSymbol:
+		targVa.Elem().SetString(src.name)
+	case SexpFunction:
+		panic("unimplemented")
+		// no conversion done
+		//return src
+	case SexpSentinel:
+		panic("unimplemented")
+		// no conversion done
+		//return src
+	default:
+		fmt.Printf("\n error: unknown type: %T in '%#v'\n", src, src)
+	}
+	return target, nil
+}
+
+// A small set of important little buildling blocks.
+// These demonstrate how to use reflect.
+/*
+(1) Tutorial on setting structs with reflect.Set()
+
+http://play.golang.org/p/sDmFgZmGvv
+
+package main
+
+import (
+"fmt"
+"reflect"
+
+)
+
+type A struct {
+  S string
+}
+
+func MakeA() interface{} {
+  return &A{}
+}
+
+func main() {
+   a1 := MakeA()
+   a2 := MakeA()
+   a2.(*A).S = "two"
+
+   // now assign a2 -> a1 using reflect.
+    targVa := reflect.ValueOf(&a1).Elem()
+    targVa.Set(reflect.ValueOf(a2))
+    fmt.Printf("a1 = '%#v' / '%#v'\n", a1, targVa.Interface())
+}
+// output
+// a1 = '&main.A{S:"two"}' / '&main.A{S:"two"}'
+
+
+(2) Tutorial on setting fields inside a struct with reflect.Set()
+
+http://play.golang.org/p/1k4iQKVwUD
+
+package main
+
+import (
+    "fmt"
+    "reflect"
+)
+
+type A struct {
+    S string
+}
+
+func main() {
+    a1 := &A{}
+
+    three := "three"
+
+    fld := reflect.ValueOf(&a1).Elem().Elem().FieldByName("S")
+
+    fmt.Printf("fld = %#v\n of type %T\n", fld, fld)
+    fmt.Println("settability of fld:", fld.CanSet()) // true
+
+    // now assign to field a1.S the string "three" using reflect.
+
+    fld.Set(reflect.ValueOf(three))
+
+    fmt.Printf("after fld.Set(): a1 = '%#v' \n", a1)
+}
+
+// output:
+fld = ""
+ of type reflect.Value
+settability of fld: true
+after fld.Set(): a1 = '&main.A{S:"three"}'
+
+(3) Setting struct after passing through an function call interface{} param:
+
+package main
+
+import (
+	"fmt"
+	"reflect"
+)
+
+type A struct {
+	S string
+}
+
+func main() {
+	a1 := &A{}
+	f(&a1)
+	fmt.Printf("a1 = '%#v'\n", a1)
+	// a1 = '&main.A{S:"two"}' / '&main.A{S:"two"}'
+}
+
+func f(i interface{}) {
+	a2 := MakeA()
+	a2.(*A).S = "two"
+
+	// now assign a2 -> a1 using reflect.
+	//targVa := reflect.ValueOf(&a1).Elem()
+	targVa := reflect.ValueOf(i).Elem()
+	targVa.Set(reflect.ValueOf(a2))
+}
+
+(4) using a function to do the Set(), and checking
+    the received interface for correct type.
+    Also: Using a function to set just one sub-field.
+
+package main
+
+import (
+	"fmt"
+	"reflect"
+)
+
+type A struct {
+	S string
+	R string
+}
+
+func main() {
+	a1 := &A{}
+	overwrite_contents_of_struct(a1)
+	fmt.Printf("a1 = '%#v'\n", a1)
+
+	// output:
+	// yes, is single level pointer
+	// a1 = '&main.A{S:"two", R:""}'
+
+	assignToOnlyFieldR(a1)
+	fmt.Printf("after assignToOnlyFieldR(a1):  a1 = '%#v'\n", a1)
+
+	// output:
+//	yes, is single level pointer
+//	a1 = '&main.A{S:"two", R:""}'
+//	yes, is single level pointer
+//	fld = ""
+//	 of type reflect.Value
+//	settability of fld: true
+//	after assignToOnlyFieldR(a1):  a1 = '&main.A{S:"two", R:"R has been altered"}'
+
+}
+
+func assignToOnlyFieldR(i interface{}) {
+	if !IsExactlySinglePointer(i) {
+		panic("not single level pointer")
+	}
+	fmt.Printf("yes, is single level pointer\n")
+
+	altered := "R has been altered"
+
+	fld := reflect.ValueOf(i).Elem().FieldByName("R")
+
+	fmt.Printf("fld = %#v\n of type %T\n", fld, fld)
+	fmt.Println("settability of fld:", fld.CanSet()) // true
+
+	// now assign to field a1.S
+	fld.Set(reflect.ValueOf(altered))
+}
+
+func overwrite_contents_of_struct(i interface{}) {
+	// we want i to contain an *A, or a pointer-to struct.
+	// So we can reassign *ptr = A' for a different content A'.
+
+	if !IsExactlySinglePointer(i) {
+		panic("not single level pointer")
+	}
+	fmt.Printf("yes, is single level pointer\n")
+
+	a2 := &A{S: "two"}
+
+	// now assign a2 -> a1 using reflect.
+	targVa := reflect.ValueOf(i).Elem()
+	targVa.Set(reflect.ValueOf(a2).Elem())
+}
+
+func IsExactlySinglePointer(target interface{}) bool {
+
+	typ := reflect.ValueOf(target).Type()
+	kind := typ.Kind()
+	if kind != reflect.Ptr {
+		return false
+	}
+	typ2 := typ.Elem()
+	kind2 := typ2.Kind()
+	if kind2 == reflect.Ptr {
+		return false // two level pointer
+	}
+	return true
+}
+
+*/

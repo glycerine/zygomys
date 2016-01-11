@@ -107,8 +107,10 @@ func processDumpCommand(env *Glisp, args []string) {
 
 func Repl(env *Glisp, cfg *GlispConfig) {
 	// used if one wishes to drop the liner library and use
-	// pr.getExpressionOrig() instead.
+	// pr.getExpressionOrig() instead, do:
 	//reader := bufio.NewReader(os.Stdin)
+	// and also change the line, err assignment
+	// just below.
 
 	// debug
 	// env.debugExec = true
@@ -177,7 +179,13 @@ func Repl(env *Glisp, cfg *GlispConfig) {
 		}
 
 		if expr != SexpNull {
-			fmt.Println(expr.SexpString())
+			// try to print strings more elegantly!
+			switch e := expr.(type) {
+			case SexpStr:
+				fmt.Printf("`%s`\n", e)
+			default:
+				fmt.Println(expr.SexpString())
+			}
 		}
 	}
 }
@@ -262,6 +270,13 @@ func (env *Glisp) StandardSetup() {
 	env.ImportGoroutines()
 	env.ImportRegex()
 	env.ImportRandom()
+
+	// create constructors for each of our pre-registered Go struct types
+	for name := range GostructRegistry {
+		makeRec := fmt.Sprintf(`(defmap %s)`, name)
+		_, err = env.EvalString(makeRec)
+		panicOn(err)
+	}
 
 }
 

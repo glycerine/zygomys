@@ -3,4 +3,4 @@
 (assert (== ["Fly func(*zygo.Snoopy, *zygo.Weather) (string, error)" "Sideeffect func(*zygo.Snoopy)"] (methodls s)))
 
 (def f (fieldls s))
-(assert (== ["Plane zygo.Plane" "Cry string"] (fieldls s)))
+(assert (== f ["Plane zygo.Plane" "Wings zygo.Wings embed-path<Plane>" "SpanCm int embed-path<Plane:Wings>" "Speed int embed-path<Plane>" "Chld zygo.Flyer embed-path<Plane>" "Friends []zygo.Flyer embed-path<Plane>" "Cry string" "Pack []int" "Carrying []zygo.Flyer"]))

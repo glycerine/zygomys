@@ -10,18 +10,6 @@ import (
 
 var NoAttachedGoStruct = fmt.Errorf("hash has no attach Go struct")
 
-var GostructRegistry = map[string]interface{}{}
-
-// builtin known Go Structs
-func init() {
-	GostructRegistry["event"] = &Event{}
-	GostructRegistry["person"] = &Person{}
-
-	GostructRegistry["snoopy"] = &Snoopy{}
-	GostructRegistry["hornet"] = &Hornet{}
-	GostructRegistry["hellcat"] = &Hellcat{}
-}
-
 func HashExpression(expr Sexp) (int, error) {
 	switch e := expr.(type) {
 	case SexpInt:
@@ -41,13 +29,12 @@ func HashExpression(expr Sexp) (int, error) {
 	return 0, errors.New(fmt.Sprintf("cannot hash type %T", expr))
 }
 
-func MakeHash(args []Sexp, typename string) (SexpHash, error) {
+func MakeHash(args []Sexp, typename string, env *Glisp) (SexpHash, error) {
 	if len(args)%2 != 0 {
 		return SexpHash{},
 			errors.New("hash requires even number of arguments")
 	}
 
-	var iface interface{}
 	var memberCount int
 	var arr SexpArray
 	var fld SexpArray
@@ -55,18 +42,21 @@ func MakeHash(args []Sexp, typename string) (SexpHash, error) {
 	var field = []reflect.StructField{}
 	num := -1
 	var got reflect.Type
+	jsonMap := make(map[string]*HashFieldDet)
+	factory := MakeGoStructFunc(func(env *Glisp) interface{} { return nil })
 	hash := SexpHash{
-		TypeName:  &typename,
-		Map:       make(map[int][]SexpPair),
-		KeyOrder:  &[]Sexp{},
-		GoStruct:  &iface,
-		NumKeys:   &memberCount,
-		GoMethods: &meth,
-		GoMethSx:  &arr,
-		GoFieldSx: &fld,
-		GoFields:  &field,
-		NumMethod: &num,
-		GoType:    &got,
+		TypeName:        &typename,
+		Map:             make(map[int][]SexpPair),
+		KeyOrder:        &[]Sexp{},
+		GoStructFactory: &factory,
+		NumKeys:         &memberCount,
+		GoMethods:       &meth,
+		GoMethSx:        &arr,
+		GoFieldSx:       &fld,
+		GoFields:        &field,
+		NumMethod:       &num,
+		GoType:          &got,
+		JsonTagMap:      &jsonMap,
 	}
 	k := 0
 	for i := 0; i < len(args); i += 2 {
@@ -79,11 +69,11 @@ func MakeHash(args []Sexp, typename string) (SexpHash, error) {
 		k++
 	}
 
-	stct, foundGoStruct := GostructRegistry[typename]
+	factory, foundGoStruct := GostructRegistry[typename]
 	if foundGoStruct {
-		VPrintf("\n in MakeHash: found struct associated with '%s': %T/val=%#v\n", typename, stct, stct)
-		hash.SetGoStruct(stct)
-		err := hash.SetMethodList()
+		VPrintf("\n in MakeHash: found struct associated with '%s'\n", typename)
+		hash.SetGoStructFactory(factory)
+		err := hash.SetMethodList(env)
 		if err != nil {
 			return SexpHash{}, fmt.Errorf("unexpected error "+
 				"from hash.SetMethodList(): %s", err)
@@ -264,27 +254,26 @@ func GoMethodListFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		// use cached results
 		return *h.GoMethSx, nil
 	}
-	rs := reflect.ValueOf(h.GoStruct)
-	if rs.IsNil() {
+	if (*h.GoStructFactory)(env) == nil {
 		return SexpNull, NoAttachedGoStruct
 	}
 
-	h.SetMethodList()
+	h.SetMethodList(env)
 	return SexpArray(*h.GoMethSx), nil
 }
 
-func (h *SexpHash) SetMethodList() error {
+func (h *SexpHash) SetMethodList(env *Glisp) error {
 	VPrintf("hash.SetMethodList() called.\n")
 
-	rs := reflect.ValueOf(*h.GoStruct)
-	VPrintf("\n in SetMethodList() rs = '%#v'\n", rs)
-	if rs.IsNil() {
+	rs := (*h.GoStructFactory)(env)
+	if rs == nil {
 		return NoAttachedGoStruct
 	}
-	ty := rs.Type()
+	va := reflect.ValueOf(rs)
+	ty := va.Type()
 	n := ty.NumMethod()
 
-	VPrintf("hash.SetMethodList() sees %d methods\n", n)
+	VPrintf("hash.SetMethodList() sees %d methods on type %v\n", n, ty)
 	*h.NumMethod = n
 	*h.GoType = ty
 
@@ -300,23 +289,58 @@ func (h *SexpHash) SetMethodList() error {
 	// do the fields too
 
 	// gotta get the struct, not a pointer to it
-	e := rs.Elem()
+	e := va.Elem()
 	var notAStruct = reflect.Value{}
 	if e == notAStruct {
 		panic(fmt.Errorf("registered GoStruct for '%s' was not a struct?!",
 			h.TypeName))
 	}
 	tye := e.Type()
-	m := tye.NumField()
-	fx := make([]Sexp, m)
-	fl := make([]reflect.StructField, m)
-	for i := 0; i < m; i++ {
-		fl[i] = tye.Field(i)
-		fx[i] = SexpStr(fl[i].Name + " " + fl[i].Type.String())
-	}
+	fx := make([]Sexp, 0)
+	fl := make([]reflect.StructField, 0)
+	embeds := []EmbedPath{}
+	json2ptr := make(map[string]*HashFieldDet)
+	fillJsonMap(&json2ptr, &fx, &fl, embeds, tye)
 	*h.GoFieldSx = fx
 	*h.GoFields = fl
+	*h.JsonTagMap = json2ptr
 	return nil
+}
+
+const YesIamEmbeddedAbove = true
+
+// recursively fill with embedded/anonymous types as well
+func fillJsonMap(json2ptr *map[string]*HashFieldDet, fx *[]Sexp, fl *[]reflect.StructField, embedPath []EmbedPath, tye reflect.Type) {
+	var suffix string
+	if len(embedPath) > 0 {
+		suffix = fmt.Sprintf(" embed-path<%s>", GetEmbedPath(embedPath))
+	}
+	m := tye.NumField()
+	for i := 0; i < m; i++ {
+		fld := tye.Field(i)
+		*fl = append(*fl, fld)
+		*fx = append(*fx, SexpStr(fld.Name+" "+fld.Type.String()+suffix))
+		det := &HashFieldDet{
+			FieldNum:     i,
+			FieldType:    fld.Type,
+			StructField:  fld,
+			FieldName:    fld.Name,
+			FieldJsonTag: fld.Name, // fallback. changed below if json tag available.
+		}
+		jsonTag := fld.Tag.Get("json")
+		if jsonTag != "" {
+			det.FieldJsonTag = jsonTag
+			(*json2ptr)[jsonTag] = det
+		} else {
+			(*json2ptr)[fld.Name] = det
+		}
+		det.EmbedPath = append(embedPath,
+			EmbedPath{ChildName: fld.Name, ChildFieldNum: i})
+		if fld.Anonymous {
+			// track how to get at embedded struct fields
+			fillJsonMap(json2ptr, fx, fl, det.EmbedPath, fld.Type)
+		}
+	}
 }
 
 func GoFieldListFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
@@ -327,8 +351,7 @@ func GoFieldListFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	if !isHash {
 		return SexpNull, fmt.Errorf("hash/record required, but saw %T/val=%v", args[0], args[0])
 	}
-	rs := reflect.ValueOf(h.GoStruct)
-	if rs.IsNil() {
+	if (*h.GoStructFactory)(env) == nil {
 		return SexpNull, NoAttachedGoStruct
 	}
 	return SexpArray(*h.GoFieldSx), nil

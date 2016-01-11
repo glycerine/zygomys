@@ -77,22 +77,52 @@ func (pair SexpPair) SexpString() string {
 }
 
 type SexpArray []Sexp
-type SexpHash struct {
-	TypeName  *string
-	Map       map[int][]SexpPair
-	KeyOrder  *[]Sexp // must user pointer here, else hset! will fail to update.
-	GoStruct  *interface{}
-	NumKeys   *int
-	GoMethods *[]reflect.Method
-	GoFields  *[]reflect.StructField
-	GoMethSx  *SexpArray
-	GoFieldSx *SexpArray
-	GoType    *reflect.Type
-	NumMethod *int
+
+type EmbedPath struct {
+	ChildName     string
+	ChildFieldNum int
 }
 
-func (h *SexpHash) SetGoStruct(str interface{}) {
-	*h.GoStruct = str
+func GetEmbedPath(e []EmbedPath) string {
+	r := ""
+	last := len(e) - 1
+	for i, s := range e {
+		r += s.ChildName
+		if i < last {
+			r += ":"
+		}
+	}
+	return r
+}
+
+type HashFieldDet struct {
+	FieldNum     int
+	FieldType    reflect.Type
+	StructField  reflect.StructField
+	FieldName    string
+	FieldJsonTag string
+	EmbedPath    []EmbedPath // we are embedded if len(EmbedPath) > 0
+}
+type SexpHash struct {
+	TypeName        *string
+	Map             map[int][]SexpPair
+	KeyOrder        *[]Sexp // must user pointer here, else hset! will fail to update.
+	GoStructFactory *MakeGoStructFunc
+	NumKeys         *int
+	GoMethods       *[]reflect.Method
+	GoFields        *[]reflect.StructField
+	GoMethSx        *SexpArray
+	GoFieldSx       *SexpArray
+	GoType          *reflect.Type
+	NumMethod       *int
+	GoShadowStruct  interface{}
+
+	// json tag name -> pointers to example values, as factories for SexpToGoStructs()
+	JsonTagMap *map[string]*HashFieldDet
+}
+
+func (h *SexpHash) SetGoStructFactory(factory MakeGoStructFunc) {
+	*h.GoStructFactory = factory
 }
 
 type SexpInt int

@@ -4,11 +4,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
-	"testing"
-
 	cv "github.com/glycerine/goconvey/convey"
 	"github.com/ugorji/go/codec"
+	"io"
+	"testing"
 )
 
 /*
@@ -45,17 +44,18 @@ type Event struct {
 }
 
  Event{}, and fill in its fields`, t, func() {
-		activate := `(defmap event)`
-		activate2 := `(defmap person)`
+		//activate := `(defmap event)`
+		//activate2 := `(defmap person)`
 		event := `(event id:123 user: (person first:"Liz" last:"C") flight:"AZD234"  pilot:["Roger" "Ernie"])`
 		env := NewGlisp()
 		env.StandardSetup()
 
-		_, err := env.EvalString(activate)
-		panicOn(err)
+		// already done
+		//_, err := env.EvalString(activate)
+		//panicOn(err)
 
-		_, err = env.EvalString(activate2)
-		panicOn(err)
+		//_, err = env.EvalString(activate2)
+		//panicOn(err)
 
 		x, err := env.EvalString(event)
 		panicOn(err)
@@ -148,7 +148,7 @@ type Event struct {
 				err = fmt.Errorf("type '%s' not registered in GostructRegistry", tn)
 				panic(err)
 			}
-			newStruct := factory
+			newStruct := factory(env)
 
 			// What didn't work here was going through msgpack, because
 			// ugorji msgpack encode will write turn signed ints into unsigned ints,
@@ -164,7 +164,7 @@ type Event struct {
 			default:
 				panic(fmt.Errorf("error during jsonDecoder.Decode() on type '%s': '%s'", tn, err))
 			}
-			asHash.SetGoStruct(newStruct)
+			asHash.SetGoStructFactory(factory)
 
 			fmt.Printf("from json via factory.Make(), newStruct = '%#v'\n", newStruct)
 			cv.So(newStruct, cv.ShouldResemble, &goEvent)

@@ -644,13 +644,13 @@ func ConstructorFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	case "list":
 		return MakeList(args), nil
 	case "hash":
-		return MakeHash(args, "hash")
+		return MakeHash(args, "hash", env)
 	case "raw":
 		return MakeRaw(args)
 	case "msgmap":
 		switch len(args) {
 		case 0:
-			return MakeHash(args, "msgmap")
+			return MakeHash(args, "msgmap", env)
 		default:
 			arr, err := ListToArray(args[1])
 			if err != nil {
@@ -659,11 +659,11 @@ func ConstructorFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 			}
 			switch nm := args[0].(type) {
 			case SexpStr:
-				return MakeHash(arr, string(nm))
+				return MakeHash(arr, string(nm), env)
 			case SexpSymbol:
-				return MakeHash(arr, nm.name)
+				return MakeHash(arr, nm.name, env)
 			default:
-				return MakeHash(arr, "msgmap")
+				return MakeHash(arr, "msgmap", env)
 			}
 		}
 	}

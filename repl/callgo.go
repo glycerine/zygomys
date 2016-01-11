@@ -1,26 +1,40 @@
 package zygo
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"github.com/shurcooL/go-goon"
+	"io"
 	"time"
 )
 
 // demostrate calling Go
 
+type Wings struct {
+	SpanCm int
+}
+
 type Plane struct {
-	Name  string  `json:"name" msg:"name"`
-	Speed int     `json:"speed" msg:"speed"`
-	Chld  []Flyer `json:"chld" msg:"chld"`
+	Wings
+
+	//Name  string `json:"name" msg:"name"`
+	Speed   int     `json:"speed" msg:"speed"`
+	Chld    Flyer   `json:"chld" msg:"chld"`
+	Friends []Flyer `json:"friends"`
 }
 
 type Snoopy struct {
-	Plane `json:"plane" msg:"plane"`
-	Cry   string `json:"cry" msg:"cry"`
+	Plane    `json:"plane" msg:"plane"`
+	Cry      string  `json:"cry" msg:"cry"`
+	Pack     []int   `json:"pack"`
+	Carrying []Flyer `json:"carrying"`
 }
 
 type Hornet struct {
-	Plane `json:"plane" msg:"plane"`
+	Plane    `json:"plane" msg:"plane"`
+	Mass     float64
+	Nickname string
 }
 
 type Hellcat struct {
@@ -48,7 +62,7 @@ func (b *Hellcat) Fly(ev *Weather) (s string, err error) {
 }
 
 type Flyer interface {
-	Fly(ev *Weather) error
+	Fly(ev *Weather) (s string, err error)
 }
 
 type Weather struct {
@@ -84,3 +98,57 @@ func CallGo(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	// return the result in a hash record too.
 	return SexpNull, nil
 }
+
+// mirror from the sexp side:  pointers to hashes in arrays;
+//  match them on the go side: pointers to GoStructs in arrays
+// so that children hierarchies can be called.
+func GoLinkFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
+	switch asHash := args[0].(type) {
+	default:
+		return SexpNull, fmt.Errorf("value must be a hash or defmap record")
+	case SexpHash:
+		tn := *(asHash.TypeName)
+		factory, hasMaker := GostructRegistry[tn]
+		if !hasMaker {
+			return SexpNull, fmt.Errorf("type '%s' not registered in GostructRegistry", tn)
+		}
+		newStruct := factory(env)
+		fmt.Printf("\n newStruct = %#v\n", newStruct)
+		jsonBytes := []byte(SexpToJson(asHash))
+
+		fmt.Printf("jsonBytes = '%s'\n", string(jsonBytes))
+
+		jsonDecoder := json.NewDecoder(bytes.NewBuffer(jsonBytes))
+		err := jsonDecoder.Decode(&newStruct)
+		switch err {
+		case io.EOF:
+		case nil:
+		default:
+			return SexpNull, fmt.Errorf("error during jsonDecoder.Decode() on type '%s': '%s'", tn, err)
+		}
+	}
+
+	return SexpNull, nil
+}
+
+//func (a Flyer) MarshalJSON() ([]byte, error) {
+// return nil, nil
+//}
+
+/*
+func (a Flyer) UnmarshalJSON(b []byte) (err error) {
+	j, s, n := author{}, "", uint64(0)
+	if err = json.Unmarshal(b, &j); err == nil {
+		*a = Author(j)
+		return
+	}
+	if err = json.Unmarshal(b, &s); err == nil {
+		a.Email = s
+		return
+	}
+	if err = json.Unmarshal(b, &n); err == nil {
+		a.ID = n
+	}
+	return
+}
+*/

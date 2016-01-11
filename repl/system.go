@@ -24,7 +24,7 @@ func SystemFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 
 	out, err := exec.Command(cmd, flat[1:]...).CombinedOutput()
 	if err != nil {
-		return SexpNull, err
+		return SexpNull, fmt.Errorf("error from command: '%s'. Output:'%s'", err, string(Chomp(out)))
 	}
 	return SexpStr(string(out)), nil
 }
@@ -75,4 +75,14 @@ func flattenToWordsHelper(args []Sexp) ([]string, error) {
 	} // end i over args
 	// INVAR: stringArgs has our flattened list.
 	return stringArgs, nil
+}
+
+func Chomp(by []byte) []byte {
+	if len(by) > 0 {
+		n := len(by)
+		if by[n-1] == '\n' {
+			return by[:n-1]
+		}
+	}
+	return by
 }
