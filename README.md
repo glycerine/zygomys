@@ -23,8 +23,13 @@ language customized to your challenges and driving other code.
 The example snippets in the tests/*.zy provide many examples.
 The full [documentation can be found in the Wiki](https://github.com/glycerine/zygomys/wiki).
 
-The standalone REPL is called simply `zygo`.  Use `make` to install `zygo` as `go get` will
-call it `zygomys` by default, and the tooling expects the shorter `zygo` for tests, etc.)
+The standalone REPL is called simply `zygo`.
+
+### installation
+
+~~~
+$ go get github.com/glycerine/zygomys/cmd/zygo
+~~~
 
 ### Not your Grandfather's Parentheses... features in zygomys 1.3.9 include
 
