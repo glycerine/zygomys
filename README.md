@@ -1,4 +1,4 @@
-![Image of Gopher flying](https://github.com/glycerine/zygomys/blob/master/biplane.png)
+![Image of Gopher flying](https://github.com/glycerine/zygomys/blob/master/media/biplane.png)
 
 # zygomys - fast, high level control
 

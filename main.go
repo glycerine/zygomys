@@ -1,3 +1,6 @@
+/*
+The zygomys command line REPL is known as `zygo`.
+*/
 package main
 
 import (
