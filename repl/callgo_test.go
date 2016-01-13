@@ -3,8 +3,6 @@ package zygo
 import (
 	"fmt"
 	cv "github.com/glycerine/goconvey/convey"
-	//"github.com/shurcooL/go-goon"
-	//"reflect"
 	"testing"
 )
 
@@ -25,42 +23,11 @@ func Test007CallByReflectionWorks(t *testing.T) {
 		//cv.So(x.SexpString(), cv.ShouldEqual, ` (snoopy speed:105 chld:[ (hellcat speed:567)  (hornet )] cry:"yeeehaw")`)
 		cv.So(x.SexpString(), cv.ShouldEqual, ` (snoopy chld: (hellcat speed:567))`)
 
-		//_, err = GoLinkFunction(env, "golink", []Sexp{x})
-		//panicOn(err)
 		var sn Snoopy
 		_, err = SexpToGoStructs(x, &sn, env)
 		panicOn(err)
 		fmt.Printf("\n sn = %#v\n", sn)
 		cv.So(sn.Chld, cv.ShouldResemble, &Hellcat{Plane: Plane{Speed: 567}})
-
-		//		chld := (*(x.(SexpHash).GoStruct)).(*Snoopy).Chld
-		//		cv.So(chld, cv.ShouldResemble, &Hellcat{})
-
-		//x, err := env.EvalString(``)
-
-		/*
-			vw := reflect.ValueOf(w)
-			in := []reflect.Value{vw}
-			fmt.Printf("in = '%#v'\n", in)
-
-			vs := reflect.ValueOf(s)
-			fmt.Printf("vs = '%#v'\n", vs)
-
-			// find the method on s
-			ty := vs.Type()
-			n := ty.NumMethod()
-			fmt.Printf("n = %v\n", n) // 2 yes!
-			m1 := ty.Method(0)
-			fmt.Printf("m1.Name = %v\n", m1.Name) // Fly
-			m2 := ty.Method(1)
-			fmt.Printf("m2.Name = %v\n", m2.Name) // Sideeffect
-
-			inObj1st := []reflect.Value{vs, vw}
-			res := m1.Func.Call(inObj1st)
-			//res := vmethod.Call(inempty)
-			fmt.Printf("res = '%#v'\n", res)
-			goon.Dump(res)
-		*/
 	})
 }
 

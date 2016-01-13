@@ -11,26 +11,9 @@ import (
 )
 
 /*
- Go map[string]interface{}  <--(1)--> lisp
-   ^                                  ^
-   |                                 /
-  (2)   ------------ (4) -----------/
-   |   /
-   V  V
- msgpack <--(3)--> go struct, strongly typed
-
-(1) we test for here
+ we test for here (1)
      (a) SexpToGo()
      (b) GoToSexp()
-(2) provided by ugorji/go/codec; see
-     (a) MsgpackToGo() / JsonToGo()
-     (b) GoToMsgpack() / GoToJson()
-(3) provided by tinylib/msgp, and by ugorji/go/codec
-     by using pre-compiled or just decoding into an instance
-     of the struct.
-(4) see
-     (a) SexpToMsgpack() and SexpToJson(): encode Sexp as bytes
-     (b) MsgpackToSexp(); (4) = (2) + (1)
 */
 func Test005ConversionToAndFromMsgpackAndJson(t *testing.T) {
 
@@ -44,29 +27,19 @@ type Event struct {
 }
 
  Event{}, and fill in its fields`, t, func() {
-		//activate := `(defmap event)`
-		//activate2 := `(defmap person)`
-		event := `(event id:123 user: (person first:"Liz" last:"C") flight:"AZD234"  pilot:["Roger" "Ernie"])`
+		event := `(event-demo id:123 user: (person-demo first:"Liz" last:"C") flight:"AZD234"  pilot:["Roger" "Ernie"])`
 		env := NewGlisp()
 		env.StandardSetup()
-
-		// already done
-		//_, err := env.EvalString(activate)
-		//panicOn(err)
-
-		//_, err = env.EvalString(activate2)
-		//panicOn(err)
 
 		x, err := env.EvalString(event)
 		panicOn(err)
 
-		cv.So(x.SexpString(), cv.ShouldEqual, ` (event id:123 user: (person first:"Liz" last:"C") flight:"AZD234" pilot:["Roger" "Ernie"])`)
+		cv.So(x.SexpString(), cv.ShouldEqual, ` (event-demo id:123 user: (person-demo first:"Liz" last:"C") flight:"AZD234" pilot:["Roger" "Ernie"])`)
 
 		jsonBy := SexpToJson(x)
-		//cv.So(string(json), cv.ShouldEqual, `{"Atype":"event", "id":123, "user":{"Atype":"person", "first":"Liz", "last":"C"}, "flight":"AZD234", "pilot":["Roger", "Ernie"]}`)
-		cv.So(string(jsonBy), cv.ShouldEqual, `{"Atype":"event", "id":123, "user":{"Atype":"person", "first":"Liz", "last":"C", "zKeyOrder":["first", "last"]}, "flight":"AZD234", "pilot":["Roger", "Ernie"], "zKeyOrder":["id", "user", "flight", "pilot"]}`)
+		cv.So(string(jsonBy), cv.ShouldEqual, `{"Atype":"event-demo", "id":123, "user":{"Atype":"person-demo", "first":"Liz", "last":"C", "zKeyOrder":["first", "last"]}, "flight":"AZD234", "pilot":["Roger", "Ernie"], "zKeyOrder":["id", "user", "flight", "pilot"]}`)
 		msgpack, goObj := SexpToMsgpack(x)
-		// msgpack field ordering is random, so can't expect a match
+		// msgpack field ordering is random, so can't expect a match the serialization byte-for-byte
 		//cv.So(msgpack, cv.ShouldResemble, expectedMsgpack)
 
 		goObj2, err := MsgpackToGo(msgpack)
@@ -87,7 +60,7 @@ type Event struct {
 		ko := sexp.(SexpHash).KeyOrder
 		*ko = *x.(SexpHash).KeyOrder
 		sexpStr := sexp.SexpString()
-		expectedSexpr := ` (event id:123 user: (person first:"Liz" last:"C") flight:"AZD234" pilot:["Roger" "Ernie"])`
+		expectedSexpr := ` (event-demo id:123 user: (person-demo first:"Liz" last:"C") flight:"AZD234" pilot:["Roger" "Ernie"])`
 		cv.So(sexpStr, cv.ShouldResemble, expectedSexpr)
 
 		fmt.Printf("\n Unmarshaling from msgpack into pre-defined go struct should succeed.\n")

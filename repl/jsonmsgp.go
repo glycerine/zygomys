@@ -12,24 +12,6 @@ import (
 	"strings"
 )
 
-//go:generate msgp
-
-type Event struct {
-	Id     int      `json:"id" msg:"id"`
-	User   Person   `json:"user" msg:"user"`
-	Flight string   `json:"flight" msg:"flight"`
-	Pilot  []string `json:"pilot" msg:"pilot"`
-}
-
-type Person struct {
-	First string `json:"first" msg:"first"`
-	Last  string `json:"last" msg:"last"`
-}
-
-func (ev *Event) DisplayEvent(from string) {
-	fmt.Printf("%s %#v", from, ev)
-}
-
 /*
  Conversion map
 
@@ -41,7 +23,7 @@ func (ev *Event) DisplayEvent(from string) {
    V  V                                 V
  msgpack <--(3)--> go struct, strongly typed
 
-(1) we provide these herein
+(1) we provide these herein; see jsonmsgp_test.go too.
      (a) SexpToGo()
      (b) GoToSexp()
 (2) provided by ugorji/go/codec; see examples also herein

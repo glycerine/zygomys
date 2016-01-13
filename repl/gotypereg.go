@@ -3,40 +3,42 @@ package zygo
 // The Go Type Registry
 // ====================
 //
-// simply decide upon a name, and add a constructor
+// simply decide upon a name, and add a maker
 // function for that returns a pointer to your struct.
 // The simply add to the init() function below.
 //
 // The env parameter to your MakeGoStructFunc()
-// funcion is there is case you want to initialize
+// function is there is case you want to initialize
 // your struct differently depending on the content
-// of its context, but this is not common.
-
-type MakeGoStructFunc func(env *Glisp) interface{}
-
+// of its context, but this is not commonly needed.
+//
+// The repl will automatically do a (defmap record)
+// for each record defined in the registry. e.g.
+// for snoopy, hornet, hellcat, etc.
+//
 var GostructRegistry = map[string]MakeGoStructFunc{}
 
-// builtin known Go Structs
-func init() {
-	GostructRegistry["event"] = func(env *Glisp) interface{} {
-		v := make([]Event, 1)
-		return &v[0]
-	}
-	GostructRegistry["person"] = func(env *Glisp) interface{} {
-		v := make([]Person, 1)
-		return &v[0]
-	}
+// the type of all maker functions
+type MakeGoStructFunc func(env *Glisp) interface{}
 
+// builtin known Go Structs
+// NB these are used to test the functionality of the
+//    Go integration.
+//
+func init() {
+	GostructRegistry["event-demo"] = func(env *Glisp) interface{} {
+		return &Event{}
+	}
+	GostructRegistry["person-demo"] = func(env *Glisp) interface{} {
+		return &Person{}
+	}
 	GostructRegistry["snoopy"] = func(env *Glisp) interface{} {
-		v := make([]Snoopy, 1)
-		return &v[0]
+		return &Snoopy{}
 	}
 	GostructRegistry["hornet"] = func(env *Glisp) interface{} {
-		v := make([]Hornet, 1)
-		return &v[0]
+		return &Hornet{}
 	}
 	GostructRegistry["hellcat"] = func(env *Glisp) interface{} {
-		v := make([]Hellcat, 1)
-		return &v[0]
+		return &Hellcat{}
 	}
 }
