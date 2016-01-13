@@ -1,0 +1,3 @@
+(def s `hi
+`)
+(assert (== (len (chomp s)) 2))
