@@ -512,6 +512,8 @@ func (gen *Generator) GenerateCallBySymbol(sym SexpSymbol, args []Sexp, orig Sex
 		return gen.GenerateCond(args)
 	case "quote":
 		return gen.GenerateQuote(args)
+	case "setq":
+		fallthrough
 	case "def":
 		return gen.GenerateDef(args)
 	case "mdef":

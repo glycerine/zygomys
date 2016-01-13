@@ -56,7 +56,7 @@ func isBalanced(str string) bool {
 	return parens == 0 && squares == 0
 }
 
-var continuationPrompt = ">> "
+var continuationPrompt = "... "
 
 func (pr *Prompter) getExpressionOrig(reader *bufio.Reader) (string, error) {
 

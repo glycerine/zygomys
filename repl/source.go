@@ -69,8 +69,8 @@ func (env *Glisp) SourceExpressions(expressions []Sexp) error {
 		return err
 	}
 
-	fmt.Printf("\n debug done with Run in source, now stack is:\n")
-	env.datastack.PrintStack()
+	//fmt.Printf("\n debug done with Run in source, now stack is:\n")
+	//env.datastack.PrintStack()
 	env.datastack.PopExpr()
 
 	env.pc = curpc
