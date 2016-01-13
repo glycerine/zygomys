@@ -47,7 +47,7 @@ func SystemFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	if err != nil {
 		return SexpNull, fmt.Errorf("error from command: '%s'. Output:'%s'", err, string(Chomp(out)))
 	}
-	return SexpStr(string(out)), nil
+	return SexpStr(string(Chomp(out))), nil
 }
 
 // given strings/lists of strings with possible whitespace
