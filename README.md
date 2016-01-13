@@ -8,7 +8,7 @@ zygomys is an embeddable scripting language. It is a Lisp, and
 provides an interpreter and REPL (Read-Eval-Print-Loop;
 that is, it comes with a command line interactive interface).
 
-zygomys is allows you to create a Domain Specific Language to drive
+zygomys allows you to create a Domain Specific Language to drive
 your program with minimal fuss and maximum convenience.
 
 It is written in Go and plays easily with Go programs
