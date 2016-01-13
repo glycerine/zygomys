@@ -49,9 +49,13 @@ func SimpleSourceFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 // SourceExpressions, this should be called from a user func context
 func (env *Glisp) SourceExpressions(expressions []Sexp) error {
 	gen := NewGenerator(env)
-	if !env.ReachedEnd() {
-		gen.AddInstruction(PopInstr(0))
-	}
+	// not sure what the point of this was, but the extra pop
+	// off the stack is causing source to fail because it is
+	// popping off our loop stack mark by mistake.
+	//if !env.ReachedEnd() {
+	//  gen.AddInstruction(PopInstr(0))
+	//}
+
 	err := gen.GenerateBegin(expressions)
 	if err != nil {
 		return err
