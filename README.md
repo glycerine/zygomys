@@ -19,7 +19,7 @@ The full [documentation can be found in the Wiki](https://github.com/glycerine/z
 
 The standalone REPL is called simply `zygo`.
 
-### Not your Grandfather's Parentheses... features in zygomys 1.2.1 include
+### Not your Grandfather's Parentheses... features in zygomys 1.3.0 include
 
  * [x] JSON and Msgpack interop: serialization and deserialization.
  * [x] `(range key value hash (body))` range loops mirror for-range over a hash in Go.
