@@ -34,11 +34,11 @@ func (ev *Event) DisplayEvent(from string) {
  Conversion map
 
  Go map[string]interface{}  <--(1)--> lisp
-   ^                                  ^
-   |                                 /
-  (2)   ------------ (4) -----------/
-   |   /
-   V  V
+   ^                                  ^ |
+   |                                 /  |
+  (2)   ------------ (4) -----------/  (5)
+   |   /                                |
+   V  V                                 V
  msgpack <--(3)--> go struct, strongly typed
 
 (1) we provide these herein
@@ -53,6 +53,15 @@ func (ev *Event) DisplayEvent(from string) {
 (4) see herein
      (a) SexpToMsgpack() and SexpToJson()
      (b) MsgpackToSexp(); uses (4) = (2) + (1)
+(5) The SexpToGoStructs() and ToGoFunction() in this
+    file provide the capability of marshaling an
+    s-expression to a Go-struct that has been
+    registered to be associated with a named
+    hash map using (defmap). See repl/gotypereg.go
+    to add your Go-struct constructor. From
+    the prompt, the (togo) function instantiates
+    a 'shadow' Go-struct whose data matches
+    that configured in the record.
 */
 func JsonFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	if len(args) != 1 {
