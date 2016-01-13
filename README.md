@@ -19,7 +19,7 @@ The full [documentation can be found in the Wiki](https://github.com/glycerine/z
 
 The standalone REPL is called simply `zygo`.
 
-### Not your Grandfather's Parentheses... features in zygomys 1.3.1 include
+### Not your Grandfather's Parentheses... features in zygomys 1.3.2 include
 
  * [x] Use `zygo` to configure trees of Go structs, and then run methods on them at natively-compiled speed (since you are calling into Go code).
  * [x] `emacs/zygo.el` emacs mode
