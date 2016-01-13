@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	//"github.com/shurcooL/go-goon"
-	"os"
 )
 
 var WrongNargs error = errors.New("wrong number of arguments")
@@ -680,58 +679,6 @@ func SymnumFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		return SexpInt(t.number), nil
 	}
 	return SexpNull, errors.New("argument must be symbol")
-}
-
-func SourceFileFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
-	if len(args) < 1 {
-		return SexpNull, WrongNargs
-	}
-
-	var sourceItem func(item Sexp) error
-
-	sourceItem = func(item Sexp) error {
-		switch t := item.(type) {
-		case SexpArray:
-			for _, v := range t {
-				if err := sourceItem(v); err != nil {
-					return err
-				}
-			}
-		case SexpPair:
-			expr := item
-			for expr != SexpNull {
-				list := expr.(SexpPair)
-				if err := sourceItem(list.head); err != nil {
-					return err
-				}
-				expr = list.tail
-			}
-		case SexpStr:
-			var f *os.File
-			var err error
-
-			if f, err = os.Open(string(t)); err != nil {
-				return err
-			}
-			defer f.Close()
-			if err = env.SourceFile(f); err != nil {
-				return err
-			}
-
-		default:
-			return fmt.Errorf("%v: Expected `string`, `list`, `array` given type %T val %v", name, item, item)
-		}
-
-		return nil
-	}
-
-	for _, v := range args {
-		if err := sourceItem(v); err != nil {
-			return SexpNull, err
-		}
-	}
-
-	return SexpNull, nil
 }
 
 var MissingFunction = SexpFunction{name: "__missing", user: true}

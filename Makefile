@@ -4,4 +4,4 @@ all:
 	go install && go install github.com/glycerine/zygomys/repl && go build -o zygo && cp -p ./zygo $(GOPATH)/bin/
 
 test:
-	tests/testall.sh
+	tests/testall.sh && cd repl && go test -v
