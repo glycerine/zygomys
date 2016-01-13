@@ -12,9 +12,9 @@ zygomys allows you to create a Domain Specific Language to drive
 your program with minimal fuss and maximum convenience.
 
 It is written in Go and plays easily with Go programs
-and Go structs, using reflection to instantiate Go structs
-from the scripted configuration. zygomys borrows certain constructs from
-Clojure, and others from Go.
+and Go structs, using reflection to instantiate trees of Go structs
+from the scripted configuration. These data structures are native
+Go, and Go methods will run on them at compiled-Go speed.
 
 Because it speaks JSON and Msgpack fluently, zygomys is ideally suited for driving
 complex configurations and providing projects with a domain specific
@@ -22,6 +22,9 @@ language customized to your challenges and driving other code.
 
 The example snippets in the tests/*.zy provide many examples.
 The full [documentation can be found in the Wiki](https://github.com/glycerine/zygomys/wiki).
+zygomys blends traditional and new. While the s-expression syntax
+defines a Lisp, zygomys borrows some syntax from Clojure,
+and some (notably the for-loop style) directly from the Go/C tradition.
 
 The standalone REPL is called simply `zygo`.
 
@@ -66,8 +69,7 @@ $ go get github.com/glycerine/zygomys/cmd/zygo
  * [x] Standalone and embedable REPL.
  * [x] Tail-call optimization
  * [x] Go API
- * [x] Macro System
- * [x] An actual *working* macexpand. `(macexpand your-macro)` makes writing/debugging macros easy. 
+ * [x] Macro System with macexpand `(macexpand (your-macro))` makes writing/debugging macros easy. 
  * [x] Syntax quoting -- with caret `^()` instead of backtick.
  * [x] Channel and goroutine support
  * [x] Pre- and Post- function call hooks
