@@ -19,8 +19,10 @@ The full [documentation can be found in the Wiki](https://github.com/glycerine/z
 
 The standalone REPL is called simply `zygo`.
 
-### Not your Grandfather's Parentheses... features in zygomys 1.3.0 include
+### Not your Grandfather's Parentheses... features in zygomys 1.3.1 include
 
+ * [x] Use `zygo` to configure trees of Go structs, and then run methods on them at natively-compiled speed (since you are calling into Go code).
+ * [x] `emacs/zygo.el` emacs mode
  * [x] JSON and Msgpack interop: serialization and deserialization.
  * [x] `(range key value hash (body))` range loops mirror for-range over a hash in Go.
  * [x] `(for [(initializer) (test) (advance)] (body))` for-loops match those in C and Go. Both `(break)` and `(continue)` are available for additional loop control.
@@ -31,7 +33,6 @@ The standalone REPL is called simply `zygo`.
  * [x] Easy to extend. See the `repl/random.go`, `repl/regexp.go`, and `repl/time.go` files for examples.
  * [x] Clojure like threading `(-> hash field1: field2:)` and `(:field hash)` selection. 
  * [x] Macros for your DSL. Syntax-quote templates work *anywhere*; inside lists, `[]` arrays and `{}` hashes.
- * [x] Use `zygo` to configure trees of Go structs, and then run methods on them at natively-compiled speed (since you are calling into Go code).
 
 ### Obligatory XKCD
 
