@@ -2,22 +2,24 @@
 
 # zygomys - embedded scripting language for Go.
 
-### fast, high level, handles complex and dynamic configuration
+### quickly create a mini-language to configure your project
 
 zygomys is an embeddable scripting language. It is a Lisp, and
 provides an interpreter and REPL (Read-Eval-Print-Loop;
 that is, it comes with a command line interactive interface).
+
 zygomys is allows you to create a Domain Specific Language to drive
 your program with minimal fuss and maximum convenience.
+
 It is written in Go and plays easily with Go programs
 and Go structs, using reflection to instantiate Go structs
-from the scripted configuration. It counts as its original ancestor
-[Howard Mao's inspiring Glisp project](https://github.com/zhemao/glisp).
-zygomys borrows certain constructs from Clojure, and others from Go.
+from the scripted configuration. zygomys borrows certain constructs from
+Clojure, and others from Go.
 
 Because it speaks JSON and Msgpack fluently, zygomys is ideally suited for driving
 complex configurations and providing projects with a domain specific
 language customized to your challenges and driving other code.
+
 The example snippets in the tests/*.zy provide many examples.
 The full [documentation can be found in the Wiki](https://github.com/glycerine/zygomys/wiki).
 
