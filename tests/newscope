@@ -3,9 +3,13 @@
 ;; Regular testing should prefer the testall.sh script herein for
 ;; this reason. It will run each test in its own zygo process.
 (def tests (nsplit (system `ls -1 tests/*.zy`)))
-(for [(def irunner 0) (< irunner (len tests)) (def irunner (+ irunner 1))]
+(for [(def irunner 7) (< irunner (len tests)) (def irunner (+ irunner 1))]
      (def cur (aget tests irunner))
-     (printf "starting %d '%s'\n" irunner cur)
-     (new-scope
-      (source cur))  
-     (printf "done with %d '%s'\n" irunner cur))
+     (cond (!= cur "new-scope")
+           (begin
+            (printf "starting %d '%s'\n" irunner cur)
+            (new-scope (source cur))
+            (printf "done with %d '%s'\n" irunner cur))
+           ()))
+
+     

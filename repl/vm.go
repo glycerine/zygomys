@@ -84,7 +84,7 @@ func (p PushInstrClosure) InstrString() string {
 
 func (p PushInstrClosure) Execute(env *Glisp) error {
 	if p.expr.fun != nil {
-		p.expr.closeScope = NewStack(ScopeStackSize)
+		p.expr.closeScope = env.NewStack(ScopeStackSize)
 
 		p.expr.closeScope.PushScope()
 
@@ -104,7 +104,11 @@ func (p PushInstrClosure) Execute(env *Glisp) error {
 				continue
 			}
 
-			exp, err, _ = env.scopestack.LookupSymbolNonGlobal(sym)
+			if env.oldStyleLookups {
+				exp, err, _ = env.scopestack.LookupSymbolNonGlobal(sym)
+			} else {
+				exp, err, _ = env.linearstack.LookupSymbolNonGlobal(sym)
+			}
 			if err == nil {
 				p.expr.closeScope.BindSymbol(sym, exp)
 			}
@@ -177,8 +181,13 @@ func (g EnvToStackInstr) Execute(env *Glisp) error {
 		}
 		return fmt.Errorf("'%s' is a builtin macro.\n", g.sym.name)
 	}
-
-	expr, err, _ := env.scopestack.LookupSymbol(g.sym)
+	var expr Sexp
+	var err error
+	if env.oldStyleLookups {
+		expr, err, _ = env.scopestack.LookupSymbol(g.sym)
+	} else {
+		expr, err, _ = env.linearstack.LookupSymbol(g.sym)
+	}
 	if err != nil {
 		return err
 	}
@@ -201,7 +210,11 @@ func (p PopStackPutEnvInstr) Execute(env *Glisp) error {
 		return err
 	}
 	env.pc++
-	return env.scopestack.BindSymbol(p.sym, expr)
+	if env.oldStyleLookups {
+		return env.scopestack.BindSymbol(p.sym, expr)
+	} else {
+		return env.linearstack.BindSymbol(p.sym, expr)
+	}
 }
 
 // Update takes top of datastack and
@@ -224,12 +237,22 @@ func (p UpdateInstr) Execute(env *Glisp) error {
 		return err
 	}
 	env.pc++
+	var scope *Scope
 
-	_, err, scope := env.scopestack.LookupSymbol(p.sym)
-	if err != nil {
-		// not found up the stack, so treat like (def)
-		// instead of (set)
-		return env.scopestack.BindSymbol(p.sym, expr)
+	if env.oldStyleLookups {
+		_, err, scope = env.scopestack.LookupSymbol(p.sym)
+		if err != nil {
+			// not found up the stack, so treat like (def)
+			// instead of (set)
+			return env.scopestack.BindSymbol(p.sym, expr)
+		}
+	} else {
+		_, err, scope = env.linearstack.LookupSymbol(p.sym)
+		if err != nil {
+			// not found up the stack, so treat like (def)
+			// instead of (set)
+			return env.linearstack.BindSymbol(p.sym, expr)
+		}
 	}
 	// found up the stack, so (set)
 	return scope.UpdateSymbolInScope(p.sym, expr)
@@ -249,15 +272,24 @@ func (c CallInstr) Execute(env *Glisp) error {
 	if ok {
 		return env.CallUserFunction(f, c.sym.name, c.nargs)
 	}
-
-	funcobj, err, _ := env.scopestack.LookupSymbol(c.sym)
+	var funcobj, indirectFuncName Sexp
+	var err error
+	if env.oldStyleLookups {
+		funcobj, err, _ = env.scopestack.LookupSymbol(c.sym)
+	} else {
+		funcobj, err, _ = env.linearstack.LookupSymbol(c.sym)
+	}
 	if err != nil {
 		return err
 	}
 	switch f := funcobj.(type) {
 	case SexpSymbol:
 		// allow symbols to refer to functions that we then call
-		indirectFuncName, err, _ := env.scopestack.LookupSymbol(f)
+		if env.oldStyleLookups {
+			indirectFuncName, err, _ = env.scopestack.LookupSymbol(f)
+		} else {
+			indirectFuncName, err, _ = env.linearstack.LookupSymbol(f)
+		}
 		if err != nil {
 			return fmt.Errorf("'%s' refers to symbol '%s', but '%s' does not refer to a function.", c.sym.name, f.name, f.name)
 		}
@@ -332,6 +364,7 @@ func (a AddScopeInstr) InstrString() string {
 
 func (a AddScopeInstr) Execute(env *Glisp) error {
 	env.scopestack.PushScope()
+	env.linearstack.PushScope()
 	env.pc++
 	return nil
 }
@@ -344,7 +377,13 @@ func (a RemoveScopeInstr) InstrString() string {
 
 func (a RemoveScopeInstr) Execute(env *Glisp) error {
 	env.pc++
-	return env.scopestack.PopScope()
+	var err error
+	err = env.linearstack.PopScope()
+	err2 := env.scopestack.PopScope()
+	if err != nil {
+		return err
+	}
+	return err2
 }
 
 type ExplodeInstr int
@@ -428,6 +467,7 @@ func (b BindlistInstr) Execute(env *Glisp) error {
 
 	for i, bindThisSym := range b.syms {
 		env.scopestack.BindSymbol(bindThisSym, arr[i])
+		env.linearstack.BindSymbol(bindThisSym, arr[i])
 	}
 	env.pc++
 	return nil
@@ -635,6 +675,28 @@ toploop:
 				break toploop
 			}
 		}
+	}
+	env.pc++
+	return nil
+}
+
+type DebugInstr struct {
+	diagnostic string
+}
+
+func (g DebugInstr) InstrString() string {
+	return fmt.Sprintf("debug %s", g.diagnostic)
+}
+
+func (g DebugInstr) Execute(env *Glisp) error {
+	switch g.diagnostic {
+	case "show-scopes":
+		err := env.ShowStackStackAndScopeStack()
+		if err != nil {
+			return err
+		}
+	default:
+		panic(fmt.Errorf("unknown diagnostic %v", g.diagnostic))
 	}
 	env.pc++
 	return nil

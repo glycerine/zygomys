@@ -512,8 +512,6 @@ func (gen *Generator) GenerateCallBySymbol(sym SexpSymbol, args []Sexp, orig Sex
 		return gen.GenerateCond(args)
 	case "quote":
 		return gen.GenerateQuote(args)
-	case "setq":
-		fallthrough
 	case "def":
 		return gen.GenerateDef(args)
 	case "mdef":
@@ -546,6 +544,10 @@ func (gen *Generator) GenerateCallBySymbol(sym SexpSymbol, args []Sexp, orig Sex
 		return gen.GenerateBreak(args)
 	case "continue":
 		return gen.GenerateContinue(args)
+	case "new-scope":
+		return gen.GenerateNewScope(args)
+	case ".ls":
+		return gen.GenerateDebug("show-scopes")
 	}
 
 	// this is where macros are run
@@ -687,6 +689,14 @@ func (gen *Generator) GenerateForLoop(args []Sexp) error {
 	startPos := len(gen.instructions)
 
 	gen.AddInstruction(LoopStartInstr{loop: loop})
+
+	// A new scope makes it harder to update variables
+	// just outside the loop; one must use (set).
+	// But this is preferred to having nested, sourced
+	// loops use repeat the use variable i in an index and then
+	// end up clobering the parents loop index
+	// inadvertantly.
+	gen.AddInstruction(AddScopeInstr(0))
 	gen.AddInstruction(PushStackmarkInstr{sym: loop.stmtname})
 
 	// generate the body of the loop
@@ -740,12 +750,6 @@ func (gen *Generator) GenerateForLoop(args []Sexp) error {
 	subgenIncr.AddInstruction(PopUntilStackmarkInstr{sym: loop.stmtname})
 	incr_code := subgenIncr.instructions
 
-	// Don't add a new scope for a for-loop.
-	// A new scope would make it hard to update variables
-	// just outside the loop using (def). If we
-	// had to use (set) it would be dangerous and
-	// more error prone.
-
 	exit_loop := len_body_code + 3
 	jump_to_test := len(incr_code) + 2
 
@@ -777,6 +781,7 @@ func (gen *Generator) GenerateForLoop(args []Sexp) error {
 
 	// cleanup
 	gen.AddInstruction(ClearStackmarkInstr{sym: loop.stmtname})
+	gen.AddInstruction(RemoveScopeInstr(0))
 	gen.AddInstruction(PushInstr{SexpNull}) // for is a statement; leave null on the stack.
 
 	loop.loopStart = startPos - bodyPos // offset; should be negative.
@@ -1075,5 +1080,38 @@ func (gen *Generator) GenerateBreak(args []Sexp) error {
 	VPrintf("\n debug GenerateBreak() : loop=%#v\n", loop)
 	gen.AddInstruction(&BreakInstr{loop: loop})
 
+	return nil
+}
+
+// like begin, but puts its contents in a new scope
+func (gen *Generator) GenerateNewScope(expressions []Sexp) error {
+	size := len(expressions)
+	oldtail := gen.tail
+	gen.tail = false
+	if size == 0 {
+		return NoExpressionsFound
+	}
+	gen.AddInstruction(AddScopeInstr(0))
+	for _, expr := range expressions[:size-1] {
+		err := gen.Generate(expr)
+		if err != nil {
+			return err
+		}
+		// insert pops after all but the last instruction
+		// that way the stack remains clean
+		gen.AddInstruction(PopInstr(0))
+	}
+	gen.tail = oldtail
+	err := gen.Generate(expressions[size-1])
+	if err != nil {
+		return err
+	}
+	gen.AddInstruction(RemoveScopeInstr(0))
+	return nil
+}
+
+func (gen *Generator) GenerateDebug(diag string) error {
+	gen.AddInstruction(DebugInstr{diagnostic: diag})
+	gen.AddInstruction(PushInstr{SexpNull})
 	return nil
 }

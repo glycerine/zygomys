@@ -3,6 +3,7 @@ package zygo
 import (
 	"errors"
 	"fmt"
+	"strings"
 )
 
 type StackElem interface {
@@ -12,13 +13,15 @@ type StackElem interface {
 type Stack struct {
 	tos      int
 	elements []StackElem
+	env      *Glisp
 }
 
-func NewStack(size int) *Stack {
-	stack := new(Stack)
-	stack.tos = -1
-	stack.elements = make([]StackElem, size)
-	return stack
+func (env *Glisp) NewStack(size int) *Stack {
+	return &Stack{
+		tos:      -1,
+		elements: make([]StackElem, size),
+		env:      env,
+	}
 }
 
 func (stack *Stack) Clone() *Stack {
@@ -79,3 +82,20 @@ func (stack *Stack) Pop() (StackElem, error) {
 }
 
 func (stack *Stack) IsStackElem() {}
+
+func (stack Stack) Show(env *Glisp, indent int, label string) error {
+	rep := strings.Repeat(" ", indent)
+	fmt.Printf("%s %s\n", rep, label)
+	n := stack.Top()
+	for i := 0; i <= n; i++ {
+		ele, err := stack.Get(n - i)
+		if err != nil {
+			panic(fmt.Errorf("stack access error on %i: %v", i, err))
+		}
+		showme, canshow := ele.(Showable)
+		if canshow {
+			showme.Show(env, indent+4, fmt.Sprintf("elem %v of %s:", i, label))
+		}
+	}
+	return nil
+}

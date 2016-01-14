@@ -144,14 +144,18 @@ func Repl(env *Glisp, cfg *GlispConfig) {
 
 		if parts[0] == ".gls" {
 			fmt.Printf("\nScopes:\n")
-			env.ShowScopes(0)
+			prev := env.showGlobalScope
+			env.showGlobalScope = true
+			err = env.ShowScopes(0)
+			env.showGlobalScope = prev
+			if err != nil {
+				fmt.Printf("%s\n", err)
+			}
 			continue
 		}
 
 		if parts[0] == ".ls" {
-			fmt.Printf("\nScopes:\n")
-			env.ShowScopes(1)
-			continue
+			line = "(.ls)"
 		}
 
 		if parts[0] == ".debug" {

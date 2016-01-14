@@ -7,12 +7,29 @@ import (
 	"strings"
 )
 
-type Scope map[int]Sexp
+type Scope struct {
+	Map      map[int]Sexp
+	IsGlobal bool
+}
+
+func NewScope() *Scope {
+	return &Scope{
+		Map: make(map[int]Sexp),
+	}
+}
+
+func (s *Scope) CloneScope() *Scope {
+	n := NewScope()
+	for k, v := range s.Map {
+		n.Map[k] = v
+	}
+	return n
+}
 
 func (s Scope) IsStackElem() {}
 
 func (stack *Stack) PushScope() {
-	stack.Push(Scope(make(map[int]Sexp)))
+	stack.Push(NewScope())
 }
 
 func (stack *Stack) PopScope() error {
@@ -27,13 +44,15 @@ func (stack *Stack) lookupSymbol(sym SexpSymbol, minFrame int) (Sexp, error, *Sc
 			if err != nil {
 				return SexpNull, err, nil
 			}
-			scope := map[int]Sexp(elem.(Scope))
-			sc := Scope(scope)
-			expr, ok := scope[sym.number]
+			scope := elem.(*Scope)
+			expr, ok := scope.Map[sym.number]
 			if ok {
-				return expr, nil, &sc
+				return expr, nil, scope
 			}
 		}
+	}
+	if stack.env.debugSymbolNotFound {
+		stack.env.ShowStackStackAndScopeStack()
 	}
 	return SexpNull, errors.New(fmt.Sprint("symbol ", sym, " not found")), nil
 }
@@ -51,18 +70,18 @@ func (stack *Stack) BindSymbol(sym SexpSymbol, expr Sexp) error {
 	if stack.IsEmpty() {
 		return errors.New("no scope available")
 	}
-	stack.elements[stack.tos].(Scope)[sym.number] = expr
+	stack.elements[stack.tos].(*Scope).Map[sym.number] = expr
 	return nil
 }
 
 // used to implement (set v 10)
 func (scope *Scope) UpdateSymbolInScope(sym SexpSymbol, expr Sexp) error {
 
-	_, found := (*scope)[sym.number]
+	_, found := scope.Map[sym.number]
 	if !found {
 		return fmt.Errorf("symbol %s not found", sym.name)
 	}
-	(*scope)[sym.number] = expr
+	scope.Map[sym.number] = expr
 	return nil
 }
 
@@ -77,16 +96,31 @@ func (a SymtabSorter) Len() int           { return len(a) }
 func (a SymtabSorter) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a SymtabSorter) Less(i, j int) bool { return a[i].Key < a[j].Key }
 
-func (s *Scope) Show(env *Glisp, indent int) {
+func (s Scope) Show(env *Glisp, indent int, label string) error {
+	rep := strings.Repeat(" ", indent)
+	rep4 := strings.Repeat(" ", indent+4)
+	fmt.Printf("%s %s\n", rep, label)
+	if s.IsGlobal && !env.showGlobalScope {
+		fmt.Printf("%s (global scope - omitting content for brevity)\n", rep4)
+		return nil
+	}
+	if len(s.Map) == 0 {
+		fmt.Printf("%s empty-scope: no symbols\n", rep4)
+		return nil
+	}
 	sortme := []*SymtabE{}
-	for symbolNumber, val := range *s {
+	for symbolNumber, val := range s.Map {
 		symbolName := env.revsymtable[symbolNumber]
 		sortme = append(sortme, &SymtabE{Key: symbolName, Val: val.SexpString()})
 	}
 	sort.Sort(SymtabSorter(sortme))
-	rep := strings.Repeat(" ", indent)
 	for i := range sortme {
-		fmt.Printf("%s %s -> %s\n", rep,
+		fmt.Printf("%s %s -> %s\n", rep4,
 			sortme[i].Key, sortme[i].Val)
 	}
+	return nil
+}
+
+type Showable interface {
+	Show(env *Glisp, indent int, label string) error
 }

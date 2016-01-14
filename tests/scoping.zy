@@ -7,3 +7,15 @@
     (def a 6)
     (assert (== a 6)))
   (assert (== a 5)))
+
+(new-scope
+  (def b 12)
+  (new-scope
+    (def b 99)
+    (new-scope
+      (def b 7)
+      (assert (== b 7)))
+    (assert (== b 99)))
+  (assert (== b 12)))
+
+   

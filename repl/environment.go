@@ -14,11 +14,17 @@ type PreHook func(*Glisp, string, []Sexp)
 type PostHook func(*Glisp, string, Sexp)
 
 type Glisp struct {
-	datastack   *Stack
-	scopestack  *Stack
-	addrstack   *Stack
-	stackstack  *Stack
-	loopstack   *Stack
+	datastack  *Stack
+	scopestack *Stack
+	addrstack  *Stack
+	stackstack *Stack
+
+	// linearstack: push on scope enter, pop on scope exit. simple.
+	linearstack *Stack
+
+	// loopstack: let break and continue find the nearest enclosing loop.
+	loopstack *Stack
+
 	symtable    map[string]int
 	revsymtable map[int]string
 	builtins    map[int]SexpFunction
@@ -30,7 +36,10 @@ type Glisp struct {
 	before      []PreHook
 	after       []PostHook
 
-	debugExec bool
+	debugExec           bool
+	debugSymbolNotFound bool
+	oldStyleLookups     bool
+	showGlobalScope     bool
 }
 
 const CallStackSize = 25
@@ -41,12 +50,16 @@ const LoopStackSize = 5
 
 func NewGlisp() *Glisp {
 	env := new(Glisp)
-	env.datastack = NewStack(DataStackSize)
-	env.scopestack = NewStack(ScopeStackSize)
-	env.scopestack.PushScope()
-	env.stackstack = NewStack(StackStackSize)
-	env.addrstack = NewStack(CallStackSize)
-	env.loopstack = NewStack(LoopStackSize)
+	env.datastack = env.NewStack(DataStackSize)
+	env.scopestack = env.NewStack(ScopeStackSize)
+	env.linearstack = env.NewStack(ScopeStackSize)
+	glob := NewScope()
+	glob.IsGlobal = true
+	env.scopestack.Push(glob)
+	env.linearstack.Push(glob)
+	env.stackstack = env.NewStack(StackStackSize)
+	env.addrstack = env.NewStack(CallStackSize)
+	env.loopstack = env.NewStack(LoopStackSize)
 	env.builtins = make(map[int]SexpFunction)
 	env.macros = make(map[int]SexpFunction)
 	env.symtable = make(map[string]int)
@@ -64,6 +77,7 @@ func NewGlisp() *Glisp {
 	env.mainfunc = MakeFunction("__main", 0, false, make([]Instruction, 0), nil)
 	env.curfunc = env.mainfunc
 	env.pc = 0
+	env.debugSymbolNotFound = false
 	return env
 }
 
@@ -73,6 +87,7 @@ func (env *Glisp) Clone() *Glisp {
 	dupenv.datastack = env.datastack.Clone()
 	dupenv.stackstack = env.stackstack.Clone()
 	dupenv.scopestack = env.scopestack.Clone()
+	dupenv.linearstack = env.linearstack.Clone()
 	dupenv.addrstack = env.addrstack.Clone()
 
 	dupenv.builtins = env.builtins
@@ -84,19 +99,22 @@ func (env *Glisp) Clone() *Glisp {
 	dupenv.after = env.after
 
 	dupenv.scopestack.Push(env.scopestack.elements[0])
+	dupenv.linearstack.Push(env.scopestack.elements[0])
 
 	dupenv.mainfunc = MakeFunction("__main", 0, false, make([]Instruction, 0), nil)
 	dupenv.curfunc = dupenv.mainfunc
 	dupenv.pc = 0
+	dupenv.debugSymbolNotFound = env.debugSymbolNotFound
 	return dupenv
 }
 
 func (env *Glisp) Duplicate() *Glisp {
 	dupenv := new(Glisp)
-	dupenv.datastack = NewStack(DataStackSize)
-	dupenv.scopestack = NewStack(ScopeStackSize)
-	dupenv.stackstack = NewStack(StackStackSize)
-	dupenv.addrstack = NewStack(CallStackSize)
+	dupenv.datastack = dupenv.NewStack(DataStackSize)
+	dupenv.scopestack = dupenv.NewStack(ScopeStackSize)
+	dupenv.linearstack = dupenv.NewStack(ScopeStackSize)
+	dupenv.stackstack = dupenv.NewStack(StackStackSize)
+	dupenv.addrstack = dupenv.NewStack(CallStackSize)
 	dupenv.builtins = env.builtins
 	dupenv.macros = env.macros
 	dupenv.symtable = env.symtable
@@ -106,10 +124,12 @@ func (env *Glisp) Duplicate() *Glisp {
 	dupenv.after = env.after
 
 	dupenv.scopestack.Push(env.scopestack.elements[0])
+	dupenv.linearstack.Push(env.scopestack.elements[0])
 
 	dupenv.mainfunc = MakeFunction("__main", 0, false, make([]Instruction, 0), nil)
 	dupenv.curfunc = dupenv.mainfunc
 	dupenv.pc = 0
+	dupenv.debugSymbolNotFound = env.debugSymbolNotFound
 	return dupenv
 }
 
@@ -178,9 +198,11 @@ func (env *Glisp) CallFunction(function SexpFunction, nargs int) error {
 	if env.scopestack.IsEmpty() {
 		panic("where's the global scope?")
 	}
+
+	/* old style, for backup.
 	globalScope := env.scopestack.elements[0]
 	env.stackstack.Push(env.scopestack)
-	env.scopestack = NewStack(ScopeStackSize)
+	env.scopestack = env.NewStack(ScopeStackSize)
 	env.scopestack.Push(globalScope)
 
 	if function.closeScope != nil {
@@ -189,6 +211,23 @@ func (env *Glisp) CallFunction(function SexpFunction, nargs int) error {
 
 	env.addrstack.PushAddr(env.curfunc, env.pc+1)
 	env.scopestack.PushScope()
+	*/
+	// new style
+	env.linearstack.PushScope()
+
+	globalScope := env.scopestack.elements[0]
+	env.stackstack.Push(env.scopestack)
+	env.scopestack = env.NewStack(ScopeStackSize)
+	env.scopestack.Push(globalScope)
+
+	if function.closeScope != nil {
+		function.closeScope.PushAllTo(env.scopestack)
+		function.closeScope.PushAllTo(env.linearstack)
+	}
+
+	env.addrstack.PushAddr(env.curfunc, env.pc+1)
+	env.scopestack.PushScope()
+
 	env.curfunc = function
 	env.pc = 0
 
@@ -209,13 +248,21 @@ func (env *Glisp) ReturnFromFunction() error {
 	if err != nil {
 		return err
 	}
+	/* old style:
 	scopestack, err := env.stackstack.Pop()
 	if err != nil {
 		return err
 	}
 	env.scopestack = scopestack.(*Stack)
+	*/
+	// new style
+	_, err = env.stackstack.Pop()
+	if err != nil {
+		return err
+	}
+	_, err = env.linearstack.Pop()
 
-	return nil
+	return err
 }
 
 func (env *Glisp) CallUserFunction(
@@ -324,7 +371,8 @@ func (env *Glisp) AddFunction(name string, function GlispUserFunction) {
 
 func (env *Glisp) AddGlobal(name string, obj Sexp) {
 	sym := env.MakeSymbol(name)
-	env.scopestack.elements[0].(Scope)[sym.number] = obj
+	env.scopestack.elements[0].(*Scope).Map[sym.number] = obj
+	env.linearstack.elements[0].(*Scope).Map[sym.number] = obj
 }
 
 func (env *Glisp) AddMacro(name string, function GlispUserFunction) {
@@ -406,6 +454,7 @@ func (env *Glisp) GetStackTrace(err error) string {
 func (env *Glisp) Clear() {
 	env.datastack.tos = -1
 	env.scopestack.tos = 0
+	env.linearstack.tos = 0
 	env.addrstack.tos = -1
 	env.mainfunc = MakeFunction("__main", 0, false, make([]Instruction, 0), nil)
 	env.curfunc = env.mainfunc
@@ -414,11 +463,19 @@ func (env *Glisp) Clear() {
 
 func (env *Glisp) FindObject(name string) (Sexp, bool) {
 	sym := env.MakeSymbol(name)
-	obj, err, _ := env.scopestack.LookupSymbol(sym)
-	if err != nil {
-		return SexpNull, false
+	if env.oldStyleLookups {
+		obj, err, _ := env.scopestack.LookupSymbol(sym)
+		if err != nil {
+			return SexpNull, false
+		}
+		return obj, true
+	} else {
+		obj, err, _ := env.linearstack.LookupSymbol(sym)
+		if err != nil {
+			return SexpNull, false
+		}
+		return obj, true
 	}
-	return obj, true
 }
 
 func (env *Glisp) Apply(fun SexpFunction, args []Sexp) (Sexp, error) {
@@ -511,16 +568,102 @@ func (env *Glisp) ShowScopes(startat int) error {
 			return err
 		}
 
-		var s Scope
 		switch sc := scop.(type) {
 		case Scope:
-			s = sc
+			sc.Show(env, i*6, fmt.Sprintf("====  scope # %d  in  env %p\n", i, env))
+		case *Scope:
+			sc.Show(env, i*6, fmt.Sprintf("====  scope # %d  in  env %p\n", i, env))
 		default:
 			return fmt.Errorf("unexpected type %T / val = %#v on scopestack", sc, sc)
 		}
-
-		fmt.Printf("====  scope # %d  in  env %p\n", i, env)
-		s.Show(env, i*6)
 	}
 	return nil
 }
+
+func (env *Glisp) ShowStackStackAndScopeStack() error {
+	note := ""
+	n := env.stackstack.Top()
+	if n < 0 {
+		note = "(empty)"
+	}
+	fmt.Printf(" ========  env.stackstack is %v deep: %s\n", n+1, note)
+	for i := 0; i <= n; i++ {
+		ele, err := env.stackstack.Get(n - i)
+		if err != nil {
+			panic(fmt.Errorf("env.stackstack access error on %i: %v", i, err))
+		}
+		label := fmt.Sprintf("stackstack %v", i)
+		switch x := ele.(type) {
+		case *Stack:
+			x.Show(env, 0, label)
+		default:
+			panic(fmt.Errorf("unrecognized element on stackstack: %T/val=%v", x, x))
+		}
+	}
+	n = env.scopestack.Top()
+	fmt.Printf(" ++++++++  env.scopestack is %v deep:\n", n+1)
+	for i := 0; i <= n; i++ {
+		ele, err := env.scopestack.Get(n - i)
+		if err != nil {
+			panic(fmt.Errorf("env.scopestack access error on %i: %v", i, err))
+		}
+		label := fmt.Sprintf("scopestack %v", i)
+		switch x := ele.(type) {
+		case *Scope:
+			x.Show(env, 0, label)
+		case Scope:
+			x.Show(env, 0, label)
+		default:
+			panic(fmt.Errorf("unrecognized element on scopestack: %T/val=%v", x, x))
+		}
+	}
+
+	n = env.linearstack.Top()
+	fmt.Printf(" ++++++++  env.linearstack is %v deep:\n", n+1)
+	for i := 0; i <= n; i++ {
+		ele, err := env.linearstack.Get(n - i)
+		if err != nil {
+			panic(fmt.Errorf("env.linearstack access error on %i: %v", i, err))
+		}
+		label := fmt.Sprintf("linearstack %v", i)
+		switch x := ele.(type) {
+		case *Scope:
+			x.Show(env, 0, label)
+		case Scope:
+			x.Show(env, 0, label)
+		default:
+			panic(fmt.Errorf("unrecognized element on linearstack: %T/val=%v", x, x))
+		}
+	}
+
+	fmt.Printf(" --------\n")
+	return nil
+}
+
+/*
+zygo> (defn h [] (println "hi from h") (defn f [] (defn g [] (println "hi from g") (.ls)) (g)) (f))
+zygo> (h)
+hi from h
+hi from g
+ ========  env.stackstack is 3 deep:
+ stackstack 0
+     elem 0 of stackstack 0:
+         (global scope - omitting content for brevity)
+ stackstack 1
+     elem 0 of stackstack 1:
+         (global scope - omitting content for brevity)
+     elem 1 of stackstack 1:
+         f -> (defn f [] (defn g [] (println "hi from g") (.ls)) (g))
+ stackstack 2
+     elem 0 of stackstack 2:
+         (global scope - omitting content for brevity)
+     elem 1 of stackstack 2:
+         g -> (defn g [] (println "hi from g") (.ls))
+ ++++++++  env.scopestack is 2 deep:
+ scopestack 0
+     (global scope - omitting content for brevity)
+ scopestack 1
+     empty-scope: no symbols
+ --------
+zygo>
+*/
