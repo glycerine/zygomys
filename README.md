@@ -39,7 +39,7 @@ $ go get github.com/glycerine/zygomys/cmd/zygo
  * [x] Use `zygo` to configure trees of Go structs, and then run methods on them at natively-compiled speed (since you are calling into Go code).
  * [x] `emacs/zygo.el` emacs mode
  * [x] JSON and Msgpack interop: serialization and deserialization.
- * [x] `(range key value hash (body))` range loops mirror for-range over a hash in Go.
+ * [x] `(range key value hash_or_array (body))` range loops act like Go for-range loops: iterate through hashes or arrays.
  * [x] `(for [(initializer) (test) (advance)] (body))` for-loops match those in C and Go. Both `(break)` and `(continue)` are available for additional loop control.
  * [x] Raw bytes type `(raw string)` lets you do zero-copy `[]byte` manipulation.
  * [x] Record definitions `(defmap)` make configuration a breeze.
