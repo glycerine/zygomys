@@ -155,10 +155,10 @@ func (gen *Generator) GenerateDef(args []Sexp) error {
 			// auto-unquoting first argument to def
 			sym = unquotedSymbol.(SexpSymbol)
 		} else {
-			return errors.New("Definition name must by symbol")
+			return errors.New("Definition name must be symbol")
 		}
 	default:
-		return errors.New("Definition name must by symbol")
+		return errors.New("Definition name must be symbol")
 	}
 
 	if gen.env.HasMacro(sym) {
@@ -197,7 +197,7 @@ func (gen *Generator) GenerateDefn(args []Sexp, orig Sexp) error {
 	case SexpSymbol:
 		sym = expr
 	default:
-		return errors.New("Definition name must by symbol")
+		return errors.New("Definition name must be symbol")
 	}
 	if gen.env.HasMacro(sym) {
 		return fmt.Errorf("Already have macro named '%s': refusing"+
@@ -234,7 +234,7 @@ func (gen *Generator) GenerateDefmac(args []Sexp, orig Sexp) error {
 	case SexpSymbol:
 		sym = expr
 	default:
-		return errors.New("Definition name must by symbol")
+		return errors.New("Definition name must be symbol")
 	}
 
 	sfun, err := buildSexpFun(gen.env, sym.name, funcargs, args[2:], orig)
@@ -814,6 +814,16 @@ func (gen *Generator) GenerateSet(args []Sexp) error {
 	switch expr := args[0].(type) {
 	case SexpSymbol:
 		lhs = expr
+
+	case SexpPair:
+		// gracefully handle the quoted symbols we get from macros
+		unquotedSymbol, isQuo := isQuotedSymbol(expr)
+		if isQuo {
+			// auto-unquoting first argument to def
+			lhs = unquotedSymbol.(SexpSymbol)
+		} else {
+			return errors.New("set: left-hand-side must be a symbol")
+		}
 	default:
 		return errors.New("set: left-hand-side must be a symbol")
 	}
