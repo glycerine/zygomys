@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"os"
 	//"github.com/shurcooL/go-goon"
 )
 
@@ -792,6 +793,7 @@ var BuiltinFunctions = map[string]GlispUserFunction{
 	"methodls":  GoMethodListFunction,
 	"fieldls":   GoFieldListFunction,
 	"chomp":     StringUtilFunction,
+	"exit":      ExitFunction,
 }
 
 func ThreadMapFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
@@ -880,4 +882,15 @@ func GensymFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	default:
 		return SexpNull, WrongNargs
 	}
+}
+
+func ExitFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
+	if len(args) != 1 {
+		return SexpNull, WrongNargs
+	}
+	switch e := args[0].(type) {
+	case SexpInt:
+		os.Exit(int(e))
+	}
+	return SexpNull, errors.New("argument must be int (the exit code)")
 }

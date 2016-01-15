@@ -12,6 +12,7 @@ type GlispConfig struct {
 	CountFuncCalls    bool
 	Flags             *flag.FlagSet
 	ExtensionsVersion string
+	Command           string
 }
 
 func NewGlispConfig(cmdname string) *GlispConfig {
@@ -26,6 +27,7 @@ func (c *GlispConfig) DefineFlags() {
 	c.Flags.StringVar(&c.MemProfile, "memprofile", "", "write mem profile to file")
 	c.Flags.BoolVar(&c.ExitOnFailure, "exitonfail", false, "exit on failure instead of starting repl")
 	c.Flags.BoolVar(&c.CountFuncCalls, "countcalls", false, "count how many times each function is run")
+	c.Flags.StringVar(&c.Command, "c", "", "expressions to evaluate")
 }
 
 // call c.ValidateConfig() after myflags.Parse()
