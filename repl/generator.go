@@ -148,6 +148,15 @@ func (gen *Generator) GenerateDef(args []Sexp) error {
 	switch expr := args[0].(type) {
 	case SexpSymbol:
 		sym = expr
+	case SexpPair:
+		// gracefully handle the quoted symbols we get from macros
+		unquotedSymbol, isQuo := isQuotedSymbol(expr)
+		if isQuo {
+			// auto-unquoting first argument to def
+			sym = unquotedSymbol.(SexpSymbol)
+		} else {
+			return errors.New("Definition name must by symbol")
+		}
 	default:
 		return errors.New("Definition name must by symbol")
 	}

@@ -356,3 +356,32 @@ func GoFieldListFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	}
 	return SexpArray(*h.GoFieldSx), nil
 }
+
+// works over hashes and arrays
+func GenericHpairFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
+	if len(args) != 2 {
+		return SexpNull, WrongNargs
+	}
+
+	posreq, isInt := args[1].(SexpInt)
+	if !isInt {
+		return SexpNull, fmt.Errorf("hpair position request must be an integer")
+	}
+	pos := int(posreq)
+
+	switch seq := args[0].(type) {
+	case SexpHash:
+		if pos < 0 || pos >= len(*seq.KeyOrder) {
+			return SexpNull, fmt.Errorf("hpair position request %d out of bounds", pos)
+		}
+		return seq.HashPairi(pos)
+	case SexpArray:
+		if pos < 0 || pos >= len(seq) {
+			return SexpNull, fmt.Errorf("hpair position request %d out of bounds", pos)
+		}
+		return Cons(SexpInt(pos), Cons(seq[pos], SexpNull)), nil
+	default:
+		return SexpNull, errors.New("first argument of to hpair function must be hash, list, or array")
+	}
+	return SexpNull, nil
+}

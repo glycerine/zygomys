@@ -270,6 +270,22 @@ func (env *Glisp) StandardSetup() {
 	_, err = env.EvalString(systemMacro)
 	panicOn(err)
 
+	incrMacro := `(defmac ++ [a] ^(set ~a (+ ~a 1)))`
+	_, err = env.EvalString(incrMacro)
+	panicOn(err)
+
+	incrEqMacro := `(defmac += [a b] ^(set ~a (+ ~a ~b)))`
+	_, err = env.EvalString(incrEqMacro)
+	panicOn(err)
+
+	decrMacro := `(defmac -- [a] ^(set ~a (- ~a 1)))`
+	_, err = env.EvalString(decrMacro)
+	panicOn(err)
+
+	decrEqMacro := `(defmac -= [a b] ^(set ~a (- ~a ~b)))`
+	_, err = env.EvalString(decrEqMacro)
+	panicOn(err)
+
 	env.ImportChannels()
 	env.ImportGoroutines()
 	env.ImportRegex()

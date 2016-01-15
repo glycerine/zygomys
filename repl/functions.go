@@ -758,7 +758,7 @@ var BuiltinFunctions = map[string]GlispUserFunction{
 	"hset!":      HashAccessFunction,
 	"hdel!":      HashAccessFunction,
 	"keys":       HashAccessFunction,
-	"hpair":      HashAccessFunction,
+	"hpair":      GenericHpairFunction,
 	"slice":      SliceFunction,
 	"len":        LenFunction,
 	"append":     AppendFunction,

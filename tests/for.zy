@@ -5,3 +5,20 @@
 (printf "sum is %d\n" sum)
 (assert (== sum 45))
 
+(def a [0 2 4 6])
+
+;; hpair works on arrays
+(assert (== (hpair a 3) '(3 6)))
+(assert (== (hpair a 2) '(2 4)))
+
+;; therefore range works on arrays
+(def sum 0)
+(def isum 0)
+(range i v a
+   (+= sum v)
+   (+= isum i))
+
+(assert (== sum 12))
+(assert (== isum 6))
+
+
