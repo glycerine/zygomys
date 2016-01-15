@@ -18,3 +18,14 @@
 (assert (array? [1 2 3]))
 (assert (empty? []))
 (assert (not (empty? [1])))
+
+;; colon used as shorthand for aget
+(def a [8 4 1 7])
+(assert (== 8 (:0 a)))
+(assert (== 4 (:1 a)))
+(assert (== 1 (:2 a)))
+(assert (== 7 (:3 a)))
+
+(assert (== 'default (:99 a 'default)))
+
+

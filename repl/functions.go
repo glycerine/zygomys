@@ -205,7 +205,8 @@ func SecondFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 }
 
 func ArrayAccessFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
-	if len(args) < 2 {
+	narg := len(args)
+	if narg < 2 || narg > 3 {
 		return SexpNull, WrongNargs
 	}
 
@@ -224,22 +225,38 @@ func ArrayAccessFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	case SexpChar:
 		i = int(t)
 	default:
-		return SexpNull, errors.New("Second argument of aget must be integer")
+		// can we evaluate it?
+		res, err := EvalFunction(env, "eval-aget-index", []Sexp{args[1]})
+		if err != nil {
+			return SexpNull, fmt.Errorf("error during eval of "+
+				"array-access position argument: %s", err)
+		}
+		switch j := res.(type) {
+		case SexpInt:
+			i = int(j)
+		default:
+			return SexpNull, errors.New("Second argument of aget could not be evaluated to integer")
+		}
 	}
 
-	if i < 0 || i >= len(arr) {
-		return SexpNull, errors.New("Array index out of bounds")
-	}
-
-	if name == "aget" {
+	switch name {
+	case "hget":
+		fallthrough
+	case "aget":
+		if i < 0 || i >= len(arr) {
+			// out of bounds -- do we have a default?
+			if narg == 3 {
+				return args[2], nil
+			}
+			return SexpNull, errors.New("Array index out of bounds")
+		}
 		return arr[i], nil
+	case "aset!":
+		if len(args) != 3 {
+			return SexpNull, WrongNargs
+		}
+		arr[i] = args[2]
 	}
-
-	if len(args) != 3 {
-		return SexpNull, WrongNargs
-	}
-	arr[i] = args[2]
-
 	return SexpNull, nil
 }
 
@@ -285,9 +302,9 @@ func HashAccessFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	switch name {
 	case "hget":
 		if len(args) == 3 {
-			return hash.HashGetDefault(args[1], args[2])
+			return hash.HashGetDefault(env, args[1], args[2])
 		}
-		return hash.HashGet(args[1])
+		return hash.HashGet(env, args[1])
 	case "hset!":
 		if len(args) != 3 {
 			return SexpNull, WrongNargs
@@ -343,9 +360,9 @@ func HashColonFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	}
 
 	if len(args) == 3 {
-		return hash.HashGetDefault(args[0], args[2])
+		return hash.HashGetDefault(env, args[0], args[2])
 	}
-	return hash.HashGet(args[0])
+	return hash.HashGet(env, args[0])
 }
 
 func SliceFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
@@ -755,7 +772,7 @@ var BuiltinFunctions = map[string]GlispUserFunction{
 	"aget":       ArrayAccessFunction,
 	"aset!":      ArrayAccessFunction,
 	"sget":       SgetFunction,
-	"hget":       HashAccessFunction,
+	"hget":       GenericAccessFunction, // handles arrays or hashes
 	"hset!":      HashAccessFunction,
 	"hdel!":      HashAccessFunction,
 	"keys":       HashAccessFunction,
@@ -806,7 +823,7 @@ func ThreadMapFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		return SexpNull, fmt.Errorf("-> error: first argument must be a hash or defmap")
 	}
 
-	field, err := threadingHelper(&h, args[1:])
+	field, err := threadingHelper(env, &h, args[1:])
 	if err != nil {
 		return SexpNull, err
 	}
@@ -814,11 +831,11 @@ func ThreadMapFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	return field, nil
 }
 
-func threadingHelper(hash *SexpHash, args []Sexp) (Sexp, error) {
+func threadingHelper(env *Glisp, hash *SexpHash, args []Sexp) (Sexp, error) {
 	if len(args) == 0 {
 		panic("should not recur without arguments")
 	}
-	field, err := hash.HashGet(args[0])
+	field, err := hash.HashGet(env, args[0])
 	if err != nil {
 		return SexpNull, fmt.Errorf("-> error: field '%s' not found",
 			args[0].SexpString())
@@ -830,7 +847,7 @@ func threadingHelper(hash *SexpHash, args []Sexp) (Sexp, error) {
 				"not on a hash or defmap; instead type %T with value '%#v'",
 				args[1].SexpString(), field, field)
 		}
-		return threadingHelper(&h, args[1:])
+		return threadingHelper(env, &h, args[1:])
 	}
 	return field, nil
 }
@@ -893,4 +910,19 @@ func ExitFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		os.Exit(int(e))
 	}
 	return SexpNull, errors.New("argument must be int (the exit code)")
+}
+
+// handles arrays or hashes
+func GenericAccessFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
+	if len(args) < 1 || len(args) > 3 {
+		return SexpNull, WrongNargs
+	}
+
+	switch args[0].(type) {
+	case SexpHash:
+		return HashAccessFunction(env, name, args)
+	case SexpArray:
+		return ArrayAccessFunction(env, name, args)
+	}
+	return SexpNull, errors.New("first argument of to hget function must be hash or array")
 }

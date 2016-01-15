@@ -169,7 +169,7 @@ func NamedHashSexpString(hash SexpHash) string {
 	str := " (" + *hash.TypeName + " "
 
 	for _, key := range *hash.KeyOrder {
-		val, err := hash.HashGet(key)
+		val, err := hash.HashGet(nil, key)
 		if err == nil {
 			switch s := key.(type) {
 			case SexpStr:

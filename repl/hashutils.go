@@ -10,23 +10,55 @@ import (
 
 var NoAttachedGoStruct = fmt.Errorf("hash has no attach Go struct")
 
-func HashExpression(expr Sexp) (int, error) {
+func HashExpression(env *Glisp, expr Sexp) (int, error) {
+
+	hashcode, isList, err := hashHelper(expr)
+	if err != nil {
+		return 0, err
+	}
+	if !isList {
+		return hashcode, nil
+	}
+
+	// can we evaluate it?
+	if env != nil {
+		res, err := EvalFunction(env, "eval-hash-key", []Sexp{expr})
+		if err != nil {
+			return 0, fmt.Errorf("error during eval of "+
+				"hash key: %s", err)
+		}
+		// 2nd try
+		hashcode2, isList2, err := hashHelper(res)
+		if err != nil {
+			return 0, fmt.Errorf("evaluated key function to '%s' but could not hash type %T: %s", res.SexpString(), res, err)
+		}
+		if !isList2 {
+			return hashcode2, nil
+		}
+		return 0, fmt.Errorf("list '%s' found where hash key needed", res.SexpString())
+	}
+	return 0, fmt.Errorf("cannot hash type %T", expr)
+}
+
+func hashHelper(expr Sexp) (hashcode int, isList bool, err error) {
 	switch e := expr.(type) {
 	case SexpInt:
-		return int(e), nil
+		return int(e), false, nil
 	case SexpChar:
-		return int(e), nil
+		return int(e), false, nil
 	case SexpSymbol:
-		return e.number, nil
+		return e.number, false, nil
 	case SexpStr:
 		hasher := fnv.New32()
 		_, err := hasher.Write([]byte(e))
 		if err != nil {
-			return 0, err
+			return 0, false, err
 		}
-		return int(hasher.Sum32()), nil
+		return int(hasher.Sum32()), false, nil
+	case SexpPair:
+		return 0, true, nil
 	}
-	return 0, errors.New(fmt.Sprintf("cannot hash type %T", expr))
+	return 0, false, fmt.Errorf("cannot hash type %T", expr)
 }
 
 func MakeHash(args []Sexp, typename string, env *Glisp) (SexpHash, error) {
@@ -85,11 +117,11 @@ func MakeHash(args []Sexp, typename string, env *Glisp) (SexpHash, error) {
 	return hash, nil
 }
 
-func (hash *SexpHash) HashGet(key Sexp) (Sexp, error) {
+func (hash *SexpHash) HashGet(env *Glisp, key Sexp) (Sexp, error) {
 	// this is kind of a hack
 	// SexpEnd can't be created by user
 	// so there is no way it would actually show up in the map
-	val, err := hash.HashGetDefault(key, SexpEnd)
+	val, err := hash.HashGetDefault(env, key, SexpEnd)
 
 	if err != nil {
 		return SexpNull, err
@@ -102,8 +134,8 @@ func (hash *SexpHash) HashGet(key Sexp) (Sexp, error) {
 	return val, nil
 }
 
-func (hash *SexpHash) HashGetDefault(key Sexp, defaultval Sexp) (Sexp, error) {
-	hashval, err := HashExpression(key)
+func (hash *SexpHash) HashGetDefault(env *Glisp, key Sexp, defaultval Sexp) (Sexp, error) {
+	hashval, err := HashExpression(env, key)
 	if err != nil {
 		return SexpNull, err
 	}
@@ -123,7 +155,7 @@ func (hash *SexpHash) HashGetDefault(key Sexp, defaultval Sexp) (Sexp, error) {
 }
 
 func (hash *SexpHash) HashSet(key Sexp, val Sexp) error {
-	hashval, err := HashExpression(key)
+	hashval, err := HashExpression(nil, key)
 	if err != nil {
 		return err
 	}
@@ -157,7 +189,7 @@ func (hash *SexpHash) HashSet(key Sexp, val Sexp) error {
 }
 
 func (hash *SexpHash) HashDelete(key Sexp) error {
-	hashval, err := HashExpression(key)
+	hashval, err := HashExpression(nil, key)
 	if err != nil {
 		return err
 	}
@@ -227,7 +259,7 @@ func (hash *SexpHash) HashPairi(pos int) (SexpPair, error) {
 	found := false
 	for k := pos; k < lenKeyOrder; k++ {
 		key = (*hash.KeyOrder)[k]
-		val, err = hash.HashGet(key)
+		val, err = hash.HashGet(nil, key)
 
 		if err == nil {
 			found = true

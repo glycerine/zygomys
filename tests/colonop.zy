@@ -1,0 +1,22 @@
+;; colon operator works like aget on arrays
+(def a [4 5 6 7])
+(assert (== 4 (:0 a)))
+
+;; symbol access
+(def y 1)
+(assert (== 5 (:y a)))
+
+;; function access
+(defn g [] 0)
+(defn f [] 3)
+(assert (== 4 (:(g) a)))
+(assert (== 7 (:(f) a)))
+
+;; colon operator works like hget on hashes
+(def h {karin:9 heath:10})
+(assert (== (:karin h) 9))
+(assert (== (:heath h) 10))
+
+;; NB doesn't work because hash expects symbols as keys
+;; (defn f [] 'heath)
+;; (assert (== (:(f) h) 10))

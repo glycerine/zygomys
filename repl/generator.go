@@ -1034,7 +1034,7 @@ func (gen *Generator) generateSyntaxQuoteHash(arg Sexp) error {
 	for i := 0; i < n; i++ {
 		// must reverse order here to preserve order on rebuild
 		key := (*hash.KeyOrder)[(n-i)-1]
-		val, err := hash.HashGet(key)
+		val, err := hash.HashGet(nil, key)
 		if err != nil {
 			return err
 		}

@@ -4,4 +4,4 @@ all:
 	go install github.com/glycerine/zygomys/cmd/zygo
 
 test:
-	tests/testall.sh && cd repl && go test -v
+	tests/testall.sh && echo "running 'go test'" && cd repl && go test -v

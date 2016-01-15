@@ -109,7 +109,7 @@ func (hash *SexpHash) jsonHashHelper() string {
 	for _, key := range *hash.KeyOrder {
 		keyst := key.SexpString()
 		ko = append(ko, keyst)
-		val, err := hash.HashGet(key)
+		val, err := hash.HashGet(nil, key)
 		if err == nil {
 			str += `"` + keyst + `":`
 			str += string(SexpToJson(val)) + `, `
