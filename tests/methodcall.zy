@@ -7,3 +7,8 @@
 (def w (weather type:"delightful" size:888))
 (def c2 (.method (snoopy cry:"yeah!") EchoWeather: w))
 (assert (== (str c2) `[ (weather time:() size:888 type:"delightful" details:[]byte(nil))]`))
+
+;; passing in []byte to a method
+(def w (weather))
+(assert (== (len (.method w MarshalMsg: (raw))) 2)) ;; really just that it doesn't crash :)
+

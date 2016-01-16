@@ -95,8 +95,12 @@ func CallGoMethodFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 			return SexpNull, fmt.Errorf("error converting %d-th "+
 				"argument to Go: '%s'", i-2, err)
 		}
-		inputVa = append(inputVa, reflect.ValueOf(iface))
-
+		switch pdepth {
+		case 0:
+			inputVa = append(inputVa, reflect.ValueOf(iface).Elem())
+		case 1:
+			inputVa = append(inputVa, reflect.ValueOf(iface))
+		}
 		VPrintf("\n allocated new %T/val=%#v /i=%#v\n", va, va, va.Interface())
 	}
 
