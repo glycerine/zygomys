@@ -46,14 +46,17 @@ func Test008CallByReflectionWorksWithoutNesting(t *testing.T) {
 `)
 		panicOn(err)
 
-		cv.So(x.SexpString(), cv.ShouldEqual, ` (hornet speed:567 nickname:"Bob" mass:4.2 SpanCm:8877)`)
+		cv.So(x.SexpString(), cv.ShouldEqual,
+			` (hornet speed:567 nickname:"Bob" mass:4.2 SpanCm:8877)`)
 
 		ho := &Hornet{}
 		res, err := SexpToGoStructs(x, ho, env)
 		panicOn(err)
 		VPrintf("\n ho = %#v\n", ho)
 		VPrintf("\n res = %#v\n", res)
-		cv.So(ho, cv.ShouldResemble, &Hornet{Plane: Plane{Wings: Wings{SpanCm: 8877}, Speed: 567}, Nickname: "Bob", Mass: 4.2})
+		cv.So(ho, cv.ShouldResemble, &Hornet{Plane: Plane{
+			Wings: Wings{SpanCm: 8877}, Speed: 567},
+			Nickname: "Bob", Mass: 4.2})
 	})
 }
 
@@ -71,7 +74,8 @@ func Test009CallByReflectionWorksWithoutNestingWithoutEmbeds(t *testing.T) {
 `)
 		panicOn(err)
 
-		cv.So(x.SexpString(), cv.ShouldEqual, ` (hornet nickname:"Bob" mass:4.2)`)
+		cv.So(x.SexpString(), cv.ShouldEqual,
+			` (hornet nickname:"Bob" mass:4.2)`)
 
 		ho := &Hornet{}
 		res, err := SexpToGoStructs(x, ho, env)
@@ -147,7 +151,8 @@ func Test012TranslationOfArraysOfInterfacesWorks(t *testing.T) {
 (def snoop (snoopy carrying:[he ho]))
 `)
 			panicOn(err)
-			cv.So(x.SexpString(), cv.ShouldEqual, ` (snoopy carrying:[ (hellcat speed:567)  (hornet SpanCm:12)])`)
+			cv.So(x.SexpString(), cv.ShouldEqual,
+				` (snoopy carrying:[ (hellcat speed:567)  (hornet SpanCm:12)])`)
 
 			var sn Snoopy
 			_, err = SexpToGoStructs(x, &sn, env)
