@@ -104,7 +104,11 @@ func (env *Glisp) Clone() *Glisp {
 	dupenv.mainfunc = MakeFunction("__main", 0, false, make([]Instruction, 0), nil)
 	dupenv.curfunc = dupenv.mainfunc
 	dupenv.pc = 0
+	dupenv.debugExec = env.debugExec
 	dupenv.debugSymbolNotFound = env.debugSymbolNotFound
+	dupenv.oldStyleLookups = env.oldStyleLookups
+	dupenv.showGlobalScope = env.showGlobalScope
+
 	return dupenv
 }
 
@@ -129,7 +133,11 @@ func (env *Glisp) Duplicate() *Glisp {
 	dupenv.mainfunc = MakeFunction("__main", 0, false, make([]Instruction, 0), nil)
 	dupenv.curfunc = dupenv.mainfunc
 	dupenv.pc = 0
+	dupenv.debugExec = env.debugExec
 	dupenv.debugSymbolNotFound = env.debugSymbolNotFound
+	dupenv.oldStyleLookups = env.oldStyleLookups
+	dupenv.showGlobalScope = env.showGlobalScope
+
 	return dupenv
 }
 
@@ -199,22 +207,7 @@ func (env *Glisp) CallFunction(function SexpFunction, nargs int) error {
 		panic("where's the global scope?")
 	}
 
-	/* old style, for backup.
-	globalScope := env.scopestack.elements[0]
-	env.stackstack.Push(env.scopestack)
-	env.scopestack = env.NewStack(ScopeStackSize)
-	env.scopestack.Push(globalScope)
-
-	if function.closeScope != nil {
-		function.closeScope.PushAllTo(env.scopestack)
-	}
-
-	env.addrstack.PushAddr(env.curfunc, env.pc+1)
-	env.scopestack.PushScope()
-	*/
-	// new style
 	env.linearstack.PushScope()
-
 	globalScope := env.scopestack.elements[0]
 	env.stackstack.Push(env.scopestack)
 	env.scopestack = env.NewStack(ScopeStackSize)
