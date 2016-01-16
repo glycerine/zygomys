@@ -13,6 +13,20 @@ type Sexp interface {
 	SexpString() string
 }
 
+type SexpPair struct {
+	head Sexp
+	tail Sexp
+}
+type SexpInt int
+type SexpBool bool
+type SexpFloat float64
+type SexpChar rune
+type SexpStr string
+type SexpRaw []byte
+type SexpReflect reflect.Value
+type SexpError struct {
+	error
+}
 type SexpSentinel int
 
 const (
@@ -33,11 +47,6 @@ func (sent SexpSentinel) SexpString() string {
 	}
 
 	return ""
-}
-
-type SexpPair struct {
-	head Sexp
-	tail Sexp
 }
 
 func Cons(a Sexp, b Sexp) SexpPair {
@@ -78,6 +87,10 @@ func (pair SexpPair) SexpString() string {
 
 type SexpArray []Sexp
 
+func (e SexpError) SexpString() string {
+	return e.error.Error()
+}
+
 type EmbedPath struct {
 	ChildName     string
 	ChildFieldNum int
@@ -104,36 +117,35 @@ type HashFieldDet struct {
 	EmbedPath    []EmbedPath // we are embedded if len(EmbedPath) > 0
 }
 type SexpHash struct {
-	TypeName        *string
-	Map             map[int][]SexpPair
-	KeyOrder        *[]Sexp // must user pointer here, else hset! will fail to update.
-	GoStructFactory *MakeGoStructFunc
-	NumKeys         *int
-	GoMethods       *[]reflect.Method
-	GoFields        *[]reflect.StructField
-	GoMethSx        *SexpArray
-	GoFieldSx       *SexpArray
-	GoType          *reflect.Type
-	NumMethod       *int
-	GoShadowStruct  interface{}
+	TypeName         *string
+	Map              map[int][]SexpPair
+	KeyOrder         *[]Sexp // must user pointer here, else hset! will fail to update.
+	GoStructFactory  *RegistryEntry
+	NumKeys          *int
+	GoMethods        *[]reflect.Method
+	GoFields         *[]reflect.StructField
+	GoMethSx         *SexpArray
+	GoFieldSx        *SexpArray
+	GoType           *reflect.Type
+	NumMethod        *int
+	GoShadowStruct   *interface{}
+	GoShadowStructVa *reflect.Value
 
 	// json tag name -> pointers to example values, as factories for SexpToGoStructs()
 	JsonTagMap *map[string]*HashFieldDet
+	DetOrder   *[]*HashFieldDet
 }
 
-func (h *SexpHash) SetGoStructFactory(factory MakeGoStructFunc) {
-	*h.GoStructFactory = factory
+func (h *SexpHash) SetGoStructFactory(factory RegistryEntry) {
+	(*h.GoStructFactory) = factory
 }
-
-type SexpInt int
-type SexpBool bool
-type SexpFloat float64
-type SexpChar rune
-type SexpStr string
-type SexpRaw []byte
 
 var SexpIntSize = reflect.TypeOf(SexpInt(0)).Bits()
 var SexpFloatSize = reflect.TypeOf(SexpFloat(0.0)).Bits()
+
+func (r SexpReflect) SexpString() string {
+	return fmt.Sprintf("%#v", r)
+}
 
 func (arr SexpArray) SexpString() string {
 	if len(arr) == 0 {

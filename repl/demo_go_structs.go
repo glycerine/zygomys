@@ -58,9 +58,17 @@ type Hellcat struct {
 }
 
 func (p *Snoopy) Fly(ev *Weather) (s string, err error) {
-	s = fmt.Sprintf("Snoopy sees weather %#v, cries '%s'", ev, p.Cry)
+	s = fmt.Sprintf("Snoopy sees weather '%s', cries '%s'", ev.Type, p.Cry)
 	fmt.Println(s)
 	return
+}
+
+func (p *Snoopy) GetCry() string {
+	return p.Cry
+}
+
+func (p *Snoopy) EchoWeather(w *Weather) *Weather {
+	return w
 }
 
 func (p *Snoopy) Sideeffect() {

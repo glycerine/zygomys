@@ -72,23 +72,29 @@ func MakeHash(args []Sexp, typename string, env *Glisp) (SexpHash, error) {
 	var fld SexpArray
 	var meth = []reflect.Method{}
 	var field = []reflect.StructField{}
+	var va reflect.Value
 	num := -1
 	var got reflect.Type
+	var iface interface{}
 	jsonMap := make(map[string]*HashFieldDet)
-	factory := MakeGoStructFunc(func(env *Glisp) interface{} { return nil })
+	factory := RegistryEntry{Factory: MakeGoStructFunc(func(env *Glisp) interface{} { return nil })}
+	detOrder := []*HashFieldDet{}
 	hash := SexpHash{
-		TypeName:        &typename,
-		Map:             make(map[int][]SexpPair),
-		KeyOrder:        &[]Sexp{},
-		GoStructFactory: &factory,
-		NumKeys:         &memberCount,
-		GoMethods:       &meth,
-		GoMethSx:        &arr,
-		GoFieldSx:       &fld,
-		GoFields:        &field,
-		NumMethod:       &num,
-		GoType:          &got,
-		JsonTagMap:      &jsonMap,
+		TypeName:         &typename,
+		Map:              make(map[int][]SexpPair),
+		KeyOrder:         &[]Sexp{},
+		GoStructFactory:  &factory,
+		NumKeys:          &memberCount,
+		GoMethods:        &meth,
+		GoMethSx:         &arr,
+		GoFieldSx:        &fld,
+		GoFields:         &field,
+		NumMethod:        &num,
+		GoType:           &got,
+		JsonTagMap:       &jsonMap,
+		GoShadowStructVa: &va,
+		GoShadowStruct:   &iface,
+		DetOrder:         &detOrder,
 	}
 	k := 0
 	for i := 0; i < len(args); i += 2 {
@@ -280,13 +286,13 @@ func GoMethodListFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	}
 	h, isHash := args[0].(SexpHash)
 	if !isHash {
-		return SexpNull, fmt.Errorf("hash/record required, but saw %T/val=%v", args[0], args[0])
+		return SexpNull, fmt.Errorf("hash/record required, but saw type %T/val=%#v", args[0], args[0])
 	}
 	if *h.NumMethod != -1 {
 		// use cached results
 		return *h.GoMethSx, nil
 	}
-	if (*h.GoStructFactory)(env) == nil {
+	if (*h.GoStructFactory).Factory(env) == nil {
 		return SexpNull, NoAttachedGoStruct
 	}
 
@@ -297,7 +303,7 @@ func GoMethodListFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 func (h *SexpHash) SetMethodList(env *Glisp) error {
 	VPrintf("hash.SetMethodList() called.\n")
 
-	rs := (*h.GoStructFactory)(env)
+	rs := (*h.GoStructFactory).Factory(env)
 	if rs == nil {
 		return NoAttachedGoStruct
 	}
@@ -332,17 +338,19 @@ func (h *SexpHash) SetMethodList(env *Glisp) error {
 	fl := make([]reflect.StructField, 0)
 	embeds := []EmbedPath{}
 	json2ptr := make(map[string]*HashFieldDet)
-	fillJsonMap(&json2ptr, &fx, &fl, embeds, tye)
+	detOrder := make([]*HashFieldDet, 0)
+	fillJsonMap(&json2ptr, &fx, &fl, embeds, tye, &detOrder)
 	*h.GoFieldSx = fx
 	*h.GoFields = fl
 	*h.JsonTagMap = json2ptr
+	*h.DetOrder = detOrder
 	return nil
 }
 
 const YesIamEmbeddedAbove = true
 
 // recursively fill with embedded/anonymous types as well
-func fillJsonMap(json2ptr *map[string]*HashFieldDet, fx *[]Sexp, fl *[]reflect.StructField, embedPath []EmbedPath, tye reflect.Type) {
+func fillJsonMap(json2ptr *map[string]*HashFieldDet, fx *[]Sexp, fl *[]reflect.StructField, embedPath []EmbedPath, tye reflect.Type, detOrder *[]*HashFieldDet) {
 	var suffix string
 	if len(embedPath) > 0 {
 		suffix = fmt.Sprintf(" embed-path<%s>", GetEmbedPath(embedPath))
@@ -366,11 +374,12 @@ func fillJsonMap(json2ptr *map[string]*HashFieldDet, fx *[]Sexp, fl *[]reflect.S
 		} else {
 			(*json2ptr)[fld.Name] = det
 		}
+		*detOrder = append(*detOrder, det)
 		det.EmbedPath = append(embedPath,
 			EmbedPath{ChildName: fld.Name, ChildFieldNum: i})
 		if fld.Anonymous {
 			// track how to get at embedded struct fields
-			fillJsonMap(json2ptr, fx, fl, det.EmbedPath, fld.Type)
+			fillJsonMap(json2ptr, fx, fl, det.EmbedPath, fld.Type, detOrder)
 		}
 	}
 }
@@ -383,7 +392,7 @@ func GoFieldListFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	if !isHash {
 		return SexpNull, fmt.Errorf("hash/record required, but saw %T/val=%v", args[0], args[0])
 	}
-	if (*h.GoStructFactory)(env) == nil {
+	if (*h.GoStructFactory).Factory(env) == nil {
 		return SexpNull, NoAttachedGoStruct
 	}
 	return SexpArray(*h.GoFieldSx), nil
@@ -415,5 +424,145 @@ func GenericHpairFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	default:
 		return SexpNull, errors.New("first argument of to hpair function must be hash, list, or array")
 	}
+	return SexpNull, nil
+}
+
+func (h *SexpHash) FillHashFromShadow(env *Glisp, src interface{}) error {
+	(*h.GoShadowStruct) = src
+	vaSrc := reflect.ValueOf(src).Elem()
+
+	for _, det := range *h.DetOrder {
+		VPrintf("\n looking at det for %s\n", det.FieldJsonTag)
+		goField := vaSrc.Field(det.FieldNum)
+		val, err := fillHashHelper(goField.Interface(), 0, env, false)
+		if err != nil {
+			return fmt.Errorf("error on GoToSexp for field '%s': '%s'",
+				det.FieldJsonTag, err)
+		}
+		key := env.MakeSymbol(det.FieldJsonTag)
+		err = h.HashSet(key, val)
+		if err != nil {
+			return fmt.Errorf("error on HashSet for key '%s': '%s'", key, err)
+		}
+	}
+	return nil
+}
+
+// translate Go -> Sexp, assuming hard *T{} struct pointers
+// for all Go structs
+func fillHashHelper(r interface{}, depth int, env *Glisp, preferSym bool) (Sexp, error) {
+	VPrintf("fillHashHelper() at depth %d, decoded type is %T\n", depth, r)
+
+	// check for one of our registered structs
+
+	// go through the type registry upfront
+	for hashName, factory := range GostructRegistry {
+		st := factory.Factory(env)
+		if reflect.ValueOf(st).Type() == reflect.ValueOf(r).Type() {
+			retHash, err := MakeHash([]Sexp{}, hashName, env)
+			if err != nil {
+				return SexpNull, fmt.Errorf("MakeHash '%s' problem: %s",
+					hashName, err)
+			}
+
+			err = retHash.FillHashFromShadow(env, r)
+			if err != nil {
+				return SexpNull, err
+			}
+			VPrintf("retHash = %#v\n", retHash)
+			return retHash, nil // or return sx?
+		}
+	}
+
+	// now handle basic non struct types:
+	switch val := r.(type) {
+	case string:
+		VPrintf("depth %d found string case: val = %#v\n", depth, val)
+		if preferSym {
+			return env.MakeSymbol(val), nil
+		}
+		return SexpStr(val), nil
+
+	case int:
+		VPrintf("depth %d found int case: val = %#v\n", depth, val)
+		return SexpInt(val), nil
+
+	case int32:
+		VPrintf("depth %d found int32 case: val = %#v\n", depth, val)
+		return SexpInt(val), nil
+
+	case int64:
+		VPrintf("depth %d found int64 case: val = %#v\n", depth, val)
+		return SexpInt(val), nil
+
+	case float64:
+		VPrintf("depth %d found float64 case: val = %#v\n", depth, val)
+		return SexpFloat(val), nil
+
+	case []interface{}:
+		VPrintf("depth %d found []interface{} case: val = %#v\n", depth, val)
+
+		slice := []Sexp{}
+		for i := range val {
+			sx2, err := fillHashHelper(val[i], depth+1, env, preferSym)
+			if err != nil {
+				return SexpNull, fmt.Errorf("error in fillHashHelper() call: '%s'", err)
+			}
+			slice = append(slice, sx2)
+		}
+		return SexpArray(slice), nil
+
+	case map[string]interface{}:
+
+		VPrintf("depth %d found map[string]interface case: val = %#v\n", depth, val)
+		sortedMapKey, sortedMapVal := makeSortedSlicesFromMap(val)
+
+		pairs := make([]Sexp, 0)
+
+		typeName := "hash"
+		var keyOrd Sexp
+		foundzKeyOrder := false
+		for i := range sortedMapKey {
+			// special field storing the name of our record (defmap) type.
+			VPrintf("\n i=%d sortedMapVal type %T, value=%v\n", i, sortedMapVal[i], sortedMapVal[i])
+			VPrintf("\n i=%d sortedMapKey type %T, value=%v\n", i, sortedMapKey[i], sortedMapKey[i])
+			if sortedMapKey[i] == "zKeyOrder" {
+				keyOrd = decodeGoToSexpHelper(sortedMapVal[i], depth+1, env, true)
+				foundzKeyOrder = true
+			} else if sortedMapKey[i] == "Atype" {
+				tn, isString := sortedMapVal[i].(string)
+				if isString {
+					typeName = string(tn)
+				}
+			} else {
+				sym := env.MakeSymbol(sortedMapKey[i])
+				pairs = append(pairs, sym)
+				ele := decodeGoToSexpHelper(sortedMapVal[i], depth+1, env, preferSym)
+				pairs = append(pairs, ele)
+			}
+		}
+		hash, err := MakeHash(pairs, typeName, env)
+		if foundzKeyOrder {
+			err = SetHashKeyOrder(&hash, keyOrd)
+			panicOn(err)
+		}
+		panicOn(err)
+		return hash, nil
+
+	case []byte:
+		VPrintf("depth %d found []byte case: val = %#v\n", depth, val)
+
+		return SexpRaw(val), nil
+
+	case nil:
+		return SexpNull, nil
+
+	case bool:
+		return SexpBool(val), nil
+
+	default:
+		VPrintf("unknown type in type switch, val = %#v.  type = %T.\n", val, val)
+	}
+
 	return SexpNull, nil
 }

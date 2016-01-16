@@ -2,6 +2,7 @@ package zygo
 
 import (
 	"errors"
+	"fmt"
 )
 
 var NotAList = errors.New("not a list")
@@ -78,4 +79,19 @@ func ConcatList(a SexpPair, b Sexp) (Sexp, error) {
 	}
 
 	return SexpNull, NotAList
+}
+
+func ListLen(expr Sexp) (int, error) {
+	sz := 0
+	var list SexpPair
+	ok := false
+	for expr != SexpNull {
+		list, ok = expr.(SexpPair)
+		if !ok {
+			return 0, fmt.Errorf("ListLen() called on non-list")
+		}
+		sz++
+		expr = list.tail
+	}
+	return sz, nil
 }

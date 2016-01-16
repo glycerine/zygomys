@@ -121,7 +121,7 @@ type Event struct {
 				err = fmt.Errorf("type '%s' not registered in GostructRegistry", tn)
 				panic(err)
 			}
-			newStruct := factory(env)
+			newStruct := factory.Factory(env)
 
 			// What didn't work here was going through msgpack, because
 			// ugorji msgpack encode will write turn signed ints into unsigned ints,

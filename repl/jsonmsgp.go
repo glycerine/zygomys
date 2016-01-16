@@ -2,6 +2,7 @@ package zygo
 
 import (
 	"bytes"
+	"time"
 	//"encoding/json"
 	"fmt"
 	"github.com/shurcooL/go-goon"
@@ -454,12 +455,13 @@ func ToGoFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		if !hasMaker {
 			return SexpNull, fmt.Errorf("type '%s' not registered in GostructRegistry", tn)
 		}
-		newStruct := factory(env)
+		newStruct := factory.Factory(env)
 		_, err := SexpToGoStructs(asHash, newStruct, env)
 		if err != nil {
 			return SexpNull, err
 		}
-		asHash.GoShadowStruct = newStruct
+		(*asHash.GoShadowStruct) = newStruct
+		(*asHash.GoShadowStructVa) = reflect.ValueOf(newStruct)
 		return SexpStr(fmt.Sprintf("%#v", newStruct)), nil
 	}
 	return SexpNull, nil
@@ -483,7 +485,7 @@ func SexpToGoStructs(sexp Sexp, target interface{}, env *Glisp) (interface{}, er
 	}()
 
 	if !IsExactlySinglePointer(target) {
-		panic(fmt.Errorf("SexpToGoStructs() got bad target: was not *T single level pointer, but rather %s", reflect.ValueOf(target).Type()))
+		panic(fmt.Errorf("SexpToGoStructs() got bad target: was not *T single level pointer, but rather %s / %T", reflect.ValueOf(target).Type(), target))
 	}
 
 	// target is a pointer to our payload.
@@ -502,7 +504,7 @@ func SexpToGoStructs(sexp Sexp, target interface{}, env *Glisp) (interface{}, er
 
 	switch src := sexp.(type) {
 	case SexpRaw:
-		panic("unimplemented") //return []byte(src)
+		targVa.Elem().Set(reflect.ValueOf([]byte(src)))
 	case SexpArray:
 		VPrintf("\n\n starting 5555555555 on SexpArray\n")
 		if targElemKind != reflect.Array && targElemKind != reflect.Slice {
@@ -535,7 +537,7 @@ func SexpToGoStructs(sexp Sexp, target interface{}, env *Glisp) (interface{}, er
 	case SexpStr:
 		targVa.Elem().SetString(string(src))
 	case SexpChar:
-		panic("unimplemented") //return rune(src)
+		targVa.Elem().Set(reflect.ValueOf(rune(src)))
 	case SexpFloat:
 		targVa.Elem().SetFloat(float64(src))
 	case SexpHash:
@@ -564,7 +566,7 @@ func SexpToGoStructs(sexp Sexp, target interface{}, env *Glisp) (interface{}, er
 			return nil, fmt.Errorf("type '%s' not registered in GostructRegistry", tn)
 		}
 		VPrintf("factory = %#v  targTyp.Kind=%s\n", factory, targTyp.Kind())
-		checkPtrStruct := factory(env)
+		checkPtrStruct := factory.Factory(env)
 		factOutputVal := reflect.ValueOf(checkPtrStruct)
 		factType := factOutputVal.Type()
 		if targTyp.Kind() == reflect.Ptr && targTyp.Elem().Kind() == reflect.Interface && factType.Implements(targTyp.Elem()) {
@@ -655,13 +657,13 @@ func SexpToGoStructs(sexp Sexp, target interface{}, env *Glisp) (interface{}, er
 	case SexpSymbol:
 		targVa.Elem().SetString(src.name)
 	case SexpFunction:
-		panic("unimplemented")
+		panic("unimplemented: SexpFunction converstion.")
 		// no conversion done
 		//return src
 	case SexpSentinel:
-		panic("unimplemented")
-		// no conversion done
-		//return src
+		targVa.Elem().Set(reflect.ValueOf(nil))
+	case SexpTime:
+		targVa.Elem().Set(reflect.ValueOf(time.Time(src)))
 	default:
 		fmt.Printf("\n error: unknown type: %T in '%#v'\n", src, src)
 	}

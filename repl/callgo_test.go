@@ -1,32 +1,30 @@
 package zygo
 
 import (
-	"fmt"
+	//"fmt"
 	cv "github.com/glycerine/goconvey/convey"
 	"testing"
 )
 
-func Test007CallByReflectionWorks(t *testing.T) {
+func Test007ParentChildRecordsTranslateToGo(t *testing.T) {
 
-	cv.Convey(`Given a tree of three records; a Snoopy{} containing a Hellcat{} and and Hornet{}: when the records point to each other inside an array, the shadow Go structs should also end up pointing at each other to form a mirror tree`, t, func() {
+	cv.Convey(`Given a tree of three records (hashes in zygomys); a snoopy containing a hellcat, then SexpToGoStructs() should translate that parent-child relationship faithfully into a Go Snoopy{} containing a Go Hellcat{}.`, t, func() {
 
 		env := NewGlisp()
 		env.StandardSetup()
 
 		x, err := env.EvalString(`
 (def he (hellcat speed:567))
-(def ho (hornet))
 (def snoop (snoopy chld:he))
 `)
 		panicOn(err)
 
-		//cv.So(x.SexpString(), cv.ShouldEqual, ` (snoopy speed:105 chld:[ (hellcat speed:567)  (hornet )] cry:"yeeehaw")`)
 		cv.So(x.SexpString(), cv.ShouldEqual, ` (snoopy chld: (hellcat speed:567))`)
 
 		var sn Snoopy
 		_, err = SexpToGoStructs(x, &sn, env)
 		panicOn(err)
-		fmt.Printf("\n sn = %#v\n", sn)
+		VPrintf("\n sn = %#v\n", sn)
 		cv.So(sn.Chld, cv.ShouldResemble, &Hellcat{Plane: Plane{Speed: 567}})
 	})
 }
@@ -48,8 +46,8 @@ func Test008CallByReflectionWorksWithoutNesting(t *testing.T) {
 		ho := &Hornet{}
 		res, err := SexpToGoStructs(x, ho, env)
 		panicOn(err)
-		fmt.Printf("\n ho = %#v\n", ho)
-		fmt.Printf("\n res = %#v\n", res)
+		VPrintf("\n ho = %#v\n", ho)
+		VPrintf("\n res = %#v\n", res)
 		cv.So(ho, cv.ShouldResemble, &Hornet{Plane: Plane{Wings: Wings{SpanCm: 8877}, Speed: 567}, Nickname: "Bob", Mass: 4.2})
 	})
 }
@@ -71,8 +69,8 @@ func Test009CallByReflectionWorksWithoutNestingWithoutEmbeds(t *testing.T) {
 		ho := &Hornet{}
 		res, err := SexpToGoStructs(x, ho, env)
 		panicOn(err)
-		fmt.Printf("\n ho = %#v\n", ho)
-		fmt.Printf("\n res = %#v\n", res)
+		VPrintf("\n ho = %#v\n", ho)
+		VPrintf("\n res = %#v\n", res)
 		cv.So(ho, cv.ShouldResemble, &Hornet{Nickname: "Bob", Mass: 4.2})
 	})
 }
@@ -96,7 +94,7 @@ func Test010WriteIntoSingleInterfaceValueWorks(t *testing.T) {
 		var sn Snoopy
 		_, err = SexpToGoStructs(x, &sn, env)
 		panicOn(err)
-		fmt.Printf("\n sn = %#v\n", sn)
+		VPrintf("\n sn = %#v\n", sn)
 		cv.So(sn.Chld, cv.ShouldResemble, &Hellcat{Plane: Plane{Speed: 567}})
 
 	})
@@ -119,7 +117,7 @@ func Test011TranslationOfArraysWorks(t *testing.T) {
 		var sn Snoopy
 		_, err = SexpToGoStructs(x, &sn, env)
 		panicOn(err)
-		fmt.Printf("\n sn = %#v\n", sn)
+		VPrintf("\n sn = %#v\n", sn)
 		cv.So(&sn, cv.ShouldResemble, &Snoopy{Pack: []int{8, 9, 4}})
 	})
 }
@@ -142,7 +140,7 @@ func Test012TranslationOfArraysOfInterfacesWorks(t *testing.T) {
 		var sn Snoopy
 		_, err = SexpToGoStructs(x, &sn, env)
 		panicOn(err)
-		fmt.Printf("\n sn = %#v\n", sn)
+		VPrintf("\n sn = %#v\n", sn)
 		cv.So(&sn, cv.ShouldResemble, &Snoopy{Carrying: []Flyer{&Hellcat{Plane: Plane{Speed: 567}}, &Hornet{
 			Plane: Plane{
 				Wings: Wings{
@@ -172,7 +170,7 @@ func Test014TranslationOfArraysOfInterfacesEmbeddedWorks(t *testing.T) {
 		var sn Snoopy
 		_, err = SexpToGoStructs(x, &sn, env)
 		panicOn(err)
-		fmt.Printf("\n sn = %#v\n", sn)
+		VPrintf("\n sn = %#v\n", sn)
 		cv.So(&sn, cv.ShouldResemble, &Snoopy{
 			Plane: Plane{
 				Friends: []Flyer{
@@ -187,5 +185,110 @@ func Test014TranslationOfArraysOfInterfacesEmbeddedWorks(t *testing.T) {
 			},
 		})
 
+	})
+}
+
+func Test016ReflectCallOnGoMethodsZeroArgs(t *testing.T) {
+
+	cv.Convey(`Given a translated to Go structs, we should be able to invoke methods (zero in arguments) on them`, t, func() {
+
+		env := NewGlisp()
+		env.StandardSetup()
+
+		x, err := env.EvalString(`
+(def he (hellcat speed:567))
+(def ho (hornet SpanCm:12))
+(def snoop (snoopy friends:[he ho] cry:"yowza"))
+`)
+		panicOn(err)
+		cv.So(x.SexpString(), cv.ShouldEqual, ` (snoopy friends:[ (hellcat speed:567)  (hornet SpanCm:12)] cry:"yowza")`)
+
+		var sn Snoopy
+		_, err = SexpToGoStructs(x, &sn, env)
+		panicOn(err)
+		VPrintf("\n sn = %#v\n", sn)
+
+		invok, err := env.EvalString(`
+		   (.method snoop GetCry: )
+		   `)
+		panicOn(err)
+		VPrintf("got invoke =  %T/val=%#v\n", invok, invok)
+
+		switch arr := invok.(type) {
+		case SexpArray:
+			// arr[0] should be string
+			cv.So(string(arr[0].(SexpStr)), cv.ShouldEqual, "yowza")
+		default:
+			VPrintf("got %T/val=%#v\n", arr, arr)
+			panic("expected array back from .method")
+		}
+
+	})
+}
+
+func Test017ReflectCallOnGoMethodsOneArg(t *testing.T) {
+
+	cv.Convey(`Given a translated to Go structs, we should be able to invoke methods (with >= 1 in argument) on them`, t, func() {
+
+		env := NewGlisp()
+		env.StandardSetup()
+
+		x, err := env.EvalString(`
+(def he (hellcat speed:567))
+(def ho (hornet SpanCm:12))
+(def snoop (snoopy friends:[he ho] cry:"yowza"))
+`)
+		panicOn(err)
+		cv.So(x.SexpString(), cv.ShouldEqual, ` (snoopy friends:[ (hellcat speed:567)  (hornet SpanCm:12)] cry:"yowza")`)
+
+		var sn Snoopy
+		_, err = SexpToGoStructs(x, &sn, env)
+		panicOn(err)
+		VPrintf("\n sn = %#v\n", sn)
+
+		invok, err := env.EvalString(`
+			   (.method snoop Fly: (weather time:(now) size:12 type:"sunny" details:(raw "123")))
+			   `)
+		panicOn(err)
+		VPrintf("got invoke =  %T/val=%#v\n", invok, invok)
+
+		switch arr := invok.(type) {
+		case SexpArray:
+			// arr[0] should be string
+			cv.So(string(arr[0].(SexpStr)), cv.ShouldEqual, `Snoopy sees weather 'sunny', cries 'yowza'`)
+		default:
+			VPrintf("got %T/val=%#v\n", arr, arr)
+			panic("expected array back from .method")
+		}
+
+	})
+}
+
+func Test018ReflectCallOnGoMethodsComplexReturnType(t *testing.T) {
+
+	cv.Convey(`Given a translated to Go structs, we should be able to invoke methods on them that return struct pointers`, t, func() {
+
+		env := NewGlisp()
+		env.StandardSetup()
+
+		x, err := env.EvalString(`
+(def he (hellcat speed:567))
+(def ho (hornet SpanCm:12))
+(def snoop (snoopy friends:[he ho] cry:"yowza"))
+`)
+		panicOn(err)
+		cv.So(x.SexpString(), cv.ShouldEqual, ` (snoopy friends:[ (hellcat speed:567)  (hornet SpanCm:12)] cry:"yowza")`)
+
+		var sn Snoopy
+		_, err = SexpToGoStructs(x, &sn, env)
+		panicOn(err)
+		VPrintf("\n sn = %#v\n", sn)
+
+		invok, err := env.EvalString(`
+			   (.method snoop EchoWeather: (weather time:(now) size:12 type:"sunny" details:(raw "123")))
+			   `)
+		panicOn(err)
+		VPrintf("got invoke = '%s'\n", invok.SexpString())
+		cv.So(invok.SexpString(), cv.ShouldEqual, `[ (weather time:() size:12 type:"sunny" details:[]byte{0x31, 0x32, 0x33})]`)
 	})
 }

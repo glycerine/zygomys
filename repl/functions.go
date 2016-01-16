@@ -406,15 +406,23 @@ func LenFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	}
 
 	switch t := args[0].(type) {
+	case SexpSentinel:
+		if t == SexpNull {
+			return SexpInt(0), nil
+		}
+		break
 	case SexpArray:
 		return SexpInt(len(t)), nil
 	case SexpStr:
 		return SexpInt(len(t)), nil
 	case SexpHash:
 		return SexpInt(HashCountKeys(t)), nil
+	case SexpPair:
+		n, err := ListLen(t)
+		return SexpInt(n), err
 	}
 
-	return SexpInt(0), errors.New("argument must be string, hash, or array")
+	return SexpInt(0), errors.New("argument must be string, list, hash, or array")
 }
 
 func AppendFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
@@ -808,6 +816,7 @@ var BuiltinFunctions = map[string]GlispUserFunction{
 	"flatten":   FlattenToWordsFunction,
 	"nsplit":    SplitStringOnNewlinesFunction,
 	"methodls":  GoMethodListFunction,
+	".method":   CallGoMethodFunction,
 	"fieldls":   GoFieldListFunction,
 	"chomp":     StringUtilFunction,
 	"exit":      ExitFunction,

@@ -16,29 +16,36 @@ package zygo
 // for each record defined in the registry. e.g.
 // for snoopy, hornet, hellcat, etc.
 //
-var GostructRegistry = map[string]MakeGoStructFunc{}
+var GostructRegistry = map[string]RegistryEntry{}
 
 // the type of all maker functions
 type MakeGoStructFunc func(env *Glisp) interface{}
+
+type RegistryEntry struct {
+	Factory MakeGoStructFunc
+}
 
 // builtin known Go Structs
 // NB these are used to test the functionality of the
 //    Go integration.
 //
 func init() {
-	GostructRegistry["event-demo"] = func(env *Glisp) interface{} {
+	GostructRegistry["event-demo"] = RegistryEntry{Factory: func(env *Glisp) interface{} {
 		return &Event{}
-	}
-	GostructRegistry["person-demo"] = func(env *Glisp) interface{} {
+	}}
+	GostructRegistry["person-demo"] = RegistryEntry{Factory: func(env *Glisp) interface{} {
 		return &Person{}
-	}
-	GostructRegistry["snoopy"] = func(env *Glisp) interface{} {
+	}}
+	GostructRegistry["snoopy"] = RegistryEntry{Factory: func(env *Glisp) interface{} {
 		return &Snoopy{}
-	}
-	GostructRegistry["hornet"] = func(env *Glisp) interface{} {
+	}}
+	GostructRegistry["hornet"] = RegistryEntry{Factory: func(env *Glisp) interface{} {
 		return &Hornet{}
-	}
-	GostructRegistry["hellcat"] = func(env *Glisp) interface{} {
+	}}
+	GostructRegistry["hellcat"] = RegistryEntry{Factory: func(env *Glisp) interface{} {
 		return &Hellcat{}
-	}
+	}}
+	GostructRegistry["weather"] = RegistryEntry{Factory: func(env *Glisp) interface{} {
+		return &Weather{}
+	}}
 }
