@@ -14,8 +14,8 @@ type Sexp interface {
 }
 
 type SexpPair struct {
-	head Sexp
-	tail Sexp
+	Head Sexp
+	Tail Sexp
 }
 type SexpInt int
 type SexpBool bool
@@ -53,33 +53,33 @@ func Cons(a Sexp, b Sexp) SexpPair {
 	return SexpPair{a, b}
 }
 
-func (pair SexpPair) Head() Sexp {
-	return pair.head
-}
+//func (pair SexpPair) Head() Sexp {
+//	return pair.Head
+//}
 
-func (pair SexpPair) Tail() Sexp {
-	return pair.tail
-}
+//func (pair SexpPair) Tail() Sexp {
+//	return pair.Tail
+//}
 
 func (pair SexpPair) SexpString() string {
 	str := "("
 
 	for {
-		switch pair.tail.(type) {
+		switch pair.Tail.(type) {
 		case SexpPair:
-			str += pair.head.SexpString() + " "
-			pair = pair.tail.(SexpPair)
+			str += pair.Head.SexpString() + " "
+			pair = pair.Tail.(SexpPair)
 			continue
 		}
 		break
 	}
 
-	str += pair.head.SexpString()
+	str += pair.Head.SexpString()
 
-	if pair.tail == SexpNull {
+	if pair.Tail == SexpNull {
 		str += ")"
 	} else {
-		str += " \\ " + pair.tail.SexpString() + ")"
+		str += " \\ " + pair.Tail.SexpString() + ")"
 	}
 
 	return str
@@ -167,8 +167,8 @@ func (hash SexpHash) SexpString() string {
 	str := "{"
 	for _, arr := range hash.Map {
 		for _, pair := range arr {
-			str += pair.head.SexpString() + " "
-			str += pair.tail.SexpString() + " "
+			str += pair.Head.SexpString() + " "
+			str += pair.Tail.SexpString() + " "
 		}
 	}
 	if len(str) > 1 {

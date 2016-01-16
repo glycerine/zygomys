@@ -10,5 +10,6 @@
 
 ;; passing in []byte to a method
 (def w (weather))
-(assert (== (len (.method w MarshalMsg: (raw))) 2)) ;; really just that it doesn't crash :)
+(assert (== (len (.method w MarshalMsg: (raw))) 2))
+
 

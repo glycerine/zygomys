@@ -16,7 +16,7 @@ func IsList(expr Sexp) bool {
 	}
 	switch list := expr.(type) {
 	case SexpPair:
-		return IsList(list.tail)
+		return IsList(list.Tail)
 	}
 	return false
 }

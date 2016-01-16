@@ -118,10 +118,10 @@ func SourceFileFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 			expr := item
 			for expr != SexpNull {
 				list := expr.(SexpPair)
-				if err := sourceItem(list.head); err != nil {
+				if err := sourceItem(list.Head); err != nil {
 					return err
 				}
-				expr = list.tail
+				expr = list.Tail
 			}
 		case SexpStr:
 			var f *os.File

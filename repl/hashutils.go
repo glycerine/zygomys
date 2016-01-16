@@ -152,9 +152,9 @@ func (hash *SexpHash) HashGetDefault(env *Glisp, key Sexp, defaultval Sexp) (Sex
 	}
 
 	for _, pair := range arr {
-		res, err := Compare(pair.head, key)
+		res, err := Compare(pair.Head, key)
 		if err == nil && res == 0 {
-			return pair.tail, nil
+			return pair.Tail, nil
 		}
 	}
 	return defaultval, nil
@@ -176,7 +176,7 @@ func (hash *SexpHash) HashSet(key Sexp, val Sexp) error {
 
 	found := false
 	for i, pair := range arr {
-		res, err := Compare(pair.head, key)
+		res, err := Compare(pair.Head, key)
 		if err == nil && res == 0 {
 			arr[i] = Cons(key, val)
 			found = true
@@ -208,7 +208,7 @@ func (hash *SexpHash) HashDelete(key Sexp) error {
 
 	(*hash.NumKeys)--
 	for i, pair := range arr {
-		res, err := Compare(pair.head, key)
+		res, err := Compare(pair.Head, key)
 		if err == nil && res == 0 {
 			hash.Map[hashval] = append(arr[0:i], arr[i+1:]...)
 			break
@@ -277,7 +277,7 @@ func (hash *SexpHash) HashPairi(pos int) (SexpPair, error) {
 		panic(fmt.Errorf("hpair internal error: could not get element at pos %d in lenKeyOrder=%d", pos, lenKeyOrder))
 	}
 
-	return Cons(key, SexpPair{head: val, tail: SexpNull}), nil
+	return Cons(key, SexpPair{Head: val, Tail: SexpNull}), nil
 }
 
 func GoMethodListFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {

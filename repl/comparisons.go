@@ -92,14 +92,14 @@ func comparePair(a SexpPair, b Sexp) (int, error) {
 		errmsg := fmt.Sprintf("cannot compare %T to %T", a, b)
 		return 0, errors.New(errmsg)
 	}
-	res, err := Compare(a.head, bp.head)
+	res, err := Compare(a.Head, bp.Head)
 	if err != nil {
 		return 0, err
 	}
 	if res != 0 {
 		return res, nil
 	}
-	return Compare(a.tail, bp.tail)
+	return Compare(a.Tail, bp.Tail)
 }
 
 func compareArray(a SexpArray, b Sexp) (int, error) {

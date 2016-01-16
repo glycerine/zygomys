@@ -2,6 +2,7 @@ package zygo
 
 import (
 	"bufio"
+	"encoding/gob"
 	"fmt"
 	"os"
 	"runtime/pprof"
@@ -291,8 +292,13 @@ func (env *Glisp) StandardSetup() {
 	env.ImportRegex()
 	env.ImportRandom()
 
+	gob.Register(SexpHash{})
+	gob.Register(SexpArray{})
+
 	// create constructors for each of our pre-registered Go struct types
-	for name := range GostructRegistry {
+	for name, fac := range GostructRegistry {
+		strct := fac.Factory(env)
+		gob.Register(strct)
 		makeRec := fmt.Sprintf(`(defmap %s)`, name)
 		_, err = env.EvalString(makeRec)
 		panicOn(err)

@@ -409,8 +409,8 @@ func SexpToGo(sexp Sexp, env *Glisp) interface{} {
 		m := make(map[string]interface{})
 		for _, arr := range e.Map {
 			for _, pair := range arr {
-				key := SexpToGo(pair.head, env)
-				val := SexpToGo(pair.tail, env)
+				key := SexpToGo(pair.Head, env)
+				val := SexpToGo(pair.Tail, env)
 				keyString, isStringKey := key.(string)
 				if !isStringKey {
 					panic(fmt.Errorf("key '%v' should have been a string, but was not.", key))
@@ -591,16 +591,16 @@ func SexpToGoStructs(sexp Sexp, target interface{}, env *Glisp) (interface{}, er
 		for _, arr := range src.Map {
 			for _, pair := range arr {
 				var recordKey string
-				switch k := pair.head.(type) {
+				switch k := pair.Head.(type) {
 				case SexpStr:
 					recordKey = string(k)
 				case SexpSymbol:
 					recordKey = k.name
 				default:
-					fmt.Printf("\n skipping field '%#v' which we don't know how to lookup.\n", pair.head)
+					fmt.Printf("\n skipping field '%#v' which we don't know how to lookup.\n", pair.Head)
 					continue
 				}
-				// We've got to match pair.head to
+				// We've got to match pair.Head to
 				// one of the struct fields: we'll use
 				// the json tags for that. Or their
 				// full exact name if they didn't have
@@ -618,7 +618,7 @@ func SexpToGoStructs(sexp Sexp, target interface{}, env *Glisp) (interface{}, er
 					}
 				}
 				VPrintf("\n\n ****  recordKey = '%s'\n\n", recordKey)
-				VPrintf("\n we found in pair.tail: %T !\n", pair.tail)
+				VPrintf("\n we found in pair.Tail: %T !\n", pair.Tail)
 
 				dref := targVa.Elem()
 				VPrintf("\n deref = %#v / type %T\n", dref, dref)
@@ -643,7 +643,7 @@ func SexpToGoStructs(sexp Sexp, target interface{}, env *Glisp) (interface{}, er
 				ptrFld := fld.Addr()
 				VPrintf("\n ptrFld = %#v \n", ptrFld)
 
-				_, err := SexpToGoStructs(pair.tail, ptrFld.Interface(), env)
+				_, err := SexpToGoStructs(pair.Tail, ptrFld.Interface(), env)
 				if err != nil {
 					panic(err)
 					return nil, err

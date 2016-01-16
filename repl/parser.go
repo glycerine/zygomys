@@ -38,7 +38,7 @@ func ParseList(parser *Parser, depth int) (Sexp, error) {
 		return SexpNull, err
 	}
 
-	start.head = expr
+	start.Head = expr
 
 	tok, err = lexer.PeekNextToken()
 	if err != nil {
@@ -63,7 +63,7 @@ func ParseList(parser *Parser, depth int) (Sexp, error) {
 		if tok.typ != TokenRParen {
 			return SexpNull, errors.New("extra value in dotted pair")
 		}
-		start.tail = expr
+		start.Tail = expr
 		return start, nil
 	}
 
@@ -71,7 +71,7 @@ func ParseList(parser *Parser, depth int) (Sexp, error) {
 	if err != nil {
 		return start, err
 	}
-	start.tail = expr
+	start.Tail = expr
 
 	return start, nil
 }
@@ -132,8 +132,8 @@ func ParseHash(parser *Parser, depth int) (Sexp, error) {
 	}
 
 	var list SexpPair
-	list.head = parser.env.MakeSymbol("hash")
-	list.tail = MakeList(arr)
+	list.Head = parser.env.MakeSymbol("hash")
+	list.Tail = MakeList(arr)
 
 	return list, nil
 }

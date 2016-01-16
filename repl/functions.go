@@ -150,7 +150,7 @@ func FirstFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	}
 	switch expr := args[0].(type) {
 	case SexpPair:
-		return expr.head, nil
+		return expr.Head, nil
 	case SexpArray:
 		if len(expr) > 0 {
 			return expr[0], nil
@@ -167,7 +167,7 @@ func RestFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 
 	switch expr := args[0].(type) {
 	case SexpPair:
-		return expr.tail, nil
+		return expr.Tail, nil
 	case SexpArray:
 		if len(expr) == 0 {
 			return expr, nil
@@ -188,10 +188,10 @@ func SecondFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	}
 	switch expr := args[0].(type) {
 	case SexpPair:
-		tail := expr.tail
+		tail := expr.Tail
 		switch p := tail.(type) {
 		case SexpPair:
-			return p.head, nil
+			return p.Head, nil
 		}
 		return SexpNull, fmt.Errorf("list too small for second")
 	case SexpArray:
@@ -820,6 +820,7 @@ var BuiltinFunctions = map[string]GlispUserFunction{
 	"fieldls":   GoFieldListFunction,
 	"chomp":     StringUtilFunction,
 	"exit":      ExitFunction,
+	"gob":       GobEncodeFunction,
 }
 
 func ThreadMapFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {

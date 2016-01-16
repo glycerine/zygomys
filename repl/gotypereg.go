@@ -22,7 +22,8 @@ var GostructRegistry = map[string]RegistryEntry{}
 type MakeGoStructFunc func(env *Glisp) interface{}
 
 type RegistryEntry struct {
-	Factory MakeGoStructFunc
+	Factory     MakeGoStructFunc
+	GobLiveness int
 }
 
 // builtin known Go Structs

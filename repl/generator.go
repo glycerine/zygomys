@@ -10,7 +10,7 @@ var NoExpressionsFound = errors.New("No expressions found")
 type Generator struct {
 	env          *Glisp
 	funcname     string
-	tail         bool
+	Tail         bool
 	scopes       int
 	instructions []Instruction
 }
@@ -30,7 +30,7 @@ func NewGenerator(env *Glisp) *Generator {
 	gen.env = env
 	gen.instructions = make([]Instruction, 0)
 	// tail marks whether or not we are in the tail position
-	gen.tail = false
+	gen.Tail = false
 	// scopes is the number of extra (non-function) scopes we've created
 	gen.scopes = 0
 	return gen
@@ -46,8 +46,8 @@ func (gen *Generator) AddInstruction(instr Instruction) {
 
 func (gen *Generator) GenerateBegin(expressions []Sexp) error {
 	size := len(expressions)
-	oldtail := gen.tail
-	gen.tail = false
+	oldtail := gen.Tail
+	gen.Tail = false
 	if size == 0 {
 		return NoExpressionsFound
 	}
@@ -60,7 +60,7 @@ func (gen *Generator) GenerateBegin(expressions []Sexp) error {
 		// that way the stack remains clean
 		gen.AddInstruction(PopInstr(0))
 	}
-	gen.tail = oldtail
+	gen.Tail = oldtail
 	return gen.Generate(expressions[size-1])
 }
 
@@ -72,7 +72,7 @@ func buildSexpFun(
 	orig Sexp) (SexpFunction, error) {
 
 	gen := NewGenerator(env)
-	gen.tail = true
+	gen.Tail = true
 
 	if len(name) == 0 {
 		gen.funcname = env.GenSymbol("__anon").name
@@ -166,7 +166,7 @@ func (gen *Generator) GenerateDef(args []Sexp) error {
 			"to define variable of same name.", sym.name)
 	}
 
-	gen.tail = false
+	gen.Tail = false
 	err := gen.Generate(args[1])
 	if err != nil {
 		return err
@@ -259,7 +259,7 @@ func (gen *Generator) GenerateMacexpand(args []Sexp) error {
 
 	switch t := args[0].(type) {
 	case SexpPair:
-		if IsList(t.tail) {
+		if IsList(t.Tail) {
 			list = t
 			islist = true
 		}
@@ -269,7 +269,7 @@ func (gen *Generator) GenerateMacexpand(args []Sexp) error {
 
 	var macro SexpFunction
 	if islist {
-		switch t := list.head.(type) {
+		switch t := list.Head.(type) {
 		case SexpSymbol:
 			macro, ismacrocall = gen.env.macros[t.number]
 		default:
@@ -282,7 +282,7 @@ func (gen *Generator) GenerateMacexpand(args []Sexp) error {
 		return nil
 	}
 
-	macargs, err := ListToArray(list.tail)
+	macargs, err := ListToArray(list.Tail)
 	if err != nil {
 		return err
 	}
@@ -306,7 +306,7 @@ func (gen *Generator) GenerateShortCircuit(or bool, args []Sexp) error {
 
 	subgen := NewGenerator(gen.env)
 	subgen.scopes = gen.scopes
-	subgen.tail = gen.tail
+	subgen.Tail = gen.Tail
 	subgen.funcname = gen.funcname
 	subgen.Generate(args[size-1])
 	instructions := subgen.instructions
@@ -330,7 +330,7 @@ func (gen *Generator) GenerateCond(args []Sexp) error {
 	}
 
 	subgen := NewGenerator(gen.env)
-	subgen.tail = gen.tail
+	subgen.Tail = gen.Tail
 	subgen.scopes = gen.scopes
 	subgen.funcname = gen.funcname
 	err := subgen.Generate(args[len(args)-1])
@@ -348,7 +348,7 @@ func (gen *Generator) GenerateCond(args []Sexp) error {
 		pred_code := subgen.instructions
 
 		subgen.Reset()
-		subgen.tail = gen.tail
+		subgen.Tail = gen.Tail
 		subgen.scopes = gen.scopes
 		subgen.funcname = gen.funcname
 		err = subgen.Generate(args[2*i+1])
@@ -478,10 +478,10 @@ func (gen *Generator) GenerateInclude(args []Sexp) error {
 			expr := item
 			for expr != SexpNull {
 				list := expr.(SexpPair)
-				if err := sourceItem(list.head); err != nil {
+				if err := sourceItem(list.Head); err != nil {
 					return err
 				}
-				expr = list.tail
+				expr = list.Tail
 			}
 		case SexpStr:
 			exps, err = gen.env.ParseFile(string(t))
@@ -572,8 +572,8 @@ func (gen *Generator) GenerateCallBySymbol(sym SexpSymbol, args []Sexp, orig Sex
 		return gen.Generate(expr)
 	}
 
-	oldtail := gen.tail
-	gen.tail = false
+	oldtail := gen.Tail
+	gen.Tail = false
 	err := gen.GenerateAll(args)
 	if err != nil {
 		return err
@@ -589,7 +589,7 @@ func (gen *Generator) GenerateCallBySymbol(sym SexpSymbol, args []Sexp, orig Sex
 	} else {
 		gen.AddInstruction(CallInstr{sym, len(args)})
 	}
-	gen.tail = oldtail
+	gen.Tail = oldtail
 	return nil
 }
 
@@ -601,12 +601,12 @@ func (gen *Generator) GenerateDispatch(fun Sexp, args []Sexp) error {
 }
 
 func (gen *Generator) GenerateCall(expr SexpPair) error {
-	arr, _ := ListToArray(expr.tail)
-	switch head := expr.head.(type) {
+	arr, _ := ListToArray(expr.Tail)
+	switch head := expr.Head.(type) {
 	case SexpSymbol:
 		return gen.GenerateCallBySymbol(head, arr, expr)
 	}
-	return gen.GenerateDispatch(expr.head, arr)
+	return gen.GenerateDispatch(expr.Head, arr)
 }
 
 func (gen *Generator) GenerateArray(arr SexpArray) error {
@@ -656,7 +656,7 @@ func (gen *Generator) GenerateAll(expressions []Sexp) error {
 
 func (gen *Generator) Reset() {
 	gen.instructions = make([]Instruction, 0)
-	gen.tail = false
+	gen.Tail = false
 	gen.scopes = 0
 }
 
@@ -710,7 +710,7 @@ func (gen *Generator) GenerateForLoop(args []Sexp) error {
 
 	// generate the body of the loop
 	subgenBody := NewGenerator(gen.env)
-	subgenBody.tail = gen.tail
+	subgenBody.Tail = gen.Tail
 	subgenBody.scopes = gen.scopes
 	subgenBody.funcname = gen.funcname
 	err := subgenBody.GenerateBegin(args[1:])
@@ -723,7 +723,7 @@ func (gen *Generator) GenerateForLoop(args []Sexp) error {
 
 	// generate the init code
 	subgenInit := NewGenerator(gen.env)
-	subgenInit.tail = gen.tail
+	subgenInit.Tail = gen.Tail
 	subgenInit.scopes = gen.scopes
 	subgenInit.funcname = gen.funcname
 	err = subgenInit.Generate(controlargs[0])
@@ -736,7 +736,7 @@ func (gen *Generator) GenerateForLoop(args []Sexp) error {
 
 	// generate the test
 	subgenT := NewGenerator(gen.env)
-	subgenT.tail = gen.tail
+	subgenT.Tail = gen.Tail
 	subgenT.scopes = gen.scopes
 	subgenT.funcname = gen.funcname
 	err = subgenT.Generate(controlargs[1])
@@ -749,7 +749,7 @@ func (gen *Generator) GenerateForLoop(args []Sexp) error {
 
 	// generate the increment code
 	subgenIncr := NewGenerator(gen.env)
-	subgenIncr.tail = gen.tail
+	subgenIncr.Tail = gen.Tail
 	subgenIncr.scopes = gen.scopes
 	subgenIncr.funcname = gen.funcname
 	err = subgenIncr.Generate(controlargs[2])
@@ -834,7 +834,7 @@ func (gen *Generator) GenerateSet(args []Sexp) error {
 	}
 
 	rhs := args[1]
-	gen.tail = false
+	gen.Tail = false
 	err := gen.Generate(rhs)
 	if err != nil {
 		return err
@@ -876,7 +876,7 @@ func (gen *Generator) GenerateMultiDef(args []Sexp) error {
 		}
 	}
 
-	gen.tail = false
+	gen.Tail = false
 	err := gen.Generate(args[lastpos])
 	if err != nil {
 		return err
@@ -890,7 +890,7 @@ func (gen *Generator) GenerateMultiDef(args []Sexp) error {
 }
 
 func isQuotedSymbol(list SexpPair) (unquotedSymbol Sexp, isQuo bool) {
-	head := list.head
+	head := list.Head
 	switch h := head.(type) {
 	case SexpSymbol:
 		if h.name != "quote" {
@@ -898,11 +898,11 @@ func isQuotedSymbol(list SexpPair) (unquotedSymbol Sexp, isQuo bool) {
 		}
 	}
 	// good, keep going to tail
-	t := list.tail
+	t := list.Tail
 	switch tt := t.(type) {
 	case SexpPair:
 		// good, keep going to head
-		hh := tt.head
+		hh := tt.Head
 		switch hhh := hh.(type) {
 		case SexpSymbol:
 			// grab the symbol
@@ -1105,8 +1105,8 @@ func (gen *Generator) GenerateBreak(args []Sexp) error {
 // like begin, but puts its contents in a new scope
 func (gen *Generator) GenerateNewScope(expressions []Sexp) error {
 	size := len(expressions)
-	oldtail := gen.tail
-	gen.tail = false
+	oldtail := gen.Tail
+	gen.Tail = false
 	if size == 0 {
 		return NoExpressionsFound
 	}
@@ -1120,7 +1120,7 @@ func (gen *Generator) GenerateNewScope(expressions []Sexp) error {
 		// that way the stack remains clean
 		gen.AddInstruction(PopInstr(0))
 	}
-	gen.tail = oldtail
+	gen.Tail = oldtail
 	err := gen.Generate(expressions[size-1])
 	if err != nil {
 		return err
