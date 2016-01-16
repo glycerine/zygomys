@@ -19,11 +19,14 @@ type Glisp struct {
 	addrstack  *Stack
 	stackstack *Stack
 
-	// linearstack: push on scope enter, pop on scope exit. simple.
+	// linearstack: push on scope enter, pop on scope exit. runtime dynamic.
 	linearstack *Stack
 
 	// loopstack: let break and continue find the nearest enclosing loop.
 	loopstack *Stack
+
+	// lexicalstack: track the scope where a function was defined.
+	lexicalstack *Stack
 
 	symtable    map[string]int
 	revsymtable map[int]string
@@ -53,10 +56,12 @@ func NewGlisp() *Glisp {
 	env.datastack = env.NewStack(DataStackSize)
 	env.scopestack = env.NewStack(ScopeStackSize)
 	env.linearstack = env.NewStack(ScopeStackSize)
+	env.lexicalstack = env.NewStack(ScopeStackSize)
 	glob := NewScope()
 	glob.IsGlobal = true
 	env.scopestack.Push(glob)
 	env.linearstack.Push(glob)
+	env.lexicalstack.Push(glob)
 	env.stackstack = env.NewStack(StackStackSize)
 	env.addrstack = env.NewStack(CallStackSize)
 	env.loopstack = env.NewStack(LoopStackSize)
@@ -88,6 +93,7 @@ func (env *Glisp) Clone() *Glisp {
 	dupenv.stackstack = env.stackstack.Clone()
 	dupenv.scopestack = env.scopestack.Clone()
 	dupenv.linearstack = env.linearstack.Clone()
+	dupenv.lexicalstack = env.lexicalstack.Clone()
 	dupenv.addrstack = env.addrstack.Clone()
 
 	dupenv.builtins = env.builtins
@@ -100,6 +106,7 @@ func (env *Glisp) Clone() *Glisp {
 
 	dupenv.scopestack.Push(env.scopestack.elements[0])
 	dupenv.linearstack.Push(env.scopestack.elements[0])
+	dupenv.lexicalstack.Push(env.scopestack.elements[0])
 
 	dupenv.mainfunc = MakeFunction("__main", 0, false, make([]Instruction, 0), nil)
 	dupenv.curfunc = dupenv.mainfunc
@@ -117,6 +124,7 @@ func (env *Glisp) Duplicate() *Glisp {
 	dupenv.datastack = dupenv.NewStack(DataStackSize)
 	dupenv.scopestack = dupenv.NewStack(ScopeStackSize)
 	dupenv.linearstack = dupenv.NewStack(ScopeStackSize)
+	dupenv.lexicalstack = dupenv.NewStack(ScopeStackSize)
 	dupenv.stackstack = dupenv.NewStack(StackStackSize)
 	dupenv.addrstack = dupenv.NewStack(CallStackSize)
 	dupenv.builtins = env.builtins
@@ -129,6 +137,7 @@ func (env *Glisp) Duplicate() *Glisp {
 
 	dupenv.scopestack.Push(env.scopestack.elements[0])
 	dupenv.linearstack.Push(env.scopestack.elements[0])
+	dupenv.lexicalstack.Push(env.scopestack.elements[0])
 
 	dupenv.mainfunc = MakeFunction("__main", 0, false, make([]Instruction, 0), nil)
 	dupenv.curfunc = dupenv.mainfunc
@@ -448,6 +457,7 @@ func (env *Glisp) Clear() {
 	env.datastack.tos = -1
 	env.scopestack.tos = 0
 	env.linearstack.tos = 0
+	env.lexicalstack.tos = 0
 	env.addrstack.tos = -1
 	env.mainfunc = MakeFunction("__main", 0, false, make([]Instruction, 0), nil)
 	env.curfunc = env.mainfunc
@@ -573,7 +583,36 @@ func (env *Glisp) ShowScopes(startat int) error {
 	return nil
 }
 
-func (env *Glisp) ShowStackStackAndScopeStack() error {
+func (env *Glisp) showStackHelper(stack *Stack, name string) {
+	note := ""
+	n := stack.Top()
+	if n < 0 {
+		note = "(empty)"
+	}
+	fmt.Printf(" ========  env.%s is %v deep: %s\n", name, n+1, note)
+	for i := 0; i <= n; i++ {
+		ele, err := stack.Get(n - i)
+		if err != nil {
+			panic(fmt.Errorf("env.%s access error on %i: %v",
+				name, i, err))
+		}
+		label := fmt.Sprintf("%s %v", name, i)
+		switch x := ele.(type) {
+		case *Stack:
+			x.Show(env, 0, label)
+		case *Scope:
+			x.Show(env, 0, label)
+		case Scope:
+			x.Show(env, 0, label)
+		default:
+			panic(fmt.Errorf("unrecognized element on %s: %T/val=%v",
+				name, x, x))
+		}
+	}
+}
+
+/*
+func (env *Glisp) OLD_ShowStackStackAndScopeStack() error {
 	note := ""
 	n := env.stackstack.Top()
 	if n < 0 {
@@ -630,6 +669,15 @@ func (env *Glisp) ShowStackStackAndScopeStack() error {
 	}
 
 	fmt.Printf(" --------\n")
+	return nil
+}
+*/
+
+func (env *Glisp) ShowStackStackAndScopeStack() error {
+	env.showStackHelper(env.stackstack, "stackstack")
+	env.showStackHelper(env.scopestack, "scopestack")
+	env.showStackHelper(env.linearstack, "linearstack")
+	env.showStackHelper(env.lexicalstack, "lexicalstack")
 	return nil
 }
 
