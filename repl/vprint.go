@@ -6,6 +6,7 @@ import (
 )
 
 var Verbose bool // set to true to debug
+var Working bool // currently under investigation
 
 // get timestamp for logging purposes
 func ts() string {
@@ -20,6 +21,12 @@ func TSPrintf(format string, a ...interface{}) {
 
 func VPrintf(format string, a ...interface{}) {
 	if Verbose {
+		TSPrintf(format, a...)
+	}
+}
+
+func WPrintf(format string, a ...interface{}) {
+	if Working {
 		TSPrintf(format, a...)
 	}
 }

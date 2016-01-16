@@ -1,0 +1,45 @@
+;; illustrates problem with dynamic scope. from
+;; https://courses.cs.washington.edu/courses/cse341/09wi/general-concepts/scoping.html
+;; 
+(defn mymap [f s]
+  (cond (null? s) ()
+        (cons (f (car s)) (mymap f (cdr s)))))
+
+;; the lambda below should refer to s as in 10, not s as in the argument to mymap.
+(def mapres2
+     (let [s 10]
+          (mymap (fn [r] (def rover 12) (+ r s)) '(1 2 3))))
+(assert (== mapres2 '(11 12 13)))
+
+;; functions defn-ed should be closures too
+
+(def z 10)
+(defn f [r] (+ r z))
+(assert (== 14 (f 4)))
+
+(def mapres (let [z 2] (mymap f '(1 2 3))))
+(assert (== mapres '(11 12 13)))
+
+
+;; just playing below, before had detected mis-impl, now fixed.
+(def y 5)
+(defn h [y] (defn f [qrs] (let* [xyz 3 g (fn [b] (* xyz b qrs y))] g)) f)
+
+
+(def r (h 2))
+(def t (r 10))
+(.closdump r) 
+(.closdump t)
+
+(defn f [] (let* [y 3 g (fn [] (+ y 1))] g))
+(def a (f))
+
+(defn f []
+  (let* [b 5]
+        (defn g [] b)
+  g))
+
+(def b 2)
+((f))
+
+(defn f [] (defn g [] ()) ())

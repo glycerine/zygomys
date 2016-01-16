@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-
-	//"github.com/shurcooL/go-goon"
 )
 
 // alternative. simpler, currently panics.
@@ -56,6 +54,9 @@ func (env *Glisp) SourceExpressions(expressions []Sexp) error {
 	//  gen.AddInstruction(PopInstr(0))
 	//}
 
+	//scope := env.LexicalPush("__source")
+	//	defer env.LexicalPop("__source")
+
 	err := gen.GenerateBegin(expressions)
 	if err != nil {
 		return err
@@ -64,7 +65,8 @@ func (env *Glisp) SourceExpressions(expressions []Sexp) error {
 	curfunc := env.curfunc
 	curpc := env.pc
 
-	env.curfunc = MakeFunction("__source", 0, false, gen.instructions, nil)
+	env.curfunc = env.MakeFunction("__source", 0, false,
+		gen.instructions, nil)
 	env.pc = 0
 
 	env.datastack.PushExpr(SexpNull)

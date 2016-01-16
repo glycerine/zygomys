@@ -2,9 +2,8 @@ package zygo
 
 import (
 	"fmt"
-	"runtime"
-	//"github.com/shurcooL/go-goon"
 	"reflect"
+	"runtime"
 )
 
 // call Go methods

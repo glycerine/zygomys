@@ -129,7 +129,7 @@ func TypeOf(expr Sexp) SexpStr {
 		v = "list"
 	case SexpSymbol:
 		v = "symbol"
-	case SexpFunction:
+	case *SexpFunction:
 		v = "function"
 	case SexpSentinel:
 		v = "null"

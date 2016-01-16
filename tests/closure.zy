@@ -56,6 +56,9 @@
 
 (def s (newStore [10 9 8 7 6 5 4 3 2 1]))
 
+(defn asserteq [a b] (cond (== a b) true
+                           (begin (printf "%v was != %v\n" a b) true)))
+
 (defn drainStore []
 	(let [ v (s) ]
 		(cond

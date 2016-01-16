@@ -2,15 +2,13 @@ package zygo
 
 import (
 	"bytes"
-	"time"
-	//"encoding/json"
 	"fmt"
 	"github.com/shurcooL/go-goon"
 	"github.com/ugorji/go/codec"
-	//"io"
 	"reflect"
 	"sort"
 	"strings"
+	"time"
 )
 
 /*
@@ -200,9 +198,9 @@ func JsonToGo(json []byte) (interface{}, error) {
 	if err != nil {
 		panic(err)
 	}
-	//fmt.Printf("\n decoded type : %T\n", iface)
-	//fmt.Printf("\n decoded value: %#v\n", iface)
-	//goon.Dump(iface)
+	VPrintf("\n decoded type : %T\n", iface)
+	VPrintf("\n decoded value: %#v\n", iface)
+	VDump(iface)
 	return iface, nil
 }
 
@@ -430,7 +428,7 @@ func SexpToGo(sexp Sexp, env *Glisp) interface{} {
 		return e
 	case SexpSymbol:
 		return e.name
-	case SexpFunction:
+	case *SexpFunction:
 		// no conversion done
 		return e
 	case SexpSentinel:
@@ -656,8 +654,8 @@ func SexpToGoStructs(sexp Sexp, target interface{}, env *Glisp) (interface{}, er
 		//return src
 	case SexpSymbol:
 		targVa.Elem().SetString(src.name)
-	case SexpFunction:
-		panic("unimplemented: SexpFunction converstion.")
+	case *SexpFunction:
+		panic("unimplemented: *SexpFunction converstion.")
 		// no conversion done
 		//return src
 	case SexpSentinel:

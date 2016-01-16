@@ -5,8 +5,6 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
-
-	//"github.com/shurcooL/go-goon"
 )
 
 type Sexp interface {
@@ -28,6 +26,16 @@ type SexpError struct {
 	error
 }
 type SexpSentinel int
+type SexpClosureEnv Scope
+
+func (c SexpClosureEnv) SexpString() string {
+	scop := Scope(c)
+	s, err := scop.Show(scop.env, 0, "")
+	if err != nil {
+		panic(err)
+	}
+	return s
+}
 
 const (
 	SexpNull SexpSentinel = iota
@@ -52,14 +60,6 @@ func (sent SexpSentinel) SexpString() string {
 func Cons(a Sexp, b Sexp) SexpPair {
 	return SexpPair{a, b}
 }
-
-//func (pair SexpPair) Head() Sexp {
-//	return pair.Head
-//}
-
-//func (pair SexpPair) Tail() Sexp {
-//	return pair.Tail
-//}
 
 func (pair SexpPair) SexpString() string {
 	str := "("
@@ -134,6 +134,69 @@ type SexpHash struct {
 	// json tag name -> pointers to example values, as factories for SexpToGoStructs()
 	JsonTagMap *map[string]*HashFieldDet
 	DetOrder   *[]*HashFieldDet
+
+	// for using these as a scoping model
+	DefnEnv    **SexpHash
+	SuperClass **SexpHash
+	ZMain      *SexpFunction
+	ZMethods   *map[string]*SexpFunction
+	env        *Glisp
+}
+
+var MethodNotFound = fmt.Errorf("method not found")
+
+func (h *SexpHash) RunZmethod(method string, args []Sexp) (Sexp, error) {
+	f, ok := (*h.ZMethods)[method]
+	if !ok {
+		return SexpNull, MethodNotFound
+	}
+
+	panic(fmt.Errorf("not done calling %s", f.name))
+	return SexpNull, nil
+}
+
+func CallZMethodOnRecordFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
+	narg := len(args)
+	if narg < 2 {
+		return SexpNull, WrongNargs
+	}
+	var hash SexpHash
+	switch h := args[0].(type) {
+	case SexpHash:
+		hash = h
+	default:
+		return SexpNull, fmt.Errorf("can only .call on a record")
+	}
+
+	method := ""
+	switch s := args[1].(type) {
+	case SexpSymbol:
+		method = s.name
+	case SexpStr:
+		method = string(s)
+	default:
+		return SexpNull, fmt.Errorf("can only .call with a " +
+			"symbol or string as the method name. example: (.call record method:)")
+	}
+
+	return hash.RunZmethod(method, args[2:])
+}
+
+func (h *SexpHash) SetMain(p *SexpFunction) {
+	h.BindSymbol(h.env.MakeSymbol(".main"), p)
+}
+
+func (h *SexpHash) SetDefnEnv(p *SexpHash) {
+	*h.DefnEnv = p
+	h.BindSymbol(h.env.MakeSymbol(".parent"), *p)
+}
+
+func (h *SexpHash) Lookup(env *Glisp, key Sexp) (expr Sexp, err error) {
+	return h.HashGet(env, key)
+}
+
+func (h *SexpHash) BindSymbol(key SexpSymbol, val Sexp) error {
+	return h.HashSet(key, val)
 }
 
 func (h *SexpHash) SetGoStructFactory(factory RegistryEntry) {
@@ -248,17 +311,54 @@ func (sym SexpSymbol) Number() int {
 }
 
 type SexpFunction struct {
-	name       string
-	user       bool
-	nargs      int
-	varargs    bool
-	fun        GlispFunction
-	userfun    GlispUserFunction
-	closeScope *Stack
-	orig       Sexp
+	name              string
+	user              bool
+	nargs             int
+	varargs           bool
+	fun               GlispFunction
+	userfun           GlispUserFunction
+	orig              Sexp
+	closingOverScopes *Closing
 }
 
-func (sf SexpFunction) SexpString() string {
+func (sf *SexpFunction) Copy() *SexpFunction {
+	cp := *sf
+	return &cp
+}
+
+func (sf *SexpFunction) SetClosing(clos *Closing) {
+	pre, err := sf.ShowClosing(clos.env, 4, "prev")
+	panicOn(err)
+	newnew, err := sf.ShowClosing(clos.env, 4, "newnew")
+	panicOn(err)
+	VPrintf("99999 for sfun = %p, in sfun.SetClosing(), prev value is %p = '%s'\n",
+		sf, sf.closingOverScopes, pre)
+	VPrintf("88888 in sfun.SetClosing(), new  value is %p = '%s'\n", clos, newnew)
+	sf.closingOverScopes = clos
+}
+
+func (sf *SexpFunction) ShowClosing(env *Glisp, indent int, label string) (string, error) {
+	if sf.closingOverScopes == nil {
+		return sf.name + " has no captured scopes.", nil
+	}
+	return sf.closingOverScopes.Show(env, indent, label)
+}
+
+func (sf *SexpFunction) ClosingLookupSymbolUntilFunction(sym SexpSymbol) (Sexp, error, *Scope) {
+	if sf.closingOverScopes != nil {
+		return sf.closingOverScopes.LookupSymbolUntilFunction(sym)
+	}
+	return SexpNull, SymNotFound, nil
+}
+
+func (sf *SexpFunction) ClosingLookupSymbol(sym SexpSymbol) (Sexp, error, *Scope) {
+	if sf.closingOverScopes != nil {
+		return sf.closingOverScopes.LookupSymbol(sym)
+	}
+	return SexpNull, SymNotFound, nil
+}
+
+func (sf *SexpFunction) SexpString() string {
 	if sf.orig == nil {
 		return "fn [" + sf.name + "]"
 	}

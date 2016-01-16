@@ -1,0 +1,13 @@
+;; tail recursion
+
+;; check for scope leaks in the tail recursion
+(defn foldl [lst fun acc]
+    (cond
+        (empty? lst) acc
+        (foldl (cdr lst) fun (fun (car lst) acc))
+		))
+(defn f [a acc] (+ 1 acc))
+
+(foldl '(a b c d e f g h i j) f 0) 
+
+

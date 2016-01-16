@@ -58,3 +58,10 @@ func (stack *Stack) PrintStack() {
 		fmt.Println("\t" + expr.SexpString())
 	}
 }
+
+func (stack *Stack) PrintScopeStack() {
+	for i := 0; i <= stack.tos; i++ {
+		scop := stack.elements[i].(*Scope)
+		scop.Show(stack.env, 4, "")
+	}
+}

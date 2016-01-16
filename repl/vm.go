@@ -3,7 +3,6 @@ package zygo
 import (
 	"errors"
 	"fmt"
-	//"github.com/shurcooL/go-goon"
 )
 
 type Instruction interface {
@@ -74,54 +73,6 @@ func (b BranchInstr) Execute(env *Glisp) error {
 	return nil
 }
 
-type PushInstrClosure struct {
-	expr SexpFunction
-}
-
-func (p PushInstrClosure) InstrString() string {
-	return "pushC " + p.expr.SexpString()
-}
-
-func (p PushInstrClosure) Execute(env *Glisp) error {
-	if p.expr.fun != nil {
-		p.expr.closeScope = env.NewStack(ScopeStackSize)
-
-		p.expr.closeScope.PushScope()
-
-		var sym SexpSymbol
-		var exp Sexp
-		var err error
-		for _, v := range p.expr.fun {
-
-			switch it := v.(type) {
-			case EnvToStackInstr:
-				sym = it.sym
-			case PopStackPutEnvInstr:
-				sym = it.sym
-			case CallInstr:
-				sym = it.sym
-			default:
-				continue
-			}
-
-			if env.oldStyleLookups {
-				exp, err, _ = env.scopestack.LookupSymbolNonGlobal(sym)
-			} else {
-				exp, err, _ = env.linearstack.LookupSymbolNonGlobal(sym)
-			}
-			if err == nil {
-				p.expr.closeScope.BindSymbol(sym, exp)
-			}
-		}
-	} else {
-		p.expr.closeScope = env.scopestack.Clone() // for a non script function I have no idea what it accesses, so we clone the whole thing
-	}
-
-	env.datastack.PushExpr(p.expr)
-	env.pc++
-	return nil
-}
-
 type PushInstr struct {
 	expr Sexp
 }
@@ -173,6 +124,8 @@ func (g EnvToStackInstr) InstrString() string {
 }
 
 func (g EnvToStackInstr) Execute(env *Glisp) error {
+	VPrintf("in EnvToStackInstr\n")
+	defer VPrintf("leaving EnvToStackInstr env.pc =%v\n", env.pc)
 
 	macxpr, isMacro := env.macros[g.sym.number]
 	if isMacro {
@@ -183,11 +136,7 @@ func (g EnvToStackInstr) Execute(env *Glisp) error {
 	}
 	var expr Sexp
 	var err error
-	if env.oldStyleLookups {
-		expr, err, _ = env.scopestack.LookupSymbol(g.sym)
-	} else {
-		expr, err, _ = env.linearstack.LookupSymbol(g.sym)
-	}
+	expr, err, _ = env.LexicalLookupSymbol(g.sym)
 	if err != nil {
 		return err
 	}
@@ -210,11 +159,8 @@ func (p PopStackPutEnvInstr) Execute(env *Glisp) error {
 		return err
 	}
 	env.pc++
-	if env.oldStyleLookups {
-		return env.scopestack.BindSymbol(p.sym, expr)
-	} else {
-		return env.linearstack.BindSymbol(p.sym, expr)
-	}
+	return env.LexicalBindSymbol(p.sym, expr)
+
 }
 
 // Update takes top of datastack and
@@ -239,21 +185,13 @@ func (p UpdateInstr) Execute(env *Glisp) error {
 	env.pc++
 	var scope *Scope
 
-	if env.oldStyleLookups {
-		_, err, scope = env.scopestack.LookupSymbol(p.sym)
-		if err != nil {
-			// not found up the stack, so treat like (def)
-			// instead of (set)
-			return env.scopestack.BindSymbol(p.sym, expr)
-		}
-	} else {
-		_, err, scope = env.linearstack.LookupSymbol(p.sym)
-		if err != nil {
-			// not found up the stack, so treat like (def)
-			// instead of (set)
-			return env.linearstack.BindSymbol(p.sym, expr)
-		}
+	_, err, scope = env.LexicalLookupSymbol(p.sym)
+	if err != nil {
+		// not found up the stack, so treat like (def)
+		// instead of (set)
+		return env.LexicalBindSymbol(p.sym, expr)
 	}
+
 	// found up the stack, so (set)
 	return scope.UpdateSymbolInScope(p.sym, expr)
 }
@@ -274,27 +212,22 @@ func (c CallInstr) Execute(env *Glisp) error {
 	}
 	var funcobj, indirectFuncName Sexp
 	var err error
-	if env.oldStyleLookups {
-		funcobj, err, _ = env.scopestack.LookupSymbol(c.sym)
-	} else {
-		funcobj, err, _ = env.linearstack.LookupSymbol(c.sym)
-	}
+
+	funcobj, err, _ = env.LexicalLookupSymbol(c.sym)
+
 	if err != nil {
 		return err
 	}
 	switch f := funcobj.(type) {
 	case SexpSymbol:
 		// allow symbols to refer to functions that we then call
-		if env.oldStyleLookups {
-			indirectFuncName, err, _ = env.scopestack.LookupSymbol(f)
-		} else {
-			indirectFuncName, err, _ = env.linearstack.LookupSymbol(f)
-		}
+		indirectFuncName, err, _ = env.LexicalLookupSymbol(f)
+
 		if err != nil {
 			return fmt.Errorf("'%s' refers to symbol '%s', but '%s' does not refer to a function.", c.sym.name, f.name, f.name)
 		}
 		switch g := indirectFuncName.(type) {
-		case SexpFunction:
+		case *SexpFunction:
 			if !g.user {
 				return env.CallFunction(g, c.nargs)
 			}
@@ -305,7 +238,7 @@ func (c CallInstr) Execute(env *Glisp) error {
 			}
 		}
 
-	case SexpFunction:
+	case *SexpFunction:
 		if !f.user {
 			return env.CallFunction(f, c.nargs)
 		}
@@ -329,7 +262,7 @@ func (d DispatchInstr) Execute(env *Glisp) error {
 	}
 
 	switch f := funcobj.(type) {
-	case SexpFunction:
+	case *SexpFunction:
 		if !f.user {
 			return env.CallFunction(f, d.nargs)
 		}
@@ -356,34 +289,48 @@ func (r ReturnInstr) InstrString() string {
 	return "ret \"" + r.err.Error() + "\""
 }
 
-type AddScopeInstr int
+type AddScopeInstr struct {
+	Name string
+}
 
 func (a AddScopeInstr) InstrString() string {
-	return "add scope"
+	return "add scope " + a.Name
 }
 
 func (a AddScopeInstr) Execute(env *Glisp) error {
-	env.scopestack.PushScope()
-	env.linearstack.PushScope()
+	sc := env.NewNamedScope(fmt.Sprintf("runtime add scope for '%s' at pc=%v",
+		env.curfunc.name, env.pc))
+	env.linearstack.Push(sc)
 	env.pc++
 	return nil
 }
 
-type RemoveScopeInstr int
+type AddFuncScopeInstr struct {
+	Name string
+}
+
+func (a AddFuncScopeInstr) InstrString() string {
+	return "add func scope " + a.Name
+}
+
+func (a AddFuncScopeInstr) Execute(env *Glisp) error {
+	sc := env.NewNamedScope(fmt.Sprintf("%s at pc=%v",
+		env.curfunc.name, env.pc))
+	sc.IsFunction = true
+	env.linearstack.Push(sc)
+	env.pc++
+	return nil
+}
+
+type RemoveScopeInstr struct{}
 
 func (a RemoveScopeInstr) InstrString() string {
-	return "rem scope"
+	return "rem runtime scope"
 }
 
 func (a RemoveScopeInstr) Execute(env *Glisp) error {
 	env.pc++
-	var err error
-	err = env.linearstack.PopScope()
-	err2 := env.scopestack.PopScope()
-	if err != nil {
-		return err
-	}
-	return err2
+	return env.linearstack.PopScope()
 }
 
 type ExplodeInstr int
@@ -466,8 +413,7 @@ func (b BindlistInstr) Execute(env *Glisp) error {
 	}
 
 	for i, bindThisSym := range b.syms {
-		env.scopestack.BindSymbol(bindThisSym, arr[i])
-		env.linearstack.BindSymbol(bindThisSym, arr[i])
+		env.LexicalBindSymbol(bindThisSym, arr[i])
 	}
 	env.pc++
 	return nil
@@ -699,5 +645,36 @@ func (g DebugInstr) Execute(env *Glisp) error {
 		panic(fmt.Errorf("unknown diagnostic %v", g.diagnostic))
 	}
 	env.pc++
+	return nil
+}
+
+// when a defn or fn executes, capture the creation env.
+type CreateClosureInstr struct {
+	sfun *SexpFunction
+}
+
+func (a CreateClosureInstr) InstrString() string {
+	return "create closure " + a.sfun.SexpString()
+}
+
+func (a CreateClosureInstr) Execute(env *Glisp) error {
+	env.pc++
+	cls := NewClosing(a.sfun.name, env)
+	myInvok := a.sfun.Copy()
+	myInvok.SetClosing(cls)
+
+	shown, err := myInvok.ShowClosing(env, 8,
+		fmt.Sprintf("closedOverScopes of '%s'", myInvok.name))
+	if err != nil {
+		return err
+	}
+	VPrintf("+++ CreateClosure: assign to '%s' the stack:\n\n%s\n\n",
+		myInvok.SexpString(), shown)
+	top := cls.TopScope()
+	VPrintf("222 CreateClosure: top of NewClosing Scope has addr %p and is\n",
+		top)
+	top.Show(env, 8, fmt.Sprintf("top of NewClosing at %p", top))
+
+	env.datastack.PushExpr(myInvok)
 	return nil
 }

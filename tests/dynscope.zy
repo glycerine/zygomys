@@ -1,0 +1,25 @@
+(def x 1)
+(def g_saw_x 0)
+(def f_after_g_sees_x 0)
+(defn g [] (printf "orig g x=%v\n" x) (set g_saw_x x) (set x 2) )
+(defn f [] (let [x 3] (g) (set f_after_g_sees_x x)))
+(f)
+
+;; currently zygomys does lexical / static scoping
+
+;; under dynamic scoping
+;(assert (== g_saw_x 3))
+;(assert (== f_after_g_sees_x 2))
+;(assert (== x 1))
+
+;; under lexical scoping
+(assert (== g_saw_x 1))
+(assert (== f_after_g_sees_x 3))
+(assert (== x 2))
+
+;; above is necessary but not sufficient:
+;; also needed: see tests/closure2.zy
+;; we can't have too much sharing. i.e.
+;; each new activation frame creates
+;; a distint frame that when closed over
+;; results in a distinct local variable set.

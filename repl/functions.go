@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	//"github.com/shurcooL/go-goon"
 )
 
 var WrongNargs error = errors.New("wrong number of arguments")
@@ -582,11 +581,11 @@ func ApplyFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	if len(args) != 2 {
 		return SexpNull, WrongNargs
 	}
-	var fun SexpFunction
+	var fun *SexpFunction
 	var funargs SexpArray
 
 	switch e := args[0].(type) {
-	case SexpFunction:
+	case *SexpFunction:
 		fun = e
 	default:
 		return SexpNull, errors.New("first argument must be function")
@@ -612,12 +611,12 @@ func MapFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	if len(args) != 2 {
 		return SexpNull, WrongNargs
 	}
-	var fun SexpFunction
+	var fun *SexpFunction
 
 	VPrintf("\n debug Map: args = '%#v'\n", args)
 
 	switch e := args[0].(type) {
-	case SexpFunction:
+	case *SexpFunction:
 		fun = e
 	default:
 		return SexpNull, fmt.Errorf("first argument must be function, but we had %T / val = '%#v'", e, e)
@@ -707,10 +706,10 @@ func SymnumFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	return SexpNull, errors.New("argument must be symbol")
 }
 
-var MissingFunction = SexpFunction{name: "__missing", user: true}
+var MissingFunction = &SexpFunction{name: "__missing", user: true}
 
-func MakeFunction(name string, nargs int, varargs bool,
-	fun GlispFunction, orig Sexp) SexpFunction {
+func (env *Glisp) MakeFunction(name string, nargs int, varargs bool,
+	fun GlispFunction, orig Sexp) *SexpFunction {
 	var sfun SexpFunction
 	sfun.name = name
 	sfun.user = false
@@ -718,15 +717,16 @@ func MakeFunction(name string, nargs int, varargs bool,
 	sfun.varargs = varargs
 	sfun.fun = fun
 	sfun.orig = orig
-	return sfun
+	sfun.SetClosing(NewClosing(name, env)) // snapshot the create env as of now.
+	return &sfun
 }
 
-func MakeUserFunction(name string, ufun GlispUserFunction) SexpFunction {
+func MakeUserFunction(name string, ufun GlispUserFunction) *SexpFunction {
 	var sfun SexpFunction
 	sfun.name = name
 	sfun.user = true
 	sfun.userfun = ufun
-	return sfun
+	return &sfun
 }
 
 var BuiltinFunctions = map[string]GlispUserFunction{
@@ -820,6 +820,9 @@ var BuiltinFunctions = map[string]GlispUserFunction{
 	"fieldls":   GoFieldListFunction,
 	"chomp":     StringUtilFunction,
 	"exit":      ExitFunction,
+	"stop":      StopFunction,
+	".closdump": DumpClosureEnvFunction,
+	".call":     CallZMethodOnRecordFunction,
 	"gob":       GobEncodeFunction,
 }
 
@@ -935,4 +938,23 @@ func GenericAccessFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		return ArrayAccessFunction(env, name, args)
 	}
 	return SexpNull, errors.New("first argument of to hget function must be hash or array")
+}
+
+var stopErr error = fmt.Errorf("stop")
+
+func StopFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
+	narg := len(args)
+	if narg > 1 {
+		return SexpNull, WrongNargs
+	}
+
+	if narg == 0 {
+		return SexpNull, stopErr
+	}
+
+	switch s := args[0].(type) {
+	case SexpStr:
+		return SexpNull, fmt.Errorf(string(s))
+	}
+	return SexpNull, stopErr
 }

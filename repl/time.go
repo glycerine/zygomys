@@ -23,9 +23,9 @@ func TimeitFunction(env *Glisp, name string,
 		return SexpNull, WrongNargs
 	}
 
-	var fun SexpFunction
+	var fun *SexpFunction
 	switch t := args[0].(type) {
-	case SexpFunction:
+	case *SexpFunction:
 		fun = t
 	default:
 		return SexpNull,

@@ -14,10 +14,8 @@ type PreHook func(*Glisp, string, []Sexp)
 type PostHook func(*Glisp, string, Sexp)
 
 type Glisp struct {
-	datastack  *Stack
-	scopestack *Stack
-	addrstack  *Stack
-	stackstack *Stack
+	datastack *Stack
+	addrstack *Stack
 
 	// linearstack: push on scope enter, pop on scope exit. runtime dynamic.
 	linearstack *Stack
@@ -25,15 +23,12 @@ type Glisp struct {
 	// loopstack: let break and continue find the nearest enclosing loop.
 	loopstack *Stack
 
-	// lexicalstack: track the scope where a function was defined.
-	lexicalstack *Stack
-
 	symtable    map[string]int
 	revsymtable map[int]string
-	builtins    map[int]SexpFunction
-	macros      map[int]SexpFunction
-	curfunc     SexpFunction
-	mainfunc    SexpFunction
+	builtins    map[int]*SexpFunction
+	macros      map[int]*SexpFunction
+	curfunc     *SexpFunction
+	mainfunc    *SexpFunction
 	pc          int
 	nextsymbol  int
 	before      []PreHook
@@ -41,8 +36,8 @@ type Glisp struct {
 
 	debugExec           bool
 	debugSymbolNotFound bool
-	oldStyleLookups     bool
-	showGlobalScope     bool
+
+	showGlobalScope bool
 }
 
 const CallStackSize = 25
@@ -54,19 +49,15 @@ const LoopStackSize = 5
 func NewGlisp() *Glisp {
 	env := new(Glisp)
 	env.datastack = env.NewStack(DataStackSize)
-	env.scopestack = env.NewStack(ScopeStackSize)
 	env.linearstack = env.NewStack(ScopeStackSize)
-	env.lexicalstack = env.NewStack(ScopeStackSize)
-	glob := NewScope()
+
+	glob := env.NewNamedScope("global")
 	glob.IsGlobal = true
-	env.scopestack.Push(glob)
 	env.linearstack.Push(glob)
-	env.lexicalstack.Push(glob)
-	env.stackstack = env.NewStack(StackStackSize)
 	env.addrstack = env.NewStack(CallStackSize)
 	env.loopstack = env.NewStack(LoopStackSize)
-	env.builtins = make(map[int]SexpFunction)
-	env.macros = make(map[int]SexpFunction)
+	env.builtins = make(map[int]*SexpFunction)
+	env.macros = make(map[int]*SexpFunction)
 	env.symtable = make(map[string]int)
 	env.revsymtable = make(map[int]string)
 	env.nextsymbol = 1
@@ -79,21 +70,21 @@ func NewGlisp() *Glisp {
 		env.AddFunction(key, function)
 	}
 
-	env.mainfunc = MakeFunction("__main", 0, false, make([]Instruction, 0), nil)
+	env.mainfunc = env.MakeFunction("__main", 0, false,
+		make([]Instruction, 0), nil)
 	env.curfunc = env.mainfunc
 	env.pc = 0
 	env.debugSymbolNotFound = false
+	//env.debugSymbolNotFound = true
+	//env.debugExec = true
+
 	return env
 }
 
 func (env *Glisp) Clone() *Glisp {
 	dupenv := new(Glisp)
-
 	dupenv.datastack = env.datastack.Clone()
-	dupenv.stackstack = env.stackstack.Clone()
-	dupenv.scopestack = env.scopestack.Clone()
 	dupenv.linearstack = env.linearstack.Clone()
-	dupenv.lexicalstack = env.lexicalstack.Clone()
 	dupenv.addrstack = env.addrstack.Clone()
 
 	dupenv.builtins = env.builtins
@@ -104,28 +95,22 @@ func (env *Glisp) Clone() *Glisp {
 	dupenv.before = env.before
 	dupenv.after = env.after
 
-	dupenv.scopestack.Push(env.scopestack.elements[0])
-	dupenv.linearstack.Push(env.scopestack.elements[0])
-	dupenv.lexicalstack.Push(env.scopestack.elements[0])
+	dupenv.linearstack.Push(env.linearstack.elements[0])
 
-	dupenv.mainfunc = MakeFunction("__main", 0, false, make([]Instruction, 0), nil)
+	dupenv.mainfunc = env.MakeFunction("__main", 0, false,
+		make([]Instruction, 0), nil)
 	dupenv.curfunc = dupenv.mainfunc
 	dupenv.pc = 0
 	dupenv.debugExec = env.debugExec
 	dupenv.debugSymbolNotFound = env.debugSymbolNotFound
-	dupenv.oldStyleLookups = env.oldStyleLookups
 	dupenv.showGlobalScope = env.showGlobalScope
-
 	return dupenv
 }
 
 func (env *Glisp) Duplicate() *Glisp {
 	dupenv := new(Glisp)
 	dupenv.datastack = dupenv.NewStack(DataStackSize)
-	dupenv.scopestack = dupenv.NewStack(ScopeStackSize)
 	dupenv.linearstack = dupenv.NewStack(ScopeStackSize)
-	dupenv.lexicalstack = dupenv.NewStack(ScopeStackSize)
-	dupenv.stackstack = dupenv.NewStack(StackStackSize)
 	dupenv.addrstack = dupenv.NewStack(CallStackSize)
 	dupenv.builtins = env.builtins
 	dupenv.macros = env.macros
@@ -135,16 +120,14 @@ func (env *Glisp) Duplicate() *Glisp {
 	dupenv.before = env.before
 	dupenv.after = env.after
 
-	dupenv.scopestack.Push(env.scopestack.elements[0])
-	dupenv.linearstack.Push(env.scopestack.elements[0])
-	dupenv.lexicalstack.Push(env.scopestack.elements[0])
+	dupenv.linearstack.Push(env.linearstack.elements[0])
 
-	dupenv.mainfunc = MakeFunction("__main", 0, false, make([]Instruction, 0), nil)
+	dupenv.mainfunc = env.MakeFunction("__main", 0, false,
+		make([]Instruction, 0), nil)
 	dupenv.curfunc = dupenv.mainfunc
 	dupenv.pc = 0
 	dupenv.debugExec = env.debugExec
 	dupenv.debugSymbolNotFound = env.debugSymbolNotFound
-	dupenv.oldStyleLookups = env.oldStyleLookups
 	dupenv.showGlobalScope = env.showGlobalScope
 
 	return dupenv
@@ -192,7 +175,7 @@ func (env *Glisp) wrangleOptargs(fnargs, nargs int) error {
 	return nil
 }
 
-func (env *Glisp) CallFunction(function SexpFunction, nargs int) error {
+func (env *Glisp) CallFunction(function *SexpFunction, nargs int) error {
 	for _, prehook := range env.before {
 		expressions, err := env.datastack.GetExpressions(nargs)
 		if err != nil {
@@ -212,24 +195,15 @@ func (env *Glisp) CallFunction(function SexpFunction, nargs int) error {
 				function.name, function.nargs, nargs))
 	}
 
-	if env.scopestack.IsEmpty() {
+	if env.linearstack.IsEmpty() {
 		panic("where's the global scope?")
 	}
 
 	env.linearstack.PushScope()
-	globalScope := env.scopestack.elements[0]
-	env.stackstack.Push(env.scopestack)
-	env.scopestack = env.NewStack(ScopeStackSize)
-	env.scopestack.Push(globalScope)
-
-	if function.closeScope != nil {
-		function.closeScope.PushAllTo(env.scopestack)
-		function.closeScope.PushAllTo(env.linearstack)
-	}
-
 	env.addrstack.PushAddr(env.curfunc, env.pc+1)
-	env.scopestack.PushScope()
 
+	// this effectely *is* the call, because it sets the
+	// next instructions to happen once we exit.
 	env.curfunc = function
 	env.pc = 0
 
@@ -244,21 +218,8 @@ func (env *Glisp) ReturnFromFunction() error {
 		}
 		posthook(env, env.curfunc.name, retval)
 	}
-
 	var err error
 	env.curfunc, env.pc, err = env.addrstack.PopAddr()
-	if err != nil {
-		return err
-	}
-	/* old style:
-	scopestack, err := env.stackstack.Pop()
-	if err != nil {
-		return err
-	}
-	env.scopestack = scopestack.(*Stack)
-	*/
-	// new style
-	_, err = env.stackstack.Pop()
 	if err != nil {
 		return err
 	}
@@ -268,7 +229,7 @@ func (env *Glisp) ReturnFromFunction() error {
 }
 
 func (env *Glisp) CallUserFunction(
-	function SexpFunction, name string, nargs int) error {
+	function *SexpFunction, name string, nargs int) error {
 
 	for _, prehook := range env.before {
 		expressions, err := env.datastack.GetExpressions(nargs)
@@ -293,6 +254,7 @@ func (env *Glisp) CallUserFunction(
 		return errors.New(
 			fmt.Sprintf("Error calling %s: %v", name, err))
 	}
+
 	env.datastack.PushExpr(res)
 
 	for _, posthook := range env.after {
@@ -355,7 +317,7 @@ func (env *Glisp) EvalString(str string) (Sexp, error) {
 	if err != nil {
 		return SexpNull, err
 	}
-
+	VPrintf("\n EvalString: LoadString() done, now to Run():\n")
 	return env.Run()
 }
 
@@ -373,7 +335,6 @@ func (env *Glisp) AddFunction(name string, function GlispUserFunction) {
 
 func (env *Glisp) AddGlobal(name string, obj Sexp) {
 	sym := env.MakeSymbol(name)
-	env.scopestack.elements[0].(*Scope).Map[sym.number] = obj
 	env.linearstack.elements[0].(*Scope).Map[sym.number] = obj
 }
 
@@ -399,7 +360,7 @@ func (env *Glisp) DumpFunctionByName(name string) error {
 
 	var fun GlispFunction
 	switch t := obj.(type) {
-	case SexpFunction:
+	case *SexpFunction:
 		if !t.user {
 			fun = t.fun
 		} else {
@@ -435,8 +396,10 @@ func (env *Glisp) DumpEnvironment() {
 	if !env.curfunc.user {
 		DumpFunction(env.curfunc.fun, env.pc)
 	}
-	fmt.Printf("Stack: (length %d)\n", env.datastack.tos+1)
+	fmt.Printf("DataStack: (length %d)\n", env.datastack.Size())
 	env.datastack.PrintStack()
+	fmt.Printf("Linear stack: (length %d)\n", env.linearstack.Size())
+	env.linearstack.PrintScopeStack()
 }
 
 func (env *Glisp) ReachedEnd() bool {
@@ -455,33 +418,25 @@ func (env *Glisp) GetStackTrace(err error) string {
 
 func (env *Glisp) Clear() {
 	env.datastack.tos = -1
-	env.scopestack.tos = 0
 	env.linearstack.tos = 0
-	env.lexicalstack.tos = 0
 	env.addrstack.tos = -1
-	env.mainfunc = MakeFunction("__main", 0, false, make([]Instruction, 0), nil)
+
+	env.mainfunc = env.MakeFunction("__main", 0, false,
+		make([]Instruction, 0), nil)
 	env.curfunc = env.mainfunc
 	env.pc = 0
 }
 
 func (env *Glisp) FindObject(name string) (Sexp, bool) {
 	sym := env.MakeSymbol(name)
-	if env.oldStyleLookups {
-		obj, err, _ := env.scopestack.LookupSymbol(sym)
-		if err != nil {
-			return SexpNull, false
-		}
-		return obj, true
-	} else {
-		obj, err, _ := env.linearstack.LookupSymbol(sym)
-		if err != nil {
-			return SexpNull, false
-		}
-		return obj, true
+	obj, err, _ := env.linearstack.LookupSymbol(sym)
+	if err != nil {
+		return SexpNull, false
 	}
+	return obj, true
 }
 
-func (env *Glisp) Apply(fun SexpFunction, args []Sexp) (Sexp, error) {
+func (env *Glisp) Apply(fun *SexpFunction, args []Sexp) (Sexp, error) {
 	VPrintf("\n\n debug Apply not working on user funcs: fun = '%#v'   and args = '%#v'\n\n", fun, args)
 	if fun.user {
 		return fun.userfun(env, fun.name, args)
@@ -492,7 +447,7 @@ func (env *Glisp) Apply(fun SexpFunction, args []Sexp) (Sexp, error) {
 		env.datastack.PushExpr(expr)
 	}
 
-	//fmt.Printf("\nApply Calling '%s'\n", fun.SexpString())
+	//VPrintf("\nApply Calling '%s'\n", fun.SexpString())
 	err := env.CallFunction(fun, len(args))
 	if err != nil {
 		return SexpNull, err
@@ -502,13 +457,14 @@ func (env *Glisp) Apply(fun SexpFunction, args []Sexp) (Sexp, error) {
 }
 
 func (env *Glisp) Run() (Sexp, error) {
+
 	for env.pc != -1 && !env.ReachedEnd() {
 		instr := env.curfunc.fun[env.pc]
 		if env.debugExec {
-			fmt.Printf("\n ====== in '%s', about to run instr: %#v\n",
+			fmt.Printf("\n ====== in '%s', about to run:\n",
 				env.curfunc.name, instr)
 			env.DumpEnvironment()
-			fmt.Printf("\n ====== in '%s', now running %#v\n",
+			fmt.Printf("\n ====== in '%s', now running the above.\n",
 				env.curfunc.name, instr)
 		}
 		err := instr.Execute(env)
@@ -516,8 +472,8 @@ func (env *Glisp) Run() (Sexp, error) {
 			return SexpNull, err
 		}
 		if env.debugExec {
-			fmt.Printf("\n ****** in '%s', after running '%#v', stack is: \n",
-				env.curfunc.name, instr)
+			fmt.Printf("\n ****** in '%s', after running, stack is: \n",
+				env.curfunc.name)
 			env.DumpEnvironment()
 			fmt.Printf("\n ****** \n")
 
@@ -559,30 +515,6 @@ func (env *Glisp) FindLoop(target *Loop) (int, error) {
 	return -1, fmt.Errorf("could not find loop target '%s'", target.stmtname.name)
 }
 
-// startat = 0 to show everything starting with global bindings
-// startat = 1 to show one scope inside the global.
-// startat = 2, 3, ... show deeper scopes only.
-func (env *Glisp) ShowScopes(startat int) error {
-	top := env.scopestack.Top()
-	VPrintf("\n ShowScopes has top=%d\n", top)
-	for i := startat; i <= top; i++ {
-		scop, err := env.scopestack.Get(i)
-		if err != nil {
-			return err
-		}
-
-		switch sc := scop.(type) {
-		case Scope:
-			sc.Show(env, i*6, fmt.Sprintf("====  scope # %d  in  env %p\n", i, env))
-		case *Scope:
-			sc.Show(env, i*6, fmt.Sprintf("====  scope # %d  in  env %p\n", i, env))
-		default:
-			return fmt.Errorf("unexpected type %T / val = %#v on scopestack", sc, sc)
-		}
-	}
-	return nil
-}
-
 func (env *Glisp) showStackHelper(stack *Stack, name string) {
 	note := ""
 	n := stack.Top()
@@ -590,6 +522,7 @@ func (env *Glisp) showStackHelper(stack *Stack, name string) {
 		note = "(empty)"
 	}
 	fmt.Printf(" ========  env.%s is %v deep: %s\n", name, n+1, note)
+	s := ""
 	for i := 0; i <= n; i++ {
 		ele, err := stack.Get(n - i)
 		if err != nil {
@@ -599,85 +532,23 @@ func (env *Glisp) showStackHelper(stack *Stack, name string) {
 		label := fmt.Sprintf("%s %v", name, i)
 		switch x := ele.(type) {
 		case *Stack:
-			x.Show(env, 0, label)
+			s, _ = x.Show(env, 0, label)
+
 		case *Scope:
-			x.Show(env, 0, label)
+			s, _ = x.Show(env, 0, label)
 		case Scope:
-			x.Show(env, 0, label)
+			s, _ = x.Show(env, 0, label)
 		default:
 			panic(fmt.Errorf("unrecognized element on %s: %T/val=%v",
 				name, x, x))
 		}
+		fmt.Println(s)
 	}
 }
-
-/*
-func (env *Glisp) OLD_ShowStackStackAndScopeStack() error {
-	note := ""
-	n := env.stackstack.Top()
-	if n < 0 {
-		note = "(empty)"
-	}
-	fmt.Printf(" ========  env.stackstack is %v deep: %s\n", n+1, note)
-	for i := 0; i <= n; i++ {
-		ele, err := env.stackstack.Get(n - i)
-		if err != nil {
-			panic(fmt.Errorf("env.stackstack access error on %i: %v", i, err))
-		}
-		label := fmt.Sprintf("stackstack %v", i)
-		switch x := ele.(type) {
-		case *Stack:
-			x.Show(env, 0, label)
-		default:
-			panic(fmt.Errorf("unrecognized element on stackstack: %T/val=%v", x, x))
-		}
-	}
-	n = env.scopestack.Top()
-	fmt.Printf(" ++++++++  env.scopestack is %v deep:\n", n+1)
-	for i := 0; i <= n; i++ {
-		ele, err := env.scopestack.Get(n - i)
-		if err != nil {
-			panic(fmt.Errorf("env.scopestack access error on %i: %v", i, err))
-		}
-		label := fmt.Sprintf("scopestack %v", i)
-		switch x := ele.(type) {
-		case *Scope:
-			x.Show(env, 0, label)
-		case Scope:
-			x.Show(env, 0, label)
-		default:
-			panic(fmt.Errorf("unrecognized element on scopestack: %T/val=%v", x, x))
-		}
-	}
-
-	n = env.linearstack.Top()
-	fmt.Printf(" ++++++++  env.linearstack is %v deep:\n", n+1)
-	for i := 0; i <= n; i++ {
-		ele, err := env.linearstack.Get(n - i)
-		if err != nil {
-			panic(fmt.Errorf("env.linearstack access error on %i: %v", i, err))
-		}
-		label := fmt.Sprintf("linearstack %v", i)
-		switch x := ele.(type) {
-		case *Scope:
-			x.Show(env, 0, label)
-		case Scope:
-			x.Show(env, 0, label)
-		default:
-			panic(fmt.Errorf("unrecognized element on linearstack: %T/val=%v", x, x))
-		}
-	}
-
-	fmt.Printf(" --------\n")
-	return nil
-}
-*/
 
 func (env *Glisp) ShowStackStackAndScopeStack() error {
-	env.showStackHelper(env.stackstack, "stackstack")
-	env.showStackHelper(env.scopestack, "scopestack")
 	env.showStackHelper(env.linearstack, "linearstack")
-	env.showStackHelper(env.lexicalstack, "lexicalstack")
+	fmt.Println(ClosureToString(env.curfunc, env))
 	return nil
 }
 
@@ -708,3 +579,78 @@ hi from g
  --------
 zygo>
 */
+
+func (env *Glisp) LexicalLookupSymbol(sym SexpSymbol) (Sexp, error, *Scope) {
+
+	// (1) first go up the linearstack (runtime stack) until
+	//     we get to the first function boundary; this gives
+	//     us actual arg bindings and any lets/new-scopes
+	//     present at closure definition time.
+	// (2) check the env.curfunc.closedOverScopes; it has a full
+	//     copy of the runtime linearstack at definition time.
+
+	VPrintf("LexicalLookupSymbol('%s')\n", sym.name)
+
+	// (1) linearstack
+	exp, err, scope := env.linearstack.LookupSymbolUntilFunction(sym)
+	switch err {
+	case nil:
+		VPrintf("LexicalLookupSymbol('%s') found on linearstack in scope '%s'\n",
+			sym.name, scope.Name)
+		return exp, err, scope
+	case SymNotFound:
+		break
+	default:
+		panic(fmt.Errorf("unexpected error from symbol lookup: %v", err))
+	}
+
+	VPrintf("LexicalLookupSymbol('%s') past linearstack\n", sym.name)
+
+	// (2) env.curfunc.closedOverScope
+	exp, err, scope = env.curfunc.ClosingLookupSymbol(sym)
+	switch err {
+	case nil:
+		VPrintf("LexicalLookupSymbol('%s') found on curfunc.closeScope in scope '%s'\n",
+			sym.name, scope.Name)
+		return exp, err, scope
+	case SymNotFound:
+		break
+	default:
+		break
+	}
+
+	return SexpNull, errors.New(fmt.Sprint("symbol ", sym, " not found")), nil
+}
+
+func (env *Glisp) LexicalBindSymbol(sym SexpSymbol, expr Sexp) error {
+	return env.linearstack.BindSymbol(sym, expr)
+}
+
+//func (env *Glisp) LexicalLookupSymbolNonGlobal(sym SexpSymbol) (Sexp, error, *Scope) {
+//	// ignore the non-global part for now TODO need to fix?
+//	return env.LexicalLookupSymbol(sym)
+//}
+
+// .closdump : show the closed over env attached to an *SexpFunction
+func DumpClosureEnvFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
+	if len(args) != 1 {
+		return SexpNull, WrongNargs
+	}
+
+	switch f := args[0].(type) {
+	case *SexpFunction:
+		s := ClosureToString(f, env)
+		return SexpStr(s), nil
+	default:
+		return SexpNull, fmt.Errorf(".closdump needs an *SexpFunction to inspect")
+	}
+}
+
+func ClosureToString(f *SexpFunction, env *Glisp) string {
+	s, err := f.ShowClosing(env, 0,
+		fmt.Sprintf("closedOverScopes of '%s'", f.name))
+	if err != nil {
+		return err.Error()
+	}
+	return s
+}

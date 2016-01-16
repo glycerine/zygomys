@@ -138,6 +138,25 @@ func Repl(env *Glisp, cfg *GlispConfig) {
 			break
 		}
 
+		if parts[0] == ".cd" {
+			if len(parts) < 2 {
+				fmt.Printf("provide directory path to change to.\n")
+				continue
+			}
+			err := os.Chdir(parts[1])
+			if err != nil {
+				fmt.Printf("error: %s\n", err)
+				continue
+			}
+			pwd, err := os.Getwd()
+			if err == nil {
+				fmt.Printf("cur dir: %s\n", pwd)
+			} else {
+				fmt.Printf("error: %s\n", err)
+			}
+			continue
+		}
+
 		if parts[0] == ".dump" {
 			processDumpCommand(env, parts[1:])
 			continue
@@ -147,7 +166,7 @@ func Repl(env *Glisp, cfg *GlispConfig) {
 			fmt.Printf("\nScopes:\n")
 			prev := env.showGlobalScope
 			env.showGlobalScope = true
-			err = env.ShowScopes(0)
+			err = env.ShowStackStackAndScopeStack()
 			env.showGlobalScope = prev
 			if err != nil {
 				fmt.Printf("%s\n", err)
@@ -157,6 +176,12 @@ func Repl(env *Glisp, cfg *GlispConfig) {
 
 		if parts[0] == ".ls" {
 			line = "(.ls)"
+		}
+
+		if parts[0] == ".verb" {
+			Verbose = !Verbose
+			fmt.Printf("verbose: %v.\n", Verbose)
+			continue
 		}
 
 		if parts[0] == ".debug" {

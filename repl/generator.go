@@ -69,7 +69,9 @@ func buildSexpFun(
 	name string,
 	funcargs SexpArray,
 	funcbody []Sexp,
-	orig Sexp) (SexpFunction, error) {
+	orig Sexp) (*SexpFunction, error) {
+
+	defer func() { VPrintf("exiting buildSexpFun()\n") }()
 
 	gen := NewGenerator(env)
 	gen.Tail = true
@@ -79,6 +81,8 @@ func buildSexpFun(
 	} else {
 		gen.funcname = name
 	}
+
+	gen.AddInstruction(AddFuncScopeInstr{Name: "runtime " + gen.funcname})
 
 	argsyms := make([]SexpSymbol, len(funcargs))
 
@@ -102,6 +106,11 @@ func buildSexpFun(
 		nargs = len(argsyms) - 1
 	}
 
+	WPrintf("\n in buildSexpFun(): DumpFunction just before %v args go onto stack\n",
+		len(argsyms))
+	if Working {
+		DumpFunction(GlispFunction(gen.instructions), -1)
+	}
 	for i := len(argsyms) - 1; i >= 0; i-- {
 		gen.AddInstruction(PopStackPutEnvInstr{argsyms[i]})
 	}
@@ -109,10 +118,14 @@ func buildSexpFun(
 	if err != nil {
 		return MissingFunction, err
 	}
+
+	gen.AddInstruction(RemoveScopeInstr{})
 	gen.AddInstruction(ReturnInstr{nil})
 
 	newfunc := GlispFunction(gen.instructions)
-	return MakeFunction(gen.funcname, nargs, varargs, newfunc, orig), nil
+	sfun := gen.env.MakeFunction(gen.funcname, nargs,
+		varargs, newfunc, orig)
+	return sfun, nil
 }
 
 func (gen *Generator) GenerateFn(args []Sexp, orig Sexp) error {
@@ -129,13 +142,19 @@ func (gen *Generator) GenerateFn(args []Sexp, orig Sexp) error {
 		return errors.New("function arguments must be in vector")
 	}
 
+	VPrintf("GenerateFn() about to call buildSexpFun\n")
 	funcbody := args[1:]
 	sfun, err := buildSexpFun(gen.env, "", funcargs, funcbody, orig)
 	if err != nil {
 		return err
 	}
-	gen.AddInstruction(PushInstrClosure{sfun})
 
+	WPrintf("in GenerateFn(): gen of sfun:\n")
+	if Working {
+		DumpFunction(sfun.fun, -1)
+	}
+
+	gen.AddInstruction(CreateClosureInstr{sfun})
 	return nil
 }
 
@@ -204,12 +223,19 @@ func (gen *Generator) GenerateDefn(args []Sexp, orig Sexp) error {
 			" to define function of same name.", sym.name)
 	}
 
+	VPrintf("GenerateDefn() about to call buildSexpFun\n")
+
 	sfun, err := buildSexpFun(gen.env, sym.name, funcargs, args[2:], orig)
 	if err != nil {
 		return err
 	}
 
-	gen.AddInstruction(PushInstr{sfun})
+	WPrintf("in GenerateDefn(): gen of sfun:\n")
+	if Working {
+		DumpFunction(sfun.fun, -1)
+	}
+
+	gen.AddInstruction(CreateClosureInstr{sfun})
 	gen.AddInstruction(PopStackPutEnvInstr{sym})
 	gen.AddInstruction(PushInstr{SexpNull})
 
@@ -267,7 +293,7 @@ func (gen *Generator) GenerateMacexpand(args []Sexp) error {
 		islist = false
 	}
 
-	var macro SexpFunction
+	var macro *SexpFunction
 	if islist {
 		switch t := list.Head.(type) {
 		case SexpSymbol:
@@ -407,7 +433,7 @@ func (gen *Generator) GenerateLet(name string, args []Sexp) error {
 		rstatements = append(rstatements, bindings[2*i+1])
 	}
 
-	gen.AddInstruction(AddScopeInstr(0))
+	gen.AddInstruction(AddScopeInstr{Name: "runtime " + name})
 	gen.scopes++
 
 	if name == "let*" {
@@ -433,7 +459,7 @@ func (gen *Generator) GenerateLet(name string, args []Sexp) error {
 	if err != nil {
 		return err
 	}
-	gen.AddInstruction(RemoveScopeInstr(0))
+	gen.AddInstruction(RemoveScopeInstr{})
 	gen.scopes--
 
 	return nil
@@ -583,7 +609,7 @@ func (gen *Generator) GenerateCallBySymbol(sym SexpSymbol, args []Sexp, orig Sex
 		// pop off all the extra scopes
 		// then jump to beginning of function
 		for i := 0; i < gen.scopes; i++ {
-			gen.AddInstruction(RemoveScopeInstr(0))
+			gen.AddInstruction(RemoveScopeInstr{})
 		}
 		gen.AddInstruction(GotoInstr{0})
 	} else {
@@ -692,6 +718,7 @@ func (gen *Generator) GenerateForLoop(args []Sexp) error {
 	loop := &Loop{
 		stmtname: gen.env.GenSymbol("__loop"),
 	}
+
 	gen.env.loopstack.Push(loop)
 	defer gen.env.loopstack.Pop()
 
@@ -705,7 +732,7 @@ func (gen *Generator) GenerateForLoop(args []Sexp) error {
 	// loops use repeat the use variable i in an index and then
 	// end up clobering the parents loop index
 	// inadvertantly.
-	gen.AddInstruction(AddScopeInstr(0))
+	gen.AddInstruction(AddScopeInstr{Name: "runtime " + loop.stmtname.name})
 	gen.AddInstruction(PushStackmarkInstr{sym: loop.stmtname})
 
 	// generate the body of the loop
@@ -739,6 +766,7 @@ func (gen *Generator) GenerateForLoop(args []Sexp) error {
 	subgenT.Tail = gen.Tail
 	subgenT.scopes = gen.scopes
 	subgenT.funcname = gen.funcname
+
 	err = subgenT.Generate(controlargs[1])
 	if err != nil {
 		return err
@@ -752,6 +780,7 @@ func (gen *Generator) GenerateForLoop(args []Sexp) error {
 	subgenIncr.Tail = gen.Tail
 	subgenIncr.scopes = gen.scopes
 	subgenIncr.funcname = gen.funcname
+
 	err = subgenIncr.Generate(controlargs[2])
 	if err != nil {
 		return err
@@ -790,7 +819,7 @@ func (gen *Generator) GenerateForLoop(args []Sexp) error {
 
 	// cleanup
 	gen.AddInstruction(ClearStackmarkInstr{sym: loop.stmtname})
-	gen.AddInstruction(RemoveScopeInstr(0))
+	gen.AddInstruction(RemoveScopeInstr{})
 	gen.AddInstruction(PushInstr{SexpNull}) // for is a statement; leave null on the stack.
 
 	loop.loopStart = startPos - bodyPos // offset; should be negative.
@@ -1110,7 +1139,8 @@ func (gen *Generator) GenerateNewScope(expressions []Sexp) error {
 	if size == 0 {
 		return NoExpressionsFound
 	}
-	gen.AddInstruction(AddScopeInstr(0))
+
+	gen.AddInstruction(AddScopeInstr{Name: "new-scope"})
 	for _, expr := range expressions[:size-1] {
 		err := gen.Generate(expr)
 		if err != nil {
@@ -1125,7 +1155,7 @@ func (gen *Generator) GenerateNewScope(expressions []Sexp) error {
 	if err != nil {
 		return err
 	}
-	gen.AddInstruction(RemoveScopeInstr(0))
+	gen.AddInstruction(RemoveScopeInstr{})
 	return nil
 }
 

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"hash/fnv"
 	"reflect"
-	//"github.com/shurcooL/go-goon"
 )
 
 var NoAttachedGoStruct = fmt.Errorf("hash has no attach Go struct")
@@ -79,6 +78,12 @@ func MakeHash(args []Sexp, typename string, env *Glisp) (SexpHash, error) {
 	jsonMap := make(map[string]*HashFieldDet)
 	factory := RegistryEntry{Factory: MakeGoStructFunc(func(env *Glisp) interface{} { return nil })}
 	detOrder := []*HashFieldDet{}
+
+	var zmain SexpFunction
+	zmethods := make(map[string]*SexpFunction)
+	var superClass *SexpHash
+	var defnEnv *SexpHash
+
 	hash := SexpHash{
 		TypeName:         &typename,
 		Map:              make(map[int][]SexpPair),
@@ -95,6 +100,11 @@ func MakeHash(args []Sexp, typename string, env *Glisp) (SexpHash, error) {
 		GoShadowStructVa: &va,
 		GoShadowStruct:   &iface,
 		DetOrder:         &detOrder,
+		ZMain:            &zmain,
+		ZMethods:         &zmethods,
+		SuperClass:       &superClass,
+		DefnEnv:          &defnEnv,
+		env:              env,
 	}
 	k := 0
 	for i := 0; i < len(args); i += 2 {
