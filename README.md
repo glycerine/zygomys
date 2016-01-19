@@ -1,4 +1,4 @@
-![Image of Gopher flying](https://github.com/glycerine/zygomys/blob/master/media/biplane.png)
+![Image of Gopher flying](https://github.com/glycerine/zygomys/blob/master/media/high_altitude_gopher.png)
 
 # zygomys - embedded scripting language for Go.
 
