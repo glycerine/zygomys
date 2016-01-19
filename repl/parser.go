@@ -17,13 +17,19 @@ type Parser struct {
 	reqStop      chan bool
 	AddInput     chan io.RuneScanner
 	ReqReset     chan io.RuneScanner
-	ParsedOutput chan []Sexp
+	ParsedOutput chan []ParserReply
 	LastErr      chan error
 
 	mut       sync.Mutex
 	stopped   bool
 	readySexp []Sexp
 	lastError error
+	sendMe    []ParserReply
+}
+
+type ParserReply struct {
+	Expr []Sexp
+	Err  error
 }
 
 func (env *Glisp) NewParser() *Parser {
@@ -34,8 +40,9 @@ func (env *Glisp) NewParser() *Parser {
 		reqStop:      make(chan bool),
 		ReqReset:     make(chan io.RuneScanner),
 		AddInput:     make(chan io.RuneScanner),
-		ParsedOutput: make(chan []Sexp),
+		ParsedOutput: make(chan []ParserReply),
 		LastErr:      make(chan error),
+		sendMe:       make([]ParserReply, 0, 1),
 	}
 	p.lexer = NewLexer(p)
 	return p
@@ -54,21 +61,23 @@ func (p *Parser) Stop() error {
 }
 
 func (p *Parser) Start() {
-	//p.lexer.Start()
+
 	go func() {
 		close(p.Ready)
 		defer p.finish()
-		var err error
+
 		for {
 			if p.lexer.stream == nil {
 				W("lexer stream is nil! waiting to parseTokens until we have stream\n")
 			} else {
 				W("lexer stream in place, parser calling p.parseTokens() from Start goro.\n")
-				p.readySexp, err = p.parseTokens()
-				W("back from p.parseTokens() with %d Sexp.\n", len(p.readySexp))
+				latest, err := p.parseTokens()
+				W("back from p.parseTokens() with %d Sexp.\n", len(latest))
 				if err != nil {
-					W("Parser sees error from p.parseTokens %s\n", err)
+					V("\nParser sees error from p.parseTokens %s\n", err)
 				}
+				p.sendMe = append(p.sendMe, ParserReply{Expr: latest, Err: err})
+
 			}
 			select {
 			case <-p.reqStop:
@@ -95,9 +104,9 @@ func (p *Parser) Start() {
 						return
 					}
 				*/
-			case p.ParsedOutput <- p.readySexp: // chan []Sexp
-				W("Parser sent %v readySexp on ParsedOutput: %#v\n", len(p.readySexp), SexpArray(p.readySexp).SexpString())
-				p.readySexp = make([]Sexp, 10)
+			case p.ParsedOutput <- p.sendMe: // chan []Sexp
+				W("Parser sent %v p.sendMe on ParsedOutput:\n", len(p.sendMe))
+				p.sendMe = make([]ParserReply, 0, 1)
 
 			case p.LastErr <- p.lastError:
 				W("Parser sent lastError %s on LastErr channel\n", p.lastError)
@@ -109,8 +118,6 @@ func (p *Parser) Start() {
 }
 
 func (p *Parser) finish() {
-	//close(p.lexer.reqStop)
-	//<-p.lexer.Done
 	close(p.Done)
 }
 
@@ -382,8 +389,18 @@ func (p *Parser) ParseTokens() ([]Sexp, error) {
 	W("ParseTokens called!\n")
 	select {
 	case out := <-p.ParsedOutput:
-		return out, nil
+		r := make([]Sexp, 0)
+		for _, k := range out {
+			r = append(r, k.Expr...)
+			if k.Err != nil {
+				V("\n ParseTokens() sees err %v\n", k.Err)
+				return r, k.Err
+			}
+		}
+		return r, nil
 	case <-p.reqStop:
 		return nil, ErrShuttingDown
 	}
 }
+
+var ErrShuttingDown error = fmt.Errorf("lexer shutting down")

@@ -607,35 +607,10 @@ func (lex *Lexer) AddNextStream(s io.RuneScanner) {
 	}
 }
 
-var ErrShuttingDown error = fmt.Errorf("lexer shutting down")
-
 func (p *Lexer) PeekNextToken() (tok Token, err error) {
 	return p.peekNextToken()
-	/*
-		tok = EndTk
-		select {
-		case tok = <-p.PeekTokenCh:
-		case <-p.reqStop:
-			err = ErrShuttingDown
-		}
-		return
-	*/
 }
 
 func (p *Lexer) GetNextToken() (tok Token, err error) {
 	return p.getNextToken()
-	/*
-		tok = EndTk
-		select {
-		case p.PingForTokens <- true:
-		case <-p.reqStop:
-			err = ErrShuttingDown
-		}
-		select {
-		case tok = <-p.NextTokenCh:
-		case <-p.reqStop:
-			err = ErrShuttingDown
-		}
-		return
-	*/
 }

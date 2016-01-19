@@ -2,6 +2,7 @@ package zygo
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/gob"
 	"fmt"
 	"os"
@@ -78,19 +79,36 @@ func (pr *Prompter) getExpressionOrig(reader *bufio.Reader) (string, error) {
 }
 
 // reads Stdin only
-func (pr *Prompter) getExpressionWithLiner() (string, error) {
+func (pr *Prompter) getExpressionWithLiner(env *Glisp) (string, error) {
 
 	line, err := pr.Getline(nil)
 	if err != nil {
 		return "", err
 	}
 
-	for !isBalanced(line) {
-		nextline, err := pr.Getline(&continuationPrompt)
-		if err != nil {
-			return "", err
+	err = UnexpectedEnd
+	var x []Sexp
+
+	for err == UnexpectedEnd {
+		V("\n starting test parse\n")
+		// test parse, but don't load or generate bytecode
+		env.parser.ResetAddNewInput(bytes.NewBuffer([]byte(line)))
+		x, err = env.parser.ParseTokens()
+		V("getExpressionWithLiner(): on line '%s', err=%v\n", line, err)
+		switch err {
+		case UnexpectedEnd:
+			V("\n doing UnexpectedEnd get again\n")
+			nextline, err := pr.Getline(&continuationPrompt)
+			if err != nil {
+				return "", err
+			}
+			line += nextline
+		case nil:
+			V("no problem parsing line '%s' into '%s', proceeding...\n", line, SexpArray(x).SexpString())
+		default:
+			V("\n in getExpressionWithLiner: non nil error back from ParseTokens: %v\n", err)
+			return "", fmt.Errorf("Error on line %d: %v\n", env.parser.lexer.Linenum(), err)
 		}
-		line += "\n" + nextline
 	}
 	return line, nil
 }
@@ -123,7 +141,7 @@ func Repl(env *Glisp, cfg *GlispConfig) {
 
 	for {
 		//line, err := pr.getExpressionOrig(reader)
-		line, err := pr.getExpressionWithLiner()
+		line, err := pr.getExpressionWithLiner(env)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(-1)
