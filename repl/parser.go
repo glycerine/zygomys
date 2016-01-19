@@ -13,10 +13,11 @@ type Parser struct {
 }
 
 func (env *Glisp) NewParser() *Parser {
-	return &Parser{
-		lexer: NewLexer(),
-		env:   env,
+	p := &Parser{
+		env: env,
 	}
+	p.lexer = NewLexer(p)
+	return p
 }
 
 func (p *Parser) Reset() {

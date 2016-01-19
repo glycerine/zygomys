@@ -105,6 +105,7 @@ const (
 )
 
 type Lexer struct {
+	parser   *Parser
 	state    LexerState
 	tokens   []Token
 	buffer   *bytes.Buffer
@@ -114,7 +115,7 @@ type Lexer struct {
 	finished bool
 }
 
-func NewLexerFromStream(stream io.RuneScanner) *Lexer {
+/*func NewLexerFromStream(stream io.RuneScanner) *Lexer {
 	return &Lexer{
 		tokens:   make([]Token, 0, 10),
 		buffer:   new(bytes.Buffer),
@@ -124,9 +125,11 @@ func NewLexerFromStream(stream io.RuneScanner) *Lexer {
 		finished: false,
 	}
 }
+*/
 
-func NewLexer() *Lexer {
+func NewLexer(p *Parser) *Lexer {
 	return &Lexer{
+		parser:   p,
 		tokens:   make([]Token, 0, 10),
 		buffer:   new(bytes.Buffer),
 		state:    LexerNormal,
