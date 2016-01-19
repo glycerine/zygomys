@@ -86,25 +86,11 @@ func (p *Parser) Start() {
 			case input := <-p.AddInput:
 				W("Parser AddInput called!\n")
 				p.lexer.AddNextStream(input)
-				/*				select {
-								case p.lexer.AddInput <- input:
-								case <-p.reqStop:
-									return
-								}
-				*/
 			case input := <-p.ReqReset:
 				W("p.ReqReset called with input %p\n", input)
 				p.lexer.Reset()
 				p.lexer.AddNextStream(input)
-				/*
-					select {
-					case p.lexer.ReqReset <- input:
-						W("p.ReqReset sent input to lexer!\n")
-					case <-p.reqStop:
-						return
-					}
-				*/
-			case p.ParsedOutput <- p.sendMe: // chan []Sexp
+			case p.ParsedOutput <- p.sendMe:
 				W("Parser sent %v p.sendMe on ParsedOutput:\n", len(p.sendMe))
 				p.sendMe = make([]ParserReply, 0, 1)
 
