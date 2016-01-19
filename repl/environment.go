@@ -14,6 +14,7 @@ type PreHook func(*Glisp, string, []Sexp)
 type PostHook func(*Glisp, string, Sexp)
 
 type Glisp struct {
+	parser    *Parser
 	datastack *Stack
 	addrstack *Stack
 
@@ -48,6 +49,7 @@ const LoopStackSize = 5
 
 func NewGlisp() *Glisp {
 	env := new(Glisp)
+	env.parser = env.NewParser()
 	env.datastack = env.NewStack(DataStackSize)
 	env.linearstack = env.NewStack(ScopeStackSize)
 
@@ -287,13 +289,13 @@ func (env *Glisp) ParseFile(file string) ([]Sexp, error) {
 		return nil, err
 	}
 
-	lexer := NewLexerFromStream(bufio.NewReader(in))
-
 	var exp []Sexp
 
-	exp, err = ParseTokens(env, lexer)
+	env.parser.Reset()
+	env.parser.NewInput(bufio.NewReader(in))
+	exp, err = env.parser.ParseTokens()
 	if err != nil {
-		return nil, fmt.Errorf("Error on line %d: %v\n", lexer.Linenum(), err)
+		return nil, fmt.Errorf("Error on line %d: %v\n", env.parser.lexer.Linenum(), err)
 	}
 
 	in.Close()
@@ -301,12 +303,11 @@ func (env *Glisp) ParseFile(file string) ([]Sexp, error) {
 	return exp, nil
 }
 
-func (env *Glisp) LoadStream(stream io.RuneReader) error {
-	lexer := NewLexerFromStream(stream)
-
-	expressions, err := ParseTokens(env, lexer)
+func (env *Glisp) LoadStream(stream io.RuneScanner) error {
+	env.parser.ResetAddNewInput(stream)
+	expressions, err := env.parser.ParseTokens()
 	if err != nil {
-		return fmt.Errorf("Error on line %d: %v\n", lexer.Linenum(), err)
+		return fmt.Errorf("Error on line %d: %v\n", env.parser.lexer.Linenum(), err)
 	}
 
 	return env.LoadExpressions(expressions)

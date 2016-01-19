@@ -85,13 +85,12 @@ func (env *Glisp) SourceExpressions(expressions []Sexp) error {
 	return nil
 }
 
-func (env *Glisp) SourceStream(stream io.RuneReader) error {
-	lexer := NewLexerFromStream(stream)
-
-	expressions, err := ParseTokens(env, lexer)
+func (env *Glisp) SourceStream(stream io.RuneScanner) error {
+	env.parser.ResetAddNewInput(stream)
+	expressions, err := env.parser.ParseTokens()
 	if err != nil {
 		return errors.New(fmt.Sprintf(
-			"Error parsing on line %d: %v\n", lexer.Linenum(), err))
+			"Error parsing on line %d: %v\n", env.parser.lexer.Linenum(), err))
 	}
 
 	return env.SourceExpressions(expressions)

@@ -476,9 +476,8 @@ func ReadFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	default:
 		return SexpNull, WrongType
 	}
-	lexer := NewLexerFromStream(bytes.NewBuffer([]byte(str)))
-	parser := Parser{lexer, env}
-	exp, err := ParseExpression(&parser, 0)
+	env.parser.ResetAddNewInput(bytes.NewBuffer([]byte(str)))
+	exp, err := env.parser.ParseExpression(0)
 	return exp, err
 }
 

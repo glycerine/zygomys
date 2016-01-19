@@ -16,8 +16,8 @@ func Test001LexerPositionRecordingWorks(t *testing.T) {
 		str := `(defn hello [] "greetings!")`
 		env := NewGlisp()
 		stream := bytes.NewBuffer([]byte(str))
-		lexer := NewLexerFromStream(stream)
-		expressions, err := ParseTokens(env, lexer)
+		env.parser.ResetAddNewInput(stream)
+		expressions, err := env.parser.ParseTokens()
 		panicOn(err)
 		//goon.Dump(expressions[0])
 		cv.So(expressions[0].SexpString(), cv.ShouldEqual, `(defn hello [] "greetings!")`)
@@ -26,13 +26,13 @@ func Test001LexerPositionRecordingWorks(t *testing.T) {
 
 func Test006LexerAndParsingOfDotInvocations(t *testing.T) {
 
-	cv.Convey(`Given a dot invocation method such as "(. subject method)" or "(.. subject method)", the parser should identify these as tokens, and should reject other tokens that *start with* dots. Tokens that start with dot '.' are special and reserved`, t, func() {
+	cv.Convey(`Given a dot invocation method such as "(. subject method)" or "(.. subject method)", the parser should identify these as tokens. Tokens that start with dot '.' are special and reserved for system functions.`, t, func() {
 
 		str := `(. subject method)`
 		env := NewGlisp()
 		stream := bytes.NewBuffer([]byte(str))
-		lexer := NewLexerFromStream(stream)
-		expressions, err := ParseTokens(env, lexer)
+		env.parser.ResetAddNewInput(stream)
+		expressions, err := env.parser.ParseTokens()
 		panicOn(err)
 		//goon.Dump(expressions[0])
 		cv.So(expressions[0].SexpString(), cv.ShouldEqual, `(. subject method)`)
@@ -86,5 +86,26 @@ func Test025LexingOfStringAtomsAndSymbols(t *testing.T) {
 			}
 		}
 
+	})
+}
+
+func Test030LexingPauseAndResume(t *testing.T) {
+
+	cv.Convey(`to enable the repl to properly detect the end of a multiline expression (or an expression containing quoted parentheses), the lexer should be able to pause and resume when more input is available.`, t, func() {
+
+		str := `(defn hello [] "greetings!(((")`
+		str1 := `(defn hel`
+		str2 := `lo [] "greetings!(((")`
+		env := NewGlisp()
+		stream := bytes.NewBuffer([]byte(str1))
+		env.parser.ResetAddNewInput(stream)
+		ex, err := env.parser.ParseTokens()
+		P("expressions = %#v\nerr = %v", ex, err)
+
+		env.parser.NewInput(bytes.NewBuffer([]byte(str2)))
+		ex, err = env.parser.Resume()
+		P("expressions = %#v\nerr = %v", ex, err)
+
+		P("str=%s\n", str)
 	})
 }

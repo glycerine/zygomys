@@ -108,9 +108,72 @@ type Lexer struct {
 	state    LexerState
 	tokens   []Token
 	buffer   *bytes.Buffer
-	stream   io.RuneReader
+	stream   io.RuneScanner
+	next     []io.RuneScanner // after stream is exhausted check here with PromoteNextStream()
 	linenum  int
 	finished bool
+}
+
+func NewLexerFromStream(stream io.RuneScanner) *Lexer {
+	return &Lexer{
+		tokens:   make([]Token, 0, 10),
+		buffer:   new(bytes.Buffer),
+		state:    LexerNormal,
+		stream:   stream,
+		linenum:  1,
+		finished: false,
+	}
+}
+
+func NewLexer() *Lexer {
+	return &Lexer{
+		tokens:   make([]Token, 0, 10),
+		buffer:   new(bytes.Buffer),
+		state:    LexerNormal,
+		linenum:  1,
+		finished: false,
+	}
+}
+
+func (lexer *Lexer) Linenum() int {
+	return lexer.linenum
+}
+
+func (lex *Lexer) Reset() {
+	lex.stream = nil
+	lex.next = lex.next[:0]
+	lex.tokens = lex.tokens[:0]
+	lex.state = LexerNormal
+	lex.linenum = 1
+	lex.finished = false
+	lex.buffer.Reset()
+}
+
+// returns true if promotion done
+func (lex *Lexer) PromoteNextStream() bool {
+	if len(lex.next) == 0 {
+		return false
+	}
+	lex.stream = lex.next[0]
+	lex.next = lex.next[1:]
+	return true
+}
+
+func (lex *Lexer) AddInput(stream io.RuneScanner) {
+	lex.finished = false
+	lex.next = append(lex.next, stream)
+	if lex.stream == nil {
+		lex.PromoteNextStream()
+	} else {
+		_, _, err := lex.stream.ReadRune()
+		if err == nil {
+			lex.stream.UnreadRune()
+			// still have input available, save new stuff for later.
+			return
+		} else {
+			lex.PromoteNextStream()
+		}
+	}
 }
 
 func (lex *Lexer) EmptyToken() Token {
@@ -428,12 +491,16 @@ func (lexer *Lexer) PeekNextToken() (Token, error) {
 		r, _, err := lexer.stream.ReadRune()
 
 		if err != nil {
-			lexer.finished = true
-			if lexer.buffer.Len() > 0 {
-				lexer.dumpBuffer()
-				return lexer.tokens[0], nil
+			if lexer.PromoteNextStream() {
+				continue
+			} else {
+				lexer.finished = true
+				if lexer.buffer.Len() > 0 {
+					lexer.dumpBuffer()
+					return lexer.tokens[0], nil
+				}
+				return lexer.Token(TokenEnd, ""), nil
 			}
-			return lexer.Token(TokenEnd, ""), nil
 		}
 
 		err = lexer.LexNextRune(r)
@@ -453,19 +520,4 @@ func (lexer *Lexer) GetNextToken() (Token, error) {
 	}
 	lexer.tokens = lexer.tokens[1:]
 	return tok, nil
-}
-
-func NewLexerFromStream(stream io.RuneReader) *Lexer {
-	return &Lexer{
-		tokens:   make([]Token, 0, 10),
-		buffer:   new(bytes.Buffer),
-		state:    LexerNormal,
-		stream:   stream,
-		linenum:  1,
-		finished: false,
-	}
-}
-
-func (lexer *Lexer) Linenum() int {
-	return lexer.linenum
 }

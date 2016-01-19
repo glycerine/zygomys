@@ -3,6 +3,7 @@ package zygo
 import (
 	"errors"
 	"fmt"
+	"io"
 	"strconv"
 )
 
@@ -11,11 +12,38 @@ type Parser struct {
 	env   *Glisp
 }
 
+func (env *Glisp) NewParser() *Parser {
+	return &Parser{
+		lexer: NewLexer(),
+		env:   env,
+	}
+}
+
+func (p *Parser) Reset() {
+	if p.lexer != nil {
+		p.lexer.Reset()
+	}
+}
+
+func (p *Parser) Resume() (results []Sexp, err error) {
+
+	return
+}
+
+func (p *Parser) NewInput(stream io.RuneScanner) {
+	p.lexer.AddInput(stream)
+}
+
+func (p *Parser) ResetAddNewInput(stream io.RuneScanner) {
+	p.Reset()
+	p.NewInput(stream)
+}
+
 var UnexpectedEnd error = errors.New("Unexpected end of input")
 
 const SliceDefaultCap = 10
 
-func ParseList(parser *Parser, depth int) (Sexp, error) {
+func (parser *Parser) ParseList(depth int) (Sexp, error) {
 	lexer := parser.lexer
 	tok, err := lexer.PeekNextToken()
 	if err != nil {
@@ -33,7 +61,7 @@ func ParseList(parser *Parser, depth int) (Sexp, error) {
 
 	var start SexpPair
 
-	expr, err := ParseExpression(parser, depth+1)
+	expr, err := parser.ParseExpression(depth + 1)
 	if err != nil {
 		return SexpNull, err
 	}
@@ -45,11 +73,11 @@ func ParseList(parser *Parser, depth int) (Sexp, error) {
 		return SexpNull, err
 	}
 
-	// backslash '\' replaces dot '.' in our lisp.
+	// backslash '\' replaces dot '.' in zygomys
 	if tok.typ == TokenBackslash {
 		// eat up the backslash
 		_, _ = lexer.GetNextToken()
-		expr, err = ParseExpression(parser, depth+1)
+		expr, err = parser.ParseExpression(depth + 1)
 		if err != nil {
 			return SexpNull, err
 		}
@@ -67,7 +95,7 @@ func ParseList(parser *Parser, depth int) (Sexp, error) {
 		return start, nil
 	}
 
-	expr, err = ParseList(parser, depth+1)
+	expr, err = parser.ParseList(depth + 1)
 	if err != nil {
 		return start, err
 	}
@@ -76,7 +104,7 @@ func ParseList(parser *Parser, depth int) (Sexp, error) {
 	return start, nil
 }
 
-func ParseArray(parser *Parser, depth int) (Sexp, error) {
+func (parser *Parser) ParseArray(depth int) (Sexp, error) {
 	lexer := parser.lexer
 	arr := make([]Sexp, 0, SliceDefaultCap)
 
@@ -96,7 +124,7 @@ func ParseArray(parser *Parser, depth int) (Sexp, error) {
 			break
 		}
 
-		expr, err := ParseExpression(parser, depth+1)
+		expr, err := parser.ParseExpression(depth + 1)
 		if err != nil {
 			return SexpNull, err
 		}
@@ -106,7 +134,7 @@ func ParseArray(parser *Parser, depth int) (Sexp, error) {
 	return SexpArray(arr), nil
 }
 
-func ParseHash(parser *Parser, depth int) (Sexp, error) {
+func (parser *Parser) ParseHash(depth int) (Sexp, error) {
 	lexer := parser.lexer
 	arr := make([]Sexp, 0, SliceDefaultCap)
 
@@ -124,7 +152,7 @@ func ParseHash(parser *Parser, depth int) (Sexp, error) {
 			break
 		}
 
-		expr, err := ParseExpression(parser, depth+1)
+		expr, err := parser.ParseExpression(depth + 1)
 		if err != nil {
 			return SexpNull, err
 		}
@@ -138,7 +166,7 @@ func ParseHash(parser *Parser, depth int) (Sexp, error) {
 	return list, nil
 }
 
-func ParseExpression(parser *Parser, depth int) (res Sexp, err error) {
+func (parser *Parser) ParseExpression(depth int) (res Sexp, err error) {
 	lexer := parser.lexer
 	env := parser.env
 
@@ -149,35 +177,35 @@ func ParseExpression(parser *Parser, depth int) (res Sexp, err error) {
 
 	switch tok.typ {
 	case TokenLParen:
-		exp, err := ParseList(parser, depth+1)
+		exp, err := parser.ParseList(depth + 1)
 		return exp, err
 	case TokenLSquare:
-		exp, err := ParseArray(parser, depth+1)
+		exp, err := parser.ParseArray(depth + 1)
 		return exp, err
 	case TokenLCurly:
-		exp, err := ParseHash(parser, depth+1)
+		exp, err := parser.ParseHash(depth + 1)
 		return exp, err
 	case TokenQuote:
-		expr, err := ParseExpression(parser, depth+1)
+		expr, err := parser.ParseExpression(depth + 1)
 		if err != nil {
 			return SexpNull, err
 		}
 		return MakeList([]Sexp{env.MakeSymbol("quote"), expr}), nil
 	case TokenCaret:
 		// '^' is now our syntax-quote symbol, not TokenBacktick, to allow go-style `string literals`.
-		expr, err := ParseExpression(parser, depth+1)
+		expr, err := parser.ParseExpression(depth + 1)
 		if err != nil {
 			return SexpNull, err
 		}
 		return MakeList([]Sexp{env.MakeSymbol("syntax-quote"), expr}), nil
 	case TokenTilde:
-		expr, err := ParseExpression(parser, depth+1)
+		expr, err := parser.ParseExpression(depth + 1)
 		if err != nil {
 			return SexpNull, err
 		}
 		return MakeList([]Sexp{env.MakeSymbol("unquote"), expr}), nil
 	case TokenTildeAt:
-		expr, err := ParseExpression(parser, depth+1)
+		expr, err := parser.ParseExpression(depth + 1)
 		if err != nil {
 			return SexpNull, err
 		}
@@ -230,12 +258,12 @@ func ParseExpression(parser *Parser, depth int) (res Sexp, err error) {
 	return SexpNull, errors.New(fmt.Sprint("Invalid syntax, didn't know what to do with ", tok.typ, " ", tok))
 }
 
-func ParseTokens(env *Glisp, lexer *Lexer) ([]Sexp, error) {
+// ParseTokens is the main service the Parser provides.
+func (parser *Parser) ParseTokens() ([]Sexp, error) {
 	expressions := make([]Sexp, 0, SliceDefaultCap)
-	parser := Parser{lexer, env}
 
 	for {
-		expr, err := ParseExpression(&parser, 0)
+		expr, err := parser.ParseExpression(0)
 		if err != nil {
 			return expressions, err
 		}
