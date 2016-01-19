@@ -200,7 +200,6 @@ func JsonToGo(json []byte) (interface{}, error) {
 	}
 	VPrintf("\n decoded type : %T\n", iface)
 	VPrintf("\n decoded value: %#v\n", iface)
-	VDump(iface)
 	return iface, nil
 }
 
