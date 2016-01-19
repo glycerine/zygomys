@@ -9,6 +9,8 @@ var Verbose bool // set to true to debug
 var Working bool // currently under investigation
 
 var P = fmt.Printf
+var V = VPrintf
+var W = WPrintf
 
 // get timestamp for logging purposes
 func ts() string {

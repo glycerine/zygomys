@@ -106,7 +106,7 @@ func buildSexpFun(
 		nargs = len(argsyms) - 1
 	}
 
-	WPrintf("\n in buildSexpFun(): DumpFunction just before %v args go onto stack\n",
+	VPrintf("\n in buildSexpFun(): DumpFunction just before %v args go onto stack\n",
 		len(argsyms))
 	if Working {
 		DumpFunction(GlispFunction(gen.instructions), -1)
@@ -149,7 +149,7 @@ func (gen *Generator) GenerateFn(args []Sexp, orig Sexp) error {
 		return err
 	}
 
-	WPrintf("in GenerateFn(): gen of sfun:\n")
+	VPrintf("in GenerateFn(): gen of sfun:\n")
 	if Working {
 		DumpFunction(sfun.fun, -1)
 	}
@@ -230,7 +230,7 @@ func (gen *Generator) GenerateDefn(args []Sexp, orig Sexp) error {
 		return err
 	}
 
-	WPrintf("in GenerateDefn(): gen of sfun:\n")
+	VPrintf("in GenerateDefn(): gen of sfun:\n")
 	if Working {
 		DumpFunction(sfun.fun, -1)
 	}

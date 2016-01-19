@@ -54,32 +54,53 @@ func (p *Parser) Stop() error {
 }
 
 func (p *Parser) Start() {
-	p.lexer.Start()
+	//p.lexer.Start()
 	go func() {
 		close(p.Ready)
+		defer p.finish()
+		var err error
 		for {
+			if p.lexer.stream == nil {
+				W("lexer stream is nil! waiting to parseTokens until we have stream\n")
+			} else {
+				W("lexer stream in place, parser calling p.parseTokens() from Start goro.\n")
+				p.readySexp, err = p.parseTokens()
+				W("back from p.parseTokens() with %d Sexp.\n", len(p.readySexp))
+				if err != nil {
+					W("Parser sees error from p.parseTokens %s\n", err)
+				}
+			}
 			select {
 			case <-p.reqStop:
-				p.finish()
+				W("parser reqStop called!\n")
 				return
 			case input := <-p.AddInput:
-				select {
-				case p.lexer.AddInput <- input:
-				case <-p.reqStop:
-					p.finish()
-					return
-				}
+				W("Parser AddInput called!\n")
+				p.lexer.AddNextStream(input)
+				/*				select {
+								case p.lexer.AddInput <- input:
+								case <-p.reqStop:
+									return
+								}
+				*/
 			case input := <-p.ReqReset:
-				select {
-				case p.lexer.ReqReset <- input:
-				case <-p.reqStop:
-					p.finish()
-					return
-				}
+				W("p.ReqReset called with input %p\n", input)
+				p.lexer.Reset()
+				p.lexer.AddNextStream(input)
+				/*
+					select {
+					case p.lexer.ReqReset <- input:
+						W("p.ReqReset sent input to lexer!\n")
+					case <-p.reqStop:
+						return
+					}
+				*/
 			case p.ParsedOutput <- p.readySexp: // chan []Sexp
+				W("Parser sent %v readySexp on ParsedOutput: %#v\n", len(p.readySexp), SexpArray(p.readySexp).SexpString())
 				p.readySexp = make([]Sexp, 10)
 
 			case p.LastErr <- p.lastError:
+				W("Parser sent lastError %s on LastErr channel\n", p.lastError)
 				p.lastError = nil
 
 			}
@@ -88,8 +109,8 @@ func (p *Parser) Start() {
 }
 
 func (p *Parser) finish() {
-	close(p.lexer.reqStop)
-	<-p.lexer.Done
+	//close(p.lexer.reqStop)
+	//<-p.lexer.Done
 	close(p.Done)
 }
 
@@ -338,8 +359,9 @@ func (parser *Parser) ParseExpression(depth int) (res Sexp, err error) {
 	return SexpNull, errors.New(fmt.Sprint("Invalid syntax, didn't know what to do with ", tok.typ, " ", tok))
 }
 
-// ParseTokens is the main service the Parser provides.
-func (parser *Parser) ParseTokens() ([]Sexp, error) {
+// private main service routine starts here.
+func (parser *Parser) parseTokens() ([]Sexp, error) {
+	W("parseTokens called!\n")
 	expressions := make([]Sexp, 0, SliceDefaultCap)
 
 	for {
@@ -353,4 +375,15 @@ func (parser *Parser) ParseTokens() ([]Sexp, error) {
 		expressions = append(expressions, expr)
 	}
 	return expressions, nil
+}
+
+// ParseTokens is the main service the Parser provides.
+func (p *Parser) ParseTokens() ([]Sexp, error) {
+	W("ParseTokens called!\n")
+	select {
+	case out := <-p.ParsedOutput:
+		return out, nil
+	case <-p.reqStop:
+		return nil, ErrShuttingDown
+	}
 }

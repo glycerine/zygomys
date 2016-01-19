@@ -118,13 +118,14 @@ type Lexer struct {
 	linenum  int
 	finished bool
 
-	Ready       chan bool
-	Done        chan bool
-	reqStop     chan bool
-	AddInput    chan io.RuneScanner
-	ReqReset    chan io.RuneScanner
-	NextTokenCh chan Token
-	PeekTokenCh chan Token
+	Ready         chan bool
+	Done          chan bool
+	reqStop       chan bool
+	AddInput      chan io.RuneScanner
+	ReqReset      chan io.RuneScanner
+	NextTokenCh   chan Token
+	PeekTokenCh   chan Token
+	PingForTokens chan bool
 
 	mut     sync.Mutex
 	stopped bool
@@ -140,13 +141,14 @@ func NewLexer(p *Parser) *Lexer {
 		linenum:  1,
 		finished: false,
 
-		Ready:       make(chan bool),
-		Done:        make(chan bool),
-		reqStop:     make(chan bool),
-		ReqReset:    make(chan io.RuneScanner),
-		AddInput:    make(chan io.RuneScanner),
-		NextTokenCh: make(chan Token),
-		PeekTokenCh: make(chan Token),
+		Ready:         make(chan bool),
+		Done:          make(chan bool),
+		reqStop:       make(chan bool),
+		ReqReset:      make(chan io.RuneScanner),
+		AddInput:      make(chan io.RuneScanner),
+		NextTokenCh:   make(chan Token),
+		PeekTokenCh:   make(chan Token),
+		PingForTokens: make(chan bool, 10),
 	}
 }
 
@@ -170,27 +172,38 @@ func (p *Lexer) Start() {
 		for {
 			advance = true
 			if p.stream != nil {
-				p.peek, err = p.PeekNextToken()
+				p.peek, err = p.peekNextToken()
 				if err != nil {
 					p.peek = EndTk
 					advance = false
 				}
+			} else {
+				W("Lexer has no stream!?! Arg!\n")
 			}
 
+			W("Lexer starting select with p.peek = %s\n", p.peek)
 			select {
 			case <-p.reqStop:
+				W("Lexer got reqStop\n")
 				close(p.Done)
 				return
 			case input := <-p.ReqReset:
+				W("Lexer got ReqReset\n")
 				p.Reset()
 				p.AddNextStream(input)
+				W("lexer did AddNextStream\n")
 			case input := <-p.AddInput:
+				W("Lexer got AddInput with %p\n", input)
 				p.AddNextStream(input)
 			case p.NextTokenChAvail() <- p.peek:
+				W("Lexer got NextTokenCh send\n")
 				if advance {
 					p.tokens = p.tokens[1:]
 				}
 			case p.PeekTokenChAvail() <- p.peek:
+				W("Lexer got PeekTokenCh send\n")
+			case <-p.PingForTokens:
+				W("got PingForTokens!\n")
 			}
 		}
 	}()
@@ -526,7 +539,7 @@ func (lexer *Lexer) LexNextRune(r rune) error {
 	return nil
 }
 
-func (lexer *Lexer) PeekNextToken() (Token, error) {
+func (lexer *Lexer) peekNextToken() (Token, error) {
 	if lexer.finished {
 		return EndTk, nil
 	}
@@ -556,8 +569,8 @@ func (lexer *Lexer) PeekNextToken() (Token, error) {
 	return tok, nil
 }
 
-func (lexer *Lexer) GetNextToken() (Token, error) {
-	tok, err := lexer.PeekNextToken()
+func (lexer *Lexer) getNextToken() (Token, error) {
+	tok, err := lexer.peekNextToken()
 	if err != nil || tok.typ == TokenEnd {
 		return EndTk, err
 	}
@@ -569,6 +582,7 @@ func (lex *Lexer) PromoteNextStream() bool {
 	if len(lex.next) == 0 {
 		return false
 	}
+	W("Promoting next stream!\n")
 	lex.stream = lex.next[0]
 	lex.next = lex.next[1:]
 	return true
@@ -591,4 +605,37 @@ func (lex *Lexer) AddNextStream(s io.RuneScanner) {
 			lex.PromoteNextStream()
 		}
 	}
+}
+
+var ErrShuttingDown error = fmt.Errorf("lexer shutting down")
+
+func (p *Lexer) PeekNextToken() (tok Token, err error) {
+	return p.peekNextToken()
+	/*
+		tok = EndTk
+		select {
+		case tok = <-p.PeekTokenCh:
+		case <-p.reqStop:
+			err = ErrShuttingDown
+		}
+		return
+	*/
+}
+
+func (p *Lexer) GetNextToken() (tok Token, err error) {
+	return p.getNextToken()
+	/*
+		tok = EndTk
+		select {
+		case p.PingForTokens <- true:
+		case <-p.reqStop:
+			err = ErrShuttingDown
+		}
+		select {
+		case tok = <-p.NextTokenCh:
+		case <-p.reqStop:
+			err = ErrShuttingDown
+		}
+		return
+	*/
 }
