@@ -5,24 +5,98 @@ import (
 	"fmt"
 	"io"
 	"strconv"
+	"sync"
 )
 
 type Parser struct {
 	lexer *Lexer
 	env   *Glisp
+
+	Ready        chan bool
+	Done         chan bool
+	reqStop      chan bool
+	AddInput     chan io.RuneScanner
+	ReqReset     chan io.RuneScanner
+	ParsedOutput chan []Sexp
+	LastErr      chan error
+
+	mut       sync.Mutex
+	stopped   bool
+	readySexp []Sexp
+	lastError error
 }
 
 func (env *Glisp) NewParser() *Parser {
 	p := &Parser{
-		env: env,
+		env:          env,
+		Ready:        make(chan bool),
+		Done:         make(chan bool),
+		reqStop:      make(chan bool),
+		ReqReset:     make(chan io.RuneScanner),
+		AddInput:     make(chan io.RuneScanner),
+		ParsedOutput: make(chan []Sexp),
+		LastErr:      make(chan error),
 	}
 	p.lexer = NewLexer(p)
 	return p
 }
 
+func (p *Parser) Stop() error {
+	p.mut.Lock()
+	defer p.mut.Unlock()
+	if p.stopped {
+		return nil
+	}
+	p.stopped = true
+	close(p.reqStop)
+	<-p.Done
+	return nil
+}
+
+func (p *Parser) Start() {
+	p.lexer.Start()
+	go func() {
+		close(p.Ready)
+		for {
+			select {
+			case <-p.reqStop:
+				p.finish()
+				return
+			case input := <-p.AddInput:
+				select {
+				case p.lexer.AddInput <- input:
+				case <-p.reqStop:
+					p.finish()
+					return
+				}
+			case input := <-p.ReqReset:
+				select {
+				case p.lexer.ReqReset <- input:
+				case <-p.reqStop:
+					p.finish()
+					return
+				}
+			case p.ParsedOutput <- p.readySexp: // chan []Sexp
+				p.readySexp = make([]Sexp, 10)
+
+			case p.LastErr <- p.lastError:
+				p.lastError = nil
+
+			}
+		}
+	}()
+}
+
+func (p *Parser) finish() {
+	close(p.lexer.reqStop)
+	<-p.lexer.Done
+	close(p.Done)
+}
+
 func (p *Parser) Reset() {
-	if p.lexer != nil {
-		p.lexer.Reset()
+	select {
+	case p.ReqReset <- nil:
+	case <-p.reqStop:
 	}
 }
 
@@ -31,13 +105,18 @@ func (p *Parser) Resume() (results []Sexp, err error) {
 	return
 }
 
-func (p *Parser) NewInput(stream io.RuneScanner) {
-	p.lexer.AddInput(stream)
+func (p *Parser) NewInput(s io.RuneScanner) {
+	select {
+	case p.AddInput <- s:
+	case <-p.reqStop:
+	}
 }
 
-func (p *Parser) ResetAddNewInput(stream io.RuneScanner) {
-	p.Reset()
-	p.NewInput(stream)
+func (p *Parser) ResetAddNewInput(s io.RuneScanner) {
+	select {
+	case p.ReqReset <- s:
+	case <-p.reqStop:
+	}
 }
 
 var UnexpectedEnd error = errors.New("Unexpected end of input")

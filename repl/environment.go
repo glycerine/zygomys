@@ -50,6 +50,7 @@ const LoopStackSize = 5
 func NewGlisp() *Glisp {
 	env := new(Glisp)
 	env.parser = env.NewParser()
+	env.parser.Start()
 	env.datastack = env.NewStack(DataStackSize)
 	env.linearstack = env.NewStack(ScopeStackSize)
 
