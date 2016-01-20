@@ -15,7 +15,7 @@ type SexpPair struct {
 	Head Sexp
 	Tail Sexp
 }
-type SexpInt int
+type SexpInt int64
 type SexpBool bool
 type SexpFloat float64
 type SexpChar rune

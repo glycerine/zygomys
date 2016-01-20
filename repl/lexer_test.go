@@ -100,11 +100,15 @@ func Test030LexingPauseAndResume(t *testing.T) {
 		stream := bytes.NewBuffer([]byte(str1))
 		env.parser.ResetAddNewInput(stream)
 		ex, err := env.parser.ParseTokens()
-		P("expressions = %#v\nerr = %v", ex, err)
+		cv.So(len(ex), cv.ShouldEqual, 0)
+		P("\n expressions = %#v\nerr = %v\n", ex, err)
+		//cv.So(err, cv.ShouldEqual, UnexpectedEnd)
 
 		env.parser.NewInput(bytes.NewBuffer([]byte(str2)))
-		ex, err = env.parser.Resume()
-		P("expressions = %#v\nerr = %v", ex, err)
+		ex, err = env.parser.ParseTokens()
+		panicOn(err)
+		P("\n expressions = %#v\nerr = %v\n", ex, err)
+		cv.So(len(ex), cv.ShouldEqual, 1)
 
 		P("str=%s\n", str)
 	})

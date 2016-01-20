@@ -172,7 +172,7 @@ func (p *Lexer) Start() {
 		for {
 			advance = true
 			if p.stream != nil {
-				p.peek, err = p.peekNextToken()
+				p.peek, err = p.PeekNextToken()
 				if err != nil {
 					p.peek = EndTk
 					advance = false
@@ -539,7 +539,7 @@ func (lexer *Lexer) LexNextRune(r rune) error {
 	return nil
 }
 
-func (lexer *Lexer) peekNextToken() (Token, error) {
+func (lexer *Lexer) PeekNextToken() (Token, error) {
 	if lexer.finished {
 		return EndTk, nil
 	}
@@ -569,8 +569,8 @@ func (lexer *Lexer) peekNextToken() (Token, error) {
 	return tok, nil
 }
 
-func (lexer *Lexer) getNextToken() (Token, error) {
-	tok, err := lexer.peekNextToken()
+func (lexer *Lexer) GetNextToken() (Token, error) {
+	tok, err := lexer.PeekNextToken()
 	if err != nil || tok.typ == TokenEnd {
 		return EndTk, err
 	}
@@ -605,12 +605,4 @@ func (lex *Lexer) AddNextStream(s io.RuneScanner) {
 			lex.PromoteNextStream()
 		}
 	}
-}
-
-func (p *Lexer) PeekNextToken() (tok Token, err error) {
-	return p.peekNextToken()
-}
-
-func (p *Lexer) GetNextToken() (tok Token, err error) {
-	return p.getNextToken()
 }
