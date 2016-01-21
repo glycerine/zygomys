@@ -7,7 +7,6 @@ import (
 	"io"
 	"regexp"
 	"strconv"
-	"sync"
 	"unicode/utf8"
 )
 
@@ -113,111 +112,19 @@ type Lexer struct {
 	tokens []Token
 	buffer *bytes.Buffer
 
-	stream   io.RuneScanner
-	next     []io.RuneScanner
-	linenum  int
-	finished bool
-
-	Ready         chan bool
-	Done          chan bool
-	reqStop       chan bool
-	AddInput      chan io.RuneScanner
-	ReqReset      chan io.RuneScanner
-	NextTokenCh   chan Token
-	PeekTokenCh   chan Token
-	PingForTokens chan bool
-
-	mut     sync.Mutex
-	stopped bool
-	peek    Token
+	stream  io.RuneScanner
+	next    []io.RuneScanner
+	linenum int
 }
 
 func NewLexer(p *Parser) *Lexer {
 	return &Lexer{
-		parser:   p,
-		tokens:   make([]Token, 0, 10),
-		buffer:   new(bytes.Buffer),
-		state:    LexerNormal,
-		linenum:  1,
-		finished: false,
-
-		Ready:         make(chan bool),
-		Done:          make(chan bool),
-		reqStop:       make(chan bool),
-		ReqReset:      make(chan io.RuneScanner),
-		AddInput:      make(chan io.RuneScanner),
-		NextTokenCh:   make(chan Token),
-		PeekTokenCh:   make(chan Token),
-		PingForTokens: make(chan bool, 10),
+		parser:  p,
+		tokens:  make([]Token, 0, 10),
+		buffer:  new(bytes.Buffer),
+		state:   LexerNormal,
+		linenum: 1,
 	}
-}
-
-func (p *Lexer) Stop() error {
-	p.mut.Lock()
-	defer p.mut.Unlock()
-	if p.stopped {
-		return nil
-	}
-	p.stopped = true
-	close(p.reqStop)
-	<-p.Done
-	return nil
-}
-
-func (p *Lexer) Start() {
-	var err error
-	var advance bool
-	go func() {
-		close(p.Ready)
-		for {
-			advance = true
-			if p.stream != nil {
-				p.peek, err = p.PeekNextToken()
-				if err != nil {
-					p.peek = EndTk
-					advance = false
-				}
-			} else {
-				W("Lexer has no stream!?! Arg!\n")
-			}
-
-			W("Lexer starting select with p.peek = %s\n", p.peek)
-			select {
-			case <-p.reqStop:
-				W("Lexer got reqStop\n")
-				close(p.Done)
-				return
-			case input := <-p.ReqReset:
-				W("Lexer got ReqReset\n")
-				p.Reset()
-				p.AddNextStream(input)
-				W("lexer did AddNextStream\n")
-			case input := <-p.AddInput:
-				W("Lexer got AddInput with %p\n", input)
-				p.AddNextStream(input)
-			case p.NextTokenChAvail() <- p.peek:
-				W("Lexer got NextTokenCh send\n")
-				if advance {
-					p.tokens = p.tokens[1:]
-				}
-			case p.PeekTokenChAvail() <- p.peek:
-				W("Lexer got PeekTokenCh send\n")
-			case <-p.PingForTokens:
-				W("got PingForTokens!\n")
-			}
-		}
-	}()
-}
-
-func (p *Lexer) NextTokenChAvail() chan Token {
-	if len(p.tokens) > 0 {
-		return p.NextTokenCh
-	}
-	return nil
-}
-
-func (p *Lexer) PeekTokenChAvail() chan Token {
-	return p.PeekTokenCh
 }
 
 func (lexer *Lexer) Linenum() int {
@@ -229,7 +136,6 @@ func (lex *Lexer) Reset() {
 	lex.tokens = lex.tokens[:0]
 	lex.state = LexerNormal
 	lex.linenum = 1
-	lex.finished = false
 	lex.buffer.Reset()
 }
 
@@ -540,14 +446,13 @@ func (lexer *Lexer) LexNextRune(r rune) error {
 }
 
 func (lexer *Lexer) PeekNextToken() (tok Token, err error) {
-	Q("\n in PeekNextToken()\n")
-	defer func() {
-		Q("\n done with PeekNextToken() -> returning tok='%v', err=%v. tok='%#v'. tok==EndTk? %v\n",
-			tok, err, tok, tok == EndTk)
-	}()
-	//	if lexer.finished {
-	//		return EndTk, nil
-	//	}
+	/*
+		Q("\n in PeekNextToken()\n")
+		defer func() {
+			Q("\n done with PeekNextToken() -> returning tok='%v', err=%v. tok='%#v'. tok==EndTk? %v\n",
+				tok, err, tok, tok == EndTk)
+		}()
+	*/
 	if lexer.stream == nil {
 		if !lexer.PromoteNextStream() {
 			return EndTk, nil
@@ -560,14 +465,6 @@ func (lexer *Lexer) PeekNextToken() (tok Token, err error) {
 			if lexer.PromoteNextStream() {
 				continue
 			} else {
-				// to be continued...
-				/*
-					lexer.finished = true
-						if lexer.buffer.Len() > 0 {
-							lexer.dumpBuffer()
-							return lexer.tokens[0], nil
-						}
-				*/
 				return EndTk, nil
 			}
 		}
@@ -583,10 +480,12 @@ func (lexer *Lexer) PeekNextToken() (tok Token, err error) {
 }
 
 func (lexer *Lexer) GetNextToken() (tok Token, err error) {
-	Q("\n in GetNextToken()\n")
-	defer func() {
-		Q("\n done with GetNextToken() -> returning tok='%v', err=%v.\n", tok, err)
-	}()
+	/*
+		Q("\n in GetNextToken()\n")
+		defer func() {
+			Q("\n done with GetNextToken() -> returning tok='%v', err=%v.\n", tok, err)
+		}()
+	*/
 	tok, err = lexer.PeekNextToken()
 	if err != nil || tok.typ == TokenEnd {
 		return EndTk, err
@@ -596,14 +495,16 @@ func (lexer *Lexer) GetNextToken() (tok Token, err error) {
 }
 
 func (lex *Lexer) PromoteNextStream() (ok bool) {
-	Q("entering PromoteNextStream()!\n")
-	defer func() {
-		Q("done with PromoteNextStream, promoted=%v\n", ok)
-	}()
+	/*
+		Q("entering PromoteNextStream()!\n")
+		defer func() {
+			Q("done with PromoteNextStream, promoted=%v\n", ok)
+		}()
+	*/
 	if len(lex.next) == 0 {
 		return false
 	}
-	Q("Promoting next stream!\n")
+	//Q("Promoting next stream!\n")
 	lex.stream = lex.next[0]
 	lex.next = lex.next[1:]
 	return true
@@ -613,8 +514,6 @@ func (lex *Lexer) AddNextStream(s io.RuneScanner) {
 	// in case we still have input available,
 	// save new stuff for later
 	lex.next = append(lex.next, s)
-
-	lex.finished = false
 
 	if lex.stream == nil {
 		lex.PromoteNextStream()
