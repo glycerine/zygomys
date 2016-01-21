@@ -80,9 +80,6 @@ func (pr *Prompter) getExpressionOrig(reader *bufio.Reader) (string, error) {
 
 // reads Stdin only
 func (pr *Prompter) getExpressionWithLiner(env *Glisp) (readin string, err error) {
-	defer func() {
-		Q("returning readin='%s'\n", readin)
-	}()
 
 	line, err := pr.Getline(nil)
 	if err != nil {
@@ -99,13 +96,11 @@ func (pr *Prompter) getExpressionWithLiner(env *Glisp) (readin string, err error
 
 	for err == ErrMoreInputNeeded || err == UnexpectedEnd || err == ResetRequested {
 		nextline, err := pr.Getline(&continuationPrompt)
-		//P("\n nextline = '%s'\n", nextline)
 		if err != nil {
 			return "", err
 		}
 		env.parser.NewInput(bytes.NewBuffer([]byte(nextline)))
 		x, err = env.parser.ParseTokens()
-		//fmt.Printf("\n after NewInput, err = %v\n", err)
 		switch err {
 		case nil:
 			line += nextline
@@ -116,7 +111,6 @@ func (pr *Prompter) getExpressionWithLiner(env *Glisp) (readin string, err error
 		case ErrMoreInputNeeded:
 			continue
 		default:
-			Q("\n in getExpressionWithLiner: non nil error back from ParseTokens: %v\n", err)
 			return "", fmt.Errorf("Error on line %d: %v\n", env.parser.lexer.Linenum(), err)
 		}
 	}
