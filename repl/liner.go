@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/peterh/liner"
+	"github.com/glycerine/liner"
 )
 
 var history_fn = filepath.Join("~/.zygohist")

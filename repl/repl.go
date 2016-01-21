@@ -79,7 +79,10 @@ func (pr *Prompter) getExpressionOrig(reader *bufio.Reader) (string, error) {
 }
 
 // reads Stdin only
-func (pr *Prompter) getExpressionWithLiner(env *Glisp) (string, error) {
+func (pr *Prompter) getExpressionWithLiner(env *Glisp) (readin string, err error) {
+	defer func() {
+		Q("returning readin='%s'\n", readin)
+	}()
 
 	line, err := pr.Getline(nil)
 	if err != nil {
@@ -89,24 +92,31 @@ func (pr *Prompter) getExpressionWithLiner(env *Glisp) (string, error) {
 	err = UnexpectedEnd
 	var x []Sexp
 
-	for err == UnexpectedEnd {
-		V("\n starting test parse\n")
-		// test parse, but don't load or generate bytecode
-		env.parser.ResetAddNewInput(bytes.NewBuffer([]byte(line)))
+	// test parse, but don't load or generate bytecode
+	env.parser.ResetAddNewInput(bytes.NewBuffer([]byte(line)))
+	x, err = env.parser.ParseTokens()
+	VPrintf("\n after ResetAddNewInput, err = %v\n", err)
+
+	for err == ErrMoreInputNeeded || err == UnexpectedEnd || err == ResetRequested {
+		nextline, err := pr.Getline(&continuationPrompt)
+		//P("\n nextline = '%s'\n", nextline)
+		if err != nil {
+			return "", err
+		}
+		env.parser.NewInput(bytes.NewBuffer([]byte(nextline)))
 		x, err = env.parser.ParseTokens()
-		V("getExpressionWithLiner(): on line '%s', err=%v\n", line, err)
+		//fmt.Printf("\n after NewInput, err = %v\n", err)
 		switch err {
-		case UnexpectedEnd:
-			V("\n doing UnexpectedEnd get again\n")
-			nextline, err := pr.Getline(&continuationPrompt)
-			if err != nil {
-				return "", err
-			}
-			line += nextline
 		case nil:
-			V("no problem parsing line '%s' into '%s', proceeding...\n", line, SexpArray(x).SexpString())
+			line += nextline
+			Q("no problem parsing line '%s' into '%s', proceeding...\n", line, SexpArray(x).SexpString())
+			return line, nil
+		case ResetRequested:
+			continue
+		case ErrMoreInputNeeded:
+			continue
 		default:
-			V("\n in getExpressionWithLiner: non nil error back from ParseTokens: %v\n", err)
+			Q("\n in getExpressionWithLiner: non nil error back from ParseTokens: %v\n", err)
 			return "", fmt.Errorf("Error on line %d: %v\n", env.parser.lexer.Linenum(), err)
 		}
 	}
