@@ -100,15 +100,23 @@ func Test030LexingPauseAndResume(t *testing.T) {
 		stream := bytes.NewBuffer([]byte(str1))
 		env.parser.ResetAddNewInput(stream)
 		ex, err := env.parser.ParseTokens()
-		cv.So(len(ex), cv.ShouldEqual, 0)
-		P("\n expressions = %#v\nerr = %v\n", ex, err)
-		//cv.So(err, cv.ShouldEqual, UnexpectedEnd)
 
+		P("\n In lexer_test, after parsing with incomplete input, we should get 0 expressions back.\n")
+		cv.So(len(ex), cv.ShouldEqual, 0)
+		P("\n In lexer_test, after ParseTokens on incomplete fragment, expressions = '%v' and err = '%v'\n", SexpArray(ex).SexpString(), err)
+
+		P("\n In lexer_test: calling parser.NewInput() to provide str2='%s'\n", str2)
 		env.parser.NewInput(bytes.NewBuffer([]byte(str2)))
+		P("\n In lexer_test: done with parser.NewInput(), now calling parser.ParseTokens()\n")
 		ex, err = env.parser.ParseTokens()
-		panicOn(err)
-		P("\n expressions = %#v\nerr = %v\n", ex, err)
+		P(`
+ in lexer test: After providing the 2nd half of the input, we returned from env.parser.ParseTokens()
+ with expressions = %v
+ with err = %v
+`, SexpArray(ex).SexpString(), err)
+
 		cv.So(len(ex), cv.ShouldEqual, 1)
+		panicOn(err)
 
 		P("str=%s\n", str)
 	})

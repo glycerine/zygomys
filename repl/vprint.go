@@ -11,6 +11,7 @@ var Working bool // currently under investigation
 var P = fmt.Printf
 var V = VPrintf
 var W = WPrintf
+var Q = func(quietly_ignored ...interface{}) {} // quiet
 
 // get timestamp for logging purposes
 func ts() string {

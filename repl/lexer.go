@@ -539,9 +539,19 @@ func (lexer *Lexer) LexNextRune(r rune) error {
 	return nil
 }
 
-func (lexer *Lexer) PeekNextToken() (Token, error) {
-	if lexer.finished {
-		return EndTk, nil
+func (lexer *Lexer) PeekNextToken() (tok Token, err error) {
+	P("\n in PeekNextToken()\n")
+	defer func() {
+		P("\n done with PeekNextToken() -> returning tok='%v', err=%v. tok='%#v'. tok==EndTk? %v\n",
+			tok, err, tok, tok == EndTk)
+	}()
+	//	if lexer.finished {
+	//		return EndTk, nil
+	//	}
+	if lexer.stream == nil {
+		if !lexer.PromoteNextStream() {
+			return EndTk, nil
+		}
 	}
 
 	for len(lexer.tokens) == 0 {
@@ -550,11 +560,14 @@ func (lexer *Lexer) PeekNextToken() (Token, error) {
 			if lexer.PromoteNextStream() {
 				continue
 			} else {
-				lexer.finished = true
-				if lexer.buffer.Len() > 0 {
-					lexer.dumpBuffer()
-					return lexer.tokens[0], nil
-				}
+				// to be continued...
+				/*
+					lexer.finished = true
+						if lexer.buffer.Len() > 0 {
+							lexer.dumpBuffer()
+							return lexer.tokens[0], nil
+						}
+				*/
 				return EndTk, nil
 			}
 		}
@@ -565,12 +578,16 @@ func (lexer *Lexer) PeekNextToken() (Token, error) {
 		}
 	}
 
-	tok := lexer.tokens[0]
+	tok = lexer.tokens[0]
 	return tok, nil
 }
 
-func (lexer *Lexer) GetNextToken() (Token, error) {
-	tok, err := lexer.PeekNextToken()
+func (lexer *Lexer) GetNextToken() (tok Token, err error) {
+	P("\n in GetNextToken()\n")
+	defer func() {
+		P("\n done with GetNextToken() -> returning tok='%v', err=%v.\n", tok, err)
+	}()
+	tok, err = lexer.PeekNextToken()
 	if err != nil || tok.typ == TokenEnd {
 		return EndTk, err
 	}
@@ -578,11 +595,15 @@ func (lexer *Lexer) GetNextToken() (Token, error) {
 	return tok, nil
 }
 
-func (lex *Lexer) PromoteNextStream() bool {
+func (lex *Lexer) PromoteNextStream() (ok bool) {
+	P("entering PromoteNextStream()!\n")
+	defer func() {
+		P("done with PromoteNextStream, promoted=%v\n", ok)
+	}()
 	if len(lex.next) == 0 {
 		return false
 	}
-	W("Promoting next stream!\n")
+	P("Promoting next stream!\n")
 	lex.stream = lex.next[0]
 	lex.next = lex.next[1:]
 	return true
@@ -592,6 +613,8 @@ func (lex *Lexer) AddNextStream(s io.RuneScanner) {
 	// in case we still have input available,
 	// save new stuff for later
 	lex.next = append(lex.next, s)
+
+	lex.finished = false
 
 	if lex.stream == nil {
 		lex.PromoteNextStream()
