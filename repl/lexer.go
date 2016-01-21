@@ -483,7 +483,8 @@ func (lexer *Lexer) GetNextToken() (tok Token, err error) {
 	/*
 		Q("\n in GetNextToken()\n")
 		defer func() {
-			Q("\n done with GetNextToken() -> returning tok='%v', err=%v.\n", tok, err)
+			Q("\n done with GetNextToken() -> returning tok='%v', err=%v. lexer.buffer.String()='%s'\n",
+				tok, err, lexer.buffer.String())
 		}()
 	*/
 	tok, err = lexer.PeekNextToken()

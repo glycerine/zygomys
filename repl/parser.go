@@ -437,6 +437,7 @@ func (p *Parser) ParseTokens() ([]Sexp, error) {
 		r := make([]Sexp, 0)
 		for _, k := range out {
 			r = append(r, k.Expr...)
+			//Q("\n ParseTokens k.Expr = '%v'\n\n", SexpArray(k.Expr).SexpString())
 			if k.Err != nil {
 				return r, k.Err
 			}

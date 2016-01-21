@@ -79,11 +79,11 @@ func (pr *Prompter) getExpressionOrig(reader *bufio.Reader) (string, error) {
 }
 
 // reads Stdin only
-func (pr *Prompter) getExpressionWithLiner(env *Glisp) (readin string, err error) {
+func (pr *Prompter) getExpressionWithLiner(env *Glisp) (readin string, xs []Sexp, err error) {
 
 	line, err := pr.Getline(nil)
 	if err != nil {
-		return "", err
+		return "", nil, err
 	}
 
 	err = UnexpectedEnd
@@ -94,27 +94,34 @@ func (pr *Prompter) getExpressionWithLiner(env *Glisp) (readin string, err error
 	x, err = env.parser.ParseTokens()
 	VPrintf("\n after ResetAddNewInput, err = %v\n", err)
 
+	if len(x) > 0 {
+		xs = append(xs, x...)
+	}
+
 	for err == ErrMoreInputNeeded || err == UnexpectedEnd || err == ResetRequested {
 		nextline, err := pr.Getline(&continuationPrompt)
 		if err != nil {
-			return "", err
+			return "", nil, err
 		}
 		env.parser.NewInput(bytes.NewBuffer([]byte(nextline)))
 		x, err = env.parser.ParseTokens()
+		if len(x) > 0 {
+			xs = append(xs, x...)
+		}
 		switch err {
 		case nil:
 			line += nextline
 			Q("no problem parsing line '%s' into '%s', proceeding...\n", line, SexpArray(x).SexpString())
-			return line, nil
+			return line, xs, nil
 		case ResetRequested:
 			continue
 		case ErrMoreInputNeeded:
 			continue
 		default:
-			return "", fmt.Errorf("Error on line %d: %v\n", env.parser.lexer.Linenum(), err)
+			return "", nil, fmt.Errorf("Error on line %d: %v\n", env.parser.lexer.Linenum(), err)
 		}
 	}
-	return line, nil
+	return line, xs, nil
 }
 
 func processDumpCommand(env *Glisp, args []string) {
@@ -145,7 +152,8 @@ func Repl(env *Glisp, cfg *GlispConfig) {
 
 	for {
 		//line, err := pr.getExpressionOrig(reader)
-		line, err := pr.getExpressionWithLiner(env)
+		line, exprsInput, err := pr.getExpressionWithLiner(env)
+		P("\n exprsInput(%d) = '%v'\n line = '%s'\n", len(exprsInput), SexpArray(exprsInput).SexpString(), line)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(-1)
@@ -218,7 +226,14 @@ func Repl(env *Glisp, cfg *GlispConfig) {
 			continue
 		}
 
-		expr, err := env.EvalString(line)
+		var expr Sexp
+		if len(exprsInput) > 0 {
+			// already parsed, so avoid parsing again if we can.
+			expr, err = env.EvalExpressions(exprsInput)
+		} else {
+			expr, err = env.EvalString(line) // print standalone variables
+			fmt.Printf("expr after EvalString = '%v'\n", expr.SexpString())
+		}
 		switch err {
 		case nil:
 		case NoExpressionsFound:

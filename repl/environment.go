@@ -323,6 +323,14 @@ func (env *Glisp) EvalString(str string) (Sexp, error) {
 	return env.Run()
 }
 
+func (env *Glisp) EvalExpressions(xs []Sexp) (Sexp, error) {
+	err := env.LoadExpressions(xs)
+	if err != nil {
+		return SexpNull, err
+	}
+	return env.Run()
+}
+
 func (env *Glisp) LoadFile(file *os.File) error {
 	return env.LoadStream(bufio.NewReader(file))
 }
