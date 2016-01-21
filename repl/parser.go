@@ -337,6 +337,10 @@ func (parser *Parser) ParseHash(depth int) (Sexp, error) {
 }
 
 func (parser *Parser) ParseExpression(depth int) (res Sexp, err error) {
+	//	defer func() {
+	//		P("returning from ParseExpression at depth=%v with res='%s'\n", depth, res.SexpString())
+	//	}()
+
 	lexer := parser.lexer
 	env := parser.env
 

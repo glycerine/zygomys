@@ -153,7 +153,7 @@ func Repl(env *Glisp, cfg *GlispConfig) {
 	for {
 		//line, err := pr.getExpressionOrig(reader)
 		line, exprsInput, err := pr.getExpressionWithLiner(env)
-		P("\n exprsInput(%d) = '%v'\n line = '%s'\n", len(exprsInput), SexpArray(exprsInput).SexpString(), line)
+		//Q("\n exprsInput(%d) = '%v'\n line = '%s'\n", len(exprsInput), SexpArray(exprsInput).SexpString(), line)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(-1)
@@ -231,8 +231,7 @@ func Repl(env *Glisp, cfg *GlispConfig) {
 			// already parsed, so avoid parsing again if we can.
 			expr, err = env.EvalExpressions(exprsInput)
 		} else {
-			expr, err = env.EvalString(line) // print standalone variables
-			fmt.Printf("expr after EvalString = '%v'\n", expr.SexpString())
+			expr, err = env.EvalString(line + " ") // print standalone variables
 		}
 		switch err {
 		case nil:
