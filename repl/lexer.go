@@ -540,9 +540,9 @@ func (lexer *Lexer) LexNextRune(r rune) error {
 }
 
 func (lexer *Lexer) PeekNextToken() (tok Token, err error) {
-	P("\n in PeekNextToken()\n")
+	Q("\n in PeekNextToken()\n")
 	defer func() {
-		P("\n done with PeekNextToken() -> returning tok='%v', err=%v. tok='%#v'. tok==EndTk? %v\n",
+		Q("\n done with PeekNextToken() -> returning tok='%v', err=%v. tok='%#v'. tok==EndTk? %v\n",
 			tok, err, tok, tok == EndTk)
 	}()
 	//	if lexer.finished {
@@ -583,9 +583,9 @@ func (lexer *Lexer) PeekNextToken() (tok Token, err error) {
 }
 
 func (lexer *Lexer) GetNextToken() (tok Token, err error) {
-	P("\n in GetNextToken()\n")
+	Q("\n in GetNextToken()\n")
 	defer func() {
-		P("\n done with GetNextToken() -> returning tok='%v', err=%v.\n", tok, err)
+		Q("\n done with GetNextToken() -> returning tok='%v', err=%v.\n", tok, err)
 	}()
 	tok, err = lexer.PeekNextToken()
 	if err != nil || tok.typ == TokenEnd {
@@ -596,14 +596,14 @@ func (lexer *Lexer) GetNextToken() (tok Token, err error) {
 }
 
 func (lex *Lexer) PromoteNextStream() (ok bool) {
-	P("entering PromoteNextStream()!\n")
+	Q("entering PromoteNextStream()!\n")
 	defer func() {
-		P("done with PromoteNextStream, promoted=%v\n", ok)
+		Q("done with PromoteNextStream, promoted=%v\n", ok)
 	}()
 	if len(lex.next) == 0 {
 		return false
 	}
-	P("Promoting next stream!\n")
+	Q("Promoting next stream!\n")
 	lex.stream = lex.next[0]
 	lex.next = lex.next[1:]
 	return true
