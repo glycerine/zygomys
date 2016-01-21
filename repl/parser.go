@@ -20,11 +20,12 @@ type Parser struct {
 	ParsedOutput chan []ParserReply
 	LastErr      chan error
 
-	mut       sync.Mutex
-	stopped   bool
-	readySexp []Sexp
-	lastError error
-	sendMe    []ParserReply
+	mut               sync.Mutex
+	stopped           bool
+	readySexp         []Sexp
+	lastError         error
+	sendMe            []ParserReply
+	FlagSendNeedInput bool
 }
 
 type ParserReply struct {
@@ -139,9 +140,12 @@ func (p *Parser) GetMoreInput(deliverThese []Sexp, errorToReport error) error {
 		close(p.Ready)
 	}
 
+	// We should try the convention: returning an length 0 []ParserReply means: need more input!
+
 	if len(deliverThese) == 0 && errorToReport == nil {
+		p.FlagSendNeedInput = true
 		Q("\n GetMoreInput sees empty deliverThese and no error, substituting errorToReport = ErrInputNeeded\n")
-		errorToReport = NewInputNeeded()
+		//errorToReport = NewInputNeeded()
 	}
 	Q("\n GetMoreInput(): before append, p.sendMe is of length %v: \n", len(p.sendMe))
 	for i := range p.sendMe {
@@ -168,12 +172,14 @@ func (p *Parser) GetMoreInput(deliverThese []Sexp, errorToReport error) error {
 			Q("Parser AddInput called!\n")
 			p.lexer.AddNextStream(input)
 			p.cleanupSendme()
+			p.FlagSendNeedInput = false
 			return nil
 		case input := <-p.ReqReset:
 			Q("p.ReqReset called with input %p\n", input)
 			p.lexer.Reset()
 			p.lexer.AddNextStream(input)
 			p.cleanupSendme()
+			p.FlagSendNeedInput = false
 			return ResetRequested
 		case p.HaveStuffToSend() <- p.sendMe:
 			Q("Parser sent %v p.sendMe on ParsedOutput:\n", len(p.sendMe))
@@ -183,6 +189,7 @@ func (p *Parser) GetMoreInput(deliverThese []Sexp, errorToReport error) error {
 			}
 			p.sendMe = make([]ParserReply, 0, 1)
 			Q("\n ... after send, now p.sendMe reset to length %v\n", len(p.sendMe))
+			p.FlagSendNeedInput = false
 		case p.LastErr <- p.lastError:
 			Q("Parser sent lastError %s on LastErr channel\n", p.lastError)
 			p.lastError = nil
@@ -210,7 +217,7 @@ func (p *Parser) cleanupSendme() {
 	p.sendMe = cleaned
 }
 func (p *Parser) HaveStuffToSend() chan []ParserReply {
-	if len(p.sendMe) > 0 {
+	if len(p.sendMe) > 0 || p.FlagSendNeedInput {
 		return p.ParsedOutput
 	}
 	return nil
