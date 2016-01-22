@@ -56,7 +56,7 @@ $ go get github.com/glycerine/zygomys/cmd/zygo
  * [x] Go style raw string literals, using `` `backticks` ``, can contain newlines and `"` double quotes directly. Easy templating.
  * [x] Easy to extend. See the `repl/random.go`, `repl/regexp.go`, and `repl/time.go` files for examples.
  * [x] Clojure like threading `(-> hash field1: field2:)` and `(:field hash)` selection. 
- * [x] Macros for your DSL. Syntax-quote templates work *anywhere*; inside lists, `[]` arrays and `{}` hashes.
+ * [x] Macros for your DSL.
 
 ### Obligatory XKCD
 
@@ -66,7 +66,7 @@ $ go get github.com/glycerine/zygomys/cmd/zygo
 ### Additional features
 
  * [x] zygomys is a small Go library, easy to integrate and use/extend.
- * [x] Float, Int, Char, String, Symbol, List, Array, and Hash datatypes builtin.
+ * [x] Float (float64), Int (int64), Char, String, Symbol, List, Array, and Hash datatypes builtin.
  * [x] Arithmetic (`+`, `-`, `*`, `/`, `mod`, `**`)
  * [x] Shift Operators (`sll`, `srl`, `sra`)
  * [x] Bitwise operations (`bit-and`, `bit-or`, `bit-xor`)

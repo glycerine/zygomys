@@ -145,3 +145,16 @@ func Test030LexingPauseAndResume(t *testing.T) {
 		P("str=%s\n", str)
 	})
 }
+
+func Test026RegexpSplittingOfDotSymbols(t *testing.T) {
+
+	cv.Convey("our DotPartsRegex should split dot-symbol `.a.b.c` into `.a`, `.b`, and `.c`", t, func() {
+		target := ".a.b.c"
+		path := DotPartsRegex.FindAllString(target, -1)
+		fmt.Printf("path = %#v\n", path)
+		cv.So(len(path), cv.ShouldEqual, 3)
+		cv.So(path[0], cv.ShouldEqual, ".a")
+		cv.So(path[1], cv.ShouldEqual, ".b")
+		cv.So(path[2], cv.ShouldEqual, ".c")
+	})
+}
