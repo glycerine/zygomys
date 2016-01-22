@@ -990,7 +990,7 @@ func UndotFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	expr, err, _ := env.LexicalLookupSymbol(sym, true)
 	//P("\n in Undot: expr = '%#v', err = '%v'\n", expr, err)
 	if err != nil {
-		return SexpNull, err
+		return SexpNull, fmt.Errorf("dot-symbol `%s` was not bound", sym.name)
 	}
 
 	return expr, nil

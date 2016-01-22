@@ -406,16 +406,24 @@ func (lexer *Lexer) LexNextRune(r rune) error {
 	// DotSymbols are used in OO-style-notation.
 	// Dot is also a decimal point(!), so test decode to detect numbers.
 	if r == '.' {
-		//		if lexer.buffer.Len() == 0 {
-		//			lexer.tokens = append(lexer.tokens, lexer.Token(TokenDot, "."))
-		//			return nil
-		//		}
-
+		//if lexer.buffer.Len() == 0 {
+		//	lexer.tokens = append(lexer.tokens, lexer.Token(TokenDot, "."))
+		//	return nil
+		//}
+		// trial decode
 		testTok, err := lexer.DecodeAtom(lexer.buffer.String())
-		if err == nil && testTok.typ == TokenDotSymbol {
-			lexer.tokens = append(lexer.tokens, testTok)
-			lexer.buffer.Reset()
-			// don't return, let '.' start the next symbol
+		if err == nil {
+			switch testTok.typ {
+			case TokenSymbol:
+				err := lexer.dumpBuffer()
+				if err != nil {
+					return err
+				}
+			case TokenDotSymbol:
+				lexer.tokens = append(lexer.tokens, testTok)
+				lexer.buffer.Reset()
+				// don't return, let '.' start the next symbol
+			}
 		}
 	}
 
