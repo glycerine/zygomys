@@ -2,8 +2,9 @@ package zygo
 
 import (
 	//"fmt"
-	cv "github.com/glycerine/goconvey/convey"
 	"testing"
+
+	cv "github.com/glycerine/goconvey/convey"
 )
 
 func Test007ParentChildRecordsTranslateToGo(t *testing.T) {
@@ -14,6 +15,8 @@ func Test007ParentChildRecordsTranslateToGo(t *testing.T) {
 		` containing a Go Hellcat{}.`, t, func() {
 
 		env := NewGlisp()
+		defer env.parser.Stop()
+
 		env.StandardSetup()
 
 		x, err := env.EvalString(`
@@ -39,6 +42,8 @@ func Test008CallByReflectionWorksWithoutNesting(t *testing.T) {
 		` struct correctly`, t, func() {
 
 		env := NewGlisp()
+		defer env.parser.Stop()
+
 		env.StandardSetup()
 
 		x, err := env.EvalString(`
@@ -67,6 +72,8 @@ func Test009CallByReflectionWorksWithoutNestingWithoutEmbeds(t *testing.T) {
 		` from record to Go struct correctly`, t, func() {
 
 		env := NewGlisp()
+		defer env.parser.Stop()
+
 		env.StandardSetup()
 
 		x, err := env.EvalString(`
@@ -92,6 +99,8 @@ func Test010WriteIntoSingleInterfaceValueWorks(t *testing.T) {
 		` value, this should translate from Sexp to Go correctly.`, t, func() {
 
 		env := NewGlisp()
+		defer env.parser.Stop()
+
 		env.StandardSetup()
 
 		x, err := env.EvalString(`
@@ -119,6 +128,8 @@ func Test011TranslationOfArraysWorks(t *testing.T) {
 		` correctly.`, t, func() {
 
 		env := NewGlisp()
+		defer env.parser.Stop()
+
 		env.StandardSetup()
 
 		x, err := env.EvalString(`
@@ -143,6 +154,8 @@ func Test012TranslationOfArraysOfInterfacesWorks(t *testing.T) {
 		t, func() {
 
 			env := NewGlisp()
+			defer env.parser.Stop()
+
 			env.StandardSetup()
 
 			x, err := env.EvalString(`
@@ -177,6 +190,8 @@ func Test014TranslationOfArraysOfInterfacesEmbeddedWorks(t *testing.T) {
 		` translated from Sexp correctly.`, t, func() {
 
 		env := NewGlisp()
+		defer env.parser.Stop()
+
 		env.StandardSetup()
 
 		x, err := env.EvalString(`
@@ -215,6 +230,8 @@ func Test016ReflectCallOnGoMethodsZeroArgs(t *testing.T) {
 		` to invoke methods (zero in arguments) on them`, t, func() {
 
 		env := NewGlisp()
+		defer env.parser.Stop()
+
 		env.StandardSetup()
 
 		x, err := env.EvalString(`
@@ -232,7 +249,7 @@ func Test016ReflectCallOnGoMethodsZeroArgs(t *testing.T) {
 		VPrintf("\n sn = %#v\n", sn)
 
 		invok, err := env.EvalString(`
-		   (.method snoop GetCry: )
+		   (_method snoop GetCry: )
 		   `)
 		panicOn(err)
 		VPrintf("got invoke =  %T/val=%#v\n", invok, invok)
@@ -243,7 +260,7 @@ func Test016ReflectCallOnGoMethodsZeroArgs(t *testing.T) {
 			cv.So(string(arr[0].(SexpStr)), cv.ShouldEqual, "yowza")
 		default:
 			VPrintf("got %T/val=%#v\n", arr, arr)
-			panic("expected array back from .method")
+			panic("expected array back from _method")
 		}
 
 	})
@@ -255,6 +272,8 @@ func Test017ReflectCallOnGoMethodsOneArg(t *testing.T) {
 		` invoke methods (with >= 1 in argument) on them`, t, func() {
 
 		env := NewGlisp()
+		defer env.parser.Stop()
+
 		env.StandardSetup()
 
 		x, err := env.EvalString(`
@@ -273,7 +292,7 @@ func Test017ReflectCallOnGoMethodsOneArg(t *testing.T) {
 		VPrintf("\n sn = %#v\n", sn)
 
 		invok, err := env.EvalString(`
-			   (.method snoop Fly: (weather time:(now) size:12 ` +
+			   (_method snoop Fly: (weather time:(now) size:12 ` +
 			`type:"sunny" details:(raw "123")))
 			   `)
 		panicOn(err)
@@ -286,7 +305,7 @@ func Test017ReflectCallOnGoMethodsOneArg(t *testing.T) {
 				`Snoopy sees weather 'sunny', cries 'yowza'`)
 		default:
 			VPrintf("got %T/val=%#v\n", arr, arr)
-			panic("expected array back from .method")
+			panic("expected array back from _method")
 		}
 
 	})
@@ -299,6 +318,8 @@ func Test018ReflectCallOnGoMethodsComplexReturnType(t *testing.T) {
 		t, func() {
 
 			env := NewGlisp()
+			defer env.parser.Stop()
+
 			env.StandardSetup()
 
 			x, err := env.EvalString(`
@@ -316,7 +337,7 @@ func Test018ReflectCallOnGoMethodsComplexReturnType(t *testing.T) {
 			VPrintf("\n sn = %#v\n", sn)
 
 			invok, err := env.EvalString(`
-			   (.method snoop EchoWeather: (weather time:(now) size:12 ` +
+			   (_method snoop EchoWeather: (weather time:(now) size:12 ` +
 				`type:"sunny" details:(raw "123")))
 			   `)
 			panicOn(err)

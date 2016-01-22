@@ -74,7 +74,7 @@ func (stack *Stack) lookupSymbol(sym SexpSymbol, minFrame int) (Sexp, error, *Sc
 	if stack.env != nil && stack.env.debugSymbolNotFound {
 		stack.env.ShowStackStackAndScopeStack()
 	}
-	return SexpNull, errors.New(fmt.Sprint("symbol ", sym, " not found")), nil
+	return SexpNull, fmt.Errorf("symbol `%s` not found", sym.name), nil
 }
 
 func (stack *Stack) LookupSymbol(sym SexpSymbol) (Sexp, error, *Scope) {
@@ -133,7 +133,7 @@ func (scope *Scope) UpdateSymbolInScope(sym SexpSymbol, expr Sexp) error {
 
 	_, found := scope.Map[sym.number]
 	if !found {
-		return fmt.Errorf("symbol %s not found", sym.name)
+		return fmt.Errorf("symbol `%s` not found", sym.name)
 	}
 	scope.Map[sym.number] = expr
 	return nil

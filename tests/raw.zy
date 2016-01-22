@@ -1,1 +1,5 @@
 (assert (== (raw2str (raw `sup`)) "sup"))
+(def s `hi
+there 34
+ symbols`)
+(assert (== s "hi\nthere 34\n symbols"))

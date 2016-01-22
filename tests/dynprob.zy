@@ -28,8 +28,8 @@
 
 (def r (h 2))
 (def t (r 10))
-(.closdump r) 
-(.closdump t)
+(_closdump r) 
+(_closdump t)
 
 (defn f [] (let* [y 3 g (fn [] (+ y 1))] g))
 (def a (f))

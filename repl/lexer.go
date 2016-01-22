@@ -38,6 +38,7 @@ const (
 	TokenThreadingOperator
 	TokenBackslash
 	TokenDollar
+	TokenDotSymbol
 	TokenEnd
 )
 
@@ -163,9 +164,14 @@ var (
 	// `{`, `}`, `'`, `#`, `:`, `^`, `\`, `|`, `%`, `"`, `;`
 	// Nor, obviously, can they contain backticks, "`".
 	// '$' is always a symbol on its own, handled specially.
-	SymbolRegex = regexp.MustCompile(`^[^'#:;\\~@\[\]{}\^|"()%]+$`)
-	CharRegex   = regexp.MustCompile("^#\\\\?.$")
-	FloatRegex  = regexp.MustCompile("^-?([0-9]+\\.[0-9]*)|(\\.[0-9]+)|([0-9]+(\\.[0-9]*)?[eE](-?[0-9]+))$")
+	// Symbols cannot start with a number. DotSymbols cannot have a number
+	// as the first character after '.'
+	SymbolRegex = regexp.MustCompile(`^[^'#:;\\~@\[\]{}\^|"()%.0-9][^'#:;\\~@\[\]{}\^|"()%.]*$`)
+	// dot symbol examples: `.`, `.a`, `.a.b`, `.a.b.c`
+	// dot symbol non-examples: `.a.`, `..`
+	DotSymbolRegex = regexp.MustCompile(`^[.]$|^([.][^'#:;\\~@\[\]{}\^|"()%.0-9][^'#:;\\~@\[\]{}\^|"()%.]*)+$`)
+	CharRegex      = regexp.MustCompile("^#\\\\?.$")
+	FloatRegex     = regexp.MustCompile("^-?([0-9]+\\.[0-9]*)|(\\.[0-9]+)|([0-9]+(\\.[0-9]*)?[eE](-?[0-9]+))$")
 )
 
 func StringToRunes(str string) []rune {
@@ -239,6 +245,9 @@ func (x *Lexer) DecodeAtom(atom string) (Token, error) {
 	}
 	if FloatRegex.MatchString(atom) {
 		return x.Token(TokenFloat, atom), nil
+	}
+	if DotSymbolRegex.MatchString(atom) {
+		return x.Token(TokenDotSymbol, atom), nil
 	}
 	if SymbolRegex.MatchString(atom) {
 		return x.Token(TokenSymbol, atom), nil
@@ -365,7 +374,7 @@ func (lexer *Lexer) LexNextRune(r rune) error {
 		return nil
 	}
 
-	// colon terminates a keyword symbol, e.g. mykey: "myvalue"; mykey is the symbol
+	// colon terminates a keyword symbol, e.g. in `mykey: "myvalue"`; mykey is the symbol
 	if r == ':' {
 		if lexer.buffer.Len() == 0 {
 			lexer.tokens = append(lexer.tokens, lexer.Token(TokenColonOperator, ":"))
@@ -391,6 +400,23 @@ func (lexer *Lexer) LexNextRune(r rune) error {
 		}
 		lexer.tokens = append(lexer.tokens, lexer.Token(TokenDollar, "$"))
 		return nil
+	}
+
+	// '.' begins a dot-symbol and terminates any previous token.
+	// DotSymbols are used in OO-style-notation.
+	// Dot is also a decimal point(!), so test decode to detect numbers.
+	if r == '.' {
+		//		if lexer.buffer.Len() == 0 {
+		//			lexer.tokens = append(lexer.tokens, lexer.Token(TokenDot, "."))
+		//			return nil
+		//		}
+
+		testTok, err := lexer.DecodeAtom(lexer.buffer.String())
+		if err == nil && testTok.typ == TokenDotSymbol {
+			lexer.tokens = append(lexer.tokens, testTok)
+			lexer.buffer.Reset()
+			// don't return, let '.' start the next symbol
+		}
 	}
 
 	if r == '\'' {
@@ -447,9 +473,9 @@ func (lexer *Lexer) LexNextRune(r rune) error {
 
 func (lexer *Lexer) PeekNextToken() (tok Token, err error) {
 	/*
-		Q("\n in PeekNextToken()\n")
+		P("\n in PeekNextToken()\n")
 		defer func() {
-			Q("\n done with PeekNextToken() -> returning tok='%v', err=%v. tok='%#v'. tok==EndTk? %v\n",
+			P("\n done with PeekNextToken() -> returning tok='%v', err=%v. tok='%#v'. tok==EndTk? %v\n",
 				tok, err, tok, tok == EndTk)
 		}()
 	*/

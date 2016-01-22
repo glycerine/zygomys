@@ -15,6 +15,8 @@ func Test001LexerPositionRecordingWorks(t *testing.T) {
 
 		str := `(defn hello [] "greetings!")`
 		env := NewGlisp()
+		defer env.parser.Stop()
+
 		stream := bytes.NewBuffer([]byte(str))
 		env.parser.ResetAddNewInput(stream)
 		expressions, err := env.parser.ParseTokens()
@@ -30,6 +32,8 @@ func Test006LexerAndParsingOfDotInvocations(t *testing.T) {
 
 		str := `(. subject method)`
 		env := NewGlisp()
+		defer env.parser.Stop()
+
 		stream := bytes.NewBuffer([]byte(str))
 		env.parser.ResetAddNewInput(stream)
 		expressions, err := env.parser.ParseTokens()
@@ -43,50 +47,69 @@ func Test025LexingOfStringAtomsAndSymbols(t *testing.T) {
 
 	cv.Convey(`our symbol regex should accept/reject what we expect and define in the Language doc.`, t, func() {
 
-		// must use "\-" to avoid creating a range with just plain `-`
-		// yes b: reg := `^[^a\-c]+$`
-		// no  b: reg := `^[^a-c]+$`
+		fmt.Printf("\n\n ==== SymbolRegexp should function as expected\n")
+		{
+			// must use "\-" to avoid creating a range with just plain `-`
+			// yes b: reg := `^[^a\-c]+$`
+			// no  b: reg := `^[^a-c]+$`
 
-		// have to allow & because it is the ... vararg indicator
-		// wanted to allow $ to be system command indicator,
-		// and possibly later allow for shell style substitution,
-		// so it is always its own token/symbol, and should be accepted.
-		notokay := []string{`~`, `@`, `(`, `)`, `[`, `]`, `{`, `}`, `'`, `#`,
-			`:`, `^`, `\`, `|`, `%`, `"`, `;`} // `.`, "`"}
+			// have to allow & because it is the ... vararg indicator
+			// wanted to allow $ to be system command indicator,
+			// and possibly later allow for shell style substitution,
+			// so it is always its own token/symbol, and should be accepted.
+			symbolNotOkay := []string{`~`, `@`, `(`, `)`, `[`, `]`, `{`, `}`, `'`, `#`,
+				`:`, `^`, `\`, `|`, `%`, `"`, `;`, `.9`, `.`, `.h`, `.a.`, `.a.b.`, `..`, `...`}
 
-		okay := []string{`..`, `a.b`, `-`, `a-b`, `*a-b*`, `$`, `&`, `.`, `.method`}
+			//okay := []string{`..`, `a.b`, `-`, `a-b`, `*a-b*`, `$`, `&`, `.`, `.method`}
+			symbolOkay := []string{`-`, `a-b`, `*a-b*`, `$`, `&`}
 
-		// for experimentation, comment out the actual test below
-		reg := `^[^'#:;\\~@\[\]{}\^|"()%&]+$`
-		symbolRegex := regexp.MustCompile(reg)
-		x := symbolRegex
+			// for experimentation, comment out the actual test below
+			//reg := `^[^'#:;\\~@\[\]{}\^|"()%.]+$`
+			//reg := `^[.]$|^[.][^'#:;\\~@\[\]{}\^|"()%.0-9][^'#:;\\~@\[\]{}\^|"()%]*$`
+			//symbolRegex := regexp.MustCompile(reg)
+			//x := symbolRegex
 
-		// actual test:
-		x = SymbolRegex // from lexer.go
-
-		fmt.Printf("\nscanning notokay list =================\n")
-		for _, a := range notokay {
-			ans := x.MatchString(a)
-			cv.So(ans, cv.ShouldEqual, false)
-			if ans {
-				fmt.Printf("bad,  '%s' unwantedly matches '%s'\n", a, x)
-			} else {
-				fmt.Printf("good, '%s' does not match     '%s'\n", a, x)
-			}
+			CheckRegex(symbolNotOkay, symbolOkay, SymbolRegex) // SymbolRegex from lexer.go
 		}
 
-		fmt.Printf("\nscanning okay list =================\n")
-		for _, a := range okay {
-			ans := x.MatchString(a)
-			cv.So(ans, cv.ShouldEqual, true)
-			if ans {
-				fmt.Printf("good, '%s' matches as expected       '%s'\n", a, x)
-			} else {
-				fmt.Printf("bad,  '%s' does not match but should '%s'\n", a, x)
-			}
-		}
+		fmt.Printf("\n\n ==== DotSymbolRegexp should function as expected\n")
+		{
+			//reg := `^[.]$|^[.][^'#:;\\~@\[\]{}\^|"()%.0-9][^'#:;\\~@\[\]{}\^|"()%]*$`
+			//dotSymbolRegex := regexp.MustCompile(reg)
 
+			dotSymbolNotOkay := []string{`~`, `@`, `(`, `)`, `[`, `]`, `{`, `}`, `'`, `#`,
+				`:`, `^`, `\`, `|`, `%`, `"`, `;`, `.9`, `.a.`, `.a.b.`, `..`, `...`}
+
+			//okay := []string{`..`, `a.b`, `-`, `a-b`, `*a-b*`, `$`, `&`, `.`, `.method`}
+			dotSymbolOkay := []string{`.`, `.h`, `.method`, `.a.b`, `.a.b.c`}
+
+			CheckRegex(dotSymbolNotOkay, dotSymbolOkay, DotSymbolRegex) // test DotSymbolRegex from lexer.go
+		}
 	})
+}
+
+func CheckRegex(notokay []string, okay []string, x *regexp.Regexp) {
+	fmt.Printf("\nscanning notokay list =================\n")
+	for _, a := range notokay {
+		ans := x.MatchString(a)
+		cv.So(ans, cv.ShouldEqual, false)
+		if ans {
+			fmt.Printf("bad,  '%s' unwantedly matches '%s'\n", a, x)
+		} else {
+			fmt.Printf("good, '%s' does not match     '%s'\n", a, x)
+		}
+	}
+
+	fmt.Printf("\nscanning okay list =================\n")
+	for _, a := range okay {
+		ans := x.MatchString(a)
+		cv.So(ans, cv.ShouldEqual, true)
+		if ans {
+			fmt.Printf("good, '%s' matches as expected       '%s'\n", a, x)
+		} else {
+			fmt.Printf("bad,  '%s' does not match but should '%s'\n", a, x)
+		}
+	}
 }
 
 func Test030LexingPauseAndResume(t *testing.T) {
@@ -97,6 +120,7 @@ func Test030LexingPauseAndResume(t *testing.T) {
 		str1 := `(defn hel`
 		str2 := `lo [] "greetings!(((")`
 		env := NewGlisp()
+		defer env.parser.Stop()
 		stream := bytes.NewBuffer([]byte(str1))
 		env.parser.ResetAddNewInput(stream)
 		ex, err := env.parser.ParseTokens()

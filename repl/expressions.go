@@ -296,6 +296,8 @@ func (r SexpRaw) SexpString() string {
 type SexpSymbol struct {
 	name   string
 	number int
+	isDot  bool
+	ztype  string
 }
 
 func (sym SexpSymbol) SexpString() string {

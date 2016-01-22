@@ -1,15 +1,15 @@
 ;; calls into Go produce expected results
-(def callres (.method (snoopy cry:"yeah!") Fly: (weather type:"awesomesauce")))
+(def callres (_method (snoopy cry:"yeah!") Fly: (weather type:"awesomesauce")))
 (assert (== callres
             ["Snoopy sees weather 'awesomesauce', cries 'yeah!'" ()]))
 
 ;; structs coming back into zygo from Go
 (def w (weather type:"delightful" size:888))
-(def c2 (.method (snoopy cry:"yeah!") EchoWeather: w))
+(def c2 (_method (snoopy cry:"yeah!") EchoWeather: w))
 (assert (== (str c2) `[ (weather time:() size:888 type:"delightful" details:[]byte(nil))]`))
 
 ;; passing in []byte to a method
 (def w (weather))
-(assert (== (len (.method w MarshalMsg: (raw))) 2))
+(assert (== (len (_method w MarshalMsg: (raw))) 2))
 
 

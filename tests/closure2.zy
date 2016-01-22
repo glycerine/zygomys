@@ -3,10 +3,10 @@
 (defn new-closure [sym] (let* [a 1
                            f (fn [addme] (set a (+ a addme)) (printf "a is now %v\n" a) a)] f))
 (def g (new-closure 'hello_g))
-(.closdump g)
+(_closdump g)
 (def h (new-closure 'hello_h))
-(.closdump h)
-(.closdump g) ;; showing hello_h arg!!!
+(_closdump h)
+(_closdump g) ;; showing hello_h arg!!!
 (assert (== (g 1) 2))
 ;; if they are mistakenly sharing the same closure variables.
 ;; then the increment on g will have impacted h as well.

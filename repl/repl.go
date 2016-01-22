@@ -90,9 +90,9 @@ func (pr *Prompter) getExpressionWithLiner(env *Glisp) (readin string, xs []Sexp
 	var x []Sexp
 
 	// test parse, but don't load or generate bytecode
-	env.parser.ResetAddNewInput(bytes.NewBuffer([]byte(line)))
+	env.parser.ResetAddNewInput(bytes.NewBuffer([]byte(line + "\n")))
 	x, err = env.parser.ParseTokens()
-	VPrintf("\n after ResetAddNewInput, err = %v\n", err)
+	//P("\n after ResetAddNewInput, err = %v. x = '%s'\n", err, SexpArray(x).SexpString())
 
 	if len(x) > 0 {
 		xs = append(xs, x...)
@@ -103,14 +103,14 @@ func (pr *Prompter) getExpressionWithLiner(env *Glisp) (readin string, xs []Sexp
 		if err != nil {
 			return "", nil, err
 		}
-		env.parser.NewInput(bytes.NewBuffer([]byte(nextline)))
+		env.parser.NewInput(bytes.NewBuffer([]byte(nextline + "\n")))
 		x, err = env.parser.ParseTokens()
 		if len(x) > 0 {
 			xs = append(xs, x...)
 		}
 		switch err {
 		case nil:
-			line += nextline
+			line += "\n" + nextline
 			Q("no problem parsing line '%s' into '%s', proceeding...\n", line, SexpArray(x).SexpString())
 			return line, xs, nil
 		case ResetRequested:

@@ -139,9 +139,9 @@ func (env *Glisp) Duplicate() *Glisp {
 func (env *Glisp) MakeSymbol(name string) SexpSymbol {
 	symnum, ok := env.symtable[name]
 	if ok {
-		return SexpSymbol{name, symnum}
+		return SexpSymbol{name: name, number: symnum}
 	}
-	symbol := SexpSymbol{name, env.nextsymbol}
+	symbol := SexpSymbol{name: name, number: env.nextsymbol}
 	env.symtable[name] = symbol.number
 	env.revsymtable[symbol.number] = name
 	env.nextsymbol++
@@ -590,7 +590,14 @@ hi from g
 zygo>
 */
 
-func (env *Glisp) LexicalLookupSymbol(sym SexpSymbol) (Sexp, error, *Scope) {
+func (env *Glisp) LexicalLookupSymbol(sym SexpSymbol, undot bool) (Sexp, error, *Scope) {
+
+	// DotSymbols always evaluate to themselves. Use the
+	// special (undot .a) to get any bound value. In which
+	// case undot will be true.
+	if sym.isDot && !undot {
+		return sym, nil, nil
+	}
 
 	// (1) first go up the linearstack (runtime stack) until
 	//     we get to the first function boundary; this gives
@@ -629,7 +636,7 @@ func (env *Glisp) LexicalLookupSymbol(sym SexpSymbol) (Sexp, error, *Scope) {
 		break
 	}
 
-	return SexpNull, errors.New(fmt.Sprint("symbol ", sym, " not found")), nil
+	return SexpNull, fmt.Errorf("symbol `%s` not found", sym.name), nil
 }
 
 func (env *Glisp) LexicalBindSymbol(sym SexpSymbol, expr Sexp) error {

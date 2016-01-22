@@ -1,0 +1,6 @@
+;; dotsymbols always evaluate to themselves
+(def .a 3)
+(assert (== .a '.a))
+
+;; until undot is used
+(assert (== (undot .a) 3))

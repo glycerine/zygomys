@@ -2,14 +2,17 @@ package zygo
 
 import (
 	"fmt"
-	cv "github.com/glycerine/goconvey/convey"
 	"testing"
+
+	cv "github.com/glycerine/goconvey/convey"
 )
 
 func Test020StacksDontAlias(t *testing.T) {
 
 	cv.Convey(`stack.Clone() should avoid all aliasing, as should Pop()`, t, func() {
 		env := NewGlisp()
+		defer env.parser.Stop()
+
 		t := env.NewStack(5)
 		a := env.NewScope()
 		b := env.NewScope()

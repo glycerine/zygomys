@@ -66,6 +66,7 @@ var ParserHaltRequested = fmt.Errorf("parser halt requested")
 var ResetRequested = fmt.Errorf("parser reset requested")
 
 func (p *Parser) InfiniteParsingLoop() {
+	defer close(p.Done)
 	expressions := make([]Sexp, 0, SliceDefaultCap)
 
 	// maybe we already have input, be optimistic!
@@ -428,6 +429,14 @@ func (parser *Parser) ParseExpression(depth int) (res Sexp, err error) {
 		return SexpFloat(f), nil
 	case TokenEnd:
 		return SexpEnd, nil
+	case TokenDot:
+		sym := env.MakeSymbol(tok.str)
+		sym.isDot = true
+		return sym, nil
+	case TokenDotSymbol:
+		sym := env.MakeSymbol(tok.str)
+		sym.isDot = true
+		return sym, nil
 	}
 	return SexpNull, errors.New(fmt.Sprint("Invalid syntax, didn't know what to do with ", tok.typ, " ", tok))
 }
@@ -441,7 +450,7 @@ func (p *Parser) ParseTokens() ([]Sexp, error) {
 		r := make([]Sexp, 0)
 		for _, k := range out {
 			r = append(r, k.Expr...)
-			//Q("\n ParseTokens k.Expr = '%v'\n\n", SexpArray(k.Expr).SexpString())
+			//P("\n ParseTokens k.Expr = '%v'\n\n", SexpArray(k.Expr).SexpString())
 			if k.Err != nil {
 				return r, k.Err
 			}

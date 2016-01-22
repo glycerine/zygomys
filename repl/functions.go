@@ -815,14 +815,18 @@ var BuiltinFunctions = map[string]GlispUserFunction{
 	"flatten":   FlattenToWordsFunction,
 	"nsplit":    SplitStringOnNewlinesFunction,
 	"methodls":  GoMethodListFunction,
-	".method":   CallGoMethodFunction,
+	"_method":   CallGoMethodFunction,
 	"fieldls":   GoFieldListFunction,
 	"chomp":     StringUtilFunction,
 	"exit":      ExitFunction,
 	"stop":      StopFunction,
-	".closdump": DumpClosureEnvFunction,
-	".call":     CallZMethodOnRecordFunction,
+	"_closdump": DumpClosureEnvFunction,
+	"_call":     CallZMethodOnRecordFunction,
 	"gob":       GobEncodeFunction,
+	"dot":       DotFunction,
+	".":         DotFunction,
+	"undot":     UndotFunction,
+	"=":         AssignmentFunction,
 }
 
 func ThreadMapFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
@@ -956,4 +960,45 @@ func StopFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		return SexpNull, fmt.Errorf(string(s))
 	}
 	return SexpNull, stopErr
+}
+
+// dot : object-oriented style calls
+func DotFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
+	// stubbed
+	P("\n DotFunction stub called!\n")
+	return SexpNull, nil
+}
+
+func UndotFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
+	narg := len(args)
+	if narg != 1 {
+		return SexpNull, WrongNargs
+	}
+
+	var sym SexpSymbol
+	switch s := args[0].(type) {
+	case SexpSymbol:
+		if !s.isDot {
+			return SexpNull, fmt.Errorf("not a dot-symbol: cannot undot '%s'", s.name)
+		}
+		sym = s
+	default:
+		return SexpNull, fmt.Errorf("not a dot-symbol: cannot undot '%s'",
+			args[0].SexpString())
+	}
+
+	expr, err, _ := env.LexicalLookupSymbol(sym, true)
+	//P("\n in Undot: expr = '%#v', err = '%v'\n", expr, err)
+	if err != nil {
+		return SexpNull, err
+	}
+
+	return expr, nil
+}
+
+// =
+func AssignmentFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
+	// stubbed
+	P("\n AssignmentFunction stub called!\n")
+	return SexpNull, nil
 }

@@ -136,7 +136,7 @@ func (g EnvToStackInstr) Execute(env *Glisp) error {
 	}
 	var expr Sexp
 	var err error
-	expr, err, _ = env.LexicalLookupSymbol(g.sym)
+	expr, err, _ = env.LexicalLookupSymbol(g.sym, false)
 	if err != nil {
 		return err
 	}
@@ -185,7 +185,7 @@ func (p UpdateInstr) Execute(env *Glisp) error {
 	env.pc++
 	var scope *Scope
 
-	_, err, scope = env.LexicalLookupSymbol(p.sym)
+	_, err, scope = env.LexicalLookupSymbol(p.sym, false)
 	if err != nil {
 		// not found up the stack, so treat like (def)
 		// instead of (set)
@@ -213,7 +213,7 @@ func (c CallInstr) Execute(env *Glisp) error {
 	var funcobj, indirectFuncName Sexp
 	var err error
 
-	funcobj, err, _ = env.LexicalLookupSymbol(c.sym)
+	funcobj, err, _ = env.LexicalLookupSymbol(c.sym, false)
 
 	if err != nil {
 		return err
@@ -221,7 +221,7 @@ func (c CallInstr) Execute(env *Glisp) error {
 	switch f := funcobj.(type) {
 	case SexpSymbol:
 		// allow symbols to refer to functions that we then call
-		indirectFuncName, err, _ = env.LexicalLookupSymbol(f)
+		indirectFuncName, err, _ = env.LexicalLookupSymbol(f, false)
 
 		if err != nil {
 			return fmt.Errorf("'%s' refers to symbol '%s', but '%s' does not refer to a function.", c.sym.name, f.name, f.name)

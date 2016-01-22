@@ -4,10 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	cv "github.com/glycerine/goconvey/convey"
-	"github.com/ugorji/go/codec"
 	"io"
 	"testing"
+
+	cv "github.com/glycerine/goconvey/convey"
+	"github.com/ugorji/go/codec"
 )
 
 /*
@@ -29,6 +30,8 @@ type Event struct {
  Event{}, and fill in its fields`, t, func() {
 		event := `(event-demo id:123 user: (person-demo first:"Liz" last:"C") flight:"AZD234"  pilot:["Roger" "Ernie"])`
 		env := NewGlisp()
+		defer env.parser.Stop()
+
 		env.StandardSetup()
 
 		x, err := env.EvalString(event)
