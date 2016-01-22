@@ -163,12 +163,13 @@ func Repl(env *Glisp, cfg *GlispConfig) {
 		if len(parts) == 0 {
 			continue
 		}
+		first := strings.Trim(parts[0], " ")
 
-		if parts[0] == ".quit" {
+		if first == ".quit" {
 			break
 		}
 
-		if parts[0] == ".cd" {
+		if first == ".cd" {
 			if len(parts) < 2 {
 				fmt.Printf("provide directory path to change to.\n")
 				continue
@@ -187,12 +188,12 @@ func Repl(env *Glisp, cfg *GlispConfig) {
 			continue
 		}
 
-		if parts[0] == ".dump" {
+		if first == ".dump" {
 			processDumpCommand(env, parts[1:])
 			continue
 		}
 
-		if parts[0] == ".gls" {
+		if first == ".gls" {
 			fmt.Printf("\nScopes:\n")
 			prev := env.showGlobalScope
 			env.showGlobalScope = true
@@ -204,23 +205,27 @@ func Repl(env *Glisp, cfg *GlispConfig) {
 			continue
 		}
 
-		if parts[0] == ".ls" {
-			line = "(.ls)"
+		if first == ".ls" {
+			err := env.ShowStackStackAndScopeStack()
+			if err != nil {
+				fmt.Println(err)
+			}
+			continue
 		}
 
-		if parts[0] == ".verb" {
+		if first == ".verb" {
 			Verbose = !Verbose
 			fmt.Printf("verbose: %v.\n", Verbose)
 			continue
 		}
 
-		if parts[0] == ".debug" {
+		if first == ".debug" {
 			env.debugExec = true
 			fmt.Printf("instruction debugging on.\n")
 			continue
 		}
 
-		if parts[0] == ".undebug" {
+		if first == ".undebug" {
 			env.debugExec = false
 			fmt.Printf("instruction debugging off.\n")
 			continue

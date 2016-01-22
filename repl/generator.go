@@ -581,7 +581,7 @@ func (gen *Generator) GenerateCallBySymbol(sym SexpSymbol, args []Sexp, orig Sex
 		return gen.GenerateContinue(args)
 	case "new-scope":
 		return gen.GenerateNewScope(args)
-	case ".ls":
+	case "_ls":
 		return gen.GenerateDebug("show-scopes")
 	}
 
