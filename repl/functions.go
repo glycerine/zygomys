@@ -974,11 +974,39 @@ var DotSexpFunc = &SexpFunction{
 
 // dot : object-oriented style calls
 func DotFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
-	P("\n DotFunction stub called! args='%s'\n", SexpArray(args).SexpString())
-	err := env.ShowStackStackAndScopeStack()
-	if err != nil {
-		fmt.Println(err)
+	//P("\n DotFunction stub called! args='%s'\n", SexpArray(args).SexpString())
+
+	narg := len(args)
+
+	if narg < 1 {
+		return SexpNull, fmt.Errorf("error: a dotcall needs at least " +
+			"one arg: what method to apply")
 	}
+	var fun *SexpFunction
+	switch f := args[0].(type) {
+	case *SexpFunction:
+		fun = f
+	default:
+		return SexpNull, fmt.Errorf("method '%s' for dotcall was not an SexpFunction", args[0].SexpString())
+	}
+
+	// push our args, set up the call
+	callargs := args[1:]
+	ncallarg := len(callargs)
+	for _, val := range callargs {
+		env.datastack.PushExpr(val)
+	}
+	var err error
+	if !fun.user {
+		err = env.CallFunction(fun, ncallarg)
+	} else {
+		_, err = env.CallUserFunction(fun, name, ncallarg)
+		//P("nargRet = %v\n", nargRet)
+	}
+	if err != nil {
+		return SexpNull, err
+	}
+
 	return SexpNull, nil
 }
 
@@ -1011,9 +1039,30 @@ func UndotFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 
 // =
 func AssignmentFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
-	// stubbed
-	P("\n AssignmentFunction stub called!\n")
-	return SexpNull, nil
+	//P("\n AssignmentFunction called with name ='%s'. args='%s'\n", name,
+	//	SexpArray(args).SexpString())
+
+	narg := len(args)
+	if narg != 1 {
+		return SexpNull, fmt.Errorf("assignment requires a right-hand-side (of size 1)")
+	}
+
+	path := DotPartsRegex.FindAllString(name, -1)
+	//P("path = '%#v' and narg=%v\n", path, narg)
+	if len(path) == 0 {
+		return SexpNull, fmt.Errorf("internal error: DotFunction path had zero length")
+	}
+
+	a := path[0][1:] // strip off the dot
+	asym := env.MakeSymbol(a)
+	err := env.LexicalBindSymbol(asym, args[0])
+	/*
+		obj, err, _ := env.LexicalLookupSymbol(asym, false)
+		if err != nil {
+			return SexpNull, err
+		}
+	*/
+	return SexpNull, err
 }
 
 func JoinSymFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {

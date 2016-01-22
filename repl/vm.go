@@ -208,7 +208,8 @@ func (c CallInstr) InstrString() string {
 func (c CallInstr) Execute(env *Glisp) error {
 	f, ok := env.builtins[c.sym.number]
 	if ok {
-		return env.CallUserFunction(f, c.sym.name, c.nargs)
+		_, err := env.CallUserFunction(f, c.sym.name, c.nargs)
+		return err
 	}
 	var funcobj, indirectFuncName Sexp
 	var err error
@@ -223,7 +224,8 @@ func (c CallInstr) Execute(env *Glisp) error {
 	case SexpSymbol:
 		// is it a dot-symbol call, lazily resolved, dispatched through DotFunction
 		if f.isDot {
-			return env.CallUserFunction(DotSexpFunc, f.name, c.nargs)
+			_, err := env.CallUserFunction(DotSexpFunc, f.name, c.nargs)
+			return err
 		}
 
 		// allow symbols to refer to functions that we then call
@@ -239,7 +241,8 @@ func (c CallInstr) Execute(env *Glisp) error {
 			if !g.user {
 				return env.CallFunction(g, c.nargs)
 			}
-			return env.CallUserFunction(g, f.name, c.nargs)
+			_, err := env.CallUserFunction(g, f.name, c.nargs)
+			return err
 		default:
 			if err != nil {
 				return fmt.Errorf("symbol '%s' refers to '%s' which does not refer to a function.", c.sym.name, f.name)
@@ -250,7 +253,8 @@ func (c CallInstr) Execute(env *Glisp) error {
 		if !f.user {
 			return env.CallFunction(f, c.nargs)
 		}
-		return env.CallUserFunction(f, c.sym.name, c.nargs)
+		_, err := env.CallUserFunction(f, c.sym.name, c.nargs)
+		return err
 	}
 	return errors.New(fmt.Sprintf("%s is not a function", c.sym.name))
 }
@@ -274,7 +278,8 @@ func (d DispatchInstr) Execute(env *Glisp) error {
 		if !f.user {
 			return env.CallFunction(f, d.nargs)
 		}
-		return env.CallUserFunction(f, f.name, d.nargs)
+		_, err := env.CallUserFunction(f, f.name, d.nargs)
+		return err
 	}
 	return fmt.Errorf("not a function on top of datastack: '%T/%#v'", funcobj, funcobj)
 }

@@ -232,19 +232,19 @@ func (env *Glisp) ReturnFromFunction() error {
 }
 
 func (env *Glisp) CallUserFunction(
-	function *SexpFunction, name string, nargs int) error {
+	function *SexpFunction, name string, nargs int) (nargReturned int, err error) {
 
 	for _, prehook := range env.before {
 		expressions, err := env.datastack.GetExpressions(nargs)
 		if err != nil {
-			return err
+			return 0, err
 		}
 		prehook(env, function.name, expressions)
 	}
 
 	args, err := env.datastack.PopExpressions(nargs)
 	if err != nil {
-		return errors.New(
+		return 0, errors.New(
 			fmt.Sprintf("Error calling %s: %v", name, err))
 	}
 
@@ -254,7 +254,7 @@ func (env *Glisp) CallUserFunction(
 
 	res, err := function.userfun(env, name, args)
 	if err != nil {
-		return errors.New(
+		return 0, errors.New(
 			fmt.Sprintf("Error calling %s: %v", name, err))
 	}
 
@@ -265,7 +265,7 @@ func (env *Glisp) CallUserFunction(
 	}
 
 	env.curfunc, env.pc, _ = env.addrstack.PopAddr()
-	return nil
+	return len(args), nil
 }
 
 func (env *Glisp) LoadExpressions(expressions []Sexp) error {
