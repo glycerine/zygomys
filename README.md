@@ -42,7 +42,7 @@ The standalone REPL is called simply `zygo`.
 $ go get github.com/glycerine/zygomys/cmd/zygo
 ~~~
 
-### Not your Grandfather's Parentheses... features in zygomys 1.5.9 include
+### Not your Grandfather's Parentheses... features in zygomys 1.6.1 include
 
  * [x] Use `zygo` to configure trees of Go structs, and then run methods on them at natively-compiled speed (since you are calling into Go code).
  * [x] `emacs/zygo.el` emacs mode
@@ -81,7 +81,6 @@ $ go get github.com/glycerine/zygomys/cmd/zygo
  * [x] Macro System with macexpand `(macexpand (your-macro))` makes writing/debugging macros easy. 
  * [x] Syntax quoting -- with caret `^()` instead of backtick.
  * [x] Channel and goroutine support
- * [x] Pre- and Post- function call hooks
  * [x] Lexical scope.
 
 [See the wiki for lots of details and a full description of the zygomys language.](https://github.com/glycerine/zygomys/wiki).
