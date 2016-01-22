@@ -643,12 +643,7 @@ func (env *Glisp) LexicalBindSymbol(sym SexpSymbol, expr Sexp) error {
 	return env.linearstack.BindSymbol(sym, expr)
 }
 
-//func (env *Glisp) LexicalLookupSymbolNonGlobal(sym SexpSymbol) (Sexp, error, *Scope) {
-//	// ignore the non-global part for now TODO need to fix?
-//	return env.LexicalLookupSymbol(sym)
-//}
-
-// .closdump : show the closed over env attached to an *SexpFunction
+// _closdump : show the closed over env attached to an *SexpFunction
 func DumpClosureEnvFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	if len(args) != 1 {
 		return SexpNull, WrongNargs

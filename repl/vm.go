@@ -185,7 +185,7 @@ func (p UpdateInstr) Execute(env *Glisp) error {
 	env.pc++
 	var scope *Scope
 
-	_, err, scope = env.LexicalLookupSymbol(p.sym, false)
+	_, err, scope = env.LexicalLookupSymbol(p.sym, true)
 	if err != nil {
 		// not found up the stack, so treat like (def)
 		// instead of (set)
@@ -218,10 +218,11 @@ func (c CallInstr) Execute(env *Glisp) error {
 	if err != nil {
 		return err
 	}
+
 	switch f := funcobj.(type) {
 	case SexpSymbol:
 		// allow symbols to refer to functions that we then call
-		indirectFuncName, err, _ = env.LexicalLookupSymbol(f, false)
+		indirectFuncName, err, _ = env.LexicalLookupSymbol(f, true)
 
 		if err != nil {
 			return fmt.Errorf("'%s' refers to symbol '%s', but '%s' does not refer to a function.", c.sym.name, f.name, f.name)

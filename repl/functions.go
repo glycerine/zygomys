@@ -827,6 +827,8 @@ var BuiltinFunctions = map[string]GlispUserFunction{
 	".":         DotFunction,
 	"undot":     UndotFunction,
 	"=":         AssignmentFunction,
+	"joinsym":   JoinSymFunction,
+	"quotelist": QuoteListFunction,
 }
 
 func ThreadMapFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
@@ -1001,4 +1003,83 @@ func AssignmentFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	// stubbed
 	P("\n AssignmentFunction stub called!\n")
 	return SexpNull, nil
+}
+
+func JoinSymFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
+	narg := len(args)
+	if narg == 0 {
+		return SexpNull, nil
+	}
+
+	j := ""
+
+	for k := range args {
+		switch a := args[k].(type) {
+		case SexpPair:
+			arr, err := ListToArray(args[k])
+			if err != nil {
+				return SexpNull, fmt.Errorf("error converting "+
+					"joinsym arguments to an array: '%v'", err)
+			}
+			s, err := joinSymHelper(arr)
+			if err != nil {
+				return SexpNull, err
+			}
+			j += s
+
+		case SexpSymbol:
+			j = j + a.name
+		case SexpArray:
+			s, err := joinSymHelper(a)
+			if err != nil {
+				return SexpNull, err
+			}
+			j += s
+		default:
+			return SexpNull, fmt.Errorf("error cannot joinsym type '%T' / val = '%s'", a, a.SexpString())
+		}
+	}
+
+	return env.MakeSymbol(j), nil
+}
+
+func joinSymHelper(arr []Sexp) (string, error) {
+	j := ""
+	for i := 0; i < len(arr); i++ {
+		switch s := arr[i].(type) {
+		case SexpSymbol:
+			j = j + s.name
+
+		default:
+			return "", fmt.Errorf("not a symbol: '%s'",
+				arr[i].SexpString())
+		}
+	}
+	return j, nil
+}
+
+// '(a b c) -> ('a 'b 'c)
+func QuoteListFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
+	narg := len(args)
+	if narg != 1 {
+		return SexpNull, WrongNargs
+	}
+
+	pair, ok := args[0].(SexpPair)
+	if !ok {
+		return SexpNull, fmt.Errorf("list required")
+	}
+
+	arr, err := ListToArray(pair)
+	if err != nil {
+		return SexpNull, fmt.Errorf("error converting "+
+			"quotelist arguments to an array: '%v'", err)
+	}
+
+	arr2 := []Sexp{}
+	for _, v := range arr {
+		arr2 = append(arr2, MakeList([]Sexp{env.MakeSymbol("quote"), v}))
+	}
+
+	return MakeList(arr2), nil
 }

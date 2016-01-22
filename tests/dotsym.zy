@@ -4,3 +4,7 @@
 
 ;; until undot is used
 (assert (== (undot .a) 3))
+
+;; set should work too
+(set .a 5)
+(assert (== (undot .a) 5))

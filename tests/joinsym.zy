@@ -1,0 +1,4 @@
+(assert (== (joinsym 'abc 'def) 'abcdef))
+(assert (== (joinsym 'abc 'def) 'abcdef))
+(assert (== (joinsym ['abc 'def]) 'abcdef))
+(assert (== (joinsym (list 'abc 'def)) 'abcdef))

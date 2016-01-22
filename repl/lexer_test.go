@@ -58,7 +58,7 @@ func Test025LexingOfStringAtomsAndSymbols(t *testing.T) {
 			// and possibly later allow for shell style substitution,
 			// so it is always its own token/symbol, and should be accepted.
 			symbolNotOkay := []string{`~`, `@`, `(`, `)`, `[`, `]`, `{`, `}`, `'`, `#`,
-				`:`, `^`, `\`, `|`, `%`, `"`, `;`, `.9`, `.`, `.h`, `.a.`, `.a.b.`, `..`, `...`}
+				`:`, `^`, `\`, `|`, `%`, `"`, `;`}
 
 			//okay := []string{`..`, `a.b`, `-`, `a-b`, `*a-b*`, `$`, `&`, `.`, `.method`}
 			symbolOkay := []string{`-`, `a-b`, `*a-b*`, `$`, `&`}
