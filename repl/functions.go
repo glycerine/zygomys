@@ -964,10 +964,21 @@ func StopFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	return SexpNull, stopErr
 }
 
+var DotSexpFunc = &SexpFunction{
+	name:    "dot",
+	user:    true,
+	nargs:   2,
+	varargs: true,
+	userfun: DotFunction,
+}
+
 // dot : object-oriented style calls
 func DotFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
-	// stubbed
-	P("\n DotFunction stub called!\n")
+	P("\n DotFunction stub called! args='%s'\n", SexpArray(args).SexpString())
+	err := env.ShowStackStackAndScopeStack()
+	if err != nil {
+		fmt.Println(err)
+	}
 	return SexpNull, nil
 }
 

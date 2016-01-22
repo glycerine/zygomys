@@ -221,12 +221,19 @@ func (c CallInstr) Execute(env *Glisp) error {
 
 	switch f := funcobj.(type) {
 	case SexpSymbol:
+		// is it a dot-symbol call, lazily resolved, dispatched through DotFunction
+		if f.isDot {
+			return env.CallUserFunction(DotSexpFunc, f.name, c.nargs)
+		}
+
 		// allow symbols to refer to functions that we then call
 		indirectFuncName, err, _ = env.LexicalLookupSymbol(f, true)
 
 		if err != nil {
-			return fmt.Errorf("'%s' refers to symbol '%s', but '%s' does not refer to a function.", c.sym.name, f.name, f.name)
+			return fmt.Errorf("'%s' refers to symbol '%s', but '%s' could not be resolved: '%s'.",
+				c.sym.name, f.name, f.name, err)
 		}
+
 		switch g := indirectFuncName.(type) {
 		case *SexpFunction:
 			if !g.user {
