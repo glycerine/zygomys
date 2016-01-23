@@ -12,9 +12,6 @@
 
 (def ggg (.greet g))
 
-
-(assert (== (g "hiiiii") `say: hiiiii`))
-(assert (== (.greet g) "say: hello"))
-
-
-        
+(def expected "say: hello")
+(assert (== (g greet) expected))
+(assert (== (.greet g) expected))

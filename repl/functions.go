@@ -1034,7 +1034,7 @@ func DotFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 
 // the assignment function, =
 func AssignmentFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
-	P("\n AssignmentFunction called with name ='%s'. args='%s'\n", name,
+	Q("\n AssignmentFunction called with name ='%s'. args='%s'\n", name,
 		SexpArray(args).SexpString())
 
 	narg := len(args)
@@ -1068,7 +1068,7 @@ func AssignmentFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 			return SexpNull, fmt.Errorf("internal error: DotFunction path had zero length")
 		}
 	*/
-	P("assignment calling dotGetSetHelper()\n")
+	Q("assignment calling dotGetSetHelper()\n")
 	return dotGetSetHelper(env, sym.name, &args[1])
 }
 
@@ -1154,7 +1154,7 @@ func QuoteListFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 // if setVal is nil, only get and return the lookup.
 func dotGetSetHelper(env *Glisp, name string, setVal *Sexp) (Sexp, error) {
 	path := DotPartsRegex.FindAllString(name, -1)
-	P("\n in dotGetSetHelper(), path = '%#v'\n", path)
+	//P("\n in dotGetSetHelper(), path = '%#v'\n", path)
 	if len(path) == 0 {
 		return SexpNull, fmt.Errorf("internal error: DotFunction" +
 			" path had zero length")
@@ -1179,10 +1179,10 @@ func dotGetSetHelper(env *Glisp, name string, setVal *Sexp) (Sexp, error) {
 	// the first
 
 	key := path[0][1:] // strip off the dot
-	P("\n in dotGetSetHelper(), looking up '%s'\n", key)
+	//P("\n in dotGetSetHelper(), looking up '%s'\n", key)
 	ret, err, _ = env.LexicalLookupSymbol(env.MakeSymbol(key), false)
 	if err != nil {
-		P("\n in dotGetSetHelper(), '%s' not found\n", key)
+		Q("\n in dotGetSetHelper(), '%s' not found\n", key)
 		return SexpNull, err
 	}
 	if lenpath == 1 {

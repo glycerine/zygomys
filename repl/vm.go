@@ -227,18 +227,18 @@ func (c CallInstr) Execute(env *Glisp) error {
 	if err != nil {
 		return err
 	}
-	P("\n in CallInstr, after looking up c.sym='%s', got funcobj='%v'. datastack is:\n", c.sym.name, funcobj.SexpString())
-	env.datastack.PrintStack()
+	//P("\n in CallInstr, after looking up c.sym='%s', got funcobj='%v'. datastack is:\n", c.sym.name, funcobj.SexpString())
+	//env.datastack.PrintStack()
 	switch f := funcobj.(type) {
 	case SexpSymbol:
 		// is it a dot-symbol call?
-		P("\n in CallInstr, found symbol\n")
+		//P("\n in CallInstr, found symbol\n")
 		if c.sym.isDot {
 
 			dotSymRef, dotLookupErr := dotGetSetHelper(env, c.sym.name, nil)
 
 			// are we a value request (no further args), or a fuction/method call?
-			P("\n in CallInstr, found dot-symbol\n")
+			//P("\n in CallInstr, found dot-symbol\n")
 			if c.nargs == 0 {
 				// value request
 				if dotLookupErr != nil {
@@ -259,13 +259,13 @@ func (c CallInstr) Execute(env *Glisp) error {
 				top := expressions[0]
 				switch ftop := top.(type) {
 				case *SexpFunction:
-					P("\n in CallInstr, fetched out function call from top of datastack.\n")
+					//P("\n in CallInstr, fetched out function call from top of datastack.\n")
 					indirectFuncName = ftop
 					if ftop.user {
-						P("\n in CallInstr, with user func, passing dot-symbol in directly so assignment will work.\n")
+						//P("\n in CallInstr, with user func, passing dot-symbol in directly so assignment will work.\n")
 						env.datastack.PushExpr(c.sym)
 					} else {
-						P("\n in CallInstr, with sexp func, dereferencing dot-symbol '%s' -> '%s'\n", c.sym.name, dotSymRef.SexpString())
+						//P("\n in CallInstr, with sexp func, dereferencing dot-symbol '%s' -> '%s'\n", c.sym.name, dotSymRef.SexpString())
 						if dotLookupErr != nil {
 							return dotLookupErr
 						}
@@ -275,8 +275,8 @@ func (c CallInstr) Execute(env *Glisp) error {
 					for j := range pushme {
 						env.datastack.PushExpr(pushme[j])
 					}
-					P("\n in CallInstr, after setting up stack for dot-symbol call, datastack:\n")
-					env.datastack.PrintStack()
+					//P("\n in CallInstr, after setting up stack for dot-symbol call, datastack:\n")
+					//env.datastack.PrintStack()
 
 				default:
 					return fmt.Errorf("dot-symbol '%s' was followed by non-function '%s'.",
