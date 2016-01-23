@@ -598,12 +598,11 @@ hi from g
 zygo>
 */
 
-func (env *Glisp) LexicalLookupSymbol(sym SexpSymbol) (Sexp, error, *Scope) {
+func (env *Glisp) LexicalLookupSymbol(sym SexpSymbol, undot bool) (Sexp, error, *Scope) {
 
-	// DotSymbols always evaluate to themselves. Use the
-	// special (undot .a) to get any bound value. In which
-	// case undot will be true.
-	if sym.isDot {
+	// DotSymbols always evaluate to themselves, unless
+	// undot is true.
+	if sym.isDot && !undot {
 		return sym, nil, nil
 	}
 
@@ -686,4 +685,21 @@ func (env *Glisp) IsBuiltinSym(sym SexpSymbol) (builtin bool, typ string) {
 		return true, "macro"
 	}
 	return false, ""
+}
+
+func (env *Glisp) ResolveDotSym(arg []Sexp) ([]Sexp, error) {
+	r := []Sexp{}
+	for i := range arg {
+		switch sym := arg[i].(type) {
+		case SexpSymbol:
+			resolved, err, _ := env.LexicalLookupSymbol(sym, true)
+			if err != nil {
+				return nil, err
+			}
+			r = append(r, resolved)
+		default:
+			r = append(r, arg[i])
+		}
+	}
+	return r, nil
 }

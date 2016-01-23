@@ -443,6 +443,11 @@ func ConcatFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	if len(args) < 1 {
 		return SexpNull, WrongNargs
 	}
+	var err error
+	args, err = env.ResolveDotSym(args)
+	if err != nil {
+		return SexpNull, err
+	}
 
 	switch t := args[0].(type) {
 	case SexpArray:
@@ -1182,7 +1187,7 @@ func dotGetSetHelper(env *Glisp, name string, setVal *Sexp) (Sexp, error) {
 
 	key := path[0][1:] // strip off the dot
 	//P("\n in dotGetSetHelper(), looking up '%s'\n", key)
-	ret, err, _ = env.LexicalLookupSymbol(env.MakeSymbol(key))
+	ret, err, _ = env.LexicalLookupSymbol(env.MakeSymbol(key), false)
 	if err != nil {
 		Q("\n in dotGetSetHelper(), '%s' not found\n", key)
 		return SexpNull, err
