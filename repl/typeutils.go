@@ -116,7 +116,7 @@ func TypeOf(expr Sexp) SexpStr {
 	case SexpArray:
 		v = "array"
 	case SexpInt:
-		v = "int"
+		v = "int64"
 	case SexpStr:
 		v = "string"
 	case SexpChar:
@@ -130,9 +130,11 @@ func TypeOf(expr Sexp) SexpStr {
 	case SexpSymbol:
 		v = "symbol"
 	case *SexpFunction:
-		v = "function"
+		v = "func"
 	case SexpSentinel:
 		v = "null"
+	case SexpTime:
+		v = "time.Time"
 	default:
 		fmt.Printf("\n error: unknown type: %T in '%#v'\n", e, e)
 	}
