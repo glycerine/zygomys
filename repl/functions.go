@@ -973,7 +973,7 @@ var DotSexpFunc = &SexpFunction{
 
 // dot : object-oriented style calls
 func DotFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
-	P("\n DotFunction called! args='%s'\n", SexpArray(args).SexpString())
+	//P("\n DotFunction called! args='%s'\n", SexpArray(args).SexpString())
 
 	narg := len(args)
 
@@ -993,18 +993,18 @@ func DotFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	var err error
 
 	if fun.user {
-		P("\n user function (Go code)\n")
+		//P("\n user function (Go code)\n")
 		// push our args, set up the call
 		env.datastack.PushExpr(env.MakeDotSymbol(name))
 		callargs := args[1:]
 		ncallarg := len(callargs)
-		P("callargs = %#v\n", callargs)
+		//P("callargs = %#v\n", callargs)
 		for _, val := range callargs {
 			env.datastack.PushExpr(val)
 		}
 		_, err = env.CallUserFunction(fun, fun.name, ncallarg+1)
 	} else {
-		P("\n sexp function, not user\n")
+		//P("\n sexp function, not user\n")
 		fmt.Printf("\n before CallFunction() DataStack: (length %d)\n", env.datastack.Size())
 		//env.datastack.PrintStack()
 
@@ -1012,12 +1012,12 @@ func DotFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		env.datastack.PushExpr(env.MakeDotSymbol(name))
 		callargs := args[1:]
 		ncallarg := len(callargs)
-		P("callargs = %#v\n", callargs)
+		//P("callargs = %#v\n", callargs)
 		for _, val := range callargs {
 			env.datastack.PushExpr(val)
 		}
 
-		P("\n DotFunction calling env.CallFunction(fun='%s',%v)\n", fun.name, ncallarg+1)
+		//P("\n DotFunction calling env.CallFunction(fun='%s',%v)\n", fun.name, ncallarg+1)
 		err = env.CallFunction(fun, ncallarg+1)
 
 		fmt.Printf("\n after CallFunction() DataStack: (length %d)\n", env.datastack.Size())
@@ -1052,7 +1052,7 @@ func AssignmentFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	}
 
 	if !sym.isDot {
-		P("assignment sees LHS symbol but is not dot, binding '%s' to '%s'\n",
+		Q("assignment sees LHS symbol but is not dot, binding '%s' to '%s'\n",
 			sym.name, args[1].SexpString())
 		err := env.LexicalBindSymbol(sym, args[1])
 		if err != nil {
@@ -1061,13 +1061,6 @@ func AssignmentFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		return args[1], nil
 	}
 
-	/*
-		path := DotPartsRegex.FindAllString(args[0], -1)
-		P("path = '%#v' and narg=%v\n", path, narg)
-		if len(path) == 0 {
-			return SexpNull, fmt.Errorf("internal error: DotFunction path had zero length")
-		}
-	*/
 	Q("assignment calling dotGetSetHelper()\n")
 	return dotGetSetHelper(env, sym.name, &args[1])
 }
