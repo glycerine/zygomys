@@ -674,3 +674,16 @@ func ClosureToString(f *SexpFunction, env *Glisp) string {
 	}
 	return s
 }
+
+func (env *Glisp) IsBuiltinSym(sym SexpSymbol) (builtin bool, typ string) {
+
+	_, isBuiltin := env.builtins[sym.number]
+	if isBuiltin {
+		return true, "built-in function"
+	}
+	_, isBuiltin = env.macros[sym.number]
+	if isBuiltin {
+		return true, "macro"
+	}
+	return false, ""
+}

@@ -828,6 +828,7 @@ var BuiltinFunctions = map[string]GlispUserFunction{
 	"=":         AssignmentFunction,
 	"joinsym":   JoinSymFunction,
 	"quotelist": QuoteListFunction,
+	"rmsym":     RemoveSymFunction,
 }
 
 func ThreadMapFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
@@ -1161,6 +1162,14 @@ func dotGetSetHelper(env *Glisp, name string, setVal *Sexp) (Sexp, error) {
 		// single path element set, bind it now.
 		a := path[0][1:] // strip off the dot
 		asym := env.MakeSymbol(a)
+
+		// check conflict
+		//P("asym = %#v\n", asym)
+		builtin, typ := env.IsBuiltinSym(asym)
+		if builtin {
+			return SexpNull, fmt.Errorf("'%s' is a %s, cannot assign to it with dot-symbol", asym.name, typ)
+		}
+
 		err := env.LexicalBindSymbol(asym, *setVal)
 		if err != nil {
 			return SexpNull, err
@@ -1201,4 +1210,8 @@ func dotGetSetHelper(env *Glisp, name string, setVal *Sexp) (Sexp, error) {
 		return SexpNull, err
 	}
 	return exp, nil
+}
+
+func RemoveSymFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
+	return SexpNull, fmt.Errorf("rmsym not yet implmented")
 }

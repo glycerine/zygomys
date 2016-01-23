@@ -15,3 +15,4 @@
 (def expected "say: hello")
 (assert (== (g greet) expected))
 (assert (== (.greet g) expected))
+(assert (== (.greet) "hello"))

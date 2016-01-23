@@ -180,13 +180,13 @@ func (gen *Generator) GenerateDef(args []Sexp) error {
 		return errors.New("Definition name must be symbol")
 	}
 
-	if gen.env.HasMacro(sym) {
-		return fmt.Errorf("Already have macro named '%s': refusing "+
-			"to define variable of same name.", sym.name)
+	builtin, typ := gen.env.IsBuiltinSym(sym)
+	if builtin {
+		return fmt.Errorf("already have %s '%s', refusing to overwrite with def", typ, sym.name)
 	}
 
 	if sym.isDot {
-		return fmt.Errorf("illegal to def dot-symbol '%s'", sym.name)
+		return fmt.Errorf("illegal attempt to def dot-symbol '%s'", sym.name)
 	}
 
 	gen.Tail = false
@@ -222,6 +222,12 @@ func (gen *Generator) GenerateDefn(args []Sexp, orig Sexp) error {
 	default:
 		return errors.New("Definition name must be symbol")
 	}
+
+	builtin, typ := gen.env.IsBuiltinSym(sym)
+	if builtin {
+		return fmt.Errorf("already have %s '%s', refusing to overwrite with defn", typ, sym.name)
+	}
+
 	if gen.env.HasMacro(sym) {
 		return fmt.Errorf("Already have macro named '%s': refusing"+
 			" to define function of same name.", sym.name)
@@ -265,6 +271,11 @@ func (gen *Generator) GenerateDefmac(args []Sexp, orig Sexp) error {
 		sym = expr
 	default:
 		return errors.New("Definition name must be symbol")
+	}
+
+	_, isBuiltin := gen.env.builtins[sym.number]
+	if isBuiltin {
+		return fmt.Errorf("'%s' is already a built-in function, cannot define macro with same name.", sym.name)
 	}
 
 	sfun, err := buildSexpFun(gen.env, sym.name, funcargs, args[2:], orig)
