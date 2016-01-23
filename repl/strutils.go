@@ -12,7 +12,8 @@ func ConcatStr(str SexpStr, rest []Sexp) (SexpStr, error) {
 		case SexpStr:
 			res = res + t
 		default:
-			return SexpStr(""), fmt.Errorf("ConcatStr error: %d-th argument (0-based) is not a string", i)
+			return SexpStr(""), fmt.Errorf("ConcatStr error: %d-th argument (0-based) is "+
+				"not a string (was %T)", i, t)
 		}
 	}
 

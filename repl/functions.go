@@ -966,20 +966,20 @@ func StopFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 var DotSexpFunc = &SexpFunction{
 	name:    "dot",
 	user:    true,
-	nargs:   2,
+	nargs:   1,
 	varargs: true,
 	userfun: DotFunction,
 }
 
 // dot : object-oriented style calls
 func DotFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
-	//P("\n DotFunction called! args='%s'\n", SexpArray(args).SexpString())
+	P("\n DotFunction called! args='%s'\n", SexpArray(args).SexpString())
 
 	narg := len(args)
 
 	if narg == 0 {
 		// a get request, just return the nested object
-		return dotGetSetHelper(env, name, nil, 0)
+		return dotGetSetHelper(env, name, nil)
 	}
 	var fun *SexpFunction
 	switch f := args[0].(type) {
@@ -990,19 +990,41 @@ func DotFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 			"was not an SexpFunction", args[0].SexpString())
 	}
 
-	// push our args, set up the call
-	callargs := args[1:]
-	ncallarg := len(callargs)
-	for _, val := range callargs {
-		env.datastack.PushExpr(val)
-	}
 	var err error
-	if !fun.user {
-		err = env.CallFunction(fun, ncallarg)
+
+	if fun.user {
+		P("\n user function (Go code)\n")
+		// push our args, set up the call
+		env.datastack.PushExpr(env.MakeDotSymbol(name))
+		callargs := args[1:]
+		ncallarg := len(callargs)
+		P("callargs = %#v\n", callargs)
+		for _, val := range callargs {
+			env.datastack.PushExpr(val)
+		}
+		_, err = env.CallUserFunction(fun, fun.name, ncallarg+1)
 	} else {
-		_, err = env.CallUserFunction(fun, name, ncallarg)
-		//P("nargRet = %v\n", nargRet)
+		P("\n sexp function, not user\n")
+		fmt.Printf("\n before CallFunction() DataStack: (length %d)\n", env.datastack.Size())
+		//env.datastack.PrintStack()
+
+		// push our args, set up the call
+		env.datastack.PushExpr(env.MakeDotSymbol(name))
+		callargs := args[1:]
+		ncallarg := len(callargs)
+		P("callargs = %#v\n", callargs)
+		for _, val := range callargs {
+			env.datastack.PushExpr(val)
+		}
+
+		P("\n DotFunction calling env.CallFunction(fun='%s',%v)\n", fun.name, ncallarg+1)
+		err = env.CallFunction(fun, ncallarg+1)
+
+		fmt.Printf("\n after CallFunction() DataStack: (length %d)\n", env.datastack.Size())
+		//env.datastack.PrintStack()
+
 	}
+
 	if err != nil {
 		return SexpNull, err
 	}
@@ -1010,47 +1032,44 @@ func DotFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	return SexpNull, nil
 }
 
-// no longer needed, just (.sym) like a function call.
-/*
-func UndotFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
+// the assignment function, =
+func AssignmentFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
+	P("\n AssignmentFunction called with name ='%s'. args='%s'\n", name,
+		SexpArray(args).SexpString())
+
 	narg := len(args)
-	if narg != 1 {
-		return SexpNull, WrongNargs
+	if narg != 2 {
+		return SexpNull, fmt.Errorf("assignment with '=' requires 2 args: lhs and rhs")
 	}
 
 	var sym SexpSymbol
 	switch s := args[0].(type) {
 	case SexpSymbol:
-		if !s.isDot {
-			return SexpNull, fmt.Errorf("not a dot-symbol: cannot undot '%s'", s.name)
-		}
 		sym = s
 	default:
-		return SexpNull, fmt.Errorf("not a dot-symbol: cannot undot '%s'",
-			args[0].SexpString())
+		return SexpNull, fmt.Errorf("assignment with '=' needs left-hand-side"+
+			" argument to be a symbol; we got %T", s)
 	}
 
-	return dotGetSetHelper(env, sym.name, nil, 1)
-}
-*/
-
-// the assignment function, =
-func AssignmentFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
-	//P("\n AssignmentFunction called with name ='%s'. args='%s'\n", name,
-	//	SexpArray(args).SexpString())
-
-	narg := len(args)
-	if narg != 1 {
-		return SexpNull, fmt.Errorf("assignment requires a right-hand-side (of size 1)")
+	if !sym.isDot {
+		P("assignment sees LHS symbol but is not dot, binding '%s' to '%s'\n",
+			sym.name, args[1].SexpString())
+		err := env.LexicalBindSymbol(sym, args[1])
+		if err != nil {
+			return SexpNull, err
+		}
+		return args[1], nil
 	}
 
-	path := DotPartsRegex.FindAllString(name, -1)
-	//P("path = '%#v' and narg=%v\n", path, narg)
-	if len(path) == 0 {
-		return SexpNull, fmt.Errorf("internal error: DotFunction path had zero length")
-	}
-
-	return dotGetSetHelper(env, name, &args[0], 0)
+	/*
+		path := DotPartsRegex.FindAllString(args[0], -1)
+		P("path = '%#v' and narg=%v\n", path, narg)
+		if len(path) == 0 {
+			return SexpNull, fmt.Errorf("internal error: DotFunction path had zero length")
+		}
+	*/
+	P("assignment calling dotGetSetHelper()\n")
+	return dotGetSetHelper(env, sym.name, &args[1])
 }
 
 func JoinSymFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
@@ -1134,9 +1153,9 @@ func QuoteListFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 
 // if setVal is nil, only get and return the lookup.
 // undot == 1 for an (undot call). else must be 0.
-func dotGetSetHelper(env *Glisp, name string, setVal *Sexp, undot int) (Sexp, error) {
+func dotGetSetHelper(env *Glisp, name string, setVal *Sexp) (Sexp, error) {
 	path := DotPartsRegex.FindAllString(name, -1)
-	//P("\n in dotGetSetHelper(), path = '%#v'\n", path)
+	P("\n in dotGetSetHelper(), path = '%#v'\n", path)
 	if len(path) == 0 {
 		return SexpNull, fmt.Errorf("internal error: DotFunction" +
 			" path had zero length")
@@ -1160,8 +1179,8 @@ func dotGetSetHelper(env *Glisp, name string, setVal *Sexp, undot int) (Sexp, er
 	// handle multiple paths that index into hashes after the
 	// the first
 
-	key := path[0][(1 - undot):] // strip off the dot, unless undot call.
-	//P("\n in dotGetSetHelper(), looking up '%s'\n", key)
+	key := path[0][1:] // strip off the dot, unless undot call.
+	P("\n in dotGetSetHelper(), looking up '%s'\n", key)
 	ret, err, _ = env.LexicalLookupSymbol(env.MakeSymbol(key), false)
 	if err != nil {
 		//P("\n in dotGetSetHelper(), '%s' not found\n", key)

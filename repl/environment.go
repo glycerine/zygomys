@@ -136,6 +136,11 @@ func (env *Glisp) Duplicate() *Glisp {
 	return dupenv
 }
 
+func (env *Glisp) MakeDotSymbol(name string) SexpSymbol {
+	x := env.MakeSymbol(name)
+	x.isDot = true
+	return x
+}
 func (env *Glisp) MakeSymbol(name string) SexpSymbol {
 	symnum, ok := env.symtable[name]
 	if ok {
@@ -210,6 +215,9 @@ func (env *Glisp) CallFunction(function *SexpFunction, nargs int) error {
 	env.curfunc = function
 	env.pc = 0
 
+	//P("\n CallFunction starting with stack:\n")
+	//env.ShowStackStackAndScopeStack()
+
 	return nil
 }
 
@@ -245,7 +253,7 @@ func (env *Glisp) CallUserFunction(
 	args, err := env.datastack.PopExpressions(nargs)
 	if err != nil {
 		return 0, errors.New(
-			fmt.Sprintf("Error calling %s: %v", name, err))
+			fmt.Sprintf("Error calling '%s': %v", name, err))
 	}
 
 	env.addrstack.PushAddr(env.curfunc, env.pc+1)
@@ -255,7 +263,7 @@ func (env *Glisp) CallUserFunction(
 	res, err := function.userfun(env, name, args)
 	if err != nil {
 		return 0, errors.New(
-			fmt.Sprintf("Error calling %s: %v", name, err))
+			fmt.Sprintf("Error calling '%s': %v", name, err))
 	}
 
 	env.datastack.PushExpr(res)
@@ -471,11 +479,11 @@ func (env *Glisp) Run() (Sexp, error) {
 	for env.pc != -1 && !env.ReachedEnd() {
 		instr := env.curfunc.fun[env.pc]
 		if env.debugExec {
-			fmt.Printf("\n ====== in '%s', about to run:\n",
+			fmt.Printf("\n ====== in '%s', about to run: '%v'\n",
 				env.curfunc.name, instr)
 			env.DumpEnvironment()
 			fmt.Printf("\n ====== in '%s', now running the above.\n",
-				env.curfunc.name, instr)
+				env.curfunc.name)
 		}
 		err := instr.Execute(env)
 		if err != nil {

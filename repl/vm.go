@@ -230,7 +230,7 @@ func (c CallInstr) Execute(env *Glisp) error {
 
 	switch f := funcobj.(type) {
 	case SexpSymbol:
-		// is it a dot-symbol call, lazily resolved, dispatched through DotFunction
+		// is it a dot-symbol call, runtime resolved, dispatched through DotFunction
 		if f.isDot {
 			_, err := env.CallUserFunction(DotSexpFunc, f.name, c.nargs)
 			return err
