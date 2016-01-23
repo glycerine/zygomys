@@ -598,12 +598,12 @@ hi from g
 zygo>
 */
 
-func (env *Glisp) LexicalLookupSymbol(sym SexpSymbol, undot bool) (Sexp, error, *Scope) {
+func (env *Glisp) LexicalLookupSymbol(sym SexpSymbol) (Sexp, error, *Scope) {
 
 	// DotSymbols always evaluate to themselves. Use the
 	// special (undot .a) to get any bound value. In which
 	// case undot will be true.
-	if sym.isDot && !undot {
+	if sym.isDot {
 		return sym, nil, nil
 	}
 

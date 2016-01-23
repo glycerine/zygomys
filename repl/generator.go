@@ -278,6 +278,12 @@ func (gen *Generator) GenerateDefmac(args []Sexp, orig Sexp) error {
 		return fmt.Errorf("'%s' is already a built-in function, cannot define macro with same name.", sym.name)
 	}
 
+	xpr, err, _ := gen.env.LexicalLookupSymbol(sym)
+	if err == nil {
+		return fmt.Errorf("'%s' is already bound to '%s', refusing to define conflicting macro",
+			sym.name, xpr.SexpString())
+	}
+
 	sfun, err := buildSexpFun(gen.env, sym.name, funcargs, args[2:], orig)
 	if err != nil {
 		return err

@@ -1182,7 +1182,7 @@ func dotGetSetHelper(env *Glisp, name string, setVal *Sexp) (Sexp, error) {
 
 	key := path[0][1:] // strip off the dot
 	//P("\n in dotGetSetHelper(), looking up '%s'\n", key)
-	ret, err, _ = env.LexicalLookupSymbol(env.MakeSymbol(key), false)
+	ret, err, _ = env.LexicalLookupSymbol(env.MakeSymbol(key))
 	if err != nil {
 		Q("\n in dotGetSetHelper(), '%s' not found\n", key)
 		return SexpNull, err
