@@ -169,6 +169,10 @@ func (p PopStackPutEnvInstr) Execute(env *Glisp) error {
 // up the stack. Used
 // to implement (set v 10) when v is
 // not in the local scope.
+//
+// (set .x 3) does nothing; use
+// (set x 3) to change x upscope.
+//
 type UpdateInstr struct {
 	sym SexpSymbol
 }
@@ -185,7 +189,11 @@ func (p UpdateInstr) Execute(env *Glisp) error {
 	env.pc++
 	var scope *Scope
 
-	_, err, scope = env.LexicalLookupSymbol(p.sym, true)
+	if p.sym.isDot {
+		return nil
+	}
+
+	_, err, scope = env.LexicalLookupSymbol(p.sym, false)
 	if err != nil {
 		// not found up the stack, so treat like (def)
 		// instead of (set)
@@ -229,7 +237,7 @@ func (c CallInstr) Execute(env *Glisp) error {
 		}
 
 		// allow symbols to refer to functions that we then call
-		indirectFuncName, err, _ = env.LexicalLookupSymbol(f, true)
+		indirectFuncName, err, _ = env.LexicalLookupSymbol(f, false)
 
 		if err != nil {
 			return fmt.Errorf("'%s' refers to symbol '%s', but '%s' could not be resolved: '%s'.",

@@ -59,6 +59,9 @@ func Test025LexingOfStringAtomsAndSymbols(t *testing.T) {
 			// so it is always its own token/symbol, and should be accepted.
 			symbolNotOkay := []string{`~`, `@`, `(`, `)`, `[`, `]`, `{`, `}`, `'`, `#`,
 				`:`, `^`, `\`, `|`, `%`, `"`, `;`}
+			// NB: have to allow  `a.b` and `a.b.` or else file paths,
+			// used as arguments in macro (req) for example, won't
+			// get lexed into symbols.
 
 			//okay := []string{`..`, `a.b`, `-`, `a-b`, `*a-b*`, `$`, `&`, `.`, `.method`}
 			symbolOkay := []string{`-`, `a-b`, `*a-b*`, `$`, `&`}
@@ -92,12 +95,12 @@ func CheckRegex(notokay []string, okay []string, x *regexp.Regexp) {
 	fmt.Printf("\nscanning notokay list =================\n")
 	for _, a := range notokay {
 		ans := x.MatchString(a)
-		cv.So(ans, cv.ShouldEqual, false)
 		if ans {
 			fmt.Printf("bad,  '%s' unwantedly matches '%s'\n", a, x)
 		} else {
 			fmt.Printf("good, '%s' does not match     '%s'\n", a, x)
 		}
+		cv.So(ans, cv.ShouldEqual, false)
 	}
 
 	fmt.Printf("\nscanning okay list =================\n")

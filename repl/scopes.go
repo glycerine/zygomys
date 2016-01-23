@@ -63,10 +63,12 @@ func (stack *Stack) lookupSymbol(sym SexpSymbol, minFrame int) (Sexp, error, *Sc
 			if err != nil {
 				return SexpNull, err, nil
 			}
-			scope := elem.(*Scope)
-			expr, ok := scope.Map[sym.number]
-			if ok {
-				return expr, nil, scope
+			switch scope := elem.(type) {
+			case (*Scope):
+				expr, ok := scope.Map[sym.number]
+				if ok {
+					return expr, nil, scope
+				}
 			}
 		}
 	}
@@ -98,16 +100,18 @@ func (stack *Stack) LookupSymbolUntilFunction(sym SexpSymbol) (Sexp, error, *Sco
 			if err != nil {
 				return SexpNull, err, nil
 			}
-			scope := elem.(*Scope)
-			VPrintf("   ...looking up in scope '%s'\n", scope.Name)
-			expr, ok := scope.Map[sym.number]
-			if ok {
-				return expr, nil, scope
-			}
-			if scope.IsFunction {
-				VPrintf("   ...scope '%s' was a function, halting up search\n",
-					scope.Name)
-				break doneSearching
+			switch scope := elem.(type) {
+			case (*Scope):
+				VPrintf("   ...looking up in scope '%s'\n", scope.Name)
+				expr, ok := scope.Map[sym.number]
+				if ok {
+					return expr, nil, scope
+				}
+				if scope.IsFunction {
+					VPrintf("   ...scope '%s' was a function, halting up search\n",
+						scope.Name)
+					break doneSearching
+				}
 			}
 		}
 	}

@@ -825,7 +825,6 @@ var BuiltinFunctions = map[string]GlispUserFunction{
 	"gob":       GobEncodeFunction,
 	"dot":       DotFunction,
 	".":         DotFunction,
-	"undot":     UndotFunction,
 	"=":         AssignmentFunction,
 	"joinsym":   JoinSymFunction,
 	"quotelist": QuoteListFunction,
@@ -974,20 +973,21 @@ var DotSexpFunc = &SexpFunction{
 
 // dot : object-oriented style calls
 func DotFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
-	//P("\n DotFunction stub called! args='%s'\n", SexpArray(args).SexpString())
+	//P("\n DotFunction called! args='%s'\n", SexpArray(args).SexpString())
 
 	narg := len(args)
 
-	if narg < 1 {
-		return SexpNull, fmt.Errorf("error: a dotcall needs at least " +
-			"one arg: what method to apply")
+	if narg == 0 {
+		// a get request, just return the nested object
+		return dotGetSetHelper(env, name, nil, 0)
 	}
 	var fun *SexpFunction
 	switch f := args[0].(type) {
 	case *SexpFunction:
 		fun = f
 	default:
-		return SexpNull, fmt.Errorf("method '%s' for dotcall was not an SexpFunction", args[0].SexpString())
+		return SexpNull, fmt.Errorf("method '%s' for dotcall "+
+			"was not an SexpFunction", args[0].SexpString())
 	}
 
 	// push our args, set up the call
@@ -1010,6 +1010,8 @@ func DotFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	return SexpNull, nil
 }
 
+// no longer needed, just (.sym) like a function call.
+/*
 func UndotFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	narg := len(args)
 	if narg != 1 {
@@ -1028,16 +1030,11 @@ func UndotFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 			args[0].SexpString())
 	}
 
-	expr, err, _ := env.LexicalLookupSymbol(sym, true)
-	//P("\n in Undot: expr = '%#v', err = '%v'\n", expr, err)
-	if err != nil {
-		return SexpNull, fmt.Errorf("dot-symbol `%s` was not bound", sym.name)
-	}
-
-	return expr, nil
+	return dotGetSetHelper(env, sym.name, nil, 1)
 }
+*/
 
-// =
+// the assignment function, =
 func AssignmentFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	//P("\n AssignmentFunction called with name ='%s'. args='%s'\n", name,
 	//	SexpArray(args).SexpString())
@@ -1053,16 +1050,7 @@ func AssignmentFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		return SexpNull, fmt.Errorf("internal error: DotFunction path had zero length")
 	}
 
-	a := path[0][1:] // strip off the dot
-	asym := env.MakeSymbol(a)
-	err := env.LexicalBindSymbol(asym, args[0])
-	/*
-		obj, err, _ := env.LexicalLookupSymbol(asym, false)
-		if err != nil {
-			return SexpNull, err
-		}
-	*/
-	return SexpNull, err
+	return dotGetSetHelper(env, name, &args[0], 0)
 }
 
 func JoinSymFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
@@ -1142,4 +1130,64 @@ func QuoteListFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	}
 
 	return MakeList(arr2), nil
+}
+
+// if setVal is nil, only get and return the lookup.
+// undot == 1 for an (undot call). else must be 0.
+func dotGetSetHelper(env *Glisp, name string, setVal *Sexp, undot int) (Sexp, error) {
+	path := DotPartsRegex.FindAllString(name, -1)
+	//P("\n in dotGetSetHelper(), path = '%#v'\n", path)
+	if len(path) == 0 {
+		return SexpNull, fmt.Errorf("internal error: DotFunction" +
+			" path had zero length")
+	}
+
+	var ret Sexp = SexpNull
+	var err error
+	lenpath := len(path)
+
+	if lenpath == 1 && setVal != nil {
+		// single path element set, bind it now.
+		a := path[0][1:] // strip off the dot
+		asym := env.MakeSymbol(a)
+		err := env.LexicalBindSymbol(asym, *setVal)
+		if err != nil {
+			return SexpNull, err
+		}
+		return *setVal, nil
+	}
+
+	// handle multiple paths that index into hashes after the
+	// the first
+
+	key := path[0][(1 - undot):] // strip off the dot, unless undot call.
+	//P("\n in dotGetSetHelper(), looking up '%s'\n", key)
+	ret, err, _ = env.LexicalLookupSymbol(env.MakeSymbol(key), false)
+	if err != nil {
+		//P("\n in dotGetSetHelper(), '%s' not found\n", key)
+		return SexpNull, err
+	}
+	if lenpath == 1 {
+		// single path element get, return it.
+		return ret, err
+	}
+
+	// at least .a.b if not a.b.c. etc: multiple elements,
+	// where .b and after
+	// will index into hashes (.a must refer to a hash);
+	// proceed deeper into the hashes.
+	h, isHash := ret.(SexpHash)
+	if !isHash {
+		return SexpNull, fmt.Errorf("not a record: cannot get "+
+			"field '%s' in non-record (instead of type %T)",
+			path[1][1:], ret)
+	}
+	// have hash: rest of path handled in hashutils.go in nestedPathGet()
+	//P("\n in dotGetSetHelper(), about to call nestedPathGetSet() with"+
+	//	"dotpaths = path[i+1:]='%#v\n", path[1:])
+	exp, err := h.nestedPathGetSet(env, path[1:], setVal)
+	if err != nil {
+		return SexpNull, err
+	}
+	return exp, nil
 }

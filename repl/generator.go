@@ -185,6 +185,10 @@ func (gen *Generator) GenerateDef(args []Sexp) error {
 			"to define variable of same name.", sym.name)
 	}
 
+	if sym.isDot {
+		return fmt.Errorf("illegal to def dot-symbol '%s'", sym.name)
+	}
+
 	gen.Tail = false
 	err := gen.Generate(args[1])
 	if err != nil {
@@ -861,6 +865,10 @@ func (gen *Generator) GenerateSet(args []Sexp) error {
 		return fmt.Errorf("Already have macro named '%s': refusing "+
 			"to set variable of same name.", lhs.name)
 	}
+
+	//	if sym.isDot {
+	//		return fmt.Errorf("warning noop to set dot-symbol '%s'", sym.name)
+	//	}
 
 	rhs := args[1]
 	gen.Tail = false

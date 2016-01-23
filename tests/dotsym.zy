@@ -1,10 +1,27 @@
 ;; dotsymbols always evaluate to themselves
-(def .a 3)
+
+;; (def) on a dot-symbol is illegal
+(def a 9)
+;;(def .a 3)
 (assert (== .a '.a))
+(assert (== a 9))
 
-;; until undot is used
-(assert (== (undot .a) 3))
 
-;; set should work too
+;; (set) on dot symbols is a noop.
+(set a 3)
 (set .a 5)
-(assert (== (undot .a) 5))
+(assert (== a 3))
+
+
+;;
+;; nested paths of dot-symbols work
+;;
+(def s (snoopy asst: (hornet side-kick: (hellcat fname:"henry" lname:"johnson"))))
+
+;; get
+(assert (== (.s.asst.side-kick.fname) "henry"))
+
+;; assign
+(.s.asst.side-kick.lname = "smith")
+(assert (== (.s.asst.side-kick.lname) "smith"))
+

@@ -576,3 +576,47 @@ func fillHashHelper(r interface{}, depth int, env *Glisp, preferSym bool) (Sexp,
 
 	return SexpNull, nil
 }
+
+func (h *SexpHash) nestedPathGetSet(env *Glisp, dotpaths []string, setVal *Sexp) (Sexp, error) {
+
+	if len(dotpaths) == 0 {
+		return SexpNull, fmt.Errorf("internal error: in nestedPathGetSet() dotpaths" +
+			" had zero length")
+	}
+
+	var ret Sexp = SexpNull
+	var err error
+	askh := h
+	lenpath := len(dotpaths)
+	//P("\n in nestedPathGetSet, dotpaths=%#v\n", dotpaths)
+	for i := range dotpaths {
+		if setVal != nil && i == lenpath-1 {
+			// assign now
+			err = askh.HashSet(env.MakeSymbol(dotpaths[i][1:]), *setVal)
+			//P("\n i=%v in nestedPathGetSet, dotpaths[i][1:]='%v' call to "+
+			//   "HashSet returned err = '%s'\n", i, dotpaths[i][1:], err)
+			return *setVal, err
+		}
+		ret, err = askh.HashGet(env, env.MakeSymbol(dotpaths[i][1:]))
+		//P("\n i=%v in nestedPathGet, dotpaths[i][1:]='%v' call to "+
+		//	"HashGet returned '%s'\n", i, dotpaths[i][1:], ret.SexpString())
+		if err != nil {
+			return SexpNull, err
+		}
+		if i == lenpath-1 {
+			return ret, nil
+		}
+		// invar: i < lenpath-1, so go deeper
+		switch h2 := ret.(type) {
+		case SexpHash:
+			//P("\n found hash in h2 at i=%d, looping to next i\n", i)
+			askh = &h2
+		default:
+			return SexpNull, fmt.Errorf("not a record: cannot get field '%s'"+
+				" in out of type %T)", dotpaths[i+1][1:], h2)
+
+		}
+
+	}
+	return ret, err
+}
