@@ -1,0 +1,20 @@
+;; dotcalls to user functions and sexp functions
+;; should work
+(.a = 4) ;; leaving 4 on datastack??
+(assert (== a 4))
+
+(= 'v 10)
+(assert (== v 10))
+
+(def greet "hello")
+(defn g [b] (let [togeth (concat "say: " b)] (printf "g says %v\n" togeth) togeth))
+(g "99999 whatsup")
+
+(def ggg (.greet g))
+
+
+(assert (== (g "hiiiii") `say: hiiiii`))
+(assert (== (.greet g) "say: hello"))
+
+
+        
