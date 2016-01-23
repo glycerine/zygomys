@@ -634,8 +634,10 @@ func (gen *Generator) GenerateCall(expr SexpPair) error {
 	arr, _ := ListToArray(expr.Tail)
 	switch head := expr.Head.(type) {
 	case SexpSymbol:
+		// flow control and macros go here
 		return gen.GenerateCallBySymbol(head, arr, expr)
 	}
+	// SexpFunction calls go here
 	return gen.GenerateDispatch(expr.Head, arr)
 }
 

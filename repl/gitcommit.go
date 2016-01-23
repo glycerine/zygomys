@@ -1,2 +1,2 @@
 package zygo
-func init() { GITLASTTAG = "1.6.3"; GITLASTCOMMIT = "82451b276f5e804f1fcdd808e4f9151f62d916bc" }
+func init() { GITLASTTAG = "1.6.3"; GITLASTCOMMIT = "599749c7a0743de44287b648b2f9c5e618533711" }

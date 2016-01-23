@@ -1152,7 +1152,6 @@ func QuoteListFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 }
 
 // if setVal is nil, only get and return the lookup.
-// undot == 1 for an (undot call). else must be 0.
 func dotGetSetHelper(env *Glisp, name string, setVal *Sexp) (Sexp, error) {
 	path := DotPartsRegex.FindAllString(name, -1)
 	P("\n in dotGetSetHelper(), path = '%#v'\n", path)
@@ -1179,11 +1178,11 @@ func dotGetSetHelper(env *Glisp, name string, setVal *Sexp) (Sexp, error) {
 	// handle multiple paths that index into hashes after the
 	// the first
 
-	key := path[0][1:] // strip off the dot, unless undot call.
+	key := path[0][1:] // strip off the dot
 	P("\n in dotGetSetHelper(), looking up '%s'\n", key)
 	ret, err, _ = env.LexicalLookupSymbol(env.MakeSymbol(key), false)
 	if err != nil {
-		//P("\n in dotGetSetHelper(), '%s' not found\n", key)
+		P("\n in dotGetSetHelper(), '%s' not found\n", key)
 		return SexpNull, err
 	}
 	if lenpath == 1 {

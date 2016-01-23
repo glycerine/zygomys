@@ -227,21 +227,72 @@ func (c CallInstr) Execute(env *Glisp) error {
 	if err != nil {
 		return err
 	}
-
+	P("\n in CallInstr, after looking up c.sym='%s', got funcobj='%v'. datastack is:\n", c.sym.name, funcobj.SexpString())
+	env.datastack.PrintStack()
 	switch f := funcobj.(type) {
 	case SexpSymbol:
-		// is it a dot-symbol call, runtime resolved, dispatched through DotFunction
-		if f.isDot {
-			_, err := env.CallUserFunction(DotSexpFunc, f.name, c.nargs)
-			return err
-		}
+		// is it a dot-symbol call?
+		P("\n in CallInstr, found symbol\n")
+		if c.sym.isDot {
 
-		// allow symbols to refer to functions that we then call
-		indirectFuncName, err, _ = env.LexicalLookupSymbol(f, false)
+			dotSymRef, dotLookupErr := dotGetSetHelper(env, c.sym.name, nil)
 
-		if err != nil {
-			return fmt.Errorf("'%s' refers to symbol '%s', but '%s' could not be resolved: '%s'.",
-				c.sym.name, f.name, f.name, err)
+			// are we a value request (no further args), or a fuction/method call?
+			P("\n in CallInstr, found dot-symbol\n")
+			if c.nargs == 0 {
+				// value request
+				if dotLookupErr != nil {
+					return dotLookupErr
+				}
+				env.datastack.PushExpr(dotSymRef)
+				env.pc++
+				return nil
+			} else {
+				// function call
+
+				// get our function from the top of datastack
+				expressions, err := env.datastack.PopExpressions(c.nargs)
+				if err != nil {
+					return err
+				}
+
+				top := expressions[0]
+				switch ftop := top.(type) {
+				case *SexpFunction:
+					P("\n in CallInstr, fetched out function call from top of datastack.\n")
+					indirectFuncName = ftop
+					if ftop.user {
+						P("\n in CallInstr, with user func, passing dot-symbol in directly so assignment will work.\n")
+						env.datastack.PushExpr(c.sym)
+					} else {
+						P("\n in CallInstr, with sexp func, dereferencing dot-symbol '%s' -> '%s'\n", c.sym.name, dotSymRef.SexpString())
+						if dotLookupErr != nil {
+							return dotLookupErr
+						}
+						env.datastack.PushExpr(dotSymRef)
+					}
+					pushme := expressions[1:]
+					for j := range pushme {
+						env.datastack.PushExpr(pushme[j])
+					}
+					P("\n in CallInstr, after setting up stack for dot-symbol call, datastack:\n")
+					env.datastack.PrintStack()
+
+				default:
+					return fmt.Errorf("dot-symbol '%s' was followed by non-function '%s'.",
+						c.sym.name, ftop.SexpString())
+				}
+			}
+		} else {
+			// not isDot
+
+			// allow symbols to refer to functions that we then call
+			indirectFuncName, err, _ = env.LexicalLookupSymbol(f, false)
+
+			if err != nil {
+				return fmt.Errorf("'%s' refers to symbol '%s', but '%s' could not be resolved: '%s'.",
+					c.sym.name, f.name, f.name, err)
+			}
 		}
 
 		switch g := indirectFuncName.(type) {
