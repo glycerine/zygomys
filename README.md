@@ -42,7 +42,7 @@ The standalone REPL is called simply `zygo`.
 $ go get github.com/glycerine/zygomys/cmd/zygo
 ~~~
 
-### Not your Grandfather's Parentheses... features in zygomys 2.0.2 include
+### Not your Grandfather's Parentheses... features in zygomys 2.0.3 include
 
  * [x] New in 2.0: dot-symbols! dot-symbols such as `.plane` or `.plane.wing` give OO-flavor and compact, expressive notation
  * [x] dot-symbols avoid the need for macros in many cases
