@@ -26,7 +26,7 @@ Go, and Go methods will run on them at compiled-Go speed.
 
 Because it speaks JSON and Msgpack fluently, zygomys is ideally suited for driving
 complex configurations and providing projects with a domain specific
-language customized to your challenges and driving other code.
+language customized to your challenges and driving Go code.
 
 The example snippets in the tests/*.zy provide many examples.
 The full [documentation can be found in the Wiki](https://github.com/glycerine/zygomys/wiki).
