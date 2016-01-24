@@ -2,19 +2,19 @@
 
 # zygomys - embedded scripting language for Go.
 
-### quickly create a mini-language to configure your project
+### Quickly create a mini-language to configure your project
 
 zygomys is an embeddable scripting language. It is a modernized Lisp with an object-oriented flavor, and
 provides an interpreter and REPL (Read-Eval-Print-Loop;
 that is, it comes with a command line interactive interface).
 
-### where did the name zygomys come from?
+### Where did the name zygomys come from?
 
 zygomys is a contraction of Zygogeomys, [a genus of pocket gophers. The Michoacan pocket gopher (Zygogeomys trichopus) finds its natural habitat in high-altitude forests.](https://en.wikipedia.org/wiki/Michoacan_pocket_gopher)
 
 The term is also descriptive. The stem `zygo` comes from the Greek for yoke, indicating a pair or a union of two things, and `mys` comes from the Greek for mouse. The union of Go and Lisp in a small cute package, that is zygomys.
 
-## tell me more
+## Tell me more
 
 zygomys allows you to create a Domain Specific Language to drive
 your program with minimal fuss and maximum convenience.
@@ -36,7 +36,7 @@ and some (notably the for-loop style) directly from the Go/C tradition.
 
 The standalone REPL is called simply `zygo`.  `zygo` is also shorthand for the whole project when speaking aloud. In writing, the full `zygomys` is used to aid searchability.
 
-### installation
+### Installation
 
 ~~~
 $ go get github.com/glycerine/zygomys/cmd/zygo
