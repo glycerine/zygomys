@@ -1,0 +1,29 @@
+
+Title: Scripting your Go code, an introduction to zygomys, an object-oriented modern Lisp
+Speaker: Jason E. Aten, Ph.D.
+Affiliation: Betable.com, San Francisco, CA.
+
+The free and open-source programming language Go, helmed by a team from Google, offers fast compilation, statical-typing, and a multicore-oriented programming environment that produces fast binaries from easy-to-maintain code.
+
+What Go has lacked is an integrated scripting language -- one that is equally multicore friendly and portable -- to provide extendable configuration and dynamic scripting.
+
+Complex programs and changing business and customer requirements demand complex and frequently changing configuration. This leads to non-standard and hard-to-extend control languages, little wheels that get invented again and again.
+
+Designed for scripting Go programs, zygomys is a modern incarnation of Lisp for the Go platform. It is open source at https://github.com/glycerine/zygomys under a permissive 2-clause BSD license. Written in 100% Go (no CGO required!), zygomys makes it easy to dynamically control compiled code. zygomys automatically maps Lisp records to nested Go structures, including structs and slices that contain Go interfaces. Should scripts become large, zygomys makes it is easy to translate a piece of script code into compiled Go code to optimize execution.
+
+In this talk I will start with an introduction to Lisp for beginners. Audience members will quickly understand the strange looking but actually extremely simple S-expression syntax at the heart of Lisp. Then for intermediate audience members, I will give an overview of zygomys and highlight the design points that give it a modern Object-oriented feel while retaining the power of 'programs-that-write-programs' that Lisp is famous for.
+
+Continuing for the intermediate level audience and touching on advanced points, I will show how to extend the capabilities of the base interpreter to call your own compiled Go methods, and how to use zygomys to produce a domain-specific-language (DSL) to drive your application with a principled and reusable scripting language.
+
+To quote Paul Graham of Y-combinator/Hackernews:
+
+"Sometimes, in desperation, competitors would try to
+introduce features that we didn't have. But with Lisp
+our development cycle was so fast that we could
+sometimes duplicate a new feature within a day or
+two of a competitor announcing it in a press
+release. By the time journalists covering the
+press release got round to calling us, we would
+have the new feature too."
+ -- http://www.paulgraham.com/avg.html
+ 
