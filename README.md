@@ -2,16 +2,18 @@
 
 # zygomys - An embedded scripting language for Go.
 
-### Quickly create a mini-language to configure your project
+### Why use zygomys?
 
-zygomys is an embeddable scripting language. It is a modernized Lisp with an object-oriented flavor, and
+zygomys is an embeddable scripting language that can be used to 
+quickly configure your Go project.  
+It allows you to create a Domain Specific Language to drive your Go programs 
+with minimal fuss and maximum convenience.
+
+### What is zygomys?
+
+zygomys is a modernized Lisp with an object-oriented flavor, and
 provides an interpreter and REPL (Read-Eval-Print-Loop;
 that is, it comes with a command line interactive interface).
-
-### Tell me more
-
-zygomys allows you to create a Domain Specific Language to drive
-your program with minimal fuss and maximum convenience.
 
 It is written in Go and plays easily with Go programs
 and Go structs, using reflection to instantiate trees of Go structs
