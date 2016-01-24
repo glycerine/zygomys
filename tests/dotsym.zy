@@ -7,7 +7,7 @@
 (assert (== a 9))
 
 
-;; (set) on dot symbols is a noop.
+;; (set) on dot symbols is an error
 (set a 3)
 (set .a 5)
 (assert (== a 3))
