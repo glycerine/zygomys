@@ -15,7 +15,7 @@ zygomys is a modernized Lisp with an object-oriented flavor, and
 provides an interpreter and REPL (Read-Eval-Print-Loop;
 that is, it comes with a command line interactive interface).
 
-It is written in Go and plays easily with Go programs
+It is written in Go and plays nicely with Go programs
 and Go structs, using reflection to instantiate trees of Go structs
 from the scripted configuration. These data structures are native
 Go, and Go methods will run on them at compiled-Go speed.
@@ -42,11 +42,11 @@ $ go get github.com/glycerine/zygomys/cmd/zygo
 
  * [x] New in 2.0: dot-symbols! dot-symbols such as `.plane` or `.plane.wing` give OO-flavor and compact, expressive notation. [See the wiki](https://github.com/glycerine/zygomys/wiki#differences-from-traditional-lisp-syntax) for discussion.
  * [x] dot-symbols avoid the need for macros in many cases
- * [x] readable assignment: `(.a = 10)` assigns value 10 to symbol `a`  (NB use `==` for equality checks.)
- * [x] readable nested method calls: `(.a.b.c Fly)` calls method `Fly` on object `c` that lives within objects `a` and `b`.
+ * [x] Readable assignment: `(.a = 10)` assigns value 10 to symbol `a`  (NB use `==` for equality checks.)
+ * [x] Readable nested method calls: `(.a.b.c Fly)` calls method `Fly` on object `c` that lives within objects `a` and `b`.
  * [x] Use `zygo` to configure trees of Go structs, and then run methods on them at natively-compiled speed (since you are calling into Go code).
  * [x] `emacs/zygo.el` emacs mode provides one-keypress stepping through code
- * [x] command line editing, with tab-complete for keywords (courtesy of https://github.com/peterh/liner)
+ * [x] Command line editing, with tab-complete for keywords (courtesy of https://github.com/peterh/liner)
  * [x] JSON and Msgpack interop: serialization and deserialization.
  * [x] `(range key value hash_or_array (body))` range loops act like Go for-range loops: iterate through hashes or arrays.
  * [x] `(for [(initializer) (test) (advance)] (body))` for-loops match those in C and Go. Both `(break)` and `(continue)` are available for additional loop control.
