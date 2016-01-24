@@ -38,7 +38,7 @@ The standalone REPL is called simply `zygo`.  `zygo` is also shorthand for the w
 $ go get github.com/glycerine/zygomys/cmd/zygo
 ~~~
 
-### Not your Grandfather's Parentheses... features in zygomys 2.0.5 include
+### Not your average parentheses... features in zygomys 2.0.5 include:
 
  * [x] New in 2.0: dot-symbols! dot-symbols such as `.plane` or `.plane.wing` give OO-flavor and compact, expressive notation. [See the wiki](https://github.com/glycerine/zygomys/wiki#differences-from-traditional-lisp-syntax) for discussion.
  * [x] dot-symbols avoid the need for macros in many cases
@@ -58,12 +58,12 @@ $ go get github.com/glycerine/zygomys/cmd/zygo
  * [x] Clojure like threading `(-> hash field1: field2:)` and `(:field hash)` selection. 
  * [x] Lisp style macros for your DSL.
 
-### Obligatory XKCD
+### Obligatory XKCD:
 
 ![Obligatory XKCD: "elegant weapons... for a more civilized age"](http://imgs.xkcd.com/comics/lisp_cycles.png)
 
 
-### Additional features
+### Additional features:
 
  * [x] zygomys is a small Go library, easy to integrate and use/extend.
  * [x] Float (float64), Int (int64), Char, String, Symbol, List, Array, and Hash datatypes builtin.
