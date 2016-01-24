@@ -34,7 +34,7 @@ zygomys blends traditional and new. While the s-expression syntax
 defines a Lisp, zygomys borrows some syntax from Clojure,
 and some (notably the for-loop style) directly from the Go/C tradition.
 
-The standalone REPL is called simply `zygo`.
+The standalone REPL is called simply `zygo`.  `zygo` is also shorthand for the whole project when speaking aloud. In writing, the full `zygomys` is used to aid searchability.
 
 ### installation
 
