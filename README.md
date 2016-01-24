@@ -1,6 +1,6 @@
 ![Image of Gopher flying](https://github.com/glycerine/zygomys/blob/master/media/high_altitude_gopher.png)
 
-# zygomys - embedded scripting language for Go.
+# zygomys - An embedded scripting language for Go.
 
 ### Quickly create a mini-language to configure your project
 
