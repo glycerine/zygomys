@@ -46,7 +46,7 @@ $ go get github.com/glycerine/zygomys/cmd/zygo
  * [x] Readable nested method calls: `(.a.b.c Fly)` calls method `Fly` on object `c` that lives within objects `a` and `b`.
  * [x] Use `zygo` to configure trees of Go structs, and then run methods on them at natively-compiled speed (since you are calling into Go code).
  * [x] `emacs/zygo.el` emacs mode provides one-keypress stepping through code
- * [x] Command line editing, with tab-complete for keywords (courtesy of https://github.com/peterh/liner)
+ * [x] Command-line editing, with tab-complete for keywords (courtesy of https://github.com/peterh/liner)
  * [x] JSON and Msgpack interop: serialization and deserialization.
  * [x] `(range key value hash_or_array (body))` range loops act like Go for-range loops: iterate through hashes or arrays.
  * [x] `(for [(initializer) (test) (advance)] (body))` for-loops match those in C and Go. Both `(break)` and `(continue)` are available for additional loop control.
@@ -55,8 +55,8 @@ $ go get github.com/glycerine/zygomys/cmd/zygo
  * [x] Files can be recursively sourced with `(req path)` or `(source "path-string")`.
  * [x] Go style raw string literals, using `` `backticks` ``, can contain newlines and `"` double quotes directly. Easy templating.
  * [x] Easy to extend. See the `repl/random.go`, `repl/regexp.go`, and `repl/time.go` files for examples.
- * [x] Clojure like threading `(-> hash field1: field2:)` and `(:field hash)` selection. 
- * [x] Lisp style macros for your DSL.
+ * [x] Clojure-like threading `(-> hash field1: field2:)` and `(:field hash)` selection. 
+ * [x] Lisp-style macros for your DSL.
 
 ### Obligatory XKCD:
 
