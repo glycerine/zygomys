@@ -8,12 +8,6 @@ zygomys is an embeddable scripting language. It is a modernized Lisp with an obj
 provides an interpreter and REPL (Read-Eval-Print-Loop;
 that is, it comes with a command line interactive interface).
 
-### Where did the name zygomys come from?
-
-zygomys is a contraction of Zygogeomys, [a genus of pocket gophers. The Michoacan pocket gopher (Zygogeomys trichopus) finds its natural habitat in high-altitude forests.](https://en.wikipedia.org/wiki/Michoacan_pocket_gopher)
-
-The term is also descriptive. The stem `zygo` comes from the Greek for yoke, indicating a pair or a union of two things, and `mys` comes from the Greek for mouse. The union of Go and Lisp in a small cute package, that is zygomys.
-
 ### Tell me more
 
 zygomys allows you to create a Domain Specific Language to drive
@@ -89,6 +83,11 @@ $ go get github.com/glycerine/zygomys/cmd/zygo
 
 [See the wiki for lots of details and a full description of the zygomys language.](https://github.com/glycerine/zygomys/wiki).
 
+### Where did the name zygomys come from?
+
+zygomys is a contraction of Zygogeomys, [a genus of pocket gophers. The Michoacan pocket gopher (Zygogeomys trichopus) finds its natural habitat in high-altitude forests.](https://en.wikipedia.org/wiki/Michoacan_pocket_gopher)
+
+The term is also descriptive. The stem `zygo` comes from the Greek for yoke, indicating a pair or a union of two things, and `mys` comes from the Greek for mouse. The union of Go and Lisp in a small cute package, that is zygomys.
 
 ### License
 
