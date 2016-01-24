@@ -132,6 +132,19 @@ func (stack *Stack) BindSymbol(sym SexpSymbol, expr Sexp) error {
 	return nil
 }
 
+func (stack *Stack) DeleteSymbolFromTopOfStackScope(sym SexpSymbol) error {
+	if stack.IsEmpty() {
+		panic("empty stack!!")
+		return errors.New("no scope available")
+	}
+	_, present := stack.elements[stack.tos].(*Scope).Map[sym.number]
+	if !present {
+		return fmt.Errorf("symbol `%s` not found", sym.name)
+	}
+	delete(stack.elements[stack.tos].(*Scope).Map, sym.number)
+	return nil
+}
+
 // used to implement (set v 10)
 func (scope *Scope) UpdateSymbolInScope(sym SexpSymbol, expr Sexp) error {
 
@@ -140,6 +153,16 @@ func (scope *Scope) UpdateSymbolInScope(sym SexpSymbol, expr Sexp) error {
 		return fmt.Errorf("symbol `%s` not found", sym.name)
 	}
 	scope.Map[sym.number] = expr
+	return nil
+}
+
+func (scope *Scope) DeleteSymbolInScope(sym SexpSymbol) error {
+
+	_, found := scope.Map[sym.number]
+	if !found {
+		return fmt.Errorf("symbol `%s` not found", sym.name)
+	}
+	delete(scope.Map, sym.number)
 	return nil
 }
 

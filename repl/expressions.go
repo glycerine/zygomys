@@ -165,7 +165,7 @@ func CallZMethodOnRecordFunction(env *Glisp, name string, args []Sexp) (Sexp, er
 	case SexpHash:
 		hash = h
 	default:
-		return SexpNull, fmt.Errorf("can only .call on a record")
+		return SexpNull, fmt.Errorf("can only _call on a record")
 	}
 
 	method := ""
@@ -175,8 +175,8 @@ func CallZMethodOnRecordFunction(env *Glisp, name string, args []Sexp) (Sexp, er
 	case SexpStr:
 		method = string(s)
 	default:
-		return SexpNull, fmt.Errorf("can only .call with a " +
-			"symbol or string as the method name. example: (.call record method:)")
+		return SexpNull, fmt.Errorf("can only _call with a " +
+			"symbol or string as the method name. example: (_call record method:)")
 	}
 
 	return hash.RunZmethod(method, args[2:])

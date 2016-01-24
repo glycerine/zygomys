@@ -828,8 +828,6 @@ var BuiltinFunctions = map[string]GlispUserFunction{
 	"_closdump": DumpClosureEnvFunction,
 	"_call":     CallZMethodOnRecordFunction,
 	"gob":       GobEncodeFunction,
-	"dot":       DotFunction,
-	".":         DotFunction,
 	"=":         AssignmentFunction,
 	"joinsym":   JoinSymFunction,
 	"quotelist": QuoteListFunction,
@@ -967,75 +965,6 @@ func StopFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		return SexpNull, fmt.Errorf(string(s))
 	}
 	return SexpNull, stopErr
-}
-
-var DotSexpFunc = &SexpFunction{
-	name:    "dot",
-	user:    true,
-	nargs:   1,
-	varargs: true,
-	userfun: DotFunction,
-}
-
-// dot : object-oriented style calls
-func DotFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
-	//P("\n DotFunction called! args='%s'\n", SexpArray(args).SexpString())
-
-	narg := len(args)
-
-	if narg == 0 {
-		// a get request, just return the nested object
-		return dotGetSetHelper(env, name, nil)
-	}
-	var fun *SexpFunction
-	switch f := args[0].(type) {
-	case *SexpFunction:
-		fun = f
-	default:
-		return SexpNull, fmt.Errorf("method '%s' for dotcall "+
-			"was not an SexpFunction", args[0].SexpString())
-	}
-
-	var err error
-
-	if fun.user {
-		//P("\n user function (Go code)\n")
-		// push our args, set up the call
-		env.datastack.PushExpr(env.MakeDotSymbol(name))
-		callargs := args[1:]
-		ncallarg := len(callargs)
-		//P("callargs = %#v\n", callargs)
-		for _, val := range callargs {
-			env.datastack.PushExpr(val)
-		}
-		_, err = env.CallUserFunction(fun, fun.name, ncallarg+1)
-	} else {
-		//P("\n sexp function, not user\n")
-		fmt.Printf("\n before CallFunction() DataStack: (length %d)\n", env.datastack.Size())
-		//env.datastack.PrintStack()
-
-		// push our args, set up the call
-		env.datastack.PushExpr(env.MakeDotSymbol(name))
-		callargs := args[1:]
-		ncallarg := len(callargs)
-		//P("callargs = %#v\n", callargs)
-		for _, val := range callargs {
-			env.datastack.PushExpr(val)
-		}
-
-		//P("\n DotFunction calling env.CallFunction(fun='%s',%v)\n", fun.name, ncallarg+1)
-		err = env.CallFunction(fun, ncallarg+1)
-
-		fmt.Printf("\n after CallFunction() DataStack: (length %d)\n", env.datastack.Size())
-		//env.datastack.PrintStack()
-
-	}
-
-	if err != nil {
-		return SexpNull, err
-	}
-
-	return SexpNull, nil
 }
 
 // the assignment function, =
@@ -1218,5 +1147,16 @@ func dotGetSetHelper(env *Glisp, name string, setVal *Sexp) (Sexp, error) {
 }
 
 func RemoveSymFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
-	return SexpNull, fmt.Errorf("rmsym not yet implmented")
+	narg := len(args)
+	if narg != 1 {
+		return SexpNull, WrongNargs
+	}
+
+	sym, ok := args[0].(SexpSymbol)
+	if !ok {
+		return SexpNull, fmt.Errorf("symbol required, but saw %T/%v", args[0], args[0].SexpString())
+	}
+
+	err := env.linearstack.DeleteSymbolFromTopOfStackScope(sym)
+	return SexpNull, err
 }

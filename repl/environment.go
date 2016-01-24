@@ -570,34 +570,6 @@ func (env *Glisp) ShowStackStackAndScopeStack() error {
 	return nil
 }
 
-/*
-zygo> (defn h [] (println "hi from h") (defn f [] (defn g [] (println "hi from g") (.ls)) (g)) (f))
-zygo> (h)
-hi from h
-hi from g
- ========  env.stackstack is 3 deep:
- stackstack 0
-     elem 0 of stackstack 0:
-         (global scope - omitting content for brevity)
- stackstack 1
-     elem 0 of stackstack 1:
-         (global scope - omitting content for brevity)
-     elem 1 of stackstack 1:
-         f -> (defn f [] (defn g [] (println "hi from g") (.ls)) (g))
- stackstack 2
-     elem 0 of stackstack 2:
-         (global scope - omitting content for brevity)
-     elem 1 of stackstack 2:
-         g -> (defn g [] (println "hi from g") (.ls))
- ++++++++  env.scopestack is 2 deep:
- scopestack 0
-     (global scope - omitting content for brevity)
- scopestack 1
-     empty-scope: no symbols
- --------
-zygo>
-*/
-
 func (env *Glisp) LexicalLookupSymbol(sym SexpSymbol, undot bool) (Sexp, error, *Scope) {
 
 	// DotSymbols always evaluate to themselves, unless
@@ -661,7 +633,7 @@ func DumpClosureEnvFunction(env *Glisp, name string, args []Sexp) (Sexp, error) 
 		s := ClosureToString(f, env)
 		return SexpStr(s), nil
 	default:
-		return SexpNull, fmt.Errorf(".closdump needs an *SexpFunction to inspect")
+		return SexpNull, fmt.Errorf("_closdump needs an *SexpFunction to inspect")
 	}
 }
 

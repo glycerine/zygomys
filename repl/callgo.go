@@ -13,7 +13,7 @@ import (
 // args[1] is a hash representing a method call on that struct.
 // The returned Sexp is a hash that represents the result of that call.
 func CallGoMethodFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
-	VPrintf(".method user func running!\n")
+	VPrintf("_method user func running!\n")
 
 	// protect against bad calls/bad reflection
 	var wasPanic bool
@@ -36,7 +36,7 @@ func CallGoMethodFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		}
 		obj, isHash := args[0].(SexpHash)
 		if !isHash {
-			return SexpNull, fmt.Errorf(".method error: first argument must be a hash or defmap (a record) with an attached GoObject")
+			return SexpNull, fmt.Errorf("_method error: first argument must be a hash or defmap (a record) with an attached GoObject")
 		}
 
 		var methodname string
@@ -46,7 +46,7 @@ func CallGoMethodFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		case SexpStr:
 			methodname = string(m)
 		default:
-			return SexpNull, fmt.Errorf(".method error: second argument must be a method name in symbol or string form (got %T)", args[1])
+			return SexpNull, fmt.Errorf("_method error: second argument must be a method name in symbol or string form (got %T)", args[1])
 		}
 
 		// get the method list, verify the method exists and get its type
@@ -120,7 +120,7 @@ func CallGoMethodFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 			VPrintf("\n allocated new %T/val=%#v /i=%#v\n", va, va, va.Interface())
 		}
 
-		VPrintf(".method: about to .Call by reflection!\n")
+		VPrintf("_method: about to .Call by reflection!\n")
 
 		out := method.Func.Call(inputVa)
 
@@ -128,7 +128,7 @@ func CallGoMethodFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		for _, o := range out {
 			iout = append(iout, o.Interface())
 		}
-		VPrintf("done with .method call, iout = %#v\n", iout)
+		VPrintf("done with _method call, iout = %#v\n", iout)
 
 		nout := len(out)
 		r := make([]Sexp, 0)

@@ -885,9 +885,9 @@ func (gen *Generator) GenerateSet(args []Sexp) error {
 			"to set variable of same name.", lhs.name)
 	}
 
-	//	if sym.isDot {
-	//		return fmt.Errorf("warning noop to set dot-symbol '%s'", sym.name)
-	//	}
+	if lhs.isDot {
+		return fmt.Errorf("illegal to set dot-symbol, attempted on '%s'", lhs.name)
+	}
 
 	rhs := args[1]
 	gen.Tail = false
