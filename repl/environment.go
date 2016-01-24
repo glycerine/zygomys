@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"runtime"
 	"strconv"
 )
 
@@ -260,7 +261,29 @@ func (env *Glisp) CallUserFunction(
 	env.curfunc = function
 	env.pc = -1
 
-	res, err := function.userfun(env, name, args)
+	// protect against bad calls/bad reflection in usercalls
+	var wasPanic bool
+	var recovered interface{}
+	tr := make([]byte, 16384)
+	trace := &tr
+	res, err := func() (Sexp, error) {
+		defer func() {
+			recovered = recover()
+			if recovered != nil {
+				wasPanic = true
+				nbyte := runtime.Stack(*trace, false)
+				*trace = (*trace)[:nbyte]
+			}
+		}()
+
+		// the point we were getting to, before the panic protection:
+		return function.userfun(env, name, args)
+	}()
+	if wasPanic {
+		err = fmt.Errorf("CallUserFunction caught panic during call of "+
+			"'%s': '%v'\n stack trace:\n%v\n",
+			name, recovered, string(*trace))
+	}
 	if err != nil {
 		return 0, errors.New(
 			fmt.Sprintf("Error calling '%s': %v", name, err))

@@ -172,14 +172,16 @@ func Test012TranslationOfArraysOfInterfacesWorks(t *testing.T) {
 			panicOn(err)
 			VPrintf("\n sn = %#v\n", sn)
 			cv.So(&sn, cv.ShouldResemble, &Snoopy{
-				Carrying: []Flyer{&Hellcat{
-					Plane: Plane{Speed: 567}}, &Hornet{
-					Plane: Plane{
-						Wings: Wings{
-							SpanCm: 12,
+				Carrying: []Flyer{
+					&Hellcat{
+						Plane: Plane{Speed: 567}},
+					&Hornet{
+						Plane: Plane{
+							Wings: Wings{
+								SpanCm: 12,
+							},
 						},
-					},
-				}}})
+					}}})
 		})
 }
 
