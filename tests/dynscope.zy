@@ -20,6 +20,8 @@
 ;; above is necessary but not sufficient:
 ;; also needed: see tests/closure2.zy
 ;; we can't have too much sharing. i.e.
-;; each new activation frame creates
-;; a distint frame that when closed over
-;; results in a distinct local variable set.
+;; each new activation frame should
+;; obviously generate new variables,
+;; so closures capturing distinct
+;; activation frames should have
+;; distinct variables.
