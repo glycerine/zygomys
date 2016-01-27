@@ -824,6 +824,7 @@ var BuiltinFunctions = map[string]GlispUserFunction{
 	"_method":   CallGoMethodFunction,
 	"fieldls":   GoFieldListFunction,
 	"chomp":     StringUtilFunction,
+	"trim":      StringUtilFunction,
 	"exit":      ExitFunction,
 	"stop":      StopFunction,
 	"_closdump": DumpClosureEnvFunction,

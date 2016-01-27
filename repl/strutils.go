@@ -3,6 +3,7 @@ package zygo
 import (
 	"errors"
 	"fmt"
+	"strings"
 )
 
 func ConcatStr(str SexpStr, rest []Sexp) (SexpStr, error) {
@@ -51,6 +52,8 @@ func StringUtilFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 			return SexpStr(s[:n-1]), nil
 		}
 		return SexpStr(s), nil
+	case "trim":
+		return SexpStr(strings.TrimSpace(s)), nil
 	}
 	return SexpNull, fmt.Errorf("unrecognized command '%s'", name)
 }

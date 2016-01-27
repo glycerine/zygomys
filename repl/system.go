@@ -51,7 +51,7 @@ func SystemFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 
 	var out []byte
 	if runtime.GOOS == "windows" {
-		out, err = exec.Command(cmd, "/k", joined).CombinedOutput()
+		out, err = exec.Command(cmd, "/c", joined).CombinedOutput()
 	} else {
 		out, err = exec.Command(cmd, "-c", joined).CombinedOutput()
 	}
