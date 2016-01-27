@@ -2,7 +2,9 @@ package zygo
 
 import (
 	"fmt"
+	"os"
 	"os/exec"
+	"runtime"
 	"strings"
 )
 
@@ -14,6 +16,10 @@ func init() {
 
 // set ShellCmd as used by SystemFunction
 func SetShellCmd() {
+	if runtime.GOOS == "windows" {
+		ShellCmd = os.Getenv("COMSPEC")
+		return
+	}
 	try := []string{"/usr/bin/bash"}
 	if !FileExists(ShellCmd) {
 		for i := range try {
@@ -43,7 +49,12 @@ func SystemFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	joined := strings.Join(flat, " ")
 	cmd := ShellCmd
 
-	out, err := exec.Command(cmd, "-c", joined).CombinedOutput()
+	var out []byte
+	if runtime.GOOS == "windows" {
+		out, err = exec.Command(cmd, "/k", joined).CombinedOutput()
+	} else {
+		out, err = exec.Command(cmd, "-c", joined).CombinedOutput()
+	}
 	if err != nil {
 		return SexpNull, fmt.Errorf("error from command: '%s'. Output:'%s'", err, string(Chomp(out)))
 	}
