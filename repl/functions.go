@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"runtime"
 )
 
 var WrongNargs error = errors.New("wrong number of arguments")
@@ -832,6 +833,7 @@ var BuiltinFunctions = map[string]GlispUserFunction{
 	"joinsym":   JoinSymFunction,
 	"quotelist": QuoteListFunction,
 	"rmsym":     RemoveSymFunction,
+	"GOOS":      GOOSFunction,
 }
 
 func ThreadMapFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
@@ -1159,4 +1161,12 @@ func RemoveSymFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 
 	err := env.linearstack.DeleteSymbolFromTopOfStackScope(sym)
 	return SexpNull, err
+}
+
+func GOOSFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
+	narg := len(args)
+	if narg != 0 {
+		return SexpNull, WrongNargs
+	}
+	return SexpStr(runtime.GOOS), nil
 }
