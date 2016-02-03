@@ -820,6 +820,7 @@ var BuiltinFunctions = map[string]GlispUserFunction{
 	"system":    SystemFunction,
 	"flatten":   FlattenToWordsFunction,
 	"nsplit":    SplitStringOnNewlinesFunction,
+	"split":     SplitStringFunction,
 	"methodls":  GoMethodListFunction,
 	"_method":   CallGoMethodFunction,
 	"fieldls":   GoFieldListFunction,

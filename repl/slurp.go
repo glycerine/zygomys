@@ -119,24 +119,40 @@ func WriteToFileFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	return SexpNull, nil
 }
 
+// SplitStringFunction splits a string based on an arbitrary delimiter
+func SplitStringFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
+	if len(args) != 2 {
+		return SexpNull, WrongNargs
+	}
+
+	// make sure the two args are strings
+	s1, ok := args[0].(SexpStr)
+	if !ok {
+		return SexpNull, fmt.Errorf("split requires a string to split, got %T", args[0])
+	}
+	s2, ok := args[1].(SexpStr)
+	if !ok {
+		return SexpNull, fmt.Errorf("split requires a string as a delimiter, got %T", args[1])
+	}
+
+	toSplit := string(s1)
+	splitter := string(s2)
+	s := strings.Split(toSplit, splitter)
+
+	split := make([]Sexp, len(s))
+	for i := range split {
+		split[i] = SexpStr(s[i])
+	}
+
+	return SexpArray(split), nil
+}
+
 // (nsplit "a\nb") -> ["a" "b"]
 func SplitStringOnNewlinesFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	if len(args) != 1 {
 		return SexpNull, WrongNargs
 	}
-	var fn string
-	switch fna := args[0].(type) {
-	case SexpStr:
-		fn = string(fna)
-	default:
-		return SexpNull, fmt.Errorf("newlinesplit requires a string to split. we got type %T / value = %v", args[0], args[0])
-	}
+	args = append(args, SexpStr("\n"))
 
-	a := make([]Sexp, 0)
-
-	str := strings.Split(fn, "\n")
-	for i := range str {
-		a = append(a, SexpStr(str[i]))
-	}
-	return SexpArray(a), nil
+	return SplitStringFunction(env, name, args)
 }
