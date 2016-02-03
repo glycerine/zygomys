@@ -1,0 +1,21 @@
+(def test-str "this is my \n test str")
+
+; split on newline
+(assert (== 
+	"this is my " (first 
+		(split test-str "\n"))))
+
+; second index
+(assert (== 
+	" test str " (aget 
+		(split test-str "\n") 1)))
+
+; split on space
+(assert (==
+	6 (len 
+		(split test-str " "))))
+
+; don't split on char that doesn't exist
+(assert (==
+	1 (len 
+		(split test-str "."))))
