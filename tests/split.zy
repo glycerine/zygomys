@@ -7,7 +7,7 @@
 
 ; second index
 (assert (== 
-	" test str " (aget 
+	" test str" (aget 
 		(split test-str "\n") 1)))
 
 ; split on space
