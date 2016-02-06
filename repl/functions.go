@@ -534,6 +534,8 @@ func TypeQueryFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		result = IsZero(args[0])
 	case "empty?":
 		result = IsEmpty(args[0])
+	case "func?":
+		result = IsFunc(args[0])
 	}
 
 	return SexpBool(result), nil
@@ -740,13 +742,17 @@ func MergeFuncMap(funcs ...map[string]GlispUserFunction) map[string]GlispUserFun
 
 	for _, f := range funcs {
 		for k, v := range f {
+			// disallow dups, avoiding possible security implications and confusion generally.
+			if _, dup := n[k]; dup {
+				panic(fmt.Sprintf(" duplicate function '%s' not allowed", k))
+			}
 			n[k] = v
 		}
 	}
 	return n
 }
 
-// SandboxSafeFuncs returns all functions that are safe to run in a "sandboxed" environment
+// SandboxSafeFuncs returns all functions that are safe to run in a sandbox
 func SandboxSafeFunctions() map[string]GlispUserFunction {
 	return MergeFuncMap(
 		CoreFunctions(),
@@ -808,6 +814,7 @@ func CoreFunctions() map[string]GlispUserFunction {
 		"string?":    TypeQueryFunction,
 		"zero?":      TypeQueryFunction,
 		"empty?":     TypeQueryFunction,
+		"func?":      TypeQueryFunction,
 		"not":        NotFunction,
 		"apply":      ApplyFunction,
 		"map":        MapFunction,
@@ -834,6 +841,7 @@ func CoreFunctions() map[string]GlispUserFunction {
 		"quotelist":  QuoteListFunction,
 		"=":          AssignmentFunction,
 		"fieldls":    GoFieldListFunction,
+		"defined?":   DefinedFunction,
 	}
 }
 
@@ -1219,4 +1227,30 @@ func GOOSFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		return SexpNull, WrongNargs
 	}
 	return SexpStr(runtime.GOOS), nil
+}
+
+// check is a symbol/string/value is defined
+func DefinedFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
+	narg := len(args)
+	if narg != 1 {
+		return SexpNull, WrongNargs
+	}
+
+	var checkme string
+	switch nm := args[0].(type) {
+	case SexpStr:
+		checkme = string(nm)
+	case SexpSymbol:
+		checkme = nm.name
+	case *SexpFunction:
+		return SexpBool(true), nil
+	default:
+		return SexpBool(false), nil
+	}
+
+	_, err, _ := env.LexicalLookupSymbol(env.MakeSymbol(checkme), false)
+	if err != nil {
+		return SexpBool(false), nil
+	}
+	return SexpBool(true), nil
 }

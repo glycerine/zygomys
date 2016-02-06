@@ -13,6 +13,8 @@ type GlispConfig struct {
 	Flags             *flag.FlagSet
 	ExtensionsVersion string
 	Command           string
+	Sandboxed         bool
+	Quiet             bool
 }
 
 func NewGlispConfig(cmdname string) *GlispConfig {
@@ -28,6 +30,8 @@ func (c *GlispConfig) DefineFlags() {
 	c.Flags.BoolVar(&c.ExitOnFailure, "exitonfail", false, "exit on failure instead of starting repl")
 	c.Flags.BoolVar(&c.CountFuncCalls, "countcalls", false, "count how many times each function is run")
 	c.Flags.StringVar(&c.Command, "c", "", "expressions to evaluate")
+	c.Flags.BoolVar(&c.Sandboxed, "sandbox", false, "run sandboxed; disallow system/external interaction functions")
+	c.Flags.BoolVar(&c.Quiet, "quiet", false, "start repl without printing the version/mode/help banner")
 }
 
 // call c.ValidateConfig() after myflags.Parse()

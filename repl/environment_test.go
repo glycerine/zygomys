@@ -2,32 +2,54 @@ package zygo
 
 import (
 	"fmt"
+	cv "github.com/glycerine/goconvey/convey"
 	"testing"
 )
 
-func TestSandboxFunctions(t *testing.T) {
+func Test400SandboxFunctions(t *testing.T) {
 
-	// given
-	s := NewSandboxSafeGlisp()
+	cv.Convey(`Given that the developer wishes to sandbox the Zygo interpreter when embedding it in their program, the NewGlispSandbox() function should return an interpreter that cannot call system/filesystem functions`, t, func() {
 
-	// when
-	sysFuncs := SystemFunctions()
-	sandSafeFuncs := SandboxSafeFunctions()
+		sysFuncs := SystemFunctions()
+		sandSafeFuncs := SandboxSafeFunctions()
+		{
+			env := NewGlispSandbox()
 
-	// then
-	// no system functions should pass
-	for name := range sysFuncs {
-		_, err := s.EvalString(fmt.Sprintf("(println %s)", name))
-		if err == nil {
-			t.Error(err)
+			// no system functions should pass
+			for name := range sysFuncs {
+				env.Clear()
+				res, err := env.EvalString(fmt.Sprintf("(defined? '%s)", name))
+				cv.So(res, cv.ShouldEqual, SexpBool(false))
+				cv.So(err, cv.ShouldEqual, nil)
+			}
+
+			// all sandSafeFuncs should be fine
+			for name := range sandSafeFuncs {
+				env.Clear()
+				res, err := env.EvalString(fmt.Sprintf("(defined? '%s)", name))
+				cv.So(res, cv.ShouldEqual, SexpBool(true))
+				cv.So(err, cv.ShouldEqual, nil)
+			}
 		}
-	}
 
-	// all sandSafeFuncs should be fine
-	for name := range sandSafeFuncs {
-		_, err := s.EvalString(fmt.Sprintf("(println %s)", name))
-		if err == nil {
-			t.Error(err)
+		{
+			fmt.Printf("\n and all functions should be reachable from a non-sandboxed environment.\n")
+			env := NewGlisp()
+			for name := range sysFuncs {
+				env.Clear()
+				res, err := env.EvalString(fmt.Sprintf("(defined? '%s)", name))
+				cv.So(res, cv.ShouldEqual, SexpBool(true))
+				cv.So(err, cv.ShouldEqual, nil)
+			}
+
+			// all sandSafeFuncs should be fine
+			for name := range sandSafeFuncs {
+				env.Clear()
+				res, err := env.EvalString(fmt.Sprintf("(defined? '%s)", name))
+				cv.So(res, cv.ShouldEqual, SexpBool(true))
+				cv.So(err, cv.ShouldEqual, nil)
+			}
+
 		}
-	}
+	})
 }

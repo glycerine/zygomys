@@ -145,8 +145,14 @@ func Repl(env *Glisp, cfg *GlispConfig) {
 	// debug
 	// env.debugExec = true
 
-	fmt.Printf("zygo version %s\n", Version())
-	fmt.Printf("press tab (repeatedly) to get completion suggestions. Shift-tab goes back. Ctrl-d to exit.\n")
+	if !cfg.Quiet {
+		if cfg.Sandboxed {
+			fmt.Printf("zygo [sandbox mode] version %s\n", Version())
+		} else {
+			fmt.Printf("zygo version %s\n", Version())
+		}
+		fmt.Printf("press tab (repeatedly) to get completion suggestions. Shift-tab goes back. Ctrl-d to exit.\n")
+	}
 	pr := NewPrompter()
 	defer pr.Close()
 
@@ -374,7 +380,12 @@ func (env *Glisp) StandardSetup() {
 
 // like main() for a standalone repl, now in library
 func ReplMain(cfg *GlispConfig) {
-	env := NewGlisp()
+	var env *Glisp
+	if cfg.Sandboxed {
+		env = NewGlispSandbox()
+	} else {
+		env = NewGlisp()
+	}
 	env.StandardSetup()
 
 	if cfg.CpuProfile != "" {

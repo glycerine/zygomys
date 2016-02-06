@@ -52,8 +52,9 @@ func NewGlisp() *Glisp {
 	return NewGlispWithFuncs(AllBuiltinFunctions())
 }
 
-// NewSandboxSafeGlisp returns a new *Glisp instance that does not allow the user to get to the outside world
-func NewSandboxSafeGlisp() *Glisp {
+// NewGlispSandbox returns a new *Glisp instance that does not allow the
+// user to get to the outside world
+func NewGlispSandbox() *Glisp {
 	return NewGlispWithFuncs(SandboxSafeFunctions())
 }
 

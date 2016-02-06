@@ -108,6 +108,14 @@ func IsEmpty(expr Sexp) bool {
 	return false
 }
 
+func IsFunc(expr Sexp) bool {
+	switch expr.(type) {
+	case *SexpFunction:
+		return true
+	}
+	return false
+}
+
 func TypeOf(expr Sexp) SexpStr {
 	v := ""
 	switch e := expr.(type) {
