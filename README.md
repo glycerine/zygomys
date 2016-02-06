@@ -38,13 +38,14 @@ for the whole project when speaking aloud. In writing, the full
 $ go get github.com/glycerine/zygomys/cmd/zygo
 ~~~
 
-### not your average parentheses... features in zygomys 2.0.7 include
+### not your average parentheses... features in zygomys 2.0.8 include
 
  * [x] New in 2.0: dot-symbols! dot-symbols such as `.plane` or `.plane.wing` give OO-flavor and compact, expressive notation. [See the wiki](https://github.com/glycerine/zygomys/wiki#differences-from-traditional-lisp-syntax) for discussion
  * [x] dot-symbols avoid the need for macros in many cases
  * [x] Readable assignment: `(.a = 10)` assigns value 10 to symbol `a`  (NB use `==` for equality checks)
  * [x] Readable nested method calls: `(.a.b.c Fly)` calls method `Fly` on object `c` that lives within objects `a` and `b`.
  * [x] Use `zygo` to configure trees of Go structs, and then run methods on them at natively-compiled speed (since you are calling into Go code).
+ * [x] sandbox-able environment; try `zygo -sandbox` and see the NewGlispSandbox() function.
  * [x] `emacs/zygo.el` emacs mode provides one-keypress stepping through code.
  * [x] Command-line editing, with tab-complete for keywords (courtesy of https://github.com/peterh/liner)
  * [x] JSON and Msgpack interop: serialization and deserialization
