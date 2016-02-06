@@ -734,8 +734,8 @@ func MakeUserFunction(name string, ufun GlispUserFunction) *SexpFunction {
 	return &sfun
 }
 
-// mergeFuncMap returns the union of the two given maps
-func mergeFuncMap(funcs ...map[string]GlispUserFunction) map[string]GlispUserFunction {
+// MergeFuncMap returns the union of the two given maps
+func MergeFuncMap(funcs ...map[string]GlispUserFunction) map[string]GlispUserFunction {
 	n := make(map[string]GlispUserFunction)
 
 	for _, f := range funcs {
@@ -748,7 +748,7 @@ func mergeFuncMap(funcs ...map[string]GlispUserFunction) map[string]GlispUserFun
 
 // SandboxSafeFuncs returns all functions that are safe to run in a "sandboxed" environment
 func SandboxSafeFunctions() map[string]GlispUserFunction {
-	return mergeFuncMap(
+	return MergeFuncMap(
 		CoreFunctions(),
 		StrFunctions(),
 		EncodingFunctions(),
@@ -757,7 +757,7 @@ func SandboxSafeFunctions() map[string]GlispUserFunction {
 
 // AllBuiltinFunctions returns all built in functions
 func AllBuiltinFunctions() map[string]GlispUserFunction {
-	return mergeFuncMap(
+	return MergeFuncMap(
 		CoreFunctions(),
 		StrFunctions(),
 		EncodingFunctions(),
