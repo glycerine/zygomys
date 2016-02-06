@@ -845,6 +845,7 @@ func StrFunctions() map[string]GlispUserFunction {
 		"println": PrintFunction,
 		"print":   PrintFunction,
 		"printf":  PrintFunction,
+		"raw2str": RawToStringFunction,
 	}
 
 }
