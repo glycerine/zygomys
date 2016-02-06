@@ -768,6 +768,7 @@ func AllBuiltinFunctions() map[string]GlispUserFunction {
 		StrFunctions(),
 		EncodingFunctions(),
 		SystemFunctions(),
+		ReflectionFunctions(),
 	)
 }
 
@@ -842,6 +843,9 @@ func CoreFunctions() map[string]GlispUserFunction {
 		"=":          AssignmentFunction,
 		"fieldls":    GoFieldListFunction,
 		"defined?":   DefinedFunction,
+		"stop":       StopFunction,
+		"joinsym":    JoinSymFunction,
+		"GOOS":       GOOSFunction,
 	}
 }
 
@@ -854,6 +858,10 @@ func StrFunctions() map[string]GlispUserFunction {
 		"print":   PrintFunction,
 		"printf":  PrintFunction,
 		"raw2str": RawToStringFunction,
+		"str2sym": Str2SymFunction,
+		"sym2str": Sym2StrFunction,
+		"gensym":  GensymFunction,
+		"symnum":  SymnumFunction,
 	}
 
 }
@@ -869,28 +877,26 @@ func EncodingFunctions() map[string]GlispUserFunction {
 	}
 }
 
+func ReflectionFunctions() map[string]GlispUserFunction {
+	return map[string]GlispUserFunction{
+		"methodls": GoMethodListFunction,
+		"_method":  CallGoMethodFunction,
+	}
+}
+
 func SystemFunctions() map[string]GlispUserFunction {
 	return map[string]GlispUserFunction{
-		"symnum":    SymnumFunction,
 		"source":    SourceFileFunction,
-		"str2sym":   Str2SymFunction,
-		"sym2str":   Sym2StrFunction,
-		"gensym":    GensymFunction,
 		"togo":      ToGoFunction,
 		"dump":      GoonDumpFunction,
 		"slurpf":    SlurpfileFunction,
 		"writef":    WriteToFileFunction,
 		"owritef":   WriteToFileFunction,
 		"system":    SystemFunction,
-		"methodls":  GoMethodListFunction,
-		"_method":   CallGoMethodFunction,
 		"exit":      ExitFunction,
-		"stop":      StopFunction,
 		"_closdump": DumpClosureEnvFunction,
-		"_call":     CallZMethodOnRecordFunction,
-		"joinsym":   JoinSymFunction,
 		"rmsym":     RemoveSymFunction,
-		"GOOS":      GOOSFunction,
+		// not done "_call":     CallZMethodOnRecordFunction,
 	}
 }
 
