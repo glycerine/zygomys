@@ -49,6 +49,16 @@ const StackStackSize = 5
 const LoopStackSize = 5
 
 func NewGlisp() *Glisp {
+	return NewGlispWithFuncs(AllBuiltinFunctions())
+}
+
+// NewSandboxSafeGlisp returns a new *Glisp instance that does not allow the user to get to the outside world
+func NewSandboxSafeGlisp() *Glisp {
+	return NewGlispWithFuncs(SandboxSafeFunctions())
+}
+
+// NewGlispWithFuncs returns a new *Glisp instance with access to only the given builtin functions
+func NewGlispWithFuncs(funcs map[string]GlispUserFunction) *Glisp {
 	env := new(Glisp)
 	env.parser = env.NewParser()
 	env.parser.Start()
@@ -68,7 +78,7 @@ func NewGlisp() *Glisp {
 	env.before = []PreHook{}
 	env.after = []PostHook{}
 
-	for key, function := range BuiltinFunctions {
+	for key, function := range funcs {
 		sym := env.MakeSymbol(key)
 		env.builtins[sym.number] = MakeUserFunction(key, function)
 		env.AddFunction(key, function)
@@ -83,6 +93,7 @@ func NewGlisp() *Glisp {
 	//env.debugExec = true
 
 	return env
+
 }
 
 func (env *Glisp) Clone() *Glisp {

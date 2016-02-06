@@ -734,108 +734,155 @@ func MakeUserFunction(name string, ufun GlispUserFunction) *SexpFunction {
 	return &sfun
 }
 
-var BuiltinFunctions = map[string]GlispUserFunction{
-	"<":          CompareFunction,
-	">":          CompareFunction,
-	"<=":         CompareFunction,
-	">=":         CompareFunction,
-	"==":         CompareFunction,
-	"not=":       CompareFunction,
-	"!=":         CompareFunction,
-	"sll":        BinaryIntFunction,
-	"sra":        BinaryIntFunction,
-	"srl":        BinaryIntFunction,
-	"mod":        BinaryIntFunction,
-	"+":          NumericFunction,
-	"-":          NumericFunction,
-	"*":          NumericFunction,
-	"**":         NumericFunction,
-	"/":          NumericFunction,
-	"bit-and":    BitwiseFunction,
-	"bit-or":     BitwiseFunction,
-	"bit-xor":    BitwiseFunction,
-	"bit-not":    ComplementFunction,
-	"read":       ReadFunction,
-	"cons":       ConsFunction,
-	"first":      FirstFunction,
-	"second":     SecondFunction,
-	"rest":       RestFunction,
-	"car":        FirstFunction,
-	"cdr":        RestFunction,
-	"type":       TypeQueryFunction,
-	"list?":      TypeQueryFunction,
-	"null?":      TypeQueryFunction,
-	"array?":     TypeQueryFunction,
-	"hash?":      TypeQueryFunction,
-	"number?":    TypeQueryFunction,
-	"int?":       TypeQueryFunction,
-	"float?":     TypeQueryFunction,
-	"char?":      TypeQueryFunction,
-	"symbol?":    TypeQueryFunction,
-	"string?":    TypeQueryFunction,
-	"zero?":      TypeQueryFunction,
-	"empty?":     TypeQueryFunction,
-	"println":    PrintFunction,
-	"print":      PrintFunction,
-	"printf":     PrintFunction,
-	"not":        NotFunction,
-	"apply":      ApplyFunction,
-	"map":        MapFunction,
-	"make-array": MakeArrayFunction,
-	"aget":       ArrayAccessFunction,
-	"aset!":      ArrayAccessFunction,
-	"sget":       SgetFunction,
-	"hget":       GenericAccessFunction, // handles arrays or hashes
-	"hset!":      HashAccessFunction,
-	"hdel!":      HashAccessFunction,
-	"keys":       HashAccessFunction,
-	"hpair":      GenericHpairFunction,
-	"slice":      SliceFunction,
-	"len":        LenFunction,
-	"append":     AppendFunction,
-	"concat":     ConcatFunction,
-	"array":      ConstructorFunction,
-	"list":       ConstructorFunction,
-	"hash":       ConstructorFunction,
-	"msgmap":     ConstructorFunction,
-	"raw":        ConstructorFunction,
-	"raw2str":    RawToStringFunction,
-	"symnum":     SymnumFunction,
-	"source":     SourceFileFunction,
-	//"source":    SimpleSourceFunction,
-	"str2sym":   Str2SymFunction,
-	"sym2str":   Sym2StrFunction,
-	"gensym":    GensymFunction,
-	"str":       StringifyFunction,
-	"->":        ThreadMapFunction,
-	"json":      JsonFunction,
-	"unjson":    JsonFunction,
-	"msgpack":   JsonFunction,
-	"unmsgpack": JsonFunction,
-	"togo":      ToGoFunction,
-	"dump":      GoonDumpFunction,
-	"slurpf":    SlurpfileFunction,
-	"writef":    WriteToFileFunction,
-	"owritef":   WriteToFileFunction,
-	"system":    SystemFunction,
-	"flatten":   FlattenToWordsFunction,
-	"nsplit":    SplitStringOnNewlinesFunction,
-	"split":     SplitStringFunction,
-	"methodls":  GoMethodListFunction,
-	"_method":   CallGoMethodFunction,
-	"fieldls":   GoFieldListFunction,
-	"chomp":     StringUtilFunction,
-	"trim":      StringUtilFunction,
-	"exit":      ExitFunction,
-	"stop":      StopFunction,
-	"_closdump": DumpClosureEnvFunction,
-	"_call":     CallZMethodOnRecordFunction,
-	"gob":       GobEncodeFunction,
-	"=":         AssignmentFunction,
-	"joinsym":   JoinSymFunction,
-	"quotelist": QuoteListFunction,
-	"rmsym":     RemoveSymFunction,
-	"GOOS":      GOOSFunction,
+// mergeFuncMap returns the union of the two given maps
+func mergeFuncMap(funcs ...map[string]GlispUserFunction) map[string]GlispUserFunction {
+	n := make(map[string]GlispUserFunction)
+
+	for _, f := range funcs {
+		for k, v := range f {
+			n[k] = v
+		}
+	}
+	return n
+}
+
+// SandboxSafeFuncs returns all functions that are safe to run in a "sandboxed" environment
+func SandboxSafeFunctions() map[string]GlispUserFunction {
+	return mergeFuncMap(
+		CoreFunctions(),
+		StrFunctions(),
+		EncodingFunctions(),
+	)
+}
+
+// AllBuiltinFunctions returns all built in functions
+func AllBuiltinFunctions() map[string]GlispUserFunction {
+	return mergeFuncMap(
+		CoreFunctions(),
+		StrFunctions(),
+		EncodingFunctions(),
+		SystemFunctions(),
+	)
+}
+
+// CoreFunctions returns all of the core logic
+func CoreFunctions() map[string]GlispUserFunction {
+	return map[string]GlispUserFunction{
+		"<":          CompareFunction,
+		">":          CompareFunction,
+		"<=":         CompareFunction,
+		">=":         CompareFunction,
+		"==":         CompareFunction,
+		"not=":       CompareFunction,
+		"!=":         CompareFunction,
+		"sll":        BinaryIntFunction,
+		"sra":        BinaryIntFunction,
+		"srl":        BinaryIntFunction,
+		"mod":        BinaryIntFunction,
+		"+":          NumericFunction,
+		"-":          NumericFunction,
+		"*":          NumericFunction,
+		"**":         NumericFunction,
+		"/":          NumericFunction,
+		"bit-and":    BitwiseFunction,
+		"bit-or":     BitwiseFunction,
+		"bit-xor":    BitwiseFunction,
+		"bit-not":    ComplementFunction,
+		"read":       ReadFunction,
+		"cons":       ConsFunction,
+		"first":      FirstFunction,
+		"second":     SecondFunction,
+		"rest":       RestFunction,
+		"car":        FirstFunction,
+		"cdr":        RestFunction,
+		"type":       TypeQueryFunction,
+		"list?":      TypeQueryFunction,
+		"null?":      TypeQueryFunction,
+		"array?":     TypeQueryFunction,
+		"hash?":      TypeQueryFunction,
+		"number?":    TypeQueryFunction,
+		"int?":       TypeQueryFunction,
+		"float?":     TypeQueryFunction,
+		"char?":      TypeQueryFunction,
+		"symbol?":    TypeQueryFunction,
+		"string?":    TypeQueryFunction,
+		"zero?":      TypeQueryFunction,
+		"empty?":     TypeQueryFunction,
+		"not":        NotFunction,
+		"apply":      ApplyFunction,
+		"map":        MapFunction,
+		"make-array": MakeArrayFunction,
+		"aget":       ArrayAccessFunction,
+		"aset!":      ArrayAccessFunction,
+		"sget":       SgetFunction,
+		"hget":       GenericAccessFunction, // handles arrays or hashes
+		"hset!":      HashAccessFunction,
+		"hdel!":      HashAccessFunction,
+		"keys":       HashAccessFunction,
+		"hpair":      GenericHpairFunction,
+		"slice":      SliceFunction,
+		"len":        LenFunction,
+		"append":     AppendFunction,
+		"concat":     ConcatFunction,
+		"array":      ConstructorFunction,
+		"list":       ConstructorFunction,
+		"hash":       ConstructorFunction,
+		"raw":        ConstructorFunction,
+		"str":        StringifyFunction,
+		"->":         ThreadMapFunction,
+		"flatten":    FlattenToWordsFunction,
+		"quotelist":  QuoteListFunction,
+		"=":          AssignmentFunction,
+		"fieldls":    GoFieldListFunction,
+	}
+}
+
+func StrFunctions() map[string]GlispUserFunction {
+	return map[string]GlispUserFunction{
+		"nsplit": SplitStringOnNewlinesFunction, "split": SplitStringFunction,
+		"chomp":   StringUtilFunction,
+		"trim":    StringUtilFunction,
+		"println": PrintFunction,
+		"print":   PrintFunction,
+		"printf":  PrintFunction,
+	}
+
+}
+
+func EncodingFunctions() map[string]GlispUserFunction {
+	return map[string]GlispUserFunction{
+		"json":      JsonFunction,
+		"unjson":    JsonFunction,
+		"msgpack":   JsonFunction,
+		"unmsgpack": JsonFunction,
+		"gob":       GobEncodeFunction,
+		"msgmap":    ConstructorFunction,
+	}
+}
+
+func SystemFunctions() map[string]GlispUserFunction {
+	return map[string]GlispUserFunction{
+		"symnum":    SymnumFunction,
+		"source":    SourceFileFunction,
+		"str2sym":   Str2SymFunction,
+		"sym2str":   Sym2StrFunction,
+		"gensym":    GensymFunction,
+		"togo":      ToGoFunction,
+		"dump":      GoonDumpFunction,
+		"slurpf":    SlurpfileFunction,
+		"writef":    WriteToFileFunction,
+		"owritef":   WriteToFileFunction,
+		"system":    SystemFunction,
+		"methodls":  GoMethodListFunction,
+		"_method":   CallGoMethodFunction,
+		"exit":      ExitFunction,
+		"stop":      StopFunction,
+		"_closdump": DumpClosureEnvFunction,
+		"_call":     CallZMethodOnRecordFunction,
+		"joinsym":   JoinSymFunction,
+		"rmsym":     RemoveSymFunction,
+		"GOOS":      GOOSFunction,
+	}
 }
 
 func ThreadMapFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {

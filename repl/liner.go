@@ -15,7 +15,7 @@ var math_funcs = []string{`* `, `** `, `+ `, `- `, `-> `, `/ `, `< `, `<= `, `==
 func init() {
 	// fill in our auto-complete keywords
 	sortme := []*SymtabE{}
-	for f, _ := range BuiltinFunctions {
+	for f, _ := range AllBuiltinFunctions() {
 		sortme = append(sortme, &SymtabE{Key: f})
 	}
 	sort.Sort(SymtabSorter(sortme))
