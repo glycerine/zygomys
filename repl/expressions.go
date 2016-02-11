@@ -45,7 +45,7 @@ const (
 
 func (sent SexpSentinel) SexpString() string {
 	if sent == SexpNull {
-		return "()"
+		return "null"
 	}
 	if sent == SexpEnd {
 		return "End"

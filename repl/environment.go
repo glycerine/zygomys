@@ -79,6 +79,8 @@ func NewGlispWithFuncs(funcs map[string]GlispUserFunction) *Glisp {
 	env.before = []PreHook{}
 	env.after = []PostHook{}
 
+	env.AddGlobal("null", SexpNull)
+
 	for key, function := range funcs {
 		sym := env.MakeSymbol(key)
 		env.builtins[sym.number] = MakeUserFunction(key, function)

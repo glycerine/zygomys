@@ -6,7 +6,7 @@
 ;; structs coming back into zygo from Go
 (def w (weather type:"delightful" size:888))
 (def c2 (_method (snoopy cry:"yeah!") EchoWeather: w))
-(assert (== (str c2) `[ (weather time:() size:888 type:"delightful" details:[]byte(nil))]`))
+(assert (== (str c2) `[ (weather time:null size:888 type:"delightful" details:[]byte(nil))]`))
 
 ;; passing in []byte to a method
 (def w (weather))

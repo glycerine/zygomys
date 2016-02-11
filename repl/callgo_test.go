@@ -344,7 +344,7 @@ func Test018ReflectCallOnGoMethodsComplexReturnType(t *testing.T) {
 			   `)
 			panicOn(err)
 			VPrintf("got invoke = '%s'\n", invok.SexpString())
-			cv.So(invok.SexpString(), cv.ShouldEqual, `[ (weather time:()`+
+			cv.So(invok.SexpString(), cv.ShouldEqual, `[ (weather time:null`+
 				` size:12 type:"sunny" details:[]byte{0x31, 0x32, 0x33})]`)
 		})
 }
