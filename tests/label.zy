@@ -5,15 +5,17 @@
      (.isum = (+ isum i))
 
      (for inner-loop: [(def j 1) (< j 5) (.j = (+ j 1))]
-          (.jsum = (+ jsum j))
+          ;;(printf "i = %v    j = %v\n" i j)
+          (set jsum (+ jsum j))
+          ;;(printf "   -- after inner increment, jsum is %v\n" jsum)          
           (cond (> j 2) (continue outer-loop:)
                 (and (> i 2) (> j 3)) (break outer-loop:)
                 null)
-          (.jsum = (+ jsum 1000));; check continue works
+          ;;(printf "advancing jsum %v -> %v\n" jsum (+ jsum 1000))
+          (set jsum (+ jsum 1000));; check continue works
      )
 )
-(printf "isum is %d\n" isum)
-(printf "jsum is %d\n" jsum)
+;;(printf "isum is %d\n" isum)
+;;(printf "jsum is %d\n" jsum)
 (assert (== isum 10))
 (assert (== jsum 8024))
-

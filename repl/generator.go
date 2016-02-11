@@ -17,6 +17,7 @@ type Generator struct {
 
 type Loop struct {
 	stmtname       SexpSymbol
+	label          *SexpSymbol
 	loopStart      int
 	loopLen        int
 	breakOffset    int // i.e. relative to loopStart
@@ -709,9 +710,11 @@ func (gen *Generator) Reset() {
 	gen.scopes = 0
 }
 
+var ErrBadLoopSyntax = errors.New("for loop: first argument must be a label or a vector of [init predicate advance]")
+
 // for loops: Just like in C.
 //
-// (for [init predicate advance] (expr)*)
+// (for {optional-label} [init predicate advance] (expr)*)
 //
 // Each of init, predicate, and advance are expressions
 // that are evaluated during the running of the for loop.
@@ -726,20 +729,48 @@ func (gen *Generator) GenerateForLoop(args []Sexp) error {
 		return errors.New("malformed for loop")
 	}
 
+	startgen := 1
 	var controlargs SexpArray
+	var labelsym SexpSymbol
+	var err error
+	foundSym := false
 	switch expr := args[0].(type) {
+	case SexpPair:
+		labelsym, err = getQuotedSymbol(expr)
+		if err != nil {
+			return ErrBadLoopSyntax
+		}
+		foundSym = true
+		startgen = 2
 	case SexpArray:
 		controlargs = expr
 	default:
-		return errors.New("for loop: first argument must be a vector of [init predicate advance]")
+		return ErrBadLoopSyntax
+	}
+
+	if foundSym {
+		switch expr := args[1].(type) {
+		case SexpArray:
+			controlargs = expr
+		default:
+			return errors.New("for loop: 2nd argument after the label must be a vector of [init predicate advance]")
+		}
 	}
 
 	if len(controlargs) != 3 {
-		return errors.New("for loop: first argument wrong size; must be a vector of three [init test advance]")
+		return errors.New("for loop: control vector argument wrong size; must be a vector of three [init test advance]")
 	}
 
-	loop := &Loop{
-		stmtname: gen.env.GenSymbol("__loop"),
+	var loop *Loop
+	if foundSym {
+		loop = &Loop{
+			stmtname: gen.env.GenSymbol("__loop_" + labelsym.name + "_"),
+			label:    &labelsym,
+		}
+	} else {
+		loop = &Loop{
+			stmtname: gen.env.GenSymbol("__loop"),
+		}
 	}
 
 	gen.env.loopstack.Push(loop)
@@ -763,7 +794,7 @@ func (gen *Generator) GenerateForLoop(args []Sexp) error {
 	subgenBody.Tail = gen.Tail
 	subgenBody.scopes = gen.scopes
 	subgenBody.funcname = gen.funcname
-	err := subgenBody.GenerateBegin(args[1:])
+	err = subgenBody.GenerateBegin(args[startgen:])
 	if err != nil {
 		return err
 	}
@@ -1113,19 +1144,60 @@ func (gen *Generator) generateSyntaxQuoteHash(arg Sexp) error {
 }
 
 func (gen *Generator) GenerateContinue(args []Sexp) error {
-	if len(args) != 0 {
-		return fmt.Errorf("(continue) takes no arguments")
+	if len(args) > 1 {
+		return fmt.Errorf("too many arguments to continue; (continue) or (continue label:) is the form.")
 	}
-	lse, err := gen.env.loopstack.Get(gen.env.loopstack.Top())
-	if err != nil || lse == nil {
+
+	var labelsym SexpSymbol
+	var err error
+	foundSym := false
+
+	if len(args) == 1 {
+		switch expr := args[0].(type) {
+		case SexpPair:
+			labelsym, err = getQuotedSymbol(expr)
+			if err != nil {
+				return ErrBadContinueLabel
+			}
+			foundSym = true
+		default:
+			return ErrBadContinueLabel
+		}
+	}
+
+	if gen.env.loopstack.IsEmpty() {
 		return fmt.Errorf("(continue) found but not inside a loop.")
 	}
+
 	var loop *Loop
-	switch e := lse.(type) {
-	case *Loop:
-		loop = e
-	default:
-		panic(fmt.Errorf("unexpected type found on loopstack: type=%T  value='%#v'", e, e))
+	isLoop := false
+	n := gen.env.loopstack.Size()
+	matchedTheLabel := false
+scanUpTheLoops:
+	for i := 0; i < n; i++ {
+		lse, err := gen.env.loopstack.Get(i)
+		if err != nil || lse == nil {
+			return fmt.Errorf("(continue) found but not inside a loop.")
+		}
+		loop, isLoop = lse.(*Loop)
+		if !isLoop {
+			panic(fmt.Errorf("unexpected type found on loopstack: type=%T  value='%#v'", lse, lse))
+		}
+		if !foundSym {
+			break scanUpTheLoops
+		}
+		if loop.label != nil {
+			if loop.label.number == labelsym.number {
+				matchedTheLabel = true
+				Q("\n labelled countinue found matching loop label '%s'\n", labelsym.name)
+				break scanUpTheLoops
+			}
+		}
+	}
+
+	if foundSym && !matchedTheLabel {
+		return fmt.Errorf("(continue %s:) problem: could not find matching for-loop with label %s:",
+			labelsym.name, labelsym.name)
 	}
 
 	myPos := len(gen.instructions)
@@ -1134,22 +1206,64 @@ func (gen *Generator) GenerateContinue(args []Sexp) error {
 	return nil
 }
 
+var ErrBadBreakLabel = errors.New("bad break label")
+var ErrBadContinueLabel = errors.New("bad continue label")
+
 func (gen *Generator) GenerateBreak(args []Sexp) error {
-	if len(args) != 0 {
-		return fmt.Errorf("(break) takes no arguments")
+	if len(args) > 1 {
+		return fmt.Errorf("too many arguments to break; (break) or (break label:) is the form.")
 	}
 
-	lse, err := gen.env.loopstack.Get(gen.env.loopstack.Top())
-	if err != nil || lse == nil {
+	var labelsym SexpSymbol
+	var err error
+	foundSym := false
+
+	if len(args) == 1 {
+		switch expr := args[0].(type) {
+		case SexpPair:
+			labelsym, err = getQuotedSymbol(expr)
+			if err != nil {
+				return ErrBadBreakLabel
+			}
+			foundSym = true
+		default:
+			return ErrBadBreakLabel
+		}
+	}
+
+	if gen.env.loopstack.IsEmpty() {
 		return fmt.Errorf("(break) found but not inside a loop.")
 	}
 
 	var loop *Loop
-	switch e := lse.(type) {
-	case *Loop:
-		loop = e
-	default:
-		panic(fmt.Errorf("unexpected type found on loopstack: type=%T  value='%#v'", e, e))
+	isLoop := false
+	n := gen.env.loopstack.Size()
+	matchedTheLabel := false
+scanUpTheLoops:
+	for i := 0; i < n; i++ {
+		lse, err := gen.env.loopstack.Get(i)
+		if err != nil || lse == nil {
+			return fmt.Errorf("(break) found but not inside a loop.")
+		}
+		loop, isLoop = lse.(*Loop)
+		if !isLoop {
+			panic(fmt.Errorf("unexpected type found on loopstack: type=%T  value='%#v'", lse, lse))
+		}
+		if !foundSym {
+			break scanUpTheLoops
+		}
+		if loop.label != nil {
+			if loop.label.number == labelsym.number {
+				matchedTheLabel = true
+				Q("\n labelled break found matching loop label '%s'\n", labelsym.name)
+				break scanUpTheLoops
+			}
+		}
+	}
+
+	if foundSym && !matchedTheLabel {
+		return fmt.Errorf("(break %s:) problem: could not find matching for-loop with label %s:",
+			labelsym.name, labelsym.name)
 	}
 
 	VPrintf("\n debug GenerateBreak() : loop=%#v\n", loop)
@@ -1190,4 +1304,31 @@ func (gen *Generator) GenerateDebug(diag string) error {
 	gen.AddInstruction(DebugInstr{diagnostic: diag})
 	gen.AddInstruction(PushInstr{SexpNull})
 	return nil
+}
+
+var ErrBadQuotedSym = fmt.Errorf("not a quoted symbol")
+
+// insist that expr is of the form '(quote mysymbol)',
+// and return mysymbol, nil if it is.
+func getQuotedSymbol(expr SexpPair) (SexpSymbol, error) {
+	n, err := ListLen(expr)
+	if err != nil {
+		return SexpSymbol{}, ErrBadQuotedSym
+	}
+	if n != 2 {
+		return SexpSymbol{}, ErrBadQuotedSym
+	}
+	qu, isSym := expr.Head.(SexpSymbol)
+	if !isSym {
+		return SexpSymbol{}, ErrBadQuotedSym
+	}
+	if qu.name != "quote" {
+		return SexpSymbol{}, ErrBadQuotedSym
+	}
+	eth := expr.Tail.(SexpPair).Head
+	labelsym, isSym := eth.(SexpSymbol)
+	if !isSym {
+		return SexpSymbol{}, ErrBadQuotedSym
+	}
+	return labelsym, nil
 }
