@@ -50,7 +50,7 @@ $ go get github.com/glycerine/zygomys/cmd/zygo
  * [x] Command-line editing, with tab-complete for keywords (courtesy of https://github.com/peterh/liner)
  * [x] JSON and Msgpack interop: serialization and deserialization
  * [x] `(range key value hash_or_array (body))` range loops act like Go for-range loops: iterate through hashes or arrays.
- * [x] `(for [(initializer) (test) (advance)] (body))` for-loops match those in C and Go. Both `(break)` and `(continue)` are available for additional loop control, and can be labelled to break out of nested loops.
+ * [x] `(for [(initializer) (test) (advance)] (body))` for-loops match those in C and Go. Both `(break)` and `(continue)` are available for additional loop control, and can be labeled to break out of nested loops.
  * [x] Raw bytes type `(raw string)` lets you do zero-copy `[]byte` manipulation.
  * [x] Record definitions `(defmap)` make configuration a breeze.
  * [x] Files can be recursively sourced with `(req path)` or `(source "path-string")`.
