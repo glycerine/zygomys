@@ -1,0 +1,19 @@
+;; break/continue in for loop with label
+(def isum 0)
+(def jsum 0)
+(for outer-loop: [(def i 1) (< i 5) (.i = (+ i 1))]
+     (.isum = (+ isum i))
+
+     (for inner-loop: [(def j 1) (< j 5) (.j = (+ j 1))]
+          (.jsum = (+ jsum j))
+          (cond (> j 2) (continue outer-loop:)
+                (and (> i 2) (> j 3)) (break outer-loop:)
+                null)
+          (.jsum = (+ jsum 1000));; check continue works
+     )
+)
+(printf "isum is %d\n" isum)
+(printf "jsum is %d\n" jsum)
+(assert (== isum 10))
+(assert (== jsum 8024))
+

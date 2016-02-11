@@ -278,6 +278,9 @@ func runScript(env *Glisp, fname string, cfg *GlispConfig) {
 	err = env.LoadFile(file)
 	if err != nil {
 		fmt.Println(err)
+		if cfg.ExitOnFailure {
+			os.Exit(-1)
+		}
 		return
 	}
 
