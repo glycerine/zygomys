@@ -1189,7 +1189,7 @@ scanUpTheLoops:
 		if loop.label != nil {
 			if loop.label.number == labelsym.number {
 				matchedTheLabel = true
-				Q("\n labelled countinue found matching loop label '%s'\n", labelsym.name)
+				Q("\n labeled countinue found matching loop label '%s'\n", labelsym.name)
 				break scanUpTheLoops
 			}
 		}
@@ -1255,7 +1255,7 @@ scanUpTheLoops:
 		if loop.label != nil {
 			if loop.label.number == labelsym.number {
 				matchedTheLabel = true
-				Q("\n labelled break found matching loop label '%s'\n", labelsym.name)
+				Q("\n labeled break found matching loop label '%s'\n", labelsym.name)
 				break scanUpTheLoops
 			}
 		}
