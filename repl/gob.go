@@ -11,7 +11,7 @@ func GobEncodeFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		return SexpNull, WrongNargs
 	}
 
-	h, isHash := args[0].(SexpHash)
+	h, isHash := args[0].(*SexpHash)
 	if !isHash {
 		return SexpNull, fmt.Errorf("gob argument must be a hash or defmap")
 	}
@@ -26,7 +26,7 @@ func GobEncodeFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	var gobBytes bytes.Buffer
 
 	enc := gob.NewEncoder(&gobBytes)
-	err = enc.Encode(*h.GoShadowStruct)
+	err = enc.Encode(h.GoShadowStruct)
 	if err != nil {
 		return SexpNull, fmt.Errorf("gob encode error: '%s'", err)
 	}

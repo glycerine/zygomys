@@ -105,6 +105,12 @@ func WriteToFileFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 				return SexpNull, err
 			}
 		}
+	case SexpRaw:
+		_, err = f.Write([]byte(sl))
+		if err != nil {
+			return SexpNull, err
+		}
+
 	default:
 		s := sl.SexpString()
 		if len(s) >= 2 && s[0] == '"' && s[len(s)-1] == '"' {

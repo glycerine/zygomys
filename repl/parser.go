@@ -387,6 +387,8 @@ func (parser *Parser) ParseExpression(depth int) (res Sexp, err error) {
 		return MakeList([]Sexp{env.MakeSymbol("unquote-splicing"), expr}), nil
 	case TokenSymbol:
 		return env.MakeSymbol(tok.str), nil
+	case TokenFreshAssign:
+		return env.MakeSymbol(tok.str), nil
 	case TokenColonOperator:
 		return env.MakeSymbol(tok.str), nil
 	case TokenDollar:
@@ -436,6 +438,10 @@ func (parser *Parser) ParseExpression(depth int) (res Sexp, err error) {
 	case TokenDotSymbol:
 		sym := env.MakeSymbol(tok.str)
 		sym.isDot = true
+		return sym, nil
+	case TokenTypeDesc:
+		sym := env.MakeSymbol(tok.str)
+		sym.isTypeDesc = true
 		return sym, nil
 	}
 	return SexpNull, errors.New(fmt.Sprint("Invalid syntax, didn't know what to do with ", tok.typ, " ", tok))

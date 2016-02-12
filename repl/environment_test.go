@@ -27,7 +27,12 @@ func Test400SandboxFunctions(t *testing.T) {
 			for name := range sandSafeFuncs {
 				env.Clear()
 				res, err := env.EvalString(fmt.Sprintf("(defined? '%s)", name))
-				cv.So(res, cv.ShouldEqual, SexpBool(true))
+				switch y := res.(type) {
+				case SexpSentinel:
+					P("'%s' wasn't defined but should be; defined? returned '%s'", name, y.SexpString())
+				case SexpBool:
+					cv.So(res, cv.ShouldEqual, SexpBool(true))
+				}
 				cv.So(err, cv.ShouldEqual, nil)
 			}
 		}

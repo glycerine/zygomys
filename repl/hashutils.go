@@ -60,9 +60,9 @@ func hashHelper(expr Sexp) (hashcode int, isList bool, err error) {
 	return 0, false, fmt.Errorf("cannot hash type %T", expr)
 }
 
-func MakeHash(args []Sexp, typename string, env *Glisp) (SexpHash, error) {
+func MakeHash(args []Sexp, typename string, env *Glisp) (*SexpHash, error) {
 	if len(args)%2 != 0 {
-		return SexpHash{},
+		return &SexpHash{},
 			errors.New("hash requires even number of arguments")
 	}
 
@@ -85,25 +85,25 @@ func MakeHash(args []Sexp, typename string, env *Glisp) (SexpHash, error) {
 	var defnEnv *SexpHash
 
 	hash := SexpHash{
-		TypeName:         &typename,
+		TypeName:         typename,
 		Map:              make(map[int][]SexpPair),
-		KeyOrder:         &[]Sexp{},
-		GoStructFactory:  &factory,
-		NumKeys:          &memberCount,
-		GoMethods:        &meth,
-		GoMethSx:         &arr,
-		GoFieldSx:        &fld,
-		GoFields:         &field,
-		NumMethod:        &num,
-		GoType:           &got,
-		JsonTagMap:       &jsonMap,
-		GoShadowStructVa: &va,
-		GoShadowStruct:   &iface,
-		DetOrder:         &detOrder,
-		ZMain:            &zmain,
-		ZMethods:         &zmethods,
-		SuperClass:       &superClass,
-		DefnEnv:          &defnEnv,
+		KeyOrder:         []Sexp{},
+		GoStructFactory:  factory,
+		NumKeys:          memberCount,
+		GoMethods:        meth,
+		GoMethSx:         arr,
+		GoFieldSx:        fld,
+		GoFields:         field,
+		NumMethod:        num,
+		GoType:           got,
+		JsonTagMap:       jsonMap,
+		GoShadowStructVa: va,
+		GoShadowStruct:   iface,
+		DetOrder:         detOrder,
+		ZMain:            zmain,
+		ZMethods:         zmethods,
+		SuperClass:       superClass,
+		DefnEnv:          defnEnv,
 		env:              env,
 	}
 	k := 0
@@ -112,7 +112,7 @@ func MakeHash(args []Sexp, typename string, env *Glisp) (SexpHash, error) {
 		val := args[i+1]
 		err := hash.HashSet(key, val)
 		if err != nil {
-			return hash, err
+			return &hash, err
 		}
 		k++
 	}
@@ -123,14 +123,14 @@ func MakeHash(args []Sexp, typename string, env *Glisp) (SexpHash, error) {
 		hash.SetGoStructFactory(factory)
 		err := hash.SetMethodList(env)
 		if err != nil {
-			return SexpHash{}, fmt.Errorf("unexpected error "+
+			return &SexpHash{}, fmt.Errorf("unexpected error "+
 				"from hash.SetMethodList(): %s", err)
 		}
 	} else {
 		VPrintf("\n in MakeHash: did not find Go struct with '%s'\n", typename)
 	}
 
-	return hash, nil
+	return &hash, nil
 }
 
 func (hash *SexpHash) HashGet(env *Glisp, key Sexp) (Sexp, error) {
@@ -179,8 +179,8 @@ func (hash *SexpHash) HashSet(key Sexp, val Sexp) error {
 
 	if !ok {
 		hash.Map[hashval] = []SexpPair{Cons(key, val)}
-		*hash.KeyOrder = append(*hash.KeyOrder, key)
-		(*hash.NumKeys)++
+		hash.KeyOrder = append(hash.KeyOrder, key)
+		hash.NumKeys++
 		return nil
 	}
 
@@ -195,8 +195,8 @@ func (hash *SexpHash) HashSet(key Sexp, val Sexp) error {
 
 	if !found {
 		arr = append(arr, Cons(key, val))
-		*hash.KeyOrder = append(*hash.KeyOrder, key)
-		(*hash.NumKeys)++
+		hash.KeyOrder = append(hash.KeyOrder, key)
+		hash.NumKeys++
 	}
 
 	hash.Map[hashval] = arr
@@ -216,7 +216,7 @@ func (hash *SexpHash) HashDelete(key Sexp) error {
 		return nil
 	}
 
-	(*hash.NumKeys)--
+	hash.NumKeys--
 	for i, pair := range arr {
 		res, err := Compare(pair.Head, key)
 		if err == nil && res == 0 {
@@ -228,18 +228,18 @@ func (hash *SexpHash) HashDelete(key Sexp) error {
 	return nil
 }
 
-func HashCountKeys(hash SexpHash) int {
+func HashCountKeys(hash *SexpHash) int {
 	var num int
 	for _, arr := range hash.Map {
 		num += len(arr)
 	}
-	if num != (*hash.NumKeys) {
-		panic(fmt.Errorf("HashCountKeys disagreement on count: num=%d, (*hash.NumKeys)=%d", num, (*hash.NumKeys)))
+	if num != hash.NumKeys {
+		panic(fmt.Errorf("HashCountKeys disagreement on count: num=%d, (*hash.NumKeys)=%d", num, hash.NumKeys))
 	}
 	return num
 }
 
-func HashIsEmpty(hash SexpHash) bool {
+func HashIsEmpty(hash *SexpHash) bool {
 	for _, arr := range hash.Map {
 		if len(arr) > 0 {
 			return false
@@ -250,31 +250,31 @@ func HashIsEmpty(hash SexpHash) bool {
 
 func SetHashKeyOrder(hash *SexpHash, keyOrd Sexp) error {
 	// truncate down to zero, then build back up correctly.
-	*(*hash).KeyOrder = (*(*hash).KeyOrder)[:0]
+	hash.KeyOrder = hash.KeyOrder[:0]
 
 	keys, isArr := keyOrd.(SexpArray)
 	if !isArr {
 		return fmt.Errorf("must have SexpArray for keyOrd, but instead we have: %T with value='%#v'", keyOrd, keyOrd)
 	}
 	for _, key := range keys {
-		*hash.KeyOrder = append(*hash.KeyOrder, key)
+		hash.KeyOrder = append(hash.KeyOrder, key)
 	}
 
 	return nil
 }
 
 func (hash *SexpHash) HashPairi(pos int) (SexpPair, error) {
-	nk := (*hash.NumKeys)
+	nk := hash.NumKeys
 	if pos > nk {
 		return SexpPair{}, fmt.Errorf("hpair error: pos %d is beyond our key count %d",
 			pos, nk)
 	}
-	lenKeyOrder := len(*hash.KeyOrder)
+	lenKeyOrder := len(hash.KeyOrder)
 	var err error
 	var key, val Sexp
 	found := false
 	for k := pos; k < lenKeyOrder; k++ {
-		key = (*hash.KeyOrder)[k]
+		key = hash.KeyOrder[k]
 		val, err = hash.HashGet(nil, key)
 
 		if err == nil {
@@ -294,26 +294,26 @@ func GoMethodListFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	if len(args) != 1 {
 		return SexpNull, WrongNargs
 	}
-	h, isHash := args[0].(SexpHash)
+	h, isHash := args[0].(*SexpHash)
 	if !isHash {
 		return SexpNull, fmt.Errorf("hash/record required, but saw type %T/val=%#v", args[0], args[0])
 	}
-	if *h.NumMethod != -1 {
+	if h.NumMethod != -1 {
 		// use cached results
-		return *h.GoMethSx, nil
+		return h.GoMethSx, nil
 	}
-	if (*h.GoStructFactory).Factory(env) == nil {
+	if h.GoStructFactory.Factory(env) == nil {
 		return SexpNull, NoAttachedGoStruct
 	}
 
 	h.SetMethodList(env)
-	return SexpArray(*h.GoMethSx), nil
+	return SexpArray(h.GoMethSx), nil
 }
 
 func (h *SexpHash) SetMethodList(env *Glisp) error {
 	VPrintf("hash.SetMethodList() called.\n")
 
-	rs := (*h.GoStructFactory).Factory(env)
+	rs := h.GoStructFactory.Factory(env)
 	if rs == nil {
 		return NoAttachedGoStruct
 	}
@@ -322,8 +322,8 @@ func (h *SexpHash) SetMethodList(env *Glisp) error {
 	n := ty.NumMethod()
 
 	VPrintf("hash.SetMethodList() sees %d methods on type %v\n", n, ty)
-	*h.NumMethod = n
-	*h.GoType = ty
+	h.NumMethod = n
+	h.GoType = ty
 
 	sx := make([]Sexp, n)
 	sl := make([]reflect.Method, n)
@@ -331,8 +331,8 @@ func (h *SexpHash) SetMethodList(env *Glisp) error {
 		sl[i] = ty.Method(i)
 		sx[i] = SexpStr(sl[i].Name + " " + sl[i].Type.String())
 	}
-	*h.GoMethSx = sx
-	*h.GoMethods = sl
+	h.GoMethSx = sx
+	h.GoMethods = sl
 
 	// do the fields too
 
@@ -350,10 +350,10 @@ func (h *SexpHash) SetMethodList(env *Glisp) error {
 	json2ptr := make(map[string]*HashFieldDet)
 	detOrder := make([]*HashFieldDet, 0)
 	fillJsonMap(&json2ptr, &fx, &fl, embeds, tye, &detOrder)
-	*h.GoFieldSx = fx
-	*h.GoFields = fl
-	*h.JsonTagMap = json2ptr
-	*h.DetOrder = detOrder
+	h.GoFieldSx = fx
+	h.GoFields = fl
+	h.JsonTagMap = json2ptr
+	h.DetOrder = detOrder
 	return nil
 }
 
@@ -398,14 +398,14 @@ func GoFieldListFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	if len(args) != 1 {
 		return SexpNull, WrongNargs
 	}
-	h, isHash := args[0].(SexpHash)
+	h, isHash := args[0].(*SexpHash)
 	if !isHash {
 		return SexpNull, fmt.Errorf("hash/record required, but saw %T/val=%v", args[0], args[0])
 	}
-	if (*h.GoStructFactory).Factory(env) == nil {
+	if (h.GoStructFactory).Factory(env) == nil {
 		return SexpNull, NoAttachedGoStruct
 	}
-	return SexpArray(*h.GoFieldSx), nil
+	return SexpArray(h.GoFieldSx), nil
 }
 
 // works over hashes and arrays
@@ -421,8 +421,8 @@ func GenericHpairFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	pos := int(posreq)
 
 	switch seq := args[0].(type) {
-	case SexpHash:
-		if pos < 0 || pos >= len(*seq.KeyOrder) {
+	case *SexpHash:
+		if pos < 0 || pos >= len(seq.KeyOrder) {
 			return SexpNull, fmt.Errorf("hpair position request %d out of bounds", pos)
 		}
 		return seq.HashPairi(pos)
@@ -438,10 +438,10 @@ func GenericHpairFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 }
 
 func (h *SexpHash) FillHashFromShadow(env *Glisp, src interface{}) error {
-	(*h.GoShadowStruct) = src
+	h.GoShadowStruct = src
 	vaSrc := reflect.ValueOf(src).Elem()
 
-	for _, det := range *h.DetOrder {
+	for _, det := range h.DetOrder {
 		VPrintf("\n looking at det for %s\n", det.FieldJsonTag)
 		goField := vaSrc.Field(det.FieldNum)
 		val, err := fillHashHelper(goField.Interface(), 0, env, false)
@@ -553,7 +553,7 @@ func fillHashHelper(r interface{}, depth int, env *Glisp, preferSym bool) (Sexp,
 		}
 		hash, err := MakeHash(pairs, typeName, env)
 		if foundzKeyOrder {
-			err = SetHashKeyOrder(&hash, keyOrd)
+			err = SetHashKeyOrder(hash, keyOrd)
 			panicOn(err)
 		}
 		panicOn(err)
@@ -608,9 +608,9 @@ func (h *SexpHash) nestedPathGetSet(env *Glisp, dotpaths []string, setVal *Sexp)
 		}
 		// invar: i < lenpath-1, so go deeper
 		switch h2 := ret.(type) {
-		case SexpHash:
+		case *SexpHash:
 			//P("\n found hash in h2 at i=%d, looping to next i\n", i)
-			askh = &h2
+			askh = h2
 		default:
 			return SexpNull, fmt.Errorf("not a record: cannot get field '%s'"+
 				" in out of type %T)", dotpaths[i+1][1:], h2)

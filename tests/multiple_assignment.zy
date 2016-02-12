@@ -1,0 +1,10 @@
+(a b c = 1 2 3)
+(assert (== a 1))
+(assert (== b 2))
+(assert (== c 3))
+
+(defn f [x y] (+ x y))
+(r s t = (f 1 2) (f 3 4) (f 5 6))
+(assert (== r 3))
+(assert (== s 7))
+(assert (== t 11))

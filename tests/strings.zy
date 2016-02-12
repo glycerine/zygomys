@@ -9,9 +9,9 @@
 (assert (symbol? 'a))
 
 ;; back tick quoted strings work too now.
-(assert (== (type `hello`) "string"))
+(assert (== (type? `hello`) "string"))
 
-(assert (== (type `hello
+(assert (== (type? `hello
 world
 with newlines
 inside`) "string"))

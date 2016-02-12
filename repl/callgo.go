@@ -34,7 +34,7 @@ func CallGoMethodFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		if narg < 2 {
 			return SexpNull, WrongNargs
 		}
-		obj, isHash := args[0].(SexpHash)
+		obj, isHash := args[0].(*SexpHash)
 		if !isHash {
 			return SexpNull, fmt.Errorf("_method error: first argument must be a hash or defmap (a record) with an attached GoObject")
 		}
@@ -50,7 +50,7 @@ func CallGoMethodFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		}
 
 		// get the method list, verify the method exists and get its type
-		if *obj.NumMethod == -1 {
+		if obj.NumMethod == -1 {
 			err := obj.SetMethodList(env)
 			if err != nil {
 				return SexpNull, fmt.Errorf("could not get method list for object: %s", err)
@@ -59,7 +59,7 @@ func CallGoMethodFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 
 		var method reflect.Method
 		found := false
-		for _, me := range *obj.GoMethods {
+		for _, me := range obj.GoMethods {
 			if me.Name == methodname {
 				method = me
 				found = true
@@ -69,7 +69,7 @@ func CallGoMethodFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		if !found {
 			return SexpNull, fmt.Errorf("no such method '%s' on %s. choices are: %s",
 				methodname, obj.TypeName,
-				(*obj.GoMethSx).SexpString())
+				(obj.GoMethSx).SexpString())
 		}
 		// INVAR: var method holds our call target
 
@@ -79,7 +79,7 @@ func CallGoMethodFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 			return SexpNull, fmt.Errorf("error converting object to Go struct: '%s'", err)
 		}
 
-		inputVa := []reflect.Value{(*obj.GoShadowStructVa)}
+		inputVa := []reflect.Value{(obj.GoShadowStructVa)}
 
 		// prep args.
 		needed := method.Type.NumIn() - 1 // one for the receiver

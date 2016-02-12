@@ -39,6 +39,8 @@ const (
 	TokenBackslash
 	TokenDollar
 	TokenDotSymbol
+	TokenTypeDesc
+	TokenFreshAssign
 	TokenEnd
 )
 
@@ -99,12 +101,13 @@ func (t Token) String() string {
 type LexerState int
 
 const (
-	LexerNormal LexerState = iota
-	LexerComment
-	LexerStrLit
-	LexerStrEscaped
-	LexerUnquote
-	LexerBacktickString
+	LexerNormal         LexerState = iota
+	LexerComment                   //
+	LexerStrLit                    //
+	LexerStrEscaped                //
+	LexerUnquote                   //
+	LexerBacktickString            //
+	LexerFreshAssignOrColon
 )
 
 type Lexer struct {
@@ -169,10 +172,11 @@ var (
 	SymbolRegex = regexp.MustCompile(`^[^'#:;\\~@\[\]{}\^|"()%0-9][^'#:;\\~@\[\]{}\^|"()%]*$`)
 	// dot symbol examples: `.`, `.a`, `.a.b`, `.a.b.c`
 	// dot symbol non-examples: `.a.`, `..`
-	DotSymbolRegex = regexp.MustCompile(`^[.]$|^([.][^'#:;\\~@\[\]{}\^|"()%.0-9][^'#:;\\~@\[\]{}\^|"()%.]*)+$`)
-	DotPartsRegex  = regexp.MustCompile(`[.][^'#:;\\~@\[\]{}\^|"()%.0-9][^'#:;\\~@\[\]{}\^|"()%.]*`)
-	CharRegex      = regexp.MustCompile("^#\\\\?.$")
-	FloatRegex     = regexp.MustCompile("^-?([0-9]+\\.[0-9]*)|(\\.[0-9]+)|([0-9]+(\\.[0-9]*)?[eE](-?[0-9]+))$")
+	DotSymbolRegex      = regexp.MustCompile(`^[.]$|^([.][^'#:;\\~@\[\]{}\^|"()%.0-9][^'#:;\\~@\[\]{}\^|"()%.]*)+$`)
+	DotPartsRegex       = regexp.MustCompile(`[.][^'#:;\\~@\[\]{}\^|"()%.0-9][^'#:;\\~@\[\]{}\^|"()%.]*`)
+	CharRegex           = regexp.MustCompile("^#\\\\?.$")
+	FloatRegex          = regexp.MustCompile("^-?([0-9]+\\.[0-9]*)|(\\.[0-9]+)|([0-9]+(\\.[0-9]*)?[eE](-?[0-9]+))$")
+	TypeDescriptorRegex = regexp.MustCompile("^%[^%]+$")
 )
 
 func StringToRunes(str string) []rune {
@@ -247,6 +251,9 @@ func (x *Lexer) DecodeAtom(atom string) (Token, error) {
 	if FloatRegex.MatchString(atom) {
 		return x.Token(TokenFloat, atom), nil
 	}
+	if TypeDescriptorRegex.MatchString(atom) {
+		return x.Token(TokenTypeDesc, atom), nil
+	}
 	if DotSymbolRegex.MatchString(atom) {
 		return x.Token(TokenDotSymbol, atom), nil
 	}
@@ -305,13 +312,15 @@ func (x *Lexer) DecodeBrace(brace rune) Token {
 }
 
 func (lexer *Lexer) LexNextRune(r rune) error {
-	if lexer.state == LexerComment {
+top:
+	switch lexer.state {
+	case LexerComment:
 		if r == '\n' {
 			lexer.state = LexerNormal
 		}
 		return nil
-	}
-	if lexer.state == LexerBacktickString {
+
+	case LexerBacktickString:
 		if r == '`' {
 			lexer.dumpString()
 			lexer.state = LexerNormal
@@ -319,8 +328,8 @@ func (lexer *Lexer) LexNextRune(r rune) error {
 		}
 		lexer.buffer.WriteRune(r)
 		return nil
-	}
-	if lexer.state == LexerStrLit {
+
+	case LexerStrLit:
 		if r == '\\' {
 			lexer.state = LexerStrEscaped
 			return nil
@@ -332,8 +341,8 @@ func (lexer *Lexer) LexNextRune(r rune) error {
 		}
 		lexer.buffer.WriteRune(r)
 		return nil
-	}
-	if lexer.state == LexerStrEscaped {
+
+	case LexerStrEscaped:
 		char, err := EscapeChar(r)
 		if err != nil {
 			return err
@@ -341,8 +350,8 @@ func (lexer *Lexer) LexNextRune(r rune) error {
 		lexer.buffer.WriteRune(char)
 		lexer.state = LexerStrLit
 		return nil
-	}
-	if lexer.state == LexerUnquote {
+
+	case LexerUnquote:
 		if r == '@' {
 			lexer.tokens = append(
 				lexer.tokens, lexer.Token(TokenTildeAt, ""))
@@ -353,100 +362,134 @@ func (lexer *Lexer) LexNextRune(r rune) error {
 		}
 		lexer.state = LexerNormal
 		return nil
-	}
-	if r == '`' {
-		if lexer.buffer.Len() > 0 {
-			return errors.New("Unexpected backtick")
-		}
-		lexer.state = LexerBacktickString
-		return nil
-	}
+	case LexerFreshAssignOrColon:
+		lexer.state = LexerNormal
 
-	if r == '"' {
-		if lexer.buffer.Len() > 0 {
-			return errors.New("Unexpected quote")
-		}
-		lexer.state = LexerStrLit
-		return nil
-	}
+		// there was a ':' followed by either '=' or something other than '=',
 
-	if r == ';' {
-		lexer.state = LexerComment
-		return nil
-	}
-
-	// colon terminates a keyword symbol, e.g. in `mykey: "myvalue"`; mykey is the symbol
-	if r == ':' {
+		// so proceed to process the normal ':' actions.
 		if lexer.buffer.Len() == 0 {
+			if r == '=' {
+				lexer.tokens = append(lexer.tokens, lexer.Token(TokenFreshAssign, ":="))
+				return nil
+			}
 			lexer.tokens = append(lexer.tokens, lexer.Token(TokenColonOperator, ":"))
-			return nil
+			goto top // process the unknown rune r in Normal mode
 		}
-		// but still allow ':' to be a token terminator at the end of a word.
-		lexer.tokens = append(lexer.tokens, lexer.Token(TokenQuote, ""))
-		err := lexer.dumpBuffer()
-		if err != nil {
-			return err
-		}
-		return nil
-	}
-
-	// $ is always a token and symbol on its own, there
-	// is implicit whitespace around it.
-	if r == '$' {
-		if lexer.buffer.Len() > 0 {
+		if r == '=' {
 			err := lexer.dumpBuffer()
 			if err != nil {
 				return err
 			}
+			lexer.tokens = append(lexer.tokens, lexer.Token(TokenFreshAssign, ":="))
+			return nil
+		} else {
+			// but still allow ':' to be a token terminator at the end of a word.
+			lexer.tokens = append(lexer.tokens, lexer.Token(TokenQuote, ""))
+			err := lexer.dumpBuffer()
+			if err != nil {
+				return err
+			}
+			goto top // process the unknown rune r in Normal mode
 		}
-		lexer.tokens = append(lexer.tokens, lexer.Token(TokenDollar, "$"))
-		return nil
-	}
 
-	if r == '\'' {
-		if lexer.buffer.Len() > 0 {
-			return errors.New("Unexpected quote")
-		}
-		lexer.tokens = append(lexer.tokens, lexer.Token(TokenQuote, ""))
-		return nil
-	}
+	case LexerNormal:
+		switch r {
+		case '`':
+			if lexer.buffer.Len() > 0 {
+				return errors.New("Unexpected backtick")
+			}
+			lexer.state = LexerBacktickString
+			return nil
 
-	// caret '^' replaces backtick '`' as the start of a macro template, so
-	// we can use `` as in Go for verbatim strings (strings with newlines, etc).
-	if r == '^' {
-		if lexer.buffer.Len() > 0 {
-			return errors.New("Unexpected ^ caret")
-		}
-		lexer.tokens = append(lexer.tokens, lexer.Token(TokenCaret, ""))
-		return nil
-	}
+		case '"':
+			if lexer.buffer.Len() > 0 {
+				return errors.New("Unexpected quote")
+			}
+			lexer.state = LexerStrLit
+			return nil
 
-	if r == '~' {
-		if lexer.buffer.Len() > 0 {
-			return errors.New("Unexpected tilde")
-		}
-		lexer.state = LexerUnquote
-		return nil
-	}
+		case ';':
+			lexer.state = LexerComment
+			return nil
 
-	if r == '(' || r == ')' || r == '[' || r == ']' || r == '{' || r == '}' {
-		err := lexer.dumpBuffer()
-		if err != nil {
-			return err
-		}
-		lexer.tokens = append(lexer.tokens, lexer.DecodeBrace(r))
-		return nil
-	}
-	if r == ' ' || r == '\n' || r == '\t' || r == '\r' {
-		if r == '\n' {
+		// colon terminates a keyword symbol, e.g. in `mykey: "myvalue"`;
+		// mykey is the symbol.
+		// Exception: unless it is the := operator for fresh assigment.
+		case ':':
+			lexer.state = LexerFreshAssignOrColon
+			// won't know if it is ':' alone or ':=' for sure
+			// until we get the next rune
+			return nil
+
+		// $ is always a token and symbol on its own. There
+		// is implicit whitespace around it.
+		case '$':
+			if lexer.buffer.Len() > 0 {
+				err := lexer.dumpBuffer()
+				if err != nil {
+					return err
+				}
+			}
+			lexer.tokens = append(lexer.tokens, lexer.Token(TokenDollar, "$"))
+			return nil
+
+		case '\'':
+			if lexer.buffer.Len() > 0 {
+				return errors.New("Unexpected quote")
+			}
+			lexer.tokens = append(lexer.tokens, lexer.Token(TokenQuote, ""))
+			return nil
+
+		// caret '^' replaces backtick '`' as the start of a macro template, so
+		// we can use `` as in Go for verbatim strings (strings with newlines, etc).
+		case '^':
+			if lexer.buffer.Len() > 0 {
+				return errors.New("Unexpected ^ caret")
+			}
+			lexer.tokens = append(lexer.tokens, lexer.Token(TokenCaret, ""))
+			return nil
+
+		case '~':
+			if lexer.buffer.Len() > 0 {
+				return errors.New("Unexpected tilde")
+			}
+			lexer.state = LexerUnquote
+			return nil
+
+		case '(':
+			fallthrough
+		case ')':
+			fallthrough
+		case '[':
+			fallthrough
+		case ']':
+			fallthrough
+		case '{':
+			fallthrough
+		case '}':
+			err := lexer.dumpBuffer()
+			if err != nil {
+				return err
+			}
+			lexer.tokens = append(lexer.tokens, lexer.DecodeBrace(r))
+			return nil
+		case '\n':
 			lexer.linenum++
-		}
-		err := lexer.dumpBuffer()
-		if err != nil {
-			return err
-		}
-		return nil
-	}
+			fallthrough
+		case ' ':
+			fallthrough
+		case '\t':
+			fallthrough
+		case '\r':
+			err := lexer.dumpBuffer()
+			if err != nil {
+				return err
+			}
+			return nil
+		} // end switch r in LexerNormal state
+
+	} // end switch lexer.state
 
 	_, err := lexer.buffer.WriteRune(r)
 	if err != nil {

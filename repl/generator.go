@@ -164,34 +164,14 @@ func (gen *Generator) GenerateDef(args []Sexp) error {
 		return errors.New("Wrong number of arguments to def")
 	}
 
-	var sym SexpSymbol
-	switch expr := args[0].(type) {
-	case SexpSymbol:
-		sym = expr
-	case SexpPair:
-		// gracefully handle the quoted symbols we get from macros
-		unquotedSymbol, isQuo := isQuotedSymbol(expr)
-		if isQuo {
-			// auto-unquoting first argument to def
-			sym = unquotedSymbol.(SexpSymbol)
-		} else {
-			return errors.New("Definition name must be symbol")
-		}
-	default:
-		return errors.New("Definition name must be symbol")
+	plhs, err := gen.GetLHS(args[0], "def")
+	if err != nil {
+		return err
 	}
-
-	builtin, typ := gen.env.IsBuiltinSym(sym)
-	if builtin {
-		return fmt.Errorf("already have %s '%s', refusing to overwrite with def", typ, sym.name)
-	}
-
-	if sym.isDot {
-		return fmt.Errorf("illegal attempt to def dot-symbol '%s'", sym.name)
-	}
+	lhs := *plhs
 
 	gen.Tail = false
-	err := gen.Generate(args[1])
+	err = gen.Generate(args[1])
 	if err != nil {
 		return err
 	}
@@ -199,7 +179,7 @@ func (gen *Generator) GenerateDef(args []Sexp) error {
 	// on the stack and becomes an expression rather
 	// than a statement.
 	gen.AddInstruction(DupInstr(0))
-	gen.AddInstruction(PopStackPutEnvInstr{sym})
+	gen.AddInstruction(PopStackPutEnvInstr{lhs})
 	return nil
 }
 
@@ -263,7 +243,7 @@ func (gen *Generator) GenerateDefmac(args []Sexp, orig Sexp) error {
 	case SexpArray:
 		funcargs = expr
 	default:
-		return errors.New("function arguments must be in vector")
+		return errors.New("defmac arguments must be in vector")
 	}
 
 	var sym SexpSymbol
@@ -271,7 +251,7 @@ func (gen *Generator) GenerateDefmac(args []Sexp, orig Sexp) error {
 	case SexpSymbol:
 		sym = expr
 	default:
-		return errors.New("Definition name must be symbol")
+		return errors.New("defmac name must be symbol")
 	}
 
 	_, isBuiltin := gen.env.builtins[sym.number]
@@ -641,6 +621,17 @@ func (gen *Generator) GenerateCallBySymbol(sym SexpSymbol, args []Sexp, orig Sex
 	return nil
 }
 
+func (gen *Generator) GenerateBuilder(fun Sexp, args []Sexp) error {
+	//Q("GenerateBuilder is pushing unevaluated arguments onto the stack")
+	n := len(args)
+	for i := 0; i < n; i++ {
+		gen.AddInstruction(PushInstr{args[i]})
+	}
+	gen.Generate(fun)
+	gen.AddInstruction(DispatchInstr{len(args)})
+	return nil
+}
+
 func (gen *Generator) GenerateDispatch(fun Sexp, args []Sexp) error {
 	gen.GenerateAll(args)
 	gen.Generate(fun)
@@ -648,14 +639,53 @@ func (gen *Generator) GenerateDispatch(fun Sexp, args []Sexp) error {
 	return nil
 }
 
+func (gen *Generator) GenerateAssignment(expr SexpPair, assignPos int) error {
+	if assignPos == 0 {
+		return gen.GenerateCall(expr)
+	}
+	arr, err := ListToArray(expr)
+	panicOn(err) // internal error, should never happen since we prevalidate that we have a list.
+
+	if len(arr) <= 1 || assignPos == len(arr)-1 {
+		return fmt.Errorf("bad assignment syntax: no right-hand-side")
+	}
+
+	lhs := arr[:assignPos]
+	rhs := arr[assignPos+1:]
+
+	if len(lhs) != len(rhs) {
+		return fmt.Errorf("assignment imbalance: left-hand-side had %v, while right-hand-side had %v; in expression '%s'",
+			len(lhs), len(rhs), expr.SexpString())
+	}
+	// TODO: once functions have typed number of return values, check that we have balance
+	// of return value flow, rather than exact lhs to rhs count equality.
+
+	for i := range rhs {
+		err = gen.GenerateDef([]Sexp{lhs[i], rhs[i]})
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (gen *Generator) GenerateCall(expr SexpPair) error {
 	arr, _ := ListToArray(expr.Tail)
 	switch head := expr.Head.(type) {
 	case SexpSymbol:
+		// detect builtin builder calls
+		x, err, _ := gen.env.LexicalLookupSymbol(head, false)
+		if err == nil {
+			fun, isFun := x.(*SexpFunction)
+			if isFun && fun.isBuilder {
+				return gen.GenerateBuilder(fun, arr)
+			}
+		}
+
 		// flow control and macros go here
 		return gen.GenerateCallBySymbol(head, arr, expr)
 	}
-	// SexpFunction calls go here
+	// regular SexpFunction calls go here
 	return gen.GenerateDispatch(expr.Head, arr)
 }
 
@@ -675,6 +705,23 @@ func (gen *Generator) Generate(expr Sexp) error {
 		return nil
 	case SexpPair:
 		if IsList(e) {
+			isAssign, pos := IsAssignmentList(e, 0)
+			legalLeftHandSide := true
+			if isAssign && pos > 0 {
+				_, err := gen.GetLHS(e.Head, "assign")
+				if err != nil {
+					legalLeftHandSide = false
+				}
+			}
+			if isAssign && pos > 0 && legalLeftHandSide {
+				err := gen.GenerateAssignment(e, pos)
+				if err != nil {
+					return errors.New(
+						fmt.Sprintf("Error generating %s:\n%v",
+							expr.SexpString(), err))
+				}
+				return nil
+			}
 			err := gen.GenerateCall(e)
 			if err != nil {
 				return errors.New(
@@ -893,36 +940,15 @@ func (gen *Generator) GenerateSet(args []Sexp) error {
 		return errors.New("malformed set statement, need 2 arguments")
 	}
 
-	var lhs SexpSymbol
-	switch expr := args[0].(type) {
-	case SexpSymbol:
-		lhs = expr
-
-	case SexpPair:
-		// gracefully handle the quoted symbols we get from macros
-		unquotedSymbol, isQuo := isQuotedSymbol(expr)
-		if isQuo {
-			// auto-unquoting first argument to def
-			lhs = unquotedSymbol.(SexpSymbol)
-		} else {
-			return errors.New("set: left-hand-side must be a symbol")
-		}
-	default:
-		return errors.New("set: left-hand-side must be a symbol")
+	plhs, err := gen.GetLHS(args[0], "set")
+	if err != nil {
+		return err
 	}
-
-	if gen.env.HasMacro(lhs) {
-		return fmt.Errorf("Already have macro named '%s': refusing "+
-			"to set variable of same name.", lhs.name)
-	}
-
-	if lhs.isDot {
-		return fmt.Errorf("illegal to set dot-symbol, attempted on '%s'", lhs.name)
-	}
+	lhs := *plhs
 
 	rhs := args[1]
 	gen.Tail = false
-	err := gen.Generate(rhs)
+	err = gen.Generate(rhs)
 	if err != nil {
 		return err
 	}
@@ -933,6 +959,41 @@ func (gen *Generator) GenerateSet(args []Sexp) error {
 	gen.AddInstruction(UpdateInstr{lhs})
 	return nil
 
+}
+
+func (gen *Generator) GetLHS(arg Sexp, opname string) (*SexpSymbol, error) {
+	//P("GetLHS called with arg '%s'", arg.SexpString())
+	var lhs SexpSymbol
+	switch expr := arg.(type) {
+	case SexpSymbol:
+		lhs = expr
+	case SexpPair:
+		// gracefully handle the quoted symbols we get from macros
+		unquotedSymbol, isQuo := isQuotedSymbol(expr)
+		if isQuo {
+			// auto-unquoting first argument to def
+			lhs = unquotedSymbol.(SexpSymbol)
+		} else {
+			return nil, fmt.Errorf("%s: left-hand-side must be a symbol", opname)
+		}
+	default:
+		return nil, fmt.Errorf("%s: left-hand-side must be a symbol", opname)
+	}
+
+	builtin, typ := gen.env.IsBuiltinSym(lhs)
+	if builtin {
+		return nil, fmt.Errorf("already have %s '%s', refusing to overwrite with %s", typ, lhs.name, opname)
+	}
+
+	if gen.env.HasMacro(lhs) {
+		return nil, fmt.Errorf("Already have macro named '%s': refusing "+
+			"to %s variable of same name.", lhs.name, opname)
+	}
+
+	if lhs.isDot {
+		return nil, fmt.Errorf("illegal to %s dot-symbol, attempted on '%s'", opname, lhs.name)
+	}
+	return &lhs, nil
 }
 
 // (mdef a b c (list 1 2 3)) will bind a:1 b:2 c:3
@@ -1021,7 +1082,7 @@ func (gen *Generator) GenerateSyntaxQuote(args []Sexp) error {
 		}
 		gen.generateSyntaxQuoteList(arg)
 		return nil
-	case SexpHash:
+	case *SexpHash:
 		gen.generateSyntaxQuoteHash(arg)
 		return nil
 	}
@@ -1108,9 +1169,9 @@ func (gen *Generator) generateSyntaxQuoteArray(arg Sexp) error {
 func (gen *Generator) generateSyntaxQuoteHash(arg Sexp) error {
 	VPrintf("\n GenerateSyntaxQuoteHash() called with arg='%#v'\n", arg)
 
-	var hash SexpHash
+	var hash *SexpHash
 	switch a := arg.(type) {
-	case SexpHash:
+	case *SexpHash:
 		//good, required here
 		hash = a
 	default:
@@ -1120,7 +1181,7 @@ func (gen *Generator) generateSyntaxQuoteHash(arg Sexp) error {
 	gen.AddInstruction(PushInstr{SexpMarker})
 	for i := 0; i < n; i++ {
 		// must reverse order here to preserve order on rebuild
-		key := (*hash.KeyOrder)[(n-i)-1]
+		key := hash.KeyOrder[(n-i)-1]
 		val, err := hash.HashGet(nil, key)
 		if err != nil {
 			return err
@@ -1138,7 +1199,7 @@ func (gen *Generator) generateSyntaxQuoteHash(arg Sexp) error {
 	}
 	gen.AddInstruction(HashizeInstr{
 		HashLen:  n,
-		TypeName: *(hash.TypeName),
+		TypeName: hash.TypeName,
 	})
 	return nil
 }

@@ -8,10 +8,15 @@ import (
 var Verbose bool // set to true to debug
 var Working bool // currently under investigation
 
-var P = fmt.Printf
 var V = VPrintf
 var W = WPrintf
 var Q = func(quietly_ignored ...interface{}) {} // quiet
+
+// P is a shortcut for a call to fmt.Printf that implicitly starts
+// and ends its message with a newline.
+func P(format string, stuff ...interface{}) {
+	fmt.Printf("\n "+format+"\n", stuff...)
+}
 
 // get timestamp for logging purposes
 func ts() string {

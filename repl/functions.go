@@ -291,9 +291,9 @@ func HashAccessFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		return SexpNull, WrongNargs
 	}
 
-	var hash SexpHash
+	var hash *SexpHash
 	switch e := args[0].(type) {
-	case SexpHash:
+	case *SexpHash:
 		hash = e
 	default:
 		return SexpNull, errors.New("first argument of to h* function must be hash")
@@ -322,9 +322,9 @@ func HashAccessFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 			return SexpNull, WrongNargs
 		}
 		keys := make([]Sexp, 0)
-		n := len(*(hash.KeyOrder))
+		n := len(hash.KeyOrder)
 		for i := 0; i < n; i++ {
-			keys = append(keys, (*hash.KeyOrder)[i])
+			keys = append(keys, (hash.KeyOrder)[i])
 		}
 		return SexpArray(keys), nil
 	case "hpair":
@@ -334,7 +334,7 @@ func HashAccessFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		switch posreq := args[1].(type) {
 		case SexpInt:
 			pos := int(posreq)
-			if pos < 0 || pos >= len(*hash.KeyOrder) {
+			if pos < 0 || pos >= len(hash.KeyOrder) {
 				return SexpNull, fmt.Errorf("hpair position request %d out of bounds", pos)
 			}
 			return hash.HashPairi(pos)
@@ -351,9 +351,9 @@ func HashColonFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		return SexpNull, WrongNargs
 	}
 
-	var hash SexpHash
+	var hash *SexpHash
 	switch e := args[1].(type) {
-	case SexpHash:
+	case *SexpHash:
 		hash = e
 	default:
 		return SexpNull, errors.New("second argument of (:field hash) must be a hash")
@@ -415,7 +415,7 @@ func LenFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		return SexpInt(len(t)), nil
 	case SexpStr:
 		return SexpInt(len(t)), nil
-	case SexpHash:
+	case *SexpHash:
 		return SexpInt(HashCountKeys(t)), nil
 	case SexpPair:
 		n, err := ListLen(t)
@@ -508,7 +508,7 @@ func TypeQueryFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	var result bool
 
 	switch name {
-	case "type":
+	case "type?":
 		return TypeOf(args[0]), nil
 	case "list?":
 		result = IsList(args[0])
@@ -736,6 +736,12 @@ func MakeUserFunction(name string, ufun GlispUserFunction) *SexpFunction {
 	return &sfun
 }
 
+func MakeBuilderFunction(name string, ufun GlispUserFunction) *SexpFunction {
+	sfun := MakeUserFunction(name, ufun)
+	sfun.isBuilder = true
+	return sfun
+}
+
 // MergeFuncMap returns the union of the two given maps
 func MergeFuncMap(funcs ...map[string]GlispUserFunction) map[string]GlispUserFunction {
 	n := make(map[string]GlispUserFunction)
@@ -802,7 +808,7 @@ func CoreFunctions() map[string]GlispUserFunction {
 		"rest":       RestFunction,
 		"car":        FirstFunction,
 		"cdr":        RestFunction,
-		"type":       TypeQueryFunction,
+		"type?":      TypeQueryFunction,
 		"list?":      TypeQueryFunction,
 		"null?":      TypeQueryFunction,
 		"array?":     TypeQueryFunction,
@@ -841,6 +847,7 @@ func CoreFunctions() map[string]GlispUserFunction {
 		"flatten":    FlattenToWordsFunction,
 		"quotelist":  QuoteListFunction,
 		"=":          AssignmentFunction,
+		":=":         AssignmentFunction,
 		"fieldls":    GoFieldListFunction,
 		"defined?":   DefinedFunction,
 		"stop":       StopFunction,
@@ -905,12 +912,12 @@ func ThreadMapFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		return SexpNull, WrongNargs
 	}
 
-	h, isHash := args[0].(SexpHash)
+	h, isHash := args[0].(*SexpHash)
 	if !isHash {
 		return SexpNull, fmt.Errorf("-> error: first argument must be a hash or defmap")
 	}
 
-	field, err := threadingHelper(env, &h, args[1:])
+	field, err := threadingHelper(env, h, args[1:])
 	if err != nil {
 		return SexpNull, err
 	}
@@ -928,13 +935,13 @@ func threadingHelper(env *Glisp, hash *SexpHash, args []Sexp) (Sexp, error) {
 			args[0].SexpString())
 	}
 	if len(args) > 1 {
-		h, isHash := field.(SexpHash)
+		h, isHash := field.(*SexpHash)
 		if !isHash {
 			return SexpNull, fmt.Errorf("request for field '%s' was "+
 				"not on a hash or defmap; instead type %T with value '%#v'",
 				args[1].SexpString(), field, field)
 		}
-		return threadingHelper(env, &h, args[1:])
+		return threadingHelper(env, h, args[1:])
 	}
 	return field, nil
 }
@@ -1006,7 +1013,7 @@ func GenericAccessFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	}
 
 	switch args[0].(type) {
-	case SexpHash:
+	case *SexpHash:
 		return HashAccessFunction(env, name, args)
 	case SexpArray:
 		return ArrayAccessFunction(env, name, args)
@@ -1040,7 +1047,7 @@ func AssignmentFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 
 	narg := len(args)
 	if narg != 2 {
-		return SexpNull, fmt.Errorf("assignment with '=' requires 2 args: lhs and rhs")
+		return SexpNull, fmt.Errorf("assignment requires two arguments: a left-hand-side and a right-hand-side argument")
 	}
 
 	var sym SexpSymbol
@@ -1048,7 +1055,7 @@ func AssignmentFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	case SexpSymbol:
 		sym = s
 	default:
-		return SexpNull, fmt.Errorf("assignment with '=' needs left-hand-side"+
+		return SexpNull, fmt.Errorf("assignment needs left-hand-side"+
 			" argument to be a symbol; we got %T", s)
 	}
 
@@ -1196,7 +1203,7 @@ func dotGetSetHelper(env *Glisp, name string, setVal *Sexp) (Sexp, error) {
 	// where .b and after
 	// will index into hashes (.a must refer to a hash);
 	// proceed deeper into the hashes.
-	h, isHash := ret.(SexpHash)
+	h, isHash := ret.(*SexpHash)
 	if !isHash {
 		return SexpNull, fmt.Errorf("not a record: cannot get "+
 			"field '%s' in non-record (instead of type %T)",

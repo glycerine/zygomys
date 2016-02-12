@@ -28,6 +28,7 @@ type Glisp struct {
 	symtable    map[string]int
 	revsymtable map[int]string
 	builtins    map[int]*SexpFunction
+	reserved    map[int]bool
 	macros      map[int]*SexpFunction
 	curfunc     *SexpFunction
 	mainfunc    *SexpFunction
@@ -47,6 +48,8 @@ const ScopeStackSize = 50
 const DataStackSize = 100
 const StackStackSize = 5
 const LoopStackSize = 5
+
+var ReservedWords = []string{"byte", "defbuild", "builder", "field", "and", "or", "cond", "quote", "def", "mdef", "fn", "defn", "begin", "let", "let*", "assert", "defmac", "macexpand", "syntax-quote", "include", "for", "set", "break", "continue", "new-scope", "_ls", "int8", "int16", "int32", "int64", "uint8", "uint16", "uint32", "uint64", "float32", "float64", "complex64", "complex128", "bool", "string", "any", "break", "case", "chan", "const", "continue", "default", "else", "defer", "fallthrough", "for", "func", "go", "goto", "if", "import", "interface", "map", "package", "range", "return", "select", "struct", "switch", "type", "var", "append", "cap", "close", "complex", "copy", "delete", "imag", "len", "make", "new", "panic", "print", "println", "real", "recover", "null", "nil"}
 
 func NewGlisp() *Glisp {
 	return NewGlispWithFuncs(AllBuiltinFunctions())
@@ -72,6 +75,7 @@ func NewGlispWithFuncs(funcs map[string]GlispUserFunction) *Glisp {
 	env.addrstack = env.NewStack(CallStackSize)
 	env.loopstack = env.NewStack(LoopStackSize)
 	env.builtins = make(map[int]*SexpFunction)
+	env.reserved = make(map[int]bool)
 	env.macros = make(map[int]*SexpFunction)
 	env.symtable = make(map[string]int)
 	env.revsymtable = make(map[int]string)
@@ -80,11 +84,17 @@ func NewGlispWithFuncs(funcs map[string]GlispUserFunction) *Glisp {
 	env.after = []PostHook{}
 
 	env.AddGlobal("null", SexpNull)
+	env.AddGlobal("nil", SexpNull)
 
 	for key, function := range funcs {
 		sym := env.MakeSymbol(key)
 		env.builtins[sym.number] = MakeUserFunction(key, function)
 		env.AddFunction(key, function)
+	}
+
+	for _, word := range ReservedWords {
+		sym := env.MakeSymbol(word)
+		env.reserved[sym.number] = true
 	}
 
 	env.mainfunc = env.MakeFunction("__main", 0, false,
@@ -106,6 +116,7 @@ func (env *Glisp) Clone() *Glisp {
 	dupenv.addrstack = env.addrstack.Clone()
 
 	dupenv.builtins = env.builtins
+	dupenv.reserved = env.reserved
 	dupenv.macros = env.macros
 	dupenv.symtable = env.symtable
 	dupenv.revsymtable = env.revsymtable
@@ -131,6 +142,7 @@ func (env *Glisp) Duplicate() *Glisp {
 	dupenv.linearstack = dupenv.NewStack(ScopeStackSize)
 	dupenv.addrstack = dupenv.NewStack(CallStackSize)
 	dupenv.builtins = env.builtins
+	dupenv.reserved = env.reserved
 	dupenv.macros = env.macros
 	dupenv.symtable = env.symtable
 	dupenv.revsymtable = env.revsymtable
@@ -386,6 +398,10 @@ func (env *Glisp) LoadString(str string) error {
 
 func (env *Glisp) AddFunction(name string, function GlispUserFunction) {
 	env.AddGlobal(name, MakeUserFunction(name, function))
+}
+
+func (env *Glisp) AddBuilder(name string, function GlispUserFunction) {
+	env.AddGlobal(name, MakeBuilderFunction(name, function))
 }
 
 func (env *Glisp) AddGlobal(name string, obj Sexp) {
@@ -693,6 +709,11 @@ func (env *Glisp) IsBuiltinSym(sym SexpSymbol) (builtin bool, typ string) {
 	if isBuiltin {
 		return true, "macro"
 	}
+	_, isReserved := env.reserved[sym.number]
+	if isReserved {
+		return true, "reserved word"
+	}
+
 	return false, ""
 }
 

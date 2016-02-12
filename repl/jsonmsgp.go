@@ -85,7 +85,7 @@ func JsonToSexp(json []byte, env *Glisp) (Sexp, error) {
 // sexp -> json
 func SexpToJson(exp Sexp) string {
 	switch e := exp.(type) {
-	case SexpHash:
+	case *SexpHash:
 		return e.jsonHashHelper()
 	case SexpArray:
 		return e.jsonArrayHelper()
@@ -97,15 +97,15 @@ func SexpToJson(exp Sexp) string {
 }
 
 func (hash *SexpHash) jsonHashHelper() string {
-	str := fmt.Sprintf(`{"Atype":"%s", `, *hash.TypeName)
+	str := fmt.Sprintf(`{"Atype":"%s", `, hash.TypeName)
 
 	ko := []string{}
-	n := len(*hash.KeyOrder)
+	n := len(hash.KeyOrder)
 	if n == 0 {
 		return str[:len(str)-2] + "}"
 	}
 
-	for _, key := range *hash.KeyOrder {
+	for _, key := range hash.KeyOrder {
 		keyst := key.SexpString()
 		ko = append(ko, keyst)
 		val, err := hash.HashGet(nil, key)
@@ -325,7 +325,7 @@ func decodeGoToSexpHelper(r interface{}, depth int, env *Glisp, preferSym bool) 
 		}
 		hash, err := MakeHash(pairs, typeName, env)
 		if foundzKeyOrder {
-			err = SetHashKeyOrder(&hash, keyOrd)
+			err = SetHashKeyOrder(hash, keyOrd)
 			panicOn(err)
 		}
 		panicOn(err)
@@ -402,7 +402,7 @@ func SexpToGo(sexp Sexp, env *Glisp) interface{} {
 		return rune(e)
 	case SexpFloat:
 		return float64(e)
-	case SexpHash:
+	case *SexpHash:
 		m := make(map[string]interface{})
 		for _, arr := range e.Map {
 			for _, pair := range arr {
@@ -415,9 +415,9 @@ func SexpToGo(sexp Sexp, env *Glisp) interface{} {
 				m[keyString] = val
 			}
 		}
-		m["Atype"] = *e.TypeName
+		m["Atype"] = e.TypeName
 		ko := make([]interface{}, 0)
-		for _, k := range *e.KeyOrder {
+		for _, k := range e.KeyOrder {
 			ko = append(ko, SexpToGo(k, env))
 		}
 		m["zKeyOrder"] = ko
@@ -446,8 +446,8 @@ func ToGoFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	switch asHash := args[0].(type) {
 	default:
 		return SexpNull, fmt.Errorf("value must be a hash or defmap")
-	case SexpHash:
-		tn := *(asHash.TypeName)
+	case *SexpHash:
+		tn := asHash.TypeName
 		factory, hasMaker := GostructRegistry[tn]
 		if !hasMaker {
 			return SexpNull, fmt.Errorf("type '%s' not registered in GostructRegistry", tn)
@@ -457,8 +457,8 @@ func ToGoFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		if err != nil {
 			return SexpNull, err
 		}
-		(*asHash.GoShadowStruct) = newStruct
-		(*asHash.GoShadowStructVa) = reflect.ValueOf(newStruct)
+		asHash.GoShadowStruct = newStruct
+		asHash.GoShadowStructVa = reflect.ValueOf(newStruct)
 		return SexpStr(fmt.Sprintf("%#v", newStruct)), nil
 	}
 	return SexpNull, nil
@@ -537,9 +537,9 @@ func SexpToGoStructs(sexp Sexp, target interface{}, env *Glisp) (interface{}, er
 		targVa.Elem().Set(reflect.ValueOf(rune(src)))
 	case SexpFloat:
 		targVa.Elem().SetFloat(float64(src))
-	case SexpHash:
+	case *SexpHash:
 		VPrintf("\n ==== found SexpHash\n\n")
-		tn := *(src.TypeName)
+		tn := src.TypeName
 		if tn == "hash" {
 			panic("not done here yet")
 			// TODO: don't try to translate into a Go struct,
@@ -602,13 +602,13 @@ func SexpToGoStructs(sexp Sexp, target interface{}, env *Glisp) (interface{}, er
 				// the json tags for that. Or their
 				// full exact name if they didn't have
 				// a json tag.
-				VPrintf("\n JsonTagMap = %#v\n", (*src.JsonTagMap))
-				det, found := (*src.JsonTagMap)[recordKey]
+				VPrintf("\n JsonTagMap = %#v\n", src.JsonTagMap)
+				det, found := src.JsonTagMap[recordKey]
 				if !found {
 					// try once more, with uppercased version
 					// of record key
 					upperKey := strings.ToUpper(recordKey[:1]) + recordKey[1:]
-					det, found = (*src.JsonTagMap)[upperKey]
+					det, found = src.JsonTagMap[upperKey]
 					if !found {
 						fmt.Printf("\n skipping field '%s' in this hash/which we could not find in the JsonTagMap\n", recordKey)
 						continue

@@ -21,6 +21,24 @@ func IsList(expr Sexp) bool {
 	return false
 }
 
+func IsAssignmentList(expr Sexp, pos int) (bool, int) {
+	if expr == SexpNull {
+		return false, -1
+	}
+	switch list := expr.(type) {
+	case SexpPair:
+		sym, isSym := list.Head.(SexpSymbol)
+		if !isSym {
+			return IsAssignmentList(list.Tail, pos+1)
+		}
+		if sym.name == "=" || sym.name == ":=" {
+			return true, pos
+		}
+		return IsAssignmentList(list.Tail, pos+1)
+	}
+	return false, -1
+}
+
 func IsFloat(expr Sexp) bool {
 	switch expr.(type) {
 	case SexpFloat:
@@ -75,7 +93,7 @@ func IsSymbol(expr Sexp) bool {
 
 func IsHash(expr Sexp) bool {
 	switch expr.(type) {
-	case SexpHash:
+	case *SexpHash:
 		return true
 	}
 	return false
@@ -101,7 +119,7 @@ func IsEmpty(expr Sexp) bool {
 	switch e := expr.(type) {
 	case SexpArray:
 		return len(e) == 0
-	case SexpHash:
+	case *SexpHash:
 		return HashIsEmpty(e)
 	}
 
@@ -131,7 +149,7 @@ func TypeOf(expr Sexp) SexpStr {
 		v = "char"
 	case SexpFloat:
 		v = "float64"
-	case SexpHash:
+	case *SexpHash:
 		v = "hash"
 	case SexpPair:
 		v = "list"

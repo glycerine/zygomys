@@ -307,6 +307,7 @@ func runScript(env *Glisp, fname string, cfg *GlispConfig) {
 func (env *Glisp) StandardSetup() {
 	env.ImportEval()
 	env.ImportTime()
+	env.ImportPackageBuilder()
 	env.ImportMsgpackMap()
 
 	defmap := `(defmac defmap [name] ^(defn ~name [& rest] (msgmap (quote ~name) rest)))`
@@ -378,7 +379,6 @@ func (env *Glisp) StandardSetup() {
 		_, err = env.EvalString(makeRec)
 		panicOn(err)
 	}
-
 }
 
 // like main() for a standalone repl, now in library

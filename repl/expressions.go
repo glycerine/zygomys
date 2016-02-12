@@ -45,7 +45,7 @@ const (
 
 func (sent SexpSentinel) SexpString() string {
 	if sent == SexpNull {
-		return "null"
+		return "nil"
 	}
 	if sent == SexpEnd {
 		return "End"
@@ -117,36 +117,36 @@ type HashFieldDet struct {
 	EmbedPath    []EmbedPath // we are embedded if len(EmbedPath) > 0
 }
 type SexpHash struct {
-	TypeName         *string
+	TypeName         string
 	Map              map[int][]SexpPair
-	KeyOrder         *[]Sexp // must user pointer here, else hset! will fail to update.
-	GoStructFactory  *RegistryEntry
-	NumKeys          *int
-	GoMethods        *[]reflect.Method
-	GoFields         *[]reflect.StructField
-	GoMethSx         *SexpArray
-	GoFieldSx        *SexpArray
-	GoType           *reflect.Type
-	NumMethod        *int
-	GoShadowStruct   *interface{}
-	GoShadowStructVa *reflect.Value
+	KeyOrder         []Sexp
+	GoStructFactory  RegistryEntry
+	NumKeys          int
+	GoMethods        []reflect.Method
+	GoFields         []reflect.StructField
+	GoMethSx         SexpArray
+	GoFieldSx        SexpArray
+	GoType           reflect.Type
+	NumMethod        int
+	GoShadowStruct   interface{}
+	GoShadowStructVa reflect.Value
 
 	// json tag name -> pointers to example values, as factories for SexpToGoStructs()
-	JsonTagMap *map[string]*HashFieldDet
-	DetOrder   *[]*HashFieldDet
+	JsonTagMap map[string]*HashFieldDet
+	DetOrder   []*HashFieldDet
 
 	// for using these as a scoping model
-	DefnEnv    **SexpHash
-	SuperClass **SexpHash
-	ZMain      *SexpFunction
-	ZMethods   *map[string]*SexpFunction
+	DefnEnv    *SexpHash
+	SuperClass *SexpHash
+	ZMain      SexpFunction
+	ZMethods   map[string]*SexpFunction
 	env        *Glisp
 }
 
 var MethodNotFound = fmt.Errorf("method not found")
 
 func (h *SexpHash) RunZmethod(method string, args []Sexp) (Sexp, error) {
-	f, ok := (*h.ZMethods)[method]
+	f, ok := (h.ZMethods)[method]
 	if !ok {
 		return SexpNull, MethodNotFound
 	}
@@ -160,9 +160,9 @@ func CallZMethodOnRecordFunction(env *Glisp, name string, args []Sexp) (Sexp, er
 	if narg < 2 {
 		return SexpNull, WrongNargs
 	}
-	var hash SexpHash
+	var hash *SexpHash
 	switch h := args[0].(type) {
-	case SexpHash:
+	case *SexpHash:
 		hash = h
 	default:
 		return SexpNull, fmt.Errorf("can only _call on a record")
@@ -187,8 +187,8 @@ func (h *SexpHash) SetMain(p *SexpFunction) {
 }
 
 func (h *SexpHash) SetDefnEnv(p *SexpHash) {
-	*h.DefnEnv = p
-	h.BindSymbol(h.env.MakeSymbol(".parent"), *p)
+	h.DefnEnv = p
+	h.BindSymbol(h.env.MakeSymbol(".parent"), p)
 }
 
 func (h *SexpHash) Lookup(env *Glisp, key Sexp) (expr Sexp, err error) {
@@ -200,7 +200,7 @@ func (h *SexpHash) BindSymbol(key SexpSymbol, val Sexp) error {
 }
 
 func (h *SexpHash) SetGoStructFactory(factory RegistryEntry) {
-	(*h.GoStructFactory) = factory
+	(h.GoStructFactory) = factory
 }
 
 var SexpIntSize = reflect.TypeOf(SexpInt(0)).Bits()
@@ -223,8 +223,8 @@ func (arr SexpArray) SexpString() string {
 	return str
 }
 
-func (hash SexpHash) SexpString() string {
-	if *hash.TypeName != "hash" {
+func (hash *SexpHash) SexpString() string {
+	if hash.TypeName != "hash" {
 		return NamedHashSexpString(hash)
 	}
 	str := "{"
@@ -240,10 +240,10 @@ func (hash SexpHash) SexpString() string {
 	return str + "}"
 }
 
-func NamedHashSexpString(hash SexpHash) string {
-	str := " (" + *hash.TypeName + " "
+func NamedHashSexpString(hash *SexpHash) string {
+	str := " (" + hash.TypeName + " "
 
-	for _, key := range *hash.KeyOrder {
+	for _, key := range hash.KeyOrder {
 		val, err := hash.HashGet(nil, key)
 		if err == nil {
 			switch s := key.(type) {
@@ -294,10 +294,11 @@ func (r SexpRaw) SexpString() string {
 }
 
 type SexpSymbol struct {
-	name   string
-	number int
-	isDot  bool
-	ztype  string
+	name       string
+	number     int
+	isDot      bool
+	isTypeDesc bool
+	ztype      string
 }
 
 func (sym SexpSymbol) SexpString() string {
@@ -321,6 +322,7 @@ type SexpFunction struct {
 	userfun           GlispUserFunction
 	orig              Sexp
 	closingOverScopes *Closing
+	isBuilder         bool // see defbuild; builders are builtins that receive un-evaluated expressions
 }
 
 func (sf *SexpFunction) Copy() *SexpFunction {
