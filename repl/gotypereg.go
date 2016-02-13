@@ -1,5 +1,10 @@
 package zygo
 
+import (
+	tm "github.com/glycerine/tmframe"
+	"time"
+)
+
 // The Go Type Registry
 // ====================
 //
@@ -125,6 +130,14 @@ func init() {
 	GostructRegistry["[]int64"] = RegistryEntry{Gen: false, Factory: func(env *Glisp) interface{} {
 		m := make([]int64, 0)
 		return &m
+	}}
+
+	GostructRegistry["time.Time"] = RegistryEntry{Gen: false, Factory: func(env *Glisp) interface{} {
+		return new(time.Time)
+	}}
+
+	GostructRegistry["tm.Frame"] = RegistryEntry{Gen: false, Factory: func(env *Glisp) interface{} {
+		return new(tm.Frame)
 	}}
 
 }
