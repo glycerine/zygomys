@@ -372,7 +372,7 @@ func (env *Glisp) StandardSetup() {
 	gob.Register(SexpArray{})
 
 	// create constructors for each of our pre-registered Go struct types
-	for name, fac := range GostructRegistry {
+	for name, fac := range GoStructRegistry {
 		strct := fac.Factory(env)
 		if fac.Gen {
 			gob.Register(strct)

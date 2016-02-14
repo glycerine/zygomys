@@ -448,9 +448,9 @@ func ToGoFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		return SexpNull, fmt.Errorf("value must be a hash or defmap")
 	case *SexpHash:
 		tn := asHash.TypeName
-		factory, hasMaker := GostructRegistry[tn]
+		factory, hasMaker := GoStructRegistry[tn]
 		if !hasMaker {
-			return SexpNull, fmt.Errorf("type '%s' not registered in GostructRegistry", tn)
+			return SexpNull, fmt.Errorf("type '%s' not registered in GoStructRegistry", tn)
 		}
 		newStruct := factory.Factory(env)
 		_, err := SexpToGoStructs(asHash, newStruct, env)
@@ -557,10 +557,10 @@ func SexpToGoStructs(sexp Sexp, target interface{}, env *Glisp) (interface{}, er
 		}
 
 		// use targVa, but check against the type in the registry for sanity/type checking.
-		factory, hasMaker := GostructRegistry[tn]
+		factory, hasMaker := GoStructRegistry[tn]
 		if !hasMaker {
-			panic(fmt.Errorf("type '%s' not registered in GostructRegistry", tn))
-			return nil, fmt.Errorf("type '%s' not registered in GostructRegistry", tn)
+			panic(fmt.Errorf("type '%s' not registered in GoStructRegistry", tn))
+			return nil, fmt.Errorf("type '%s' not registered in GoStructRegistry", tn)
 		}
 		VPrintf("factory = %#v  targTyp.Kind=%s\n", factory, targTyp.Kind())
 		checkPtrStruct := factory.Factory(env)
@@ -582,7 +582,7 @@ func SexpToGoStructs(sexp Sexp, target interface{}, env *Glisp) (interface{}, er
 			targKind = targVa.Kind()
 
 		} else if factType != targTyp {
-			panic(fmt.Errorf("type checking failed compare the factor associated with SexpHash and the provided target *T: expected '%s' (associated with typename '%s' in the GostructRegistry) but saw '%s' type in target", tn, factType, targTyp))
+			panic(fmt.Errorf("type checking failed compare the factor associated with SexpHash and the provided target *T: expected '%s' (associated with typename '%s' in the GoStructRegistry) but saw '%s' type in target", tn, factType, targTyp))
 		}
 		//maploop:
 		for _, arr := range src.Map {

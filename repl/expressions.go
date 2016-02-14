@@ -120,7 +120,7 @@ type SexpHash struct {
 	TypeName         string
 	Map              map[int][]SexpPair
 	KeyOrder         []Sexp
-	GoStructFactory  RegistryEntry
+	GoStructFactory  *RegistryEntry
 	NumKeys          int
 	GoMethods        []reflect.Method
 	GoFields         []reflect.StructField
@@ -199,8 +199,8 @@ func (h *SexpHash) BindSymbol(key SexpSymbol, val Sexp) error {
 	return h.HashSet(key, val)
 }
 
-func (h *SexpHash) SetGoStructFactory(factory RegistryEntry) {
-	(h.GoStructFactory) = factory
+func (h *SexpHash) SetGoStructFactory(factory *RegistryEntry) {
+	h.GoStructFactory = factory
 }
 
 var SexpIntSize = reflect.TypeOf(SexpInt(0)).Bits()

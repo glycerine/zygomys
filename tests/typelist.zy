@@ -1,0 +1,12 @@
+;; typelist should have some basic types in it
+(tl = (typelist))
+(found = false)
+(range k v tl 
+   (cond (== v "int64")
+         (begin
+          (set found true)
+          (printf "found int64 at pos %v\n" k)
+          (break))
+         nil))
+   
+(assert found)

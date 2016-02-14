@@ -2,6 +2,7 @@ package zygo
 
 import (
 	tm "github.com/glycerine/tmframe"
+	"reflect"
 	"time"
 )
 
@@ -16,19 +17,25 @@ import (
 // function is there is case you want to initialize
 // your struct differently depending on the content
 // of its context, but this is not commonly needed.
+// Also, the factory method *must* support the
+// env parameter being nil and still return a
+// sensible, usable value. The factory will be called
+// with env = nil during init() time.
 //
 // The repl will automatically do a (defmap record)
 // for each record defined in the registry. e.g.
 // for snoopy, hornet, hellcat, etc.
 //
-var GostructRegistry = map[string]RegistryEntry{}
+var GoStructRegistry = map[string]*RegistryEntry{}
 
 // the type of all maker functions
 type MakeGoStructFunc func(env *Glisp) interface{}
 
 type RegistryEntry struct {
-	Factory MakeGoStructFunc
-	Gen     bool // generate a defmap mapping?
+	Factory    MakeGoStructFunc
+	Gen        bool // generate a defmap mapping?
+	ValueCache reflect.Value
+	TypeCache  reflect.Type
 }
 
 // builtin known Go Structs
@@ -36,108 +43,140 @@ type RegistryEntry struct {
 //    Go integration.
 //
 func init() {
-	GostructRegistry["event-demo"] = RegistryEntry{Gen: true, Factory: func(env *Glisp) interface{} {
+	GoStructRegistry["event-demo"] = &RegistryEntry{Gen: true, Factory: func(env *Glisp) interface{} {
 		return &Event{}
 	}}
-	GostructRegistry["person-demo"] = RegistryEntry{Gen: true, Factory: func(env *Glisp) interface{} {
+	GoStructRegistry["person-demo"] = &RegistryEntry{Gen: true, Factory: func(env *Glisp) interface{} {
 		return &Person{}
 	}}
-	GostructRegistry["snoopy"] = RegistryEntry{Gen: true, Factory: func(env *Glisp) interface{} {
+	GoStructRegistry["snoopy"] = &RegistryEntry{Gen: true, Factory: func(env *Glisp) interface{} {
 		return &Snoopy{}
 	}}
-	GostructRegistry["hornet"] = RegistryEntry{Gen: true, Factory: func(env *Glisp) interface{} {
+	GoStructRegistry["hornet"] = &RegistryEntry{Gen: true, Factory: func(env *Glisp) interface{} {
 		return &Hornet{}
 	}}
-	GostructRegistry["hellcat"] = RegistryEntry{Gen: true, Factory: func(env *Glisp) interface{} {
+	GoStructRegistry["hellcat"] = &RegistryEntry{Gen: true, Factory: func(env *Glisp) interface{} {
 		return &Hellcat{}
 	}}
-	GostructRegistry["weather"] = RegistryEntry{Gen: true, Factory: func(env *Glisp) interface{} {
+	GoStructRegistry["weather"] = &RegistryEntry{Gen: true, Factory: func(env *Glisp) interface{} {
 		return &Weather{}
 	}}
 
 	// add go builtin types
-	GostructRegistry["byte"] = RegistryEntry{Gen: false, Factory: func(env *Glisp) interface{} {
+	// ====================
+
+	GoStructRegistry["byte"] = &RegistryEntry{Gen: false, Factory: func(env *Glisp) interface{} {
 		return new(byte)
 	}}
-	GostructRegistry["uint8"] = RegistryEntry{Gen: false, Factory: func(env *Glisp) interface{} {
+	GoStructRegistry["uint8"] = &RegistryEntry{Gen: false, Factory: func(env *Glisp) interface{} {
 		return new(uint8)
 	}}
-	GostructRegistry["uint16"] = RegistryEntry{Gen: false, Factory: func(env *Glisp) interface{} {
+	GoStructRegistry["uint16"] = &RegistryEntry{Gen: false, Factory: func(env *Glisp) interface{} {
 		return new(uint16)
 	}}
-	GostructRegistry["uint32"] = RegistryEntry{Gen: false, Factory: func(env *Glisp) interface{} {
+	GoStructRegistry["uint32"] = &RegistryEntry{Gen: false, Factory: func(env *Glisp) interface{} {
 		return new(uint32)
 	}}
-	GostructRegistry["uint64"] = RegistryEntry{Gen: false, Factory: func(env *Glisp) interface{} {
+	GoStructRegistry["uint64"] = &RegistryEntry{Gen: false, Factory: func(env *Glisp) interface{} {
 		return new(uint64)
 	}}
-	GostructRegistry["int8"] = RegistryEntry{Gen: false, Factory: func(env *Glisp) interface{} {
+	GoStructRegistry["int8"] = &RegistryEntry{Gen: false, Factory: func(env *Glisp) interface{} {
 		return new(int8)
 	}}
-	GostructRegistry["int16"] = RegistryEntry{Gen: false, Factory: func(env *Glisp) interface{} {
+	GoStructRegistry["int16"] = &RegistryEntry{Gen: false, Factory: func(env *Glisp) interface{} {
 		return new(int16)
 	}}
-	GostructRegistry["int32"] = RegistryEntry{Gen: false, Factory: func(env *Glisp) interface{} {
+	GoStructRegistry["int32"] = &RegistryEntry{Gen: false, Factory: func(env *Glisp) interface{} {
 		return new(int32)
 	}}
-	GostructRegistry["int64"] = RegistryEntry{Gen: false, Factory: func(env *Glisp) interface{} {
+	GoStructRegistry["int64"] = &RegistryEntry{Gen: false, Factory: func(env *Glisp) interface{} {
 		return new(int64)
 	}}
-	GostructRegistry["float32"] = RegistryEntry{Gen: false, Factory: func(env *Glisp) interface{} {
+	GoStructRegistry["float32"] = &RegistryEntry{Gen: false, Factory: func(env *Glisp) interface{} {
 		return new(float32)
 	}}
 
-	GostructRegistry["float64"] = RegistryEntry{Gen: false, Factory: func(env *Glisp) interface{} {
+	GoStructRegistry["float64"] = &RegistryEntry{Gen: false, Factory: func(env *Glisp) interface{} {
 		return new(float64)
 	}}
 
-	GostructRegistry["complex64"] = RegistryEntry{Gen: false, Factory: func(env *Glisp) interface{} {
+	GoStructRegistry["complex64"] = &RegistryEntry{Gen: false, Factory: func(env *Glisp) interface{} {
 		return new(complex64)
 	}}
 
-	GostructRegistry["complex128"] = RegistryEntry{Gen: false, Factory: func(env *Glisp) interface{} {
+	GoStructRegistry["complex128"] = &RegistryEntry{Gen: false, Factory: func(env *Glisp) interface{} {
 		return new(complex128)
 	}}
 
-	GostructRegistry["bool"] = RegistryEntry{Gen: false, Factory: func(env *Glisp) interface{} {
+	GoStructRegistry["bool"] = &RegistryEntry{Gen: false, Factory: func(env *Glisp) interface{} {
 		return new(bool)
 	}}
 
-	GostructRegistry["string"] = RegistryEntry{Gen: false, Factory: func(env *Glisp) interface{} {
+	GoStructRegistry["string"] = &RegistryEntry{Gen: false, Factory: func(env *Glisp) interface{} {
 		return new(string)
 	}}
 
-	GostructRegistry["map[interface{}]interface{}"] = RegistryEntry{Gen: false, Factory: func(env *Glisp) interface{} {
+	GoStructRegistry["map[interface{}]interface{}"] = &RegistryEntry{Gen: false, Factory: func(env *Glisp) interface{} {
 		m := make(map[interface{}]interface{})
 		return &m
 	}}
 
-	GostructRegistry["map[string]interface{}"] = RegistryEntry{Gen: false, Factory: func(env *Glisp) interface{} {
+	GoStructRegistry["map[string]interface{}"] = &RegistryEntry{Gen: false, Factory: func(env *Glisp) interface{} {
 		m := make(map[string]interface{})
 		return &m
 	}}
 
-	GostructRegistry["[]interface{}"] = RegistryEntry{Gen: false, Factory: func(env *Glisp) interface{} {
+	GoStructRegistry["[]interface{}"] = &RegistryEntry{Gen: false, Factory: func(env *Glisp) interface{} {
 		m := make([]interface{}, 0)
 		return &m
 	}}
 
-	GostructRegistry["[]string"] = RegistryEntry{Gen: false, Factory: func(env *Glisp) interface{} {
+	GoStructRegistry["[]string"] = &RegistryEntry{Gen: false, Factory: func(env *Glisp) interface{} {
 		m := make([]string, 0)
 		return &m
 	}}
 
-	GostructRegistry["[]int64"] = RegistryEntry{Gen: false, Factory: func(env *Glisp) interface{} {
+	GoStructRegistry["[]int64"] = &RegistryEntry{Gen: false, Factory: func(env *Glisp) interface{} {
 		m := make([]int64, 0)
 		return &m
 	}}
 
-	GostructRegistry["time.Time"] = RegistryEntry{Gen: false, Factory: func(env *Glisp) interface{} {
+	GoStructRegistry["time.Time"] = &RegistryEntry{Gen: false, Factory: func(env *Glisp) interface{} {
 		return new(time.Time)
 	}}
 
-	GostructRegistry["tm.Frame"] = RegistryEntry{Gen: false, Factory: func(env *Glisp) interface{} {
+	GoStructRegistry["tm.Frame"] = &RegistryEntry{Gen: false, Factory: func(env *Glisp) interface{} {
 		return new(tm.Frame)
 	}}
 
+	GoStructRegistry["[]tm.Frame"] = &RegistryEntry{Gen: false, Factory: func(env *Glisp) interface{} {
+		m := make([]tm.Frame, 0)
+		return &m
+	}}
+
+	// cache all empty values and types
+	for _, e := range GoStructRegistry {
+		e.ValueCache = reflect.ValueOf(e.Factory(nil))
+		e.TypeCache = e.ValueCache.Type()
+	}
+}
+
+func ListRegisteredTypes() (res []string) {
+	for k := range GoStructRegistry {
+		res = append(res, k)
+	}
+	return
+}
+
+func TypeListFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
+	narg := len(args)
+	if narg != 0 {
+		return SexpNull, WrongNargs
+	}
+	r := ListRegisteredTypes()
+	s := make([]Sexp, len(r))
+	for i := range r {
+		s[i] = SexpStr(r[i])
+	}
+	return SexpArray(s), nil
 }

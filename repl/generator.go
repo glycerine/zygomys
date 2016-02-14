@@ -917,6 +917,7 @@ func (gen *Generator) GenerateForLoop(args []Sexp) error {
 		where: "to-continue-position-aka-increment"})
 	gen.AddInstruction(LabelInstr{label: "end of body for " + loop.stmtname.name})
 	// bottom is (break) target
+	bottomPos := len(gen.instructions)
 
 	// cleanup
 	gen.AddInstruction(ClearStackmarkInstr{sym: loop.stmtname})
@@ -924,8 +925,8 @@ func (gen *Generator) GenerateForLoop(args []Sexp) error {
 	gen.AddInstruction(PushInstr{SexpNull}) // for is a statement; leave null on the stack.
 
 	loop.loopStart = startPos - bodyPos // offset; should be negative.
-	loop.loopLen = len(gen.instructions) - startPos
-	loop.breakOffset = loop.loopLen
+	//loop.loopLen = len(gen.instructions) - startPos
+	loop.breakOffset = bottomPos - startPos // previously loop.loopLen
 	loop.continueOffset = continuePos - startPos
 
 	VPrintf("\n debug at end of for loop generation, loop = %#v at address %p\n",

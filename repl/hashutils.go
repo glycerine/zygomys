@@ -76,7 +76,7 @@ func MakeHash(args []Sexp, typename string, env *Glisp) (*SexpHash, error) {
 	var got reflect.Type
 	var iface interface{}
 	jsonMap := make(map[string]*HashFieldDet)
-	factory := RegistryEntry{Factory: MakeGoStructFunc(func(env *Glisp) interface{} { return nil })}
+	factory := &RegistryEntry{Factory: MakeGoStructFunc(func(env *Glisp) interface{} { return nil })}
 	detOrder := []*HashFieldDet{}
 
 	var zmain SexpFunction
@@ -117,7 +117,7 @@ func MakeHash(args []Sexp, typename string, env *Glisp) (*SexpHash, error) {
 		k++
 	}
 
-	factory, foundGoStruct := GostructRegistry[typename]
+	factory, foundGoStruct := GoStructRegistry[typename]
 	if foundGoStruct {
 		VPrintf("\n in MakeHash: found struct associated with '%s'\n", typename)
 		hash.SetGoStructFactory(factory)
@@ -466,7 +466,7 @@ func fillHashHelper(r interface{}, depth int, env *Glisp, preferSym bool) (Sexp,
 	// check for one of our registered structs
 
 	// go through the type registry upfront
-	for hashName, factory := range GostructRegistry {
+	for hashName, factory := range GoStructRegistry {
 		st := factory.Factory(env)
 		if reflect.ValueOf(st).Type() == reflect.ValueOf(r).Type() {
 			retHash, err := MakeHash([]Sexp{}, hashName, env)

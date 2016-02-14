@@ -903,6 +903,7 @@ func SystemFunctions() map[string]GlispUserFunction {
 		"exit":      ExitFunction,
 		"_closdump": DumpClosureEnvFunction,
 		"rmsym":     RemoveSymFunction,
+		"typelist":  TypeListFunction,
 		// not done "_call":     CallZMethodOnRecordFunction,
 	}
 }
