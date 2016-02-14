@@ -76,7 +76,7 @@ func MakeHash(args []Sexp, typename string, env *Glisp) (*SexpHash, error) {
 	var got reflect.Type
 	var iface interface{}
 	jsonMap := make(map[string]*HashFieldDet)
-	factory := &RegistryEntry{Factory: MakeGoStructFunc(func(env *Glisp) interface{} { return nil })}
+	factory := &RegisteredType{Factory: MakeGoStructFunc(func(env *Glisp) interface{} { return nil })}
 	detOrder := []*HashFieldDet{}
 
 	var zmain SexpFunction

@@ -32,24 +32,24 @@ var GoStructRegistry GoStructRegistryType
 // the registry type
 type GoStructRegistryType struct {
 	// comprehensive
-	Registry map[string]*RegistryEntry
+	Registry map[string]*RegisteredType
 
 	// only init-time builtins
-	Builtin map[string]*RegistryEntry
+	Builtin map[string]*RegisteredType
 
 	// later, user-defined types
-	Userdef map[string]*RegistryEntry
+	Userdef map[string]*RegisteredType
 }
 
 // consistently ordered list of all registered types (created at init time).
 var ListRegisteredTypes = []string{}
 
-func (r *GoStructRegistryType) RegisterBuiltin(name string, e *RegistryEntry) {
+func (r *GoStructRegistryType) RegisterBuiltin(name string, e *RegisteredType) {
 	r.register(name, e, false)
 	e.IsUser = false
 }
 
-func (r *GoStructRegistryType) register(name string, e *RegistryEntry, isUser bool) {
+func (r *GoStructRegistryType) register(name string, e *RegisteredType, isUser bool) {
 	if !e.initDone {
 		e.Init()
 	}
@@ -75,7 +75,7 @@ func (r *GoStructRegistryType) register(name string, e *RegistryEntry, isUser bo
 	r.Registry[e.ReflectName] = e
 }
 
-func (e *RegistryEntry) Init() {
+func (e *RegisteredType) Init() {
 	e.Aliases = make(map[string]bool)
 	val := e.Factory(nil)
 	e.ValueCache = reflect.ValueOf(val)
@@ -85,19 +85,19 @@ func (e *RegistryEntry) Init() {
 	e.initDone = true
 }
 
-func (r *GoStructRegistryType) RegisterUserdef(name string, e *RegistryEntry) {
+func (r *GoStructRegistryType) RegisterUserdef(name string, e *RegisteredType) {
 	r.register(name, e, true)
 	e.IsUser = true
 }
 
-func (r *GoStructRegistryType) Lookup(name string) *RegistryEntry {
+func (r *GoStructRegistryType) Lookup(name string) *RegisteredType {
 	return r.Registry[name]
 }
 
 // the type of all maker functions
 type MakeGoStructFunc func(env *Glisp) interface{}
 
-type RegistryEntry struct {
+type RegisteredType struct {
 	initDone bool
 
 	RegisteredName string
@@ -111,15 +111,19 @@ type RegistryEntry struct {
 	Aliases        map[string]bool
 }
 
+func (p *RegisteredType) SexpString() string {
+	return p.RegisteredName
+}
+
 // builtin known Go Structs
 // NB these are used to test the functionality of the
 //    Go integration.
 //
 func init() {
 	GoStructRegistry = GoStructRegistryType{
-		Registry: make(map[string]*RegistryEntry),
-		Builtin:  make(map[string]*RegistryEntry),
-		Userdef:  make(map[string]*RegistryEntry),
+		Registry: make(map[string]*RegisteredType),
+		Builtin:  make(map[string]*RegisteredType),
+		Userdef:  make(map[string]*RegisteredType),
 	}
 
 	gsr := &GoStructRegistry
@@ -127,115 +131,115 @@ func init() {
 	// add go builtin types
 	// ====================
 
-	byteEntry := &RegistryEntry{Gen: false, Factory: func(env *Glisp) interface{} {
+	byteEntry := &RegisteredType{Gen: false, Factory: func(env *Glisp) interface{} {
 		return new(byte)
 	}}
 	gsr.RegisterBuiltin("byte", byteEntry)
 	gsr.RegisterBuiltin("uint8", byteEntry)
 
-	gsr.RegisterBuiltin("int", &RegistryEntry{Gen: false, Factory: func(env *Glisp) interface{} {
+	gsr.RegisterBuiltin("int", &RegisteredType{Gen: false, Factory: func(env *Glisp) interface{} {
 		return new(int)
 	}})
-	gsr.RegisterBuiltin("uint16", &RegistryEntry{Gen: false, Factory: func(env *Glisp) interface{} {
+	gsr.RegisterBuiltin("uint16", &RegisteredType{Gen: false, Factory: func(env *Glisp) interface{} {
 		return new(uint16)
 	}})
-	gsr.RegisterBuiltin("uint32", &RegistryEntry{Gen: false, Factory: func(env *Glisp) interface{} {
+	gsr.RegisterBuiltin("uint32", &RegisteredType{Gen: false, Factory: func(env *Glisp) interface{} {
 		return new(uint32)
 	}})
-	gsr.RegisterBuiltin("uint64", &RegistryEntry{Gen: false, Factory: func(env *Glisp) interface{} {
+	gsr.RegisterBuiltin("uint64", &RegisteredType{Gen: false, Factory: func(env *Glisp) interface{} {
 		return new(uint64)
 	}})
-	gsr.RegisterBuiltin("int8", &RegistryEntry{Gen: false, Factory: func(env *Glisp) interface{} {
+	gsr.RegisterBuiltin("int8", &RegisteredType{Gen: false, Factory: func(env *Glisp) interface{} {
 		return new(int8)
 	}})
-	gsr.RegisterBuiltin("int16", &RegistryEntry{Gen: false, Factory: func(env *Glisp) interface{} {
+	gsr.RegisterBuiltin("int16", &RegisteredType{Gen: false, Factory: func(env *Glisp) interface{} {
 		return new(int16)
 	}})
-	gsr.RegisterBuiltin("int32", &RegistryEntry{Gen: false, Factory: func(env *Glisp) interface{} {
+	gsr.RegisterBuiltin("int32", &RegisteredType{Gen: false, Factory: func(env *Glisp) interface{} {
 		return new(int32)
 	}})
-	gsr.RegisterBuiltin("int64", &RegistryEntry{Gen: false, Factory: func(env *Glisp) interface{} {
+	gsr.RegisterBuiltin("int64", &RegisteredType{Gen: false, Factory: func(env *Glisp) interface{} {
 		return new(int64)
 	}})
-	gsr.RegisterBuiltin("float32", &RegistryEntry{Gen: false, Factory: func(env *Glisp) interface{} {
+	gsr.RegisterBuiltin("float32", &RegisteredType{Gen: false, Factory: func(env *Glisp) interface{} {
 		return new(float32)
 	}})
 
-	gsr.RegisterBuiltin("float64", &RegistryEntry{Gen: false, Factory: func(env *Glisp) interface{} {
+	gsr.RegisterBuiltin("float64", &RegisteredType{Gen: false, Factory: func(env *Glisp) interface{} {
 		return new(float64)
 	}})
 
-	gsr.RegisterBuiltin("complex64", &RegistryEntry{Gen: false, Factory: func(env *Glisp) interface{} {
+	gsr.RegisterBuiltin("complex64", &RegisteredType{Gen: false, Factory: func(env *Glisp) interface{} {
 		return new(complex64)
 	}})
 
-	gsr.RegisterBuiltin("complex128", &RegistryEntry{Gen: false, Factory: func(env *Glisp) interface{} {
+	gsr.RegisterBuiltin("complex128", &RegisteredType{Gen: false, Factory: func(env *Glisp) interface{} {
 		return new(complex128)
 	}})
 
-	gsr.RegisterBuiltin("bool", &RegistryEntry{Gen: false, Factory: func(env *Glisp) interface{} {
+	gsr.RegisterBuiltin("bool", &RegisteredType{Gen: false, Factory: func(env *Glisp) interface{} {
 		return new(bool)
 	}})
 
-	gsr.RegisterBuiltin("string", &RegistryEntry{Gen: false, Factory: func(env *Glisp) interface{} {
+	gsr.RegisterBuiltin("string", &RegisteredType{Gen: false, Factory: func(env *Glisp) interface{} {
 		return new(string)
 	}})
 
-	gsr.RegisterBuiltin("map[interface {}]interface {}", &RegistryEntry{Gen: false, Factory: func(env *Glisp) interface{} {
+	gsr.RegisterBuiltin("map[interface {}]interface {}", &RegisteredType{Gen: false, Factory: func(env *Glisp) interface{} {
 		m := make(map[interface{}]interface{})
 		return &m
 	}})
 
-	gsr.RegisterBuiltin("map[string]interface {}", &RegistryEntry{Gen: false, Factory: func(env *Glisp) interface{} {
+	gsr.RegisterBuiltin("map[string]interface {}", &RegisteredType{Gen: false, Factory: func(env *Glisp) interface{} {
 		m := make(map[string]interface{})
 		return &m
 	}})
 
-	gsr.RegisterBuiltin("[]interface {}", &RegistryEntry{Gen: false, Factory: func(env *Glisp) interface{} {
+	gsr.RegisterBuiltin("[]interface {}", &RegisteredType{Gen: false, Factory: func(env *Glisp) interface{} {
 		m := make([]interface{}, 0)
 		return &m
 	}})
 
-	gsr.RegisterBuiltin("[]string", &RegistryEntry{Gen: false, Factory: func(env *Glisp) interface{} {
+	gsr.RegisterBuiltin("[]string", &RegisteredType{Gen: false, Factory: func(env *Glisp) interface{} {
 		m := make([]string, 0)
 		return &m
 	}})
 
-	gsr.RegisterBuiltin("[]int64", &RegistryEntry{Gen: false, Factory: func(env *Glisp) interface{} {
+	gsr.RegisterBuiltin("[]int64", &RegisteredType{Gen: false, Factory: func(env *Glisp) interface{} {
 		m := make([]int64, 0)
 		return &m
 	}})
 
-	gsr.RegisterBuiltin("time.Time", &RegistryEntry{Gen: false, Factory: func(env *Glisp) interface{} {
+	gsr.RegisterBuiltin("time.Time", &RegisteredType{Gen: false, Factory: func(env *Glisp) interface{} {
 		return new(time.Time)
 	}})
 
-	gsr.RegisterBuiltin("tm.Frame", &RegistryEntry{Gen: false, Factory: func(env *Glisp) interface{} {
+	gsr.RegisterBuiltin("tm.Frame", &RegisteredType{Gen: false, Factory: func(env *Glisp) interface{} {
 		return new(tm.Frame)
 	}})
 
-	gsr.RegisterBuiltin("[]tm.Frame", &RegistryEntry{Gen: false, Factory: func(env *Glisp) interface{} {
+	gsr.RegisterBuiltin("[]tm.Frame", &RegisteredType{Gen: false, Factory: func(env *Glisp) interface{} {
 		m := make([]tm.Frame, 0)
 		return &m
 	}})
 
 	// demo and user defined structs
-	gsr.RegisterUserdef("event-demo", &RegistryEntry{Gen: true, Factory: func(env *Glisp) interface{} {
+	gsr.RegisterUserdef("event-demo", &RegisteredType{Gen: true, Factory: func(env *Glisp) interface{} {
 		return &Event{}
 	}})
-	gsr.RegisterUserdef("person-demo", &RegistryEntry{Gen: true, Factory: func(env *Glisp) interface{} {
+	gsr.RegisterUserdef("person-demo", &RegisteredType{Gen: true, Factory: func(env *Glisp) interface{} {
 		return &Person{}
 	}})
-	gsr.RegisterUserdef("snoopy", &RegistryEntry{Gen: true, Factory: func(env *Glisp) interface{} {
+	gsr.RegisterUserdef("snoopy", &RegisteredType{Gen: true, Factory: func(env *Glisp) interface{} {
 		return &Snoopy{}
 	}})
-	gsr.RegisterUserdef("hornet", &RegistryEntry{Gen: true, Factory: func(env *Glisp) interface{} {
+	gsr.RegisterUserdef("hornet", &RegisteredType{Gen: true, Factory: func(env *Glisp) interface{} {
 		return &Hornet{}
 	}})
-	gsr.RegisterUserdef("hellcat", &RegistryEntry{Gen: true, Factory: func(env *Glisp) interface{} {
+	gsr.RegisterUserdef("hellcat", &RegisteredType{Gen: true, Factory: func(env *Glisp) interface{} {
 		return &Hellcat{}
 	}})
-	gsr.RegisterUserdef("weather", &RegistryEntry{Gen: true, Factory: func(env *Glisp) interface{} {
+	gsr.RegisterUserdef("weather", &RegisteredType{Gen: true, Factory: func(env *Glisp) interface{} {
 		return &Weather{}
 	}})
 

@@ -161,6 +161,8 @@ func TypeOf(expr Sexp) SexpStr {
 		v = "null"
 	case SexpTime:
 		v = "time.Time"
+	case *RegisteredType:
+		v = "regtype"
 	default:
 		fmt.Printf("\n error: unknown type: %T in '%#v'\n", e, e)
 	}

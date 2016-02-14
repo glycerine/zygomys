@@ -305,6 +305,7 @@ func runScript(env *Glisp, fname string, cfg *GlispConfig) {
 }
 
 func (env *Glisp) StandardSetup() {
+	env.ImportBaseTypes()
 	env.ImportEval()
 	env.ImportTime()
 	env.ImportPackageBuilder()

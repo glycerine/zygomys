@@ -120,7 +120,7 @@ type SexpHash struct {
 	TypeName         string
 	Map              map[int][]SexpPair
 	KeyOrder         []Sexp
-	GoStructFactory  *RegistryEntry
+	GoStructFactory  *RegisteredType
 	NumKeys          int
 	GoMethods        []reflect.Method
 	GoFields         []reflect.StructField
@@ -199,7 +199,7 @@ func (h *SexpHash) BindSymbol(key SexpSymbol, val Sexp) error {
 	return h.HashSet(key, val)
 }
 
-func (h *SexpHash) SetGoStructFactory(factory *RegistryEntry) {
+func (h *SexpHash) SetGoStructFactory(factory *RegisteredType) {
 	h.GoStructFactory = factory
 }
 
@@ -294,11 +294,10 @@ func (r SexpRaw) SexpString() string {
 }
 
 type SexpSymbol struct {
-	name       string
-	number     int
-	isDot      bool
-	isTypeDesc bool
-	ztype      string
+	name   string
+	number int
+	isDot  bool
+	ztype  string
 }
 
 func (sym SexpSymbol) SexpString() string {
