@@ -448,7 +448,7 @@ func ToGoFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		return SexpNull, fmt.Errorf("value must be a hash or defmap")
 	case *SexpHash:
 		tn := asHash.TypeName
-		factory, hasMaker := GoStructRegistry[tn]
+		factory, hasMaker := GoStructRegistry.Registry[tn]
 		if !hasMaker {
 			return SexpNull, fmt.Errorf("type '%s' not registered in GoStructRegistry", tn)
 		}
@@ -557,7 +557,7 @@ func SexpToGoStructs(sexp Sexp, target interface{}, env *Glisp) (interface{}, er
 		}
 
 		// use targVa, but check against the type in the registry for sanity/type checking.
-		factory, hasMaker := GoStructRegistry[tn]
+		factory, hasMaker := GoStructRegistry.Registry[tn]
 		if !hasMaker {
 			panic(fmt.Errorf("type '%s' not registered in GoStructRegistry", tn))
 			return nil, fmt.Errorf("type '%s' not registered in GoStructRegistry", tn)

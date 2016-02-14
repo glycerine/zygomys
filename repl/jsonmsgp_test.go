@@ -119,7 +119,7 @@ type Event struct {
 			panic(err)
 		case *SexpHash:
 			tn := asHash.TypeName
-			factory, hasMaker := GoStructRegistry[tn]
+			factory, hasMaker := GoStructRegistry.Registry[tn]
 			if !hasMaker {
 				err = fmt.Errorf("type '%s' not registered in GoStructRegistry", tn)
 				panic(err)

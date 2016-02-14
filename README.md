@@ -38,7 +38,7 @@ for the whole project when speaking aloud. In writing, the full
 $ go get github.com/glycerine/zygomys/cmd/zygo
 ~~~
 
-### not your average parentheses... features in zygomys 2.2.1 include
+### not your average parentheses... features in zygomys 2.2.2 include
 
  * [x] New since 2.0: dot-symbols! dot-symbols such as `.plane` or `.plane.wing` give OO-flavor and compact, expressive notation. [See the wiki](https://github.com/glycerine/zygomys/wiki#differences-from-traditional-lisp-syntax) for discussion
  * [x] dot-symbols avoid the need for macros in many cases
