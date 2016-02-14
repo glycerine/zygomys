@@ -39,7 +39,6 @@ const (
 	TokenBackslash
 	TokenDollar
 	TokenDotSymbol
-	TokenTypeDesc
 	TokenFreshAssign
 	TokenEnd
 )
@@ -172,11 +171,10 @@ var (
 	SymbolRegex = regexp.MustCompile(`^[^'#:;\\~@\[\]{}\^|"()%0-9][^'#:;\\~@\[\]{}\^|"()%]*$`)
 	// dot symbol examples: `.`, `.a`, `.a.b`, `.a.b.c`
 	// dot symbol non-examples: `.a.`, `..`
-	DotSymbolRegex      = regexp.MustCompile(`^[.]$|^([.][^'#:;\\~@\[\]{}\^|"()%.0-9][^'#:;\\~@\[\]{}\^|"()%.]*)+$`)
-	DotPartsRegex       = regexp.MustCompile(`[.][^'#:;\\~@\[\]{}\^|"()%.0-9][^'#:;\\~@\[\]{}\^|"()%.]*`)
-	CharRegex           = regexp.MustCompile("^#\\\\?.$")
-	FloatRegex          = regexp.MustCompile("^-?([0-9]+\\.[0-9]*)|(\\.[0-9]+)|([0-9]+(\\.[0-9]*)?[eE](-?[0-9]+))$")
-	TypeDescriptorRegex = regexp.MustCompile("^%[^%]+$")
+	DotSymbolRegex = regexp.MustCompile(`^[.]$|^([.][^'#:;\\~@\[\]{}\^|"()%.0-9][^'#:;\\~@\[\]{}\^|"()%.]*)+$`)
+	DotPartsRegex  = regexp.MustCompile(`[.][^'#:;\\~@\[\]{}\^|"()%.0-9][^'#:;\\~@\[\]{}\^|"()%.]*`)
+	CharRegex      = regexp.MustCompile("^#\\\\?.$")
+	FloatRegex     = regexp.MustCompile("^-?([0-9]+\\.[0-9]*)|(\\.[0-9]+)|([0-9]+(\\.[0-9]*)?[eE](-?[0-9]+))$")
 )
 
 func StringToRunes(str string) []rune {
@@ -250,9 +248,6 @@ func (x *Lexer) DecodeAtom(atom string) (Token, error) {
 	}
 	if FloatRegex.MatchString(atom) {
 		return x.Token(TokenFloat, atom), nil
-	}
-	if TypeDescriptorRegex.MatchString(atom) {
-		return x.Token(TokenTypeDesc, atom), nil
 	}
 	if DotSymbolRegex.MatchString(atom) {
 		return x.Token(TokenDotSymbol, atom), nil

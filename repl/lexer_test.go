@@ -161,30 +161,3 @@ func Test026RegexpSplittingOfDotSymbols(t *testing.T) {
 		cv.So(path[2], cv.ShouldEqual, ".c")
 	})
 }
-
-func Test027RegexpForTypeDescriptors(t *testing.T) {
-
-	// because we are in a string, we have to use %% to get a single % to print
-	cv.Convey("our TypeDescriptorRegex should recognize `%%int`, `%%string`, and `%%slice`, but not `%%` nor `%%%%%%`", t, func() {
-		cv.So(TypeDescriptorRegex.MatchString(`%int`), cv.ShouldBeTrue)
-		cv.So(TypeDescriptorRegex.MatchString(`%string`), cv.ShouldBeTrue)
-		cv.So(TypeDescriptorRegex.MatchString(`%slice`), cv.ShouldBeTrue)
-		cv.So(TypeDescriptorRegex.MatchString(`%`), cv.ShouldBeFalse)
-		cv.So(TypeDescriptorRegex.MatchString(`%%%`), cv.ShouldBeFalse)
-	})
-}
-
-func Test028NestedTypeDescriptorsForFunctions(t *testing.T) {
-
-	cv.Convey("type descriptions for functions and methods should be parsed without error", t, func() {
-		str := `(%func (%recv p:%Mystruct) (%arg a:%int b:%string) (%return n:(%slice %int) err:%error))`
-		env := NewGlisp()
-		defer env.parser.Stop()
-
-		stream := bytes.NewBuffer([]byte(str))
-		env.parser.ResetAddNewInput(stream)
-		expressions, err := env.parser.ParseTokens()
-		panicOn(err)
-		cv.So(expressions[0].SexpString(), cv.ShouldEqual, `(%func (%recv (quote p) %Mystruct) (%arg (quote a) %int (quote b) %string) (%return (quote n) (%slice %int) (quote err) %error))`)
-	})
-}

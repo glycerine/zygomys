@@ -439,10 +439,6 @@ func (parser *Parser) ParseExpression(depth int) (res Sexp, err error) {
 		sym := env.MakeSymbol(tok.str)
 		sym.isDot = true
 		return sym, nil
-	case TokenTypeDesc:
-		sym := env.MakeSymbol(tok.str)
-		sym.isTypeDesc = true
-		return sym, nil
 	}
 	return SexpNull, errors.New(fmt.Sprint("Invalid syntax, didn't know what to do with ", tok.typ, " ", tok))
 }
