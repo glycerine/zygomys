@@ -115,6 +115,12 @@ func (p *RegisteredType) SexpString() string {
 	return p.RegisteredName
 }
 
+func NewRegisteredType(f MakeGoStructFunc) *RegisteredType {
+	rt := &RegisteredType{Factory: f}
+	rt.Init()
+	return rt
+}
+
 // builtin known Go Structs
 // NB these are used to test the functionality of the
 //    Go integration.

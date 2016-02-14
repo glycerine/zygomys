@@ -2,6 +2,7 @@ package zygo
 
 import (
 	"fmt"
+	"reflect"
 )
 
 // package.go: declare package, structs, function types
@@ -21,6 +22,7 @@ import (
 //
 func (env *Glisp) ImportPackageBuilder() {
 	env.AddBuilder("package", PackageBuilder)
+	env.AddFunction("slice-of", SliceOfFunction)
 }
 
 // this is just a stub. TODO: finish design, implement packages.
@@ -38,4 +40,33 @@ func PackageBuilder(env *Glisp, name string,
 	}
 
 	return SexpNull, nil
+}
+
+func SliceOfFunction(env *Glisp, name string,
+	args []Sexp) (Sexp, error) {
+
+	if len(args) != 1 {
+		return SexpNull, fmt.Errorf("argument to slice-of is missing. use: " +
+			"(slice-of a-regtype)\n")
+	}
+
+	var rt *RegisteredType
+	switch arg := args[0].(type) {
+	case *RegisteredType:
+		rt = arg
+	default:
+		return SexpNull, fmt.Errorf("argument to slice-of was not regtype, "+
+			"instead type %T displaying as '%v' ",
+			arg, arg.SexpString())
+	}
+
+	//P("slice-of arg = '%s' with type %T", args[0].SexpString(), args[0])
+
+	derivedType := reflect.SliceOf(rt.TypeCache)
+	sliceRt := NewRegisteredType(func(env *Glisp) interface{} {
+		return reflect.MakeSlice(derivedType, 0, 0)
+	})
+	sliceName := "slice-of-" + rt.RegisteredName
+	GoStructRegistry.RegisterUserdef(sliceName, sliceRt)
+	return sliceRt, nil
 }

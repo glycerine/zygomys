@@ -1,2 +1,2 @@
 ;; slice types can be referenced
-(assert (type? (slice int64)) `(slice int64)`)
+(assert (== (str (slice-of int64)) `slice-of-int64`))
