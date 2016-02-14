@@ -1,0 +1,2 @@
+;; slice types can be referenced
+(assert (type? (slice int64)) `(slice int64)`)

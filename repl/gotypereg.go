@@ -185,42 +185,12 @@ func init() {
 		return new(string)
 	}})
 
-	gsr.RegisterBuiltin("map[interface {}]interface {}", &RegisteredType{Gen: false, Factory: func(env *Glisp) interface{} {
-		m := make(map[interface{}]interface{})
-		return &m
-	}})
-
-	gsr.RegisterBuiltin("map[string]interface {}", &RegisteredType{Gen: false, Factory: func(env *Glisp) interface{} {
-		m := make(map[string]interface{})
-		return &m
-	}})
-
-	gsr.RegisterBuiltin("[]interface {}", &RegisteredType{Gen: false, Factory: func(env *Glisp) interface{} {
-		m := make([]interface{}, 0)
-		return &m
-	}})
-
-	gsr.RegisterBuiltin("[]string", &RegisteredType{Gen: false, Factory: func(env *Glisp) interface{} {
-		m := make([]string, 0)
-		return &m
-	}})
-
-	gsr.RegisterBuiltin("[]int64", &RegisteredType{Gen: false, Factory: func(env *Glisp) interface{} {
-		m := make([]int64, 0)
-		return &m
-	}})
-
 	gsr.RegisterBuiltin("time.Time", &RegisteredType{Gen: false, Factory: func(env *Glisp) interface{} {
 		return new(time.Time)
 	}})
 
 	gsr.RegisterBuiltin("tm.Frame", &RegisteredType{Gen: false, Factory: func(env *Glisp) interface{} {
 		return new(tm.Frame)
-	}})
-
-	gsr.RegisterBuiltin("[]tm.Frame", &RegisteredType{Gen: false, Factory: func(env *Glisp) interface{} {
-		m := make([]tm.Frame, 0)
-		return &m
 	}})
 
 	// demo and user defined structs
