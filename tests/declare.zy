@@ -1,0 +1,20 @@
+;; delcare functions
+;; declare structs
+
+;; always using named return types; so we can
+;; have an implicit return ending in the compile-down.
+;;
+(func doSomething [a:int b:string] [n:int err:error]
+  (return a nil))
+
+(struct Car: [
+        (field Id:          int64     e:0                  gotags:`json:"id",name:"id"`)
+        (field Name:        string    e:1                  gotags:`json:"name"`)
+        (field BadApple:    string    e:2  deprecated:true)
+        (field SliceOfLife: []string  e:3)
+        (field PointerSisters: *int64 e:4)
+        ])
+
+(interface Driveable: [
+  (func [p: *Car] driveIt [a:int b:string] [n:int err:error])
+  ])
