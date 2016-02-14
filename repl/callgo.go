@@ -157,7 +157,7 @@ func CallGoMethodFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 				for hashName, factory := range GoStructRegistry.Registry {
 					st := factory.Factory(env)
 					if reflect.ValueOf(st).Type() == out[i].Type() {
-						retHash, err := MakeHash([]Sexp{}, hashName, env)
+						retHash, err := MakeHash([]Sexp{}, factory.RegisteredName, env)
 						if err != nil {
 							return SexpNull, fmt.Errorf("MakeHash '%s' problem: %s",
 								hashName, err)

@@ -42,7 +42,7 @@ type GoStructRegistryType struct {
 }
 
 // consistently ordered list of all registered types (created at init time).
-var InitTimeListRegisteredTypes = []string{}
+var ListRegisteredTypes = []string{}
 
 func (r *GoStructRegistryType) RegisterBuiltin(name string, e *RegistryEntry) {
 	r.register(name, e, false)
@@ -53,19 +53,26 @@ func (r *GoStructRegistryType) register(name string, e *RegistryEntry, isUser bo
 	if !e.initDone {
 		e.Init()
 	}
+	e.RegisteredName = name
+	e.Aliases[name] = true
+	e.Aliases[e.ReflectName] = true
+
 	_, found := r.Registry[name]
 	if !found {
-		InitTimeListRegisteredTypes = append(InitTimeListRegisteredTypes, name)
+		ListRegisteredTypes = append(ListRegisteredTypes, name)
 	}
+	_, found2 := r.Registry[e.ReflectName]
+	if !found2 {
+		ListRegisteredTypes = append(ListRegisteredTypes, e.ReflectName)
+	}
+
 	if isUser {
 		r.Userdef[name] = e
 	} else {
 		r.Builtin[name] = e
 	}
 	r.Registry[name] = e
-	if name != e.ReflectName {
-		r.Registry[e.ReflectName] = e
-	}
+	r.Registry[e.ReflectName] = e
 }
 
 func (e *RegistryEntry) Init() {
@@ -83,9 +90,8 @@ func (r *GoStructRegistryType) RegisterUserdef(name string, e *RegistryEntry) {
 	e.IsUser = true
 }
 
-func (r *GoStructRegistryType) Lookup(name string) (string, *RegistryEntry) {
-	e := r.Registry[name]
-	return name, e
+func (r *GoStructRegistryType) Lookup(name string) *RegistryEntry {
+	return r.Registry[name]
 }
 
 // the type of all maker functions
@@ -94,14 +100,15 @@ type MakeGoStructFunc func(env *Glisp) interface{}
 type RegistryEntry struct {
 	initDone bool
 
-	Factory     MakeGoStructFunc
-	Gen         bool // generate a defmap mapping?
-	ValueCache  reflect.Value
-	TypeCache   reflect.Type
-	PointerName string
-	ReflectName string
-	IsUser      bool
-	Aliases     map[string]bool
+	RegisteredName string
+	Factory        MakeGoStructFunc
+	Gen            bool // generate a defmap mapping?
+	ValueCache     reflect.Value
+	TypeCache      reflect.Type
+	PointerName    string
+	ReflectName    string
+	IsUser         bool
+	Aliases        map[string]bool
 }
 
 // builtin known Go Structs
@@ -239,7 +246,7 @@ func TypeListFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	if narg != 0 {
 		return SexpNull, WrongNargs
 	}
-	r := InitTimeListRegisteredTypes
+	r := ListRegisteredTypes
 	s := make([]Sexp, len(r))
 	for i := range r {
 		s[i] = SexpStr(r[i])
