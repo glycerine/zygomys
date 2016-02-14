@@ -678,15 +678,17 @@ func ConstructorFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		return MakeHash(args, "hash", env)
 	case "raw":
 		return MakeRaw(args)
+	case "field":
+		return MakeHash(args, "field", env)
 	case "msgmap":
 		switch len(args) {
 		case 0:
-			return MakeHash(args, "msgmap", env)
+			return MakeHash(args, name, env)
 		default:
 			arr, err := ListToArray(args[1])
 			if err != nil {
 				return SexpNull, fmt.Errorf("error converting "+
-					"msgmap arguments to an array: '%v'", err)
+					"'%s' arguments to an array: '%v'", name, err)
 			}
 			switch nm := args[0].(type) {
 			case SexpStr:
@@ -694,7 +696,7 @@ func ConstructorFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 			case SexpSymbol:
 				return MakeHash(arr, nm.name, env)
 			default:
-				return MakeHash(arr, "msgmap", env)
+				return MakeHash(arr, name, env)
 			}
 		}
 	}
@@ -838,6 +840,7 @@ func CoreFunctions() map[string]GlispUserFunction {
 		"len":        LenFunction,
 		"append":     AppendFunction,
 		"concat":     ConcatFunction,
+		"field":      ConstructorFunction,
 		"array":      ConstructorFunction,
 		"list":       ConstructorFunction,
 		"hash":       ConstructorFunction,

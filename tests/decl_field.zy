@@ -1,0 +1,2 @@
+;; fields can be declared
+(def fld (field Id:          int64     e:0                  gotags:`json:"id",name:"id"`))
