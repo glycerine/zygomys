@@ -234,6 +234,24 @@ func StructBuilder(env *Glisp, name string,
 	env.datastack.PushExpr(SexpNull)
 	structName := symN.name
 
+	{
+		// begin enable recursion -- add ourselves to the env early, then
+		// update later, so that structs can refer to themselves.
+		udsR := &SexpUserStructDefn{Name: structName}
+		rtR := NewRegisteredType(func(env *Glisp) (interface{}, error) {
+			return udsR, nil
+		})
+		rtR.UserStructDefn = udsR
+		rtR.DisplayAs = structName
+		GoStructRegistry.RegisterUserdef(structName, rtR, false)
+
+		err := env.LexicalBindSymbol(symN, rtR)
+		if err != nil {
+			return SexpNull, fmt.Errorf("struct builder could not bind symbol '%s': '%v'",
+				structName, err)
+		}
+		// end enable recursion
+	}
 	var xar []Sexp
 	var flat []*SexpField
 	if n > 2 {
@@ -312,11 +330,12 @@ func StructBuilder(env *Glisp, name string,
 		return uds, nil
 	})
 	rt.UserStructDefn = uds
+	rt.DisplayAs = structName
 	GoStructRegistry.RegisterUserdef(structName, rt, false)
 	Q("good: registered new userdefined struct '%s'", structName)
 	err := env.LexicalBindSymbol(symN, rt)
 	if err != nil {
-		return SexpNull, fmt.Errorf("struct builder could not bind symbol '%': '%v'",
+		return SexpNull, fmt.Errorf("struct builder could not bind symbol '%s': '%v'",
 			structName, err)
 	}
 	Q("good: bound symbol '%s' to RegisteredType '%s'", symN.SexpString(), rt.SexpString())
