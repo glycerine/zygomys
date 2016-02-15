@@ -451,10 +451,11 @@ func (parser *Parser) ParseExpression(depth int) (res Sexp, err error) {
 func (p *Parser) ParseTokens() ([]Sexp, error) {
 	select {
 	case out := <-p.ParsedOutput:
+		Q("ParseTokens got p.ParsedOutput out: '%#v'", out)
 		r := make([]Sexp, 0)
 		for _, k := range out {
 			r = append(r, k.Expr...)
-			//P("\n ParseTokens k.Expr = '%v'\n\n", SexpArray(k.Expr).SexpString())
+			Q("\n ParseTokens k.Expr = '%v'\n\n", SexpArray(k.Expr).SexpString())
 			if k.Err != nil {
 				return r, k.Err
 			}

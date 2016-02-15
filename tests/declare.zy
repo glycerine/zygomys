@@ -16,6 +16,8 @@
         (field OtherCar: (* Car) e:5)
         ])
 
-(interface Driveable: [
-  (func [p: (pointer-to Car)] driveIt [a:int b:string] [n:int err:error])
+(interface Driveable [
+     (driveIt [a:int b:string] [n:int err:error])
   ])
+
+(func [p: (* Car)] driveIt [a:int b:string] [n:int err:error])

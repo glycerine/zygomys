@@ -163,7 +163,8 @@ func Repl(env *Glisp, cfg *GlispConfig) {
 		//Q("\n exprsInput(%d) = '%v'\n line = '%s'\n", len(exprsInput), SexpArray(exprsInput).SexpString(), line)
 		if err != nil {
 			fmt.Println(err)
-			os.Exit(-1)
+			env.Clear()
+			continue
 		}
 
 		parts := strings.Split(line, " ")
