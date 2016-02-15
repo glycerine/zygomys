@@ -17,7 +17,7 @@
         ])
 
 (interface Driveable [
-     (driveIt [a:int b:string] [n:int err:error])
+     (func driveIt [a:int b:string] [n:int err:error])
   ])
 
 (func [p: (* Car)] driveIt [a:int b:string] [n:int err:error])
