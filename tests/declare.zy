@@ -7,7 +7,7 @@
 (func doSomething [a:int b:string] [n:int err:error]
   (return a nil))
 
-(struct Car: [
+(struct Car [
         (field Id:          int64     e:0                  gotags:`json:"id",name:"id"`)
         (field Name:        string    e:1                  gotags:`json:"name"`)
         (field BadApple:    string    e:2  deprecated:true)

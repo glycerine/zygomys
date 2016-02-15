@@ -60,7 +60,6 @@ func StructBuilder(env *Glisp, name string,
 	}
 
 	/*
-		env.datastack.PushExpr(SexpNull)
 		sn, err := env.EvalExpressions(args[0:1])
 		if err != nil {
 			return SexpNull, fmt.Errorf("bad struct name: '%v'", err)
@@ -75,6 +74,7 @@ func StructBuilder(env *Glisp, name string,
 
 	var xar []Sexp
 	if n > 1 {
+		env.datastack.PushExpr(SexpNull)
 		arr, err := env.EvalExpressions(args[1:])
 		if err != nil {
 			return SexpNull, fmt.Errorf("bad struct declaration: bad "+
@@ -95,11 +95,12 @@ func StructBuilder(env *Glisp, name string,
 	if err != nil {
 		return SexpNull, fmt.Errorf("problem on MakeHash() for '%s' in StructBuilder: '%v'", structName, err)
 	}
+	P("good: made typeDefnHash")
 	rt := NewRegisteredType(func(env *Glisp) (interface{}, error) {
 		return typeDefnHash, nil
 	})
 	GoStructRegistry.RegisterUserdef(structName, rt, false)
-	P("good: registerd new userdefined struct '%s'", structName)
+	P("good: registered new userdefined struct '%s'", structName)
 	err = env.LexicalBindSymbol(symN, rt)
 	if err != nil {
 		return SexpNull, fmt.Errorf("struct builder could not bind symbol '%': '%v'",
