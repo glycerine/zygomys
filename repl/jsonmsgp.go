@@ -452,8 +452,12 @@ func ToGoFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		if !hasMaker {
 			return SexpNull, fmt.Errorf("type '%s' not registered in GoStructRegistry", tn)
 		}
-		newStruct := factory.Factory(env)
-		_, err := SexpToGoStructs(asHash, newStruct, env)
+		newStruct, err := factory.Factory(env)
+		if err != nil {
+			return SexpNull, err
+		}
+
+		_, err = SexpToGoStructs(asHash, newStruct, env)
 		if err != nil {
 			return SexpNull, err
 		}
@@ -563,7 +567,10 @@ func SexpToGoStructs(sexp Sexp, target interface{}, env *Glisp) (interface{}, er
 			return nil, fmt.Errorf("type '%s' not registered in GoStructRegistry", tn)
 		}
 		VPrintf("factory = %#v  targTyp.Kind=%s\n", factory, targTyp.Kind())
-		checkPtrStruct := factory.Factory(env)
+		checkPtrStruct, err := factory.Factory(env)
+		if err != nil {
+			return nil, err
+		}
 		factOutputVal := reflect.ValueOf(checkPtrStruct)
 		factType := factOutputVal.Type()
 		if targTyp.Kind() == reflect.Ptr && targTyp.Elem().Kind() == reflect.Interface && factType.Implements(targTyp.Elem()) {

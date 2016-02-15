@@ -1,0 +1,7 @@
+;; types should act as constructors AND as type-variables
+(struct truck)
+(def t (truck name:"harley"))
+(def pty (pointer-to truck))
+
+(def n (int 7))
+(assert (== n 7))

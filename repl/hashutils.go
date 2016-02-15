@@ -76,7 +76,7 @@ func MakeHash(args []Sexp, typename string, env *Glisp) (*SexpHash, error) {
 	var got reflect.Type
 	var iface interface{}
 	jsonMap := make(map[string]*HashFieldDet)
-	factory := &RegisteredType{Factory: MakeGoStructFunc(func(env *Glisp) interface{} { return nil })}
+	factory := &RegisteredType{Factory: MakeGoStructFunc(func(env *Glisp) (interface{}, error) { return nil, nil })}
 	detOrder := []*HashFieldDet{}
 
 	var zmain SexpFunction
@@ -117,17 +117,19 @@ func MakeHash(args []Sexp, typename string, env *Glisp) (*SexpHash, error) {
 		k++
 	}
 
+	P("doing factory, foundGoStruct := GoStructRegistry.Registry[typename]")
 	factory, foundGoStruct := GoStructRegistry.Registry[typename]
-	if foundGoStruct {
-		VPrintf("\n in MakeHash: found struct associated with '%s'\n", typename)
+	if foundGoStruct && factory.hasShadowStruct {
+		P("\n in MakeHash: found struct associated with '%s'\n", typename)
 		hash.SetGoStructFactory(factory)
+		P("\n in MakeHash: after SetGoStructFactory for typename '%s'\n", typename)
 		err := hash.SetMethodList(env)
 		if err != nil {
 			return &SexpHash{}, fmt.Errorf("unexpected error "+
 				"from hash.SetMethodList(): %s", err)
 		}
 	} else {
-		VPrintf("\n in MakeHash: did not find Go struct with '%s'\n", typename)
+		P("\n in MakeHash: did not find Go struct with '%s'\n", typename)
 	}
 
 	return &hash, nil
@@ -302,8 +304,12 @@ func GoMethodListFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		// use cached results
 		return h.GoMethSx, nil
 	}
-	if h.GoStructFactory.Factory(env) == nil {
+	v, err := h.GoStructFactory.Factory(env)
+	if v == nil {
 		return SexpNull, NoAttachedGoStruct
+	}
+	if err != nil {
+		return SexpNull, fmt.Errorf("problem during h.GoStructFactory.Factory() call: '%v'", err)
 	}
 
 	h.SetMethodList(env)
@@ -311,9 +317,15 @@ func GoMethodListFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 }
 
 func (h *SexpHash) SetMethodList(env *Glisp) error {
-	VPrintf("hash.SetMethodList() called.\n")
+	fmt.Printf("hash.SetMethodList() called.\n")
 
-	rs := h.GoStructFactory.Factory(env)
+	if !h.GoStructFactory.hasShadowStruct {
+		return NoAttachedGoStruct
+	}
+	rs, err := h.GoStructFactory.Factory(env)
+	if err != nil {
+		return err
+	}
 	if rs == nil {
 		return NoAttachedGoStruct
 	}
@@ -321,7 +333,7 @@ func (h *SexpHash) SetMethodList(env *Glisp) error {
 	ty := va.Type()
 	n := ty.NumMethod()
 
-	VPrintf("hash.SetMethodList() sees %d methods on type %v\n", n, ty)
+	fmt.Printf("hash.SetMethodList() sees %d methods on type %v\n", n, ty)
 	h.NumMethod = n
 	h.GoType = ty
 
@@ -402,9 +414,18 @@ func GoFieldListFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	if !isHash {
 		return SexpNull, fmt.Errorf("hash/record required, but saw %T/val=%v", args[0], args[0])
 	}
-	if (h.GoStructFactory).Factory(env) == nil {
+
+	if !h.GoStructFactory.hasShadowStruct {
 		return SexpNull, NoAttachedGoStruct
 	}
+	v, err := h.GoStructFactory.Factory(env)
+	if v == nil {
+		return SexpNull, NoAttachedGoStruct
+	}
+	if err != nil {
+		return SexpNull, fmt.Errorf("problem during h.GoStructFactory.Factory() call: '%v'", err)
+	}
+
 	return SexpArray(h.GoFieldSx), nil
 }
 
@@ -467,7 +488,8 @@ func fillHashHelper(r interface{}, depth int, env *Glisp, preferSym bool) (Sexp,
 
 	// go through the type registry upfront
 	for hashName, factory := range GoStructRegistry.Registry {
-		st := factory.Factory(env)
+		st, err := factory.Factory(env)
+		return SexpNull, err
 		if reflect.ValueOf(st).Type() == reflect.ValueOf(r).Type() {
 			retHash, err := MakeHash([]Sexp{}, hashName, env)
 			if err != nil {

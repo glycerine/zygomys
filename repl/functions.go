@@ -687,10 +687,16 @@ func ConstructorFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		case 0:
 			return MakeHash(args, name, env)
 		default:
-			arr, err := ListToArray(args[1])
-			if err != nil {
-				return SexpNull, fmt.Errorf("error converting "+
-					"'%s' arguments to an array: '%v'", name, err)
+			var arr []Sexp
+			var err error
+			if len(args) > 1 {
+				arr, err = ListToArray(args[1])
+				if err != nil {
+					return SexpNull, fmt.Errorf("error converting "+
+						"'%s' arguments to an array: '%v'", name, err)
+				}
+			} else {
+				arr = args[1:]
 			}
 			switch nm := args[0].(type) {
 			case SexpStr:

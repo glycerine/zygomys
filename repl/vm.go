@@ -314,6 +314,14 @@ func (c CallInstr) Execute(env *Glisp) error {
 		}
 		_, err := env.CallUserFunction(f, c.sym.name, c.nargs)
 		return err
+
+	case *RegisteredType:
+		if f.Constructor == nil {
+			return errors.New(fmt.Sprintf("'%s' does not have a constructor function", c.sym.name))
+		}
+		P("call instruction for RegisteredType!")
+		_, err := env.CallUserFunction(f.Constructor, c.sym.name, c.nargs)
+		return err
 	}
 	return errors.New(fmt.Sprintf("%s is not a function", c.sym.name))
 }

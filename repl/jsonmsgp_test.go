@@ -124,7 +124,8 @@ type Event struct {
 				err = fmt.Errorf("type '%s' not registered in GoStructRegistry", tn)
 				panic(err)
 			}
-			newStruct := factory.Factory(env)
+			newStruct, err := factory.Factory(env)
+			panicOn(err)
 
 			// What didn't work here was going through msgpack, because
 			// ugorji msgpack encode will write turn signed ints into unsigned ints,
@@ -133,7 +134,7 @@ type Event struct {
 			jsonBytes := []byte(SexpToJson(asHash))
 
 			jsonDecoder := json.NewDecoder(bytes.NewBuffer(jsonBytes))
-			err := jsonDecoder.Decode(newStruct)
+			err = jsonDecoder.Decode(newStruct)
 			switch err {
 			case io.EOF:
 			case nil:

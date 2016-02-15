@@ -77,18 +77,22 @@ func (r *GoStructRegistryType) register(name string, e *RegisteredType, isUser b
 
 func (e *RegisteredType) Init() {
 	e.Aliases = make(map[string]bool)
-	val := e.Factory(nil)
-	e.ValueCache = reflect.ValueOf(val)
-	e.TypeCache = e.ValueCache.Type()
-	e.PointerName = fmt.Sprintf("%T", val)
-	e.ReflectName = e.PointerName[1:]
-	e.DisplayAs = e.ReflectName
+	val, err := e.Factory(nil)
+	panicOn(err)
+	if val != nil {
+		e.ValueCache = reflect.ValueOf(val)
+		e.TypeCache = e.ValueCache.Type()
+		e.PointerName = fmt.Sprintf("%T", val)
+		e.ReflectName = e.PointerName[1:]
+		e.DisplayAs = e.ReflectName
+	}
 	e.initDone = true
 }
 
-func (r *GoStructRegistryType) RegisterUserdef(name string, e *RegisteredType) {
+func (r *GoStructRegistryType) RegisterUserdef(name string, e *RegisteredType, hasShadowStruct bool) {
 	r.register(name, e, true)
 	e.IsUser = true
+	e.hasShadowStruct = hasShadowStruct
 }
 
 func (r *GoStructRegistryType) Lookup(name string) *RegisteredType {
@@ -96,14 +100,16 @@ func (r *GoStructRegistryType) Lookup(name string) *RegisteredType {
 }
 
 // the type of all maker functions
-type MakeGoStructFunc func(env *Glisp) interface{}
+type MakeGoStructFunc func(env *Glisp) (interface{}, error)
 
 type RegisteredType struct {
-	initDone bool
+	initDone        bool
+	hasShadowStruct bool
 
+	Constructor    *SexpFunction
 	RegisteredName string
 	Factory        MakeGoStructFunc
-	Gen            bool // generate a defmap mapping?
+	GenDefMap      bool
 	ValueCache     reflect.Value
 	TypeCache      reflect.Type
 	PointerName    string
@@ -139,87 +145,87 @@ func init() {
 	// add go builtin types
 	// ====================
 
-	byteEntry := &RegisteredType{Gen: false, Factory: func(env *Glisp) interface{} {
-		return new(byte)
+	byteEntry := &RegisteredType{GenDefMap: false, Factory: func(env *Glisp) (interface{}, error) {
+		return new(byte), nil
 	}}
 	gsr.RegisterBuiltin("byte", byteEntry)
 	gsr.RegisterBuiltin("uint8", byteEntry)
 
-	gsr.RegisterBuiltin("int", &RegisteredType{Gen: false, Factory: func(env *Glisp) interface{} {
-		return new(int)
+	gsr.RegisterBuiltin("int", &RegisteredType{GenDefMap: false, Factory: func(env *Glisp) (interface{}, error) {
+		return new(int), nil
 	}})
-	gsr.RegisterBuiltin("uint16", &RegisteredType{Gen: false, Factory: func(env *Glisp) interface{} {
-		return new(uint16)
+	gsr.RegisterBuiltin("uint16", &RegisteredType{GenDefMap: false, Factory: func(env *Glisp) (interface{}, error) {
+		return new(uint16), nil
 	}})
-	gsr.RegisterBuiltin("uint32", &RegisteredType{Gen: false, Factory: func(env *Glisp) interface{} {
-		return new(uint32)
+	gsr.RegisterBuiltin("uint32", &RegisteredType{GenDefMap: false, Factory: func(env *Glisp) (interface{}, error) {
+		return new(uint32), nil
 	}})
-	gsr.RegisterBuiltin("uint64", &RegisteredType{Gen: false, Factory: func(env *Glisp) interface{} {
-		return new(uint64)
+	gsr.RegisterBuiltin("uint64", &RegisteredType{GenDefMap: false, Factory: func(env *Glisp) (interface{}, error) {
+		return new(uint64), nil
 	}})
-	gsr.RegisterBuiltin("int8", &RegisteredType{Gen: false, Factory: func(env *Glisp) interface{} {
-		return new(int8)
+	gsr.RegisterBuiltin("int8", &RegisteredType{GenDefMap: false, Factory: func(env *Glisp) (interface{}, error) {
+		return new(int8), nil
 	}})
-	gsr.RegisterBuiltin("int16", &RegisteredType{Gen: false, Factory: func(env *Glisp) interface{} {
-		return new(int16)
+	gsr.RegisterBuiltin("int16", &RegisteredType{GenDefMap: false, Factory: func(env *Glisp) (interface{}, error) {
+		return new(int16), nil
 	}})
-	gsr.RegisterBuiltin("int32", &RegisteredType{Gen: false, Factory: func(env *Glisp) interface{} {
-		return new(int32)
+	gsr.RegisterBuiltin("int32", &RegisteredType{GenDefMap: false, Factory: func(env *Glisp) (interface{}, error) {
+		return new(int32), nil
 	}})
-	gsr.RegisterBuiltin("int64", &RegisteredType{Gen: false, Factory: func(env *Glisp) interface{} {
-		return new(int64)
+	gsr.RegisterBuiltin("int64", &RegisteredType{GenDefMap: false, Factory: func(env *Glisp) (interface{}, error) {
+		return new(int64), nil
 	}})
-	gsr.RegisterBuiltin("float32", &RegisteredType{Gen: false, Factory: func(env *Glisp) interface{} {
-		return new(float32)
-	}})
-
-	gsr.RegisterBuiltin("float64", &RegisteredType{Gen: false, Factory: func(env *Glisp) interface{} {
-		return new(float64)
+	gsr.RegisterBuiltin("float32", &RegisteredType{GenDefMap: false, Factory: func(env *Glisp) (interface{}, error) {
+		return new(float32), nil
 	}})
 
-	gsr.RegisterBuiltin("complex64", &RegisteredType{Gen: false, Factory: func(env *Glisp) interface{} {
-		return new(complex64)
+	gsr.RegisterBuiltin("float64", &RegisteredType{GenDefMap: false, Factory: func(env *Glisp) (interface{}, error) {
+		return new(float64), nil
 	}})
 
-	gsr.RegisterBuiltin("complex128", &RegisteredType{Gen: false, Factory: func(env *Glisp) interface{} {
-		return new(complex128)
+	gsr.RegisterBuiltin("complex64", &RegisteredType{GenDefMap: false, Factory: func(env *Glisp) (interface{}, error) {
+		return new(complex64), nil
 	}})
 
-	gsr.RegisterBuiltin("bool", &RegisteredType{Gen: false, Factory: func(env *Glisp) interface{} {
-		return new(bool)
+	gsr.RegisterBuiltin("complex128", &RegisteredType{GenDefMap: false, Factory: func(env *Glisp) (interface{}, error) {
+		return new(complex128), nil
 	}})
 
-	gsr.RegisterBuiltin("string", &RegisteredType{Gen: false, Factory: func(env *Glisp) interface{} {
-		return new(string)
+	gsr.RegisterBuiltin("bool", &RegisteredType{GenDefMap: false, Factory: func(env *Glisp) (interface{}, error) {
+		return new(bool), nil
 	}})
 
-	gsr.RegisterBuiltin("time.Time", &RegisteredType{Gen: false, Factory: func(env *Glisp) interface{} {
-		return new(time.Time)
+	gsr.RegisterBuiltin("string", &RegisteredType{GenDefMap: false, Factory: func(env *Glisp) (interface{}, error) {
+		return new(string), nil
 	}})
 
-	gsr.RegisterBuiltin("tm.Frame", &RegisteredType{Gen: false, Factory: func(env *Glisp) interface{} {
-		return new(tm.Frame)
+	gsr.RegisterBuiltin("time.Time", &RegisteredType{GenDefMap: false, Factory: func(env *Glisp) (interface{}, error) {
+		return new(time.Time), nil
 	}})
+
+	gsr.RegisterUserdef("tm.Frame", &RegisteredType{GenDefMap: true, Factory: func(env *Glisp) (interface{}, error) {
+		return new(tm.Frame), nil
+	}}, true)
 
 	// demo and user defined structs
-	gsr.RegisterUserdef("event-demo", &RegisteredType{Gen: true, Factory: func(env *Glisp) interface{} {
-		return &Event{}
-	}})
-	gsr.RegisterUserdef("person-demo", &RegisteredType{Gen: true, Factory: func(env *Glisp) interface{} {
-		return &Person{}
-	}})
-	gsr.RegisterUserdef("snoopy", &RegisteredType{Gen: true, Factory: func(env *Glisp) interface{} {
-		return &Snoopy{}
-	}})
-	gsr.RegisterUserdef("hornet", &RegisteredType{Gen: true, Factory: func(env *Glisp) interface{} {
-		return &Hornet{}
-	}})
-	gsr.RegisterUserdef("hellcat", &RegisteredType{Gen: true, Factory: func(env *Glisp) interface{} {
-		return &Hellcat{}
-	}})
-	gsr.RegisterUserdef("weather", &RegisteredType{Gen: true, Factory: func(env *Glisp) interface{} {
-		return &Weather{}
-	}})
+	gsr.RegisterUserdef("event-demo", &RegisteredType{GenDefMap: true, Factory: func(env *Glisp) (interface{}, error) {
+		return &Event{}, nil
+	}}, true)
+	gsr.RegisterUserdef("person-demo", &RegisteredType{GenDefMap: true, Factory: func(env *Glisp) (interface{}, error) {
+		return &Person{}, nil
+	}}, true)
+	gsr.RegisterUserdef("snoopy", &RegisteredType{GenDefMap: true, Factory: func(env *Glisp) (interface{}, error) {
+		return &Snoopy{}, nil
+	}}, true)
+	gsr.RegisterUserdef("hornet", &RegisteredType{GenDefMap: true, Factory: func(env *Glisp) (interface{}, error) {
+		return &Hornet{}, nil
+	}}, true)
+	gsr.RegisterUserdef("hellcat", &RegisteredType{GenDefMap: true, Factory: func(env *Glisp) (interface{}, error) {
+		return &Hellcat{}, nil
+	}}, true)
+	gsr.RegisterUserdef("weather", &RegisteredType{GenDefMap: true, Factory: func(env *Glisp) (interface{}, error) {
+		return &Weather{}, nil
+	}}, true)
 
 }
 

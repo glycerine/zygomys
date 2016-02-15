@@ -379,8 +379,9 @@ func (env *Glisp) StandardSetup() {
 
 	// create constructors for each of our pre-registered Go struct types
 	for name, fac := range GoStructRegistry.Registry {
-		strct := fac.Factory(env)
-		if fac.Gen {
+		strct, err := fac.Factory(env)
+		panicOn(err)
+		if fac.GenDefMap {
 			gob.Register(strct)
 			makeRec := fmt.Sprintf(`(defmap %s)`, name)
 			_, err = env.EvalString(makeRec)
