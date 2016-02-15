@@ -82,6 +82,7 @@ func (e *RegisteredType) Init() {
 	e.TypeCache = e.ValueCache.Type()
 	e.PointerName = fmt.Sprintf("%T", val)
 	e.ReflectName = e.PointerName[1:]
+	e.DisplayAs = e.ReflectName
 	e.initDone = true
 }
 
@@ -109,10 +110,11 @@ type RegisteredType struct {
 	ReflectName    string
 	IsUser         bool
 	Aliases        map[string]bool
+	DisplayAs      string
 }
 
 func (p *RegisteredType) SexpString() string {
-	return p.RegisteredName
+	return p.DisplayAs
 }
 
 func NewRegisteredType(f MakeGoStructFunc) *RegisteredType {

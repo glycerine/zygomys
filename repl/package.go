@@ -67,6 +67,7 @@ func SliceOfFunction(env *Glisp, name string,
 	sliceRt := NewRegisteredType(func(env *Glisp) interface{} {
 		return reflect.MakeSlice(derivedType, 0, 0)
 	})
+	sliceRt.DisplayAs = fmt.Sprintf("(slice-of %s)", rt.DisplayAs)
 	sliceName := "slice-of-" + rt.RegisteredName
 	GoStructRegistry.RegisterUserdef(sliceName, sliceRt)
 	return sliceRt, nil
@@ -96,6 +97,7 @@ func PointerToFunction(env *Glisp, name string,
 	sliceRt := NewRegisteredType(func(env *Glisp) interface{} {
 		return reflect.New(derivedType)
 	})
+	sliceRt.DisplayAs = fmt.Sprintf("(pointer-to %s)", rt.DisplayAs)
 	sliceName := "pointer-to-" + rt.RegisteredName
 	GoStructRegistry.RegisterUserdef(sliceName, sliceRt)
 	return sliceRt, nil
