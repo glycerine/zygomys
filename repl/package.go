@@ -547,11 +547,25 @@ func baseConstruct(env *Glisp, f *RegisteredType, nargs int) (Sexp, error) {
 func ArrayOfFunction(env *Glisp, name string,
 	args []Sexp) (Sexp, error) {
 
-	sz := 5
-	P("args = %#v in ArrayOfFunction", args)
 	if len(args) != 2 {
 		return SexpNull, fmt.Errorf("insufficient arguments to ([size] regtype) array constructor. use: "+
 			"([size...] a-regtype)\n", name)
+	}
+	sz := 0
+	P("args = %#v in ArrayOfFunction", args)
+	switch ar := args[1].(type) {
+	case SexpArray:
+		if len(ar) == 0 {
+			return SexpNull, fmt.Errorf("at least one size must be specified in array constructor; e.g. ([size ...] regtype)")
+		}
+		asInt, isInt := ar[0].(SexpInt)
+		if !isInt {
+			return SexpNull, fmt.Errorf("size must be an int (not %T) in array constructor; e.g. ([size ...] regtype)", ar[0])
+		}
+		sz = int(asInt)
+		// TODO: implement multiple dimensional arrays (matrixes etc).
+	default:
+		return SexpNull, fmt.Errorf("at least one size must be specified in array constructor; e.g. ([size ...] regtype)")
 	}
 
 	var rt *RegisteredType
