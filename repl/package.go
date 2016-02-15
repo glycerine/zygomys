@@ -24,6 +24,8 @@ func (env *Glisp) ImportPackageBuilder() {
 	env.AddBuilder("package", PackageBuilder)
 	env.AddFunction("slice-of", SliceOfFunction)
 	env.AddFunction("pointer-to", PointerToFunction)
+	env.AddBuilder("interface", InterfaceBuilder)
+	env.AddBuilder("func", FuncBuilder)
 }
 
 // this is just a stub. TODO: finish design, implement packages.
@@ -36,6 +38,38 @@ func PackageBuilder(env *Glisp, name string,
 	}
 
 	P("in package builder, args = ")
+	for i := range args {
+		P("args[%v] = '%s'", i, args[i].SexpString())
+	}
+
+	return SexpNull, nil
+}
+
+func InterfaceBuilder(env *Glisp, name string,
+	args []Sexp) (Sexp, error) {
+
+	if len(args) < 1 {
+		return SexpNull, fmt.Errorf("interface name is missing. use: " +
+			"(interface interface-name ...)\n")
+	}
+
+	P("in interface builder, args = ")
+	for i := range args {
+		P("args[%v] = '%s'", i, args[i].SexpString())
+	}
+
+	return SexpNull, nil
+}
+
+func FuncBuilder(env *Glisp, name string,
+	args []Sexp) (Sexp, error) {
+
+	if len(args) < 1 {
+		return SexpNull, fmt.Errorf("func name is missing. use: " +
+			"(func func-name ...)\n")
+	}
+
+	P("in func builder, args = ")
 	for i := range args {
 		P("args[%v] = '%s'", i, args[i].SexpString())
 	}
