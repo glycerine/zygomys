@@ -229,7 +229,7 @@ func StructBuilder(env *Glisp, name string,
 			return SexpNull, fmt.Errorf("bad struct name: symbol required")
 		}
 	*/
-	P("good: have struct name '%v'", symN)
+	Q("good: have struct name '%v'", symN)
 
 	env.datastack.PushExpr(SexpNull)
 	structName := symN.name
@@ -241,7 +241,7 @@ func StructBuilder(env *Glisp, name string,
 			"prototype is (struct name [(field ...)*] )")
 	}
 	if n == 2 {
-		P("in case n == 2")
+		Q("in case n == 2")
 		switch ar := args[1].(type) {
 		default:
 			return SexpNull, fmt.Errorf("bad struct declaration '%v': second argument "+
@@ -255,40 +255,40 @@ func StructBuilder(env *Glisp, name string,
 				// dup to avoid messing with the stack on eval:
 				dup := env.Duplicate()
 				for i, ele := range arr {
-					P("about to eval i=%v", i)
+					Q("about to eval i=%v", i)
 					ev, err := dup.EvalExpressions([]Sexp{ele})
-					P("done with eval i=%v. ev=%v", i, ev.SexpString())
+					Q("done with eval i=%v. ev=%v", i, ev.SexpString())
 					if err != nil {
 						return SexpNull, fmt.Errorf("bad struct declaration '%v': bad "+
 							"field at array entry %v; error was '%v'", structName, i, err)
 					}
-					P("checking for isHash at i=%v", i)
+					Q("checking for isHash at i=%v", i)
 					asHash, isHash := ev.(*SexpField)
 					if !isHash {
-						P("was not hash, instead was %T", ev)
+						Q("was not hash, instead was %T", ev)
 						return SexpNull, fmt.Errorf("bad struct declaration '%v': bad "+
 							"field array at entry %v; a (field ...) is required. Instead saw '%T'/with value = '%v'",
 							structName, i, ev, ev.SexpString())
 					}
-					P("good eval i=%v, ev=%#v / %v", i, ev, ev.SexpString())
+					Q("good eval i=%v, ev=%#v / %v", i, ev, ev.SexpString())
 					ko := asHash.KeyOrder
 					if len(ko) == 0 {
 						return SexpNull, fmt.Errorf("bad struct declaration '%v': bad "+
 							"field array at entry %v; field had no name",
 							structName, i)
 					}
-					P("ko = '%#v'", ko)
+					Q("ko = '%#v'", ko)
 					first := ko[0]
-					P("first = '%#v'", first)
+					Q("first = '%#v'", first)
 					xar = append(xar, first)
 					xar = append(xar, ev)
 					flat = append(flat, ev.(*SexpField))
 				}
-				P("no err from EvalExpressions, got xar = '%#v'", xar)
+				Q("no err from EvalExpressions, got xar = '%#v'", xar)
 			}
 		}
 		/*
-				P("evaluating args[1:2] which is of type %T / val=%#v", args[1], args[1])
+				Q("evaluating args[1:2] which is of type %T / val=%#v", args[1], args[1])
 				arr, err := env.EvalExpressions(args[1:2])
 				if err != nil {
 					return SexpNull, fmt.Errorf("bad struct declaration: bad "+
@@ -297,7 +297,7 @@ func StructBuilder(env *Glisp, name string,
 
 			switch ar := arr.(type) {
 			case SexpArray:
-				P("good, have array %#v", ar)
+				Q("good, have array %#v", ar)
 				xar = []Sexp(ar)
 			default:
 				return SexpNull, fmt.Errorf("bad struct declaration: did not find "+
@@ -307,19 +307,19 @@ func StructBuilder(env *Glisp, name string,
 	} // end n == 2
 
 	uds := &SexpUserStructDefn{Name: structName, Fields: flat}
-	P("good: made typeDefnHash: '%s'", uds.SexpString())
+	Q("good: made typeDefnHash: '%s'", uds.SexpString())
 	rt := NewRegisteredType(func(env *Glisp) (interface{}, error) {
 		return uds, nil
 	})
 	rt.UserStructDefn = uds
 	GoStructRegistry.RegisterUserdef(structName, rt, false)
-	P("good: registered new userdefined struct '%s'", structName)
+	Q("good: registered new userdefined struct '%s'", structName)
 	err := env.LexicalBindSymbol(symN, rt)
 	if err != nil {
 		return SexpNull, fmt.Errorf("struct builder could not bind symbol '%': '%v'",
 			structName, err)
 	}
-	P("good: bound symbol '%s' to RegisteredType '%s'", symN.SexpString(), rt.SexpString())
+	Q("good: bound symbol '%s' to RegisteredType '%s'", symN.SexpString(), rt.SexpString())
 	return rt, nil
 }
 
@@ -332,9 +332,9 @@ func PackageBuilder(env *Glisp, name string,
 			"(package package-name ...)\n")
 	}
 
-	P("in package builder, args = ")
+	Q("in package builder, args = ")
 	for i := range args {
-		P("args[%v] = '%s'", i, args[i].SexpString())
+		Q("args[%v] = '%s'", i, args[i].SexpString())
 	}
 
 	return SexpNull, nil
@@ -348,9 +348,9 @@ func InterfaceBuilder(env *Glisp, name string,
 			"(interface interface-name ...)\n")
 	}
 
-	P("in interface builder, args = ")
+	Q("in interface builder, args = ")
 	for i := range args {
-		P("args[%v] = '%s'", i, args[i].SexpString())
+		Q("args[%v] = '%s'", i, args[i].SexpString())
 	}
 
 	return SexpNull, nil
@@ -364,9 +364,9 @@ func FuncBuilder(env *Glisp, name string,
 			"(func func-name ...)\n")
 	}
 
-	P("in func builder, args = ")
+	Q("in func builder, args = ")
 	for i := range args {
-		P("args[%v] = '%s'", i, args[i].SexpString())
+		Q("args[%v] = '%s'", i, args[i].SexpString())
 	}
 
 	return SexpNull, nil
@@ -392,7 +392,7 @@ func SliceOfFunction(env *Glisp, name string,
 			arg, arg.SexpString())
 	}
 
-	//P("slice-of arg = '%s' with type %T", args[0].SexpString(), args[0])
+	//Q("slice-of arg = '%s' with type %T", args[0].SexpString(), args[0])
 
 	derivedType := reflect.SliceOf(rt.TypeCache)
 	sliceRt := NewRegisteredType(func(env *Glisp) (interface{}, error) {
@@ -424,7 +424,7 @@ func PointerToFunction(env *Glisp, name string,
 			arg, arg.SexpString())
 	}
 
-	//P("pointer-to arg = '%s' with type %T", args[0].SexpString(), args[0])
+	//Q("pointer-to arg = '%s' with type %T", args[0].SexpString(), args[0])
 
 	derivedType := reflect.PtrTo(rt.TypeCache)
 	sliceRt := NewRegisteredType(func(env *Glisp) (interface{}, error) {
@@ -437,16 +437,16 @@ func PointerToFunction(env *Glisp, name string,
 }
 
 func StructConstructorFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
-	P("in struct ctor, name = '%s', args = %#v", name, args)
+	Q("in struct ctor, name = '%s', args = %#v", name, args)
 	return MakeHash(args, name, env)
 }
 
 func BaseTypeConstructorFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
-	P("in base type ctor, args = '%#v'", args)
+	Q("in base type ctor, args = '%#v'", args)
 	if len(args) < 1 {
 		return SexpNull, WrongNargs
 	}
-	P("in base ctor, name = '%s', args = %#v", name, args)
+	Q("in base ctor, name = '%s', args = %#v", name, args)
 
 	return SexpNull, nil
 }
