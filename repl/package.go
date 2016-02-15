@@ -14,17 +14,34 @@ type SexpUserStructDefn struct {
 
 // pretty print a struct
 func (p *SexpUserStructDefn) SexpString() string {
+	P("SexpUserStructDefn::SexpString() called!")
 	if len(p.Fields) == 0 {
 		return fmt.Sprintf("(struct %s)", p.Name)
 	}
 	s := fmt.Sprintf("(struct %s [\n", p.Name)
 
 	w := make([][]int, len(p.Fields))
-	maxfield := 0
-	for j, f := range p.Fields {
-		w[j] = f.FieldWidths()
-		maxfield = maxi(maxfield, len(w[j]))
+	maxnfield := 0
+	for i, f := range p.Fields {
+		w[i] = f.FieldWidths()
+		P("w[i=%v] = %v", i, w[i])
+		maxnfield = maxi(maxnfield, len(w[i]))
 	}
+
+	biggestCol := make([]int, maxnfield)
+	P("\n")
+	for j := 0; j < maxnfield; j++ {
+		for i := range p.Fields {
+			P("i= %v, j=%v, len(w[i])=%v  check=%v", i, j, len(w[i]), len(w[i]) < j)
+			if j < len(w[i]) {
+				fmt.Printf("w[i][j]=%v   ", w[i][j])
+				biggestCol[j] = maxi(biggestCol[j], w[i][j]+1)
+			}
+		}
+		P("\n")
+	}
+	P("SexpUserStructDefn::SexpString(): maxnfield = %v, out of %v", maxnfield, len(p.Fields))
+	P("SexpUserStructDefn::SexpString(): biggestCol =  %#v", biggestCol)
 
 	// computing padding
 	// x
@@ -38,18 +55,9 @@ func (p *SexpUserStructDefn) SexpString() string {
 	// xx      xx
 	// xxxxxxx
 	// xxx     x  x x
-	pad := make([]int, maxfield)
-	for j := range w {
-		cur := 0
-		for i := 0; i < maxfield; i++ {
-			if i < len(w[j]) {
-				cur = maxi(cur, w[j][i])
-			}
-		}
-		pad = append(pad, cur)
-	}
+	P("pad = %#v", biggestCol)
 	for _, f := range p.Fields {
-		s += "        " + f.AlignString(pad) + "\n"
+		s += "        " + f.AlignString(biggestCol) + "\n"
 	}
 	s += "        ])\n"
 	return s
@@ -95,23 +103,26 @@ func (f *SexpField) AlignString(pad []int) string {
 
 	for i, key := range hash.KeyOrder {
 		val, err := hash.HashGet(nil, key)
+		r := ""
 		if err == nil {
 			switch s := key.(type) {
 			case SexpStr:
-				str += s.S + ":"
+				r += s.S + ":"
 			case SexpSymbol:
-				str += s.name + ":"
+				r += s.name + ":"
 			default:
-				str += key.SexpString() + ":"
+				r += key.SexpString() + ":"
 			}
-			if i > 0 {
-				str += val.SexpString() + " "
-			} else {
-				str += val.SexpString() + strings.Repeat(" ", pad[i%len(pad)])
+			r += val.SexpString()
+			xtra := pad[i] - len(r)
+			if xtra < 0 {
+				panic(fmt.Sprintf("xtra = %d, pad[i=%v]=%v, len(r)=%v (r=%v)", xtra, i, pad[i], len(r), r))
 			}
+			r += strings.Repeat(" ", xtra)
 		} else {
 			panic(err)
 		}
+		str += r
 	}
 	if len(hash.Map) > 0 {
 		return str[:len(str)-1] + ")"
