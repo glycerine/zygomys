@@ -354,6 +354,19 @@ func (d DispatchInstr) Execute(env *Glisp) error {
 		_, err := env.CallUserFunction(f, f.name, d.nargs)
 		return err
 	}
+	// allow ([] int64) to express slice of int64.
+	switch arr := funcobj.(type) {
+	case SexpArray:
+		if len(arr) == 0 {
+			_, err := env.CallUserFunction(sxSliceOf, funcobj.SexpString(), d.nargs)
+			return err
+		}
+		// call along with the array as an argument so we know the size of the
+		// array / matrix / tensor to make
+		env.datastack.PushExpr(arr)
+		_, err := env.CallUserFunction(sxArrayOf, funcobj.SexpString(), d.nargs+1)
+		return err
+	}
 	return fmt.Errorf("not a function on top of datastack: '%T/%#v'", funcobj, funcobj)
 }
 

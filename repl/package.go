@@ -190,6 +190,9 @@ func (env *Glisp) ImportPackageBuilder() {
 	env.AddFunction("ptr", PointerToFunction)
 }
 
+var sxSliceOf *SexpFunction = MakeUserFunction("slice-of", SliceOfFunction)
+var sxArrayOf *SexpFunction = MakeUserFunction("array-of", ArrayOfFunction)
+
 func StructBuilder(env *Glisp, name string,
 	args []Sexp) (Sexp, error) {
 
@@ -395,8 +398,8 @@ func SliceOfFunction(env *Glisp, name string,
 	args []Sexp) (Sexp, error) {
 
 	if len(args) != 1 {
-		return SexpNull, fmt.Errorf("argument to slice-of is missing. use: " +
-			"(slice-of a-regtype)\n")
+		return SexpNull, fmt.Errorf("argument x to (%s x) is missing. use: "+
+			"(%s a-regtype)\n", name)
 	}
 
 	var rt *RegisteredType
@@ -406,9 +409,9 @@ func SliceOfFunction(env *Glisp, name string,
 	case *SexpHash:
 		rt = arg.GoStructFactory
 	default:
-		return SexpNull, fmt.Errorf("argument to slice-of was not regtype, "+
+		return SexpNull, fmt.Errorf("argument tx in (%s x) was not regtype, "+
 			"instead type %T displaying as '%v' ",
-			arg, arg.SexpString())
+			name, arg, arg.SexpString())
 	}
 
 	//Q("slice-of arg = '%s' with type %T", args[0].SexpString(), args[0])
@@ -417,7 +420,7 @@ func SliceOfFunction(env *Glisp, name string,
 	sliceRt := NewRegisteredType(func(env *Glisp) (interface{}, error) {
 		return reflect.MakeSlice(derivedType, 0, 0), nil
 	})
-	sliceRt.DisplayAs = fmt.Sprintf("(slice-of %s)", rt.DisplayAs)
+	sliceRt.DisplayAs = fmt.Sprintf("(%s %s)", name, rt.DisplayAs)
 	sliceName := "slice-of-" + rt.RegisteredName
 	GoStructRegistry.RegisterUserdef(sliceName, sliceRt, false)
 	return sliceRt, nil
@@ -538,4 +541,39 @@ func baseConstruct(env *Glisp, f *RegisteredType, nargs int) (Sexp, error) {
 		return SexpNull, fmt.Errorf("unhandled case in baseConstruct, arg = %#v/type=%T", arg, arg)
 	}
 	return SexpNull, fmt.Errorf("unhandled no-arg case in baseConstruct, v has type=%T")
+}
+
+// generate fixed size array
+func ArrayOfFunction(env *Glisp, name string,
+	args []Sexp) (Sexp, error) {
+
+	sz := 5
+	P("args = %#v in ArrayOfFunction", args)
+	if len(args) != 2 {
+		return SexpNull, fmt.Errorf("insufficient arguments to ([size] regtype) array constructor. use: "+
+			"([size...] a-regtype)\n", name)
+	}
+
+	var rt *RegisteredType
+	switch arg := args[0].(type) {
+	case *RegisteredType:
+		rt = arg
+	case *SexpHash:
+		rt = arg.GoStructFactory
+	default:
+		return SexpNull, fmt.Errorf("argument tx in (%s x) was not regtype, "+
+			"instead type %T displaying as '%v' ",
+			name, arg, arg.SexpString())
+	}
+
+	//Q("array-of arg = '%s' with type %T", args[0].SexpString(), args[0])
+
+	derivedType := reflect.ArrayOf(sz, rt.TypeCache)
+	arrayRt := NewRegisteredType(func(env *Glisp) (interface{}, error) {
+		return reflect.New(derivedType), nil
+	})
+	arrayRt.DisplayAs = fmt.Sprintf("(%s %s)", name, rt.DisplayAs)
+	arrayName := "array-of-" + rt.RegisteredName
+	GoStructRegistry.RegisterUserdef(arrayName, arrayRt, false)
+	return arrayRt, nil
 }
