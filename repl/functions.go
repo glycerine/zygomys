@@ -679,13 +679,13 @@ func ConstructorFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	case "raw":
 		return MakeRaw(args)
 	case "field":
-		P("making hash for field")
+		Q("making hash for field")
 		h, err := MakeHash(args, "field", env)
 		if err != nil {
 			return SexpNull, err
 		}
 		fld := (*SexpField)(h)
-		P("hash for field is: '%v'", fld.SexpString())
+		Q("hash for field is: '%v'", fld.SexpString())
 		return fld, nil
 	case "struct":
 		return MakeHash(args, "struct", env)
@@ -1175,7 +1175,7 @@ func QuoteListFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 // if setVal is nil, only get and return the lookup.
 func dotGetSetHelper(env *Glisp, name string, setVal *Sexp) (Sexp, error) {
 	path := DotPartsRegex.FindAllString(name, -1)
-	//P("\n in dotGetSetHelper(), path = '%#v'\n", path)
+	//Q("\n in dotGetSetHelper(), path = '%#v'\n", path)
 	if len(path) == 0 {
 		return SexpNull, fmt.Errorf("internal error: DotFunction" +
 			" path had zero length")
@@ -1191,7 +1191,7 @@ func dotGetSetHelper(env *Glisp, name string, setVal *Sexp) (Sexp, error) {
 		asym := env.MakeSymbol(a)
 
 		// check conflict
-		//P("asym = %#v\n", asym)
+		//Q("asym = %#v\n", asym)
 		builtin, typ := env.IsBuiltinSym(asym)
 		if builtin {
 			return SexpNull, fmt.Errorf("'%s' is a %s, cannot assign to it with dot-symbol", asym.name, typ)
@@ -1208,7 +1208,7 @@ func dotGetSetHelper(env *Glisp, name string, setVal *Sexp) (Sexp, error) {
 	// the first
 
 	key := path[0][1:] // strip off the dot
-	//P("\n in dotGetSetHelper(), looking up '%s'\n", key)
+	//Q("\n in dotGetSetHelper(), looking up '%s'\n", key)
 	ret, err, _ = env.LexicalLookupSymbol(env.MakeSymbol(key), false)
 	if err != nil {
 		Q("\n in dotGetSetHelper(), '%s' not found\n", key)
@@ -1230,7 +1230,7 @@ func dotGetSetHelper(env *Glisp, name string, setVal *Sexp) (Sexp, error) {
 			path[1][1:], ret)
 	}
 	// have hash: rest of path handled in hashutils.go in nestedPathGet()
-	//P("\n in dotGetSetHelper(), about to call nestedPathGetSet() with"+
+	//Q("\n in dotGetSetHelper(), about to call nestedPathGetSet() with"+
 	//	"dotpaths = path[i+1:]='%#v\n", path[1:])
 	exp, err := h.nestedPathGetSet(env, path[1:], setVal)
 	if err != nil {

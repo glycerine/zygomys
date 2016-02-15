@@ -317,7 +317,7 @@ func GoMethodListFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 }
 
 func (h *SexpHash) SetMethodList(env *Glisp) error {
-	fmt.Printf("hash.SetMethodList() called.\n")
+	Q("hash.SetMethodList() called.\n")
 
 	if !h.GoStructFactory.hasShadowStruct {
 		return NoAttachedGoStruct
@@ -333,7 +333,7 @@ func (h *SexpHash) SetMethodList(env *Glisp) error {
 	ty := va.Type()
 	n := ty.NumMethod()
 
-	fmt.Printf("hash.SetMethodList() sees %d methods on type %v\n", n, ty)
+	Q("hash.SetMethodList() sees %d methods on type %v\n", n, ty)
 	h.NumMethod = n
 	h.GoType = ty
 

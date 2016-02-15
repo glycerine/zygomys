@@ -227,18 +227,18 @@ func (c CallInstr) Execute(env *Glisp) error {
 	if err != nil {
 		return err
 	}
-	//P("\n in CallInstr, after looking up c.sym='%s', got funcobj='%v'. datastack is:\n", c.sym.name, funcobj.SexpString())
+	//Q("\n in CallInstr, after looking up c.sym='%s', got funcobj='%v'. datastack is:\n", c.sym.name, funcobj.SexpString())
 	//env.datastack.PrintStack()
 	switch f := funcobj.(type) {
 	case SexpSymbol:
 		// is it a dot-symbol call?
-		//P("\n in CallInstr, found symbol\n")
+		//Q("\n in CallInstr, found symbol\n")
 		if c.sym.isDot {
 
 			dotSymRef, dotLookupErr := dotGetSetHelper(env, c.sym.name, nil)
 
 			// are we a value request (no further args), or a fuction/method call?
-			//P("\n in CallInstr, found dot-symbol\n")
+			//Q("\n in CallInstr, found dot-symbol\n")
 			if c.nargs == 0 {
 				// value request
 				if dotLookupErr != nil {
@@ -259,13 +259,13 @@ func (c CallInstr) Execute(env *Glisp) error {
 				top := expressions[0]
 				switch ftop := top.(type) {
 				case *SexpFunction:
-					//P("\n in CallInstr, fetched out function call from top of datastack.\n")
+					//Q("\n in CallInstr, fetched out function call from top of datastack.\n")
 					indirectFuncName = ftop
 					if ftop.user {
-						//P("\n in CallInstr, with user func, passing dot-symbol in directly so assignment will work.\n")
+						//Q("\n in CallInstr, with user func, passing dot-symbol in directly so assignment will work.\n")
 						env.datastack.PushExpr(c.sym)
 					} else {
-						//P("\n in CallInstr, with sexp func, dereferencing dot-symbol '%s' -> '%s'\n", c.sym.name, dotSymRef.SexpString())
+						//Q("\n in CallInstr, with sexp func, dereferencing dot-symbol '%s' -> '%s'\n", c.sym.name, dotSymRef.SexpString())
 						if dotLookupErr != nil {
 							return dotLookupErr
 						}
@@ -275,7 +275,7 @@ func (c CallInstr) Execute(env *Glisp) error {
 					for j := range pushme {
 						env.datastack.PushExpr(pushme[j])
 					}
-					//P("\n in CallInstr, after setting up stack for dot-symbol call, datastack:\n")
+					//Q("\n in CallInstr, after setting up stack for dot-symbol call, datastack:\n")
 					//env.datastack.PrintStack()
 
 				default:
@@ -324,26 +324,8 @@ func (c CallInstr) Execute(env *Glisp) error {
 			}
 			env.datastack.PushExpr(res)
 			return nil
-			/*
-				v, err := f.Factory(env)
-				if err != nil {
-					//env.datastack.PushExpr(SexpNull)
-					return err
-				}
-				P("see call to *RegisteredType without constructor, putting %v/type=%T onto stack", v, v)
-				switch v.(type) {
-				case *int:
-					// it is already on the stack?
-					return nil
-				default:
-					panic("finish me")
-				}
-			*/
-			//_, err := env.CallUserFunction(env.baseTypeCtor, c.sym.name, c.nargs)
-			//return err
-			//return errors.New(fmt.Sprintf("'%s' does not have a constructor function", c.sym.name))
 		}
-		P("call instruction for RegisteredType!")
+		Q("call instruction for RegisteredType!")
 		_, err := env.CallUserFunction(f.Constructor, c.sym.name, c.nargs)
 		return err
 	}
