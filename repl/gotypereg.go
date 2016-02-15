@@ -131,6 +131,12 @@ type RegisteredType struct {
 }
 
 func (p *RegisteredType) SexpString() string {
+	if p.StructFields != nil {
+		if p.OrigSexp != nil {
+			return p.OrigSexp.SexpString()
+		}
+		return Sexp(p.StructFields).SexpString()
+	}
 	return p.DisplayAs
 }
 

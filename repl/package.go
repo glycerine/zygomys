@@ -164,6 +164,7 @@ func StructBuilder(env *Glisp, name string,
 		return SexpNull, fmt.Errorf("struct builder could not bind symbol '%': '%v'",
 			structName, err)
 	}
+	P("good: bound symbol '%s' to RegisteredType '%s'", symN.SexpString(), rt.SexpString())
 	return rt, nil
 }
 
@@ -286,6 +287,7 @@ func StructConstructorFunction(env *Glisp, name string, args []Sexp) (Sexp, erro
 }
 
 func BaseTypeConstructorFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
+	P("in base type ctor, args = '%#v'", args)
 	if len(args) < 1 {
 		return SexpNull, WrongNargs
 	}
