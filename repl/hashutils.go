@@ -653,3 +653,45 @@ func (h *SexpHash) nestedPathGetSet(env *Glisp, dotpaths []string, setVal *Sexp)
 	}
 	return ret, err
 }
+
+func (hash *SexpHash) SexpString() string {
+	if hash.TypeName != "hash" {
+		return NamedHashSexpString(hash)
+	}
+	str := "{"
+	for _, arr := range hash.Map {
+		for _, pair := range arr {
+			str += pair.Head.SexpString() + " "
+			str += pair.Tail.SexpString() + " "
+		}
+	}
+	if len(str) > 1 {
+		return str[:len(str)-1] + "}"
+	}
+	return str + "}"
+}
+
+func NamedHashSexpString(hash *SexpHash) string {
+	str := " (" + hash.TypeName + " "
+
+	for _, key := range hash.KeyOrder {
+		val, err := hash.HashGet(nil, key)
+		if err == nil {
+			switch s := key.(type) {
+			case SexpStr:
+				str += s.S + ":"
+			case SexpSymbol:
+				str += s.name + ":"
+			default:
+				str += key.SexpString() + ":"
+			}
+			str += val.SexpString() + " "
+		} else {
+			panic(err)
+		}
+	}
+	if len(hash.Map) > 0 {
+		return str[:len(str)-1] + ")"
+	}
+	return str + ")"
+}

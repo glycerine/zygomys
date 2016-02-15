@@ -12,12 +12,45 @@ type SexpUserStructDefn struct {
 }
 
 func (p *SexpUserStructDefn) SexpString() string {
-	s := fmt.Sprintf("(struct %s [\n")
+	s := fmt.Sprintf("(struct %s [\n", p.Name)
 	for _, f := range p.Fields {
-		s += "    " + f.SexpString() + "\n"
+		s += "        " + f.SexpString() + "\n"
 	}
-	s += "    ])\n"
+	s += "        ])\n"
 	return s
+}
+
+type SexpField SexpHash
+
+// specialize for nice looking field prints
+func (f *SexpField) SexpString() string {
+	hash := (*SexpHash)(f)
+	str := " (" + hash.TypeName + " "
+
+	for i, key := range hash.KeyOrder {
+		val, err := hash.HashGet(nil, key)
+		if err == nil {
+			switch s := key.(type) {
+			case SexpStr:
+				str += s.S + ":"
+			case SexpSymbol:
+				str += s.name + ":"
+			default:
+				str += key.SexpString() + ":"
+			}
+			if i > 0 {
+				str += val.SexpString() + " "
+			} else {
+				str += val.SexpString() + "    "
+			}
+		} else {
+			panic(err)
+		}
+	}
+	if len(hash.Map) > 0 {
+		return str[:len(str)-1] + ")"
+	}
+	return str + ")"
 }
 
 // package.go: declare package, structs, function types
@@ -118,7 +151,7 @@ func StructBuilder(env *Glisp, name string,
 							"field at array entry %v; error was '%v'", structName, i, err)
 					}
 					P("checking for isHash at i=%v", i)
-					asHash, isHash := ev.(*SexpHash)
+					asHash, isHash := ev.(*SexpField)
 					if !isHash {
 						P("was not hash, instead was %T", ev)
 						return SexpNull, fmt.Errorf("bad struct declaration '%v': bad "+

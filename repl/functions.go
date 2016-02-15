@@ -684,8 +684,9 @@ func ConstructorFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		if err != nil {
 			return SexpNull, err
 		}
-		P("hash for field is: '%v'", h.SexpString())
-		return h, nil
+		fld := (*SexpField)(h)
+		P("hash for field is: '%v'", fld.SexpString())
+		return fld, nil
 	case "struct":
 		return MakeHash(args, "struct", env)
 	case "msgmap":
