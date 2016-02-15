@@ -72,7 +72,7 @@ func maxi(a, b int) int {
 
 type SexpField SexpHash
 
-// specialize for nice looking field prints
+// compute key and value widths to assist alignment
 func (f *SexpField) FieldWidths() []int {
 	hash := (*SexpHash)(f)
 	wide := []int{}
@@ -88,8 +88,8 @@ func (f *SexpField) FieldWidths() []int {
 			default:
 				str += key.SexpString() + ":"
 			}
-			str += val.SexpString() + " "
 			wide = append(wide, len(str))
+			wide = append(wide, len(val.SexpString())+1)
 		} else {
 			panic(err)
 		}
@@ -100,7 +100,7 @@ func (f *SexpField) FieldWidths() []int {
 func (f *SexpField) AlignString(pad []int) string {
 	hash := (*SexpHash)(f)
 	str := " (" + hash.TypeName + " "
-
+	spc := " "
 	for i, key := range hash.KeyOrder {
 		val, err := hash.HashGet(nil, key)
 		r := ""
@@ -113,12 +113,19 @@ func (f *SexpField) AlignString(pad []int) string {
 			default:
 				r += key.SexpString() + ":"
 			}
-			r += val.SexpString()
-			xtra := pad[i] - len(r)
+			xtra := pad[i*2] - len(r)
 			if xtra < 0 {
 				panic(fmt.Sprintf("xtra = %d, pad[i=%v]=%v, len(r)=%v (r=%v)", xtra, i, pad[i], len(r), r))
 			}
-			r += strings.Repeat(" ", xtra)
+			leftpad := strings.Repeat(" ", xtra)
+			vs := val.SexpString()
+			rightpad := strings.Repeat(" ", pad[(i*2)+1]-len(vs))
+			if i == 0 {
+				spc = " "
+			} else {
+				spc = ""
+			}
+			r = leftpad + r + spc + vs + rightpad
 		} else {
 			panic(err)
 		}
