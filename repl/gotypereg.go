@@ -89,10 +89,19 @@ func (e *RegisteredType) Init() {
 	e.initDone = true
 }
 
-func (r *GoStructRegistryType) RegisterUserdef(name string, e *RegisteredType, hasShadowStruct bool) {
+func (r *GoStructRegistryType) RegisterUserdef(
+	name string,
+	e *RegisteredType,
+	hasShadowStruct bool) {
+
 	r.register(name, e, true)
 	e.IsUser = true
 	e.hasShadowStruct = hasShadowStruct
+
+	e.Constructor = MakeUserFunction("__struct_"+name, StructConstructorFunction)
+	if e.DisplayAs == "" {
+		e.DisplayAs = name
+	}
 }
 
 func (r *GoStructRegistryType) Lookup(name string) *RegisteredType {
@@ -247,4 +256,14 @@ func TypeListFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		s[i] = SexpStr{S: r[i]}
 	}
 	return SexpArray(s), nil
+}
+
+func (env *Glisp) ImportBaseTypes() {
+	for _, e := range GoStructRegistry.Builtin {
+		env.AddGlobal(e.RegisteredName, e)
+	}
+
+	for _, e := range GoStructRegistry.Userdef {
+		env.AddGlobal(e.RegisteredName, e)
+	}
 }

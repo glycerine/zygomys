@@ -59,8 +59,6 @@ func StructBuilder(env *Glisp, name string,
 	rt := NewRegisteredType(func(env *Glisp) (interface{}, error) {
 		return &SexpHash{}, nil
 	})
-	rt.Constructor = MakeUserFunction("__struct_"+structName, StructConstructorFunction)
-	rt.DisplayAs = structName
 	GoStructRegistry.RegisterUserdef(structName, rt, false)
 
 	err := env.LexicalBindSymbol(structNameSym, rt)
@@ -184,9 +182,6 @@ func PointerToFunction(env *Glisp, name string,
 }
 
 func StructConstructorFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
-	if len(args) < 1 {
-		return SexpNull, WrongNargs
-	}
 	P("in struct ctor, name = '%s', args = %#v", name, args)
 	return MakeHash(args, name, env)
 }
