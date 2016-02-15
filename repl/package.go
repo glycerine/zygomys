@@ -44,8 +44,18 @@ func StructBuilder(env *Glisp, name string,
 	for i := range args {
 		P("args[%v] = '%s' of type %T", i, args[i].SexpString(), args[i])
 	}
-	symN, isSym := args[0].(SexpSymbol)
-	if !isSym {
+	var symN SexpSymbol
+	switch b := args[0].(type) {
+	case SexpSymbol:
+		symN = b
+	case SexpPair:
+		sy, isQuo := isQuotedSymbol(b)
+		if isQuo {
+			symN = sy.(SexpSymbol)
+		} else {
+			return SexpNull, fmt.Errorf("bad struct name: symbol required")
+		}
+	default:
 		return SexpNull, fmt.Errorf("bad struct name: symbol required")
 	}
 
@@ -89,7 +99,7 @@ func StructBuilder(env *Glisp, name string,
 		return typeDefnHash, nil
 	})
 	GoStructRegistry.RegisterUserdef(structName, rt, false)
-
+	P("good: registerd new userdefined struct '%s'", structName)
 	err = env.LexicalBindSymbol(symN, rt)
 	if err != nil {
 		return SexpNull, fmt.Errorf("struct builder could not bind symbol '%': '%v'",
