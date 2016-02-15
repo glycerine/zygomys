@@ -3,26 +3,122 @@ package zygo
 import (
 	"fmt"
 	"reflect"
+	"strings"
 	"time"
 )
 
 type SexpUserStructDefn struct {
 	Name   string
-	Fields []Sexp
+	Fields []*SexpField
 }
 
+// pretty print a struct
 func (p *SexpUserStructDefn) SexpString() string {
+	if len(p.Fields) == 0 {
+		return fmt.Sprintf("(struct %s)", p.Name)
+	}
 	s := fmt.Sprintf("(struct %s [\n", p.Name)
+
+	w := make([][]int, len(p.Fields))
+	maxfield := 0
+	for j, f := range p.Fields {
+		w[j] = f.FieldWidths()
+		maxfield = maxi(maxfield, len(w[j]))
+	}
+
+	// computing padding
+	// x
+	// xx xx
+	// xxxxxxx x
+	// xxx x x x
+	//
+	// becomes
+	//
+	// x
+	// xx      xx
+	// xxxxxxx
+	// xxx     x  x x
+	pad := make([]int, maxfield)
+	for j := range w {
+		cur := 0
+		for i := 0; i < maxfield; i++ {
+			if i < len(w[j]) {
+				cur = maxi(cur, w[j][i])
+			}
+		}
+		pad = append(pad, cur)
+	}
 	for _, f := range p.Fields {
-		s += "        " + f.SexpString() + "\n"
+		s += "        " + f.AlignString(pad) + "\n"
 	}
 	s += "        ])\n"
 	return s
 }
 
+func maxi(a, b int) int {
+	if a > b {
+		return a
+	}
+	return b
+}
+
 type SexpField SexpHash
 
 // specialize for nice looking field prints
+func (f *SexpField) FieldWidths() []int {
+	hash := (*SexpHash)(f)
+	wide := []int{}
+	for _, key := range hash.KeyOrder {
+		val, err := hash.HashGet(nil, key)
+		str := ""
+		if err == nil {
+			switch s := key.(type) {
+			case SexpStr:
+				str += s.S + ":"
+			case SexpSymbol:
+				str += s.name + ":"
+			default:
+				str += key.SexpString() + ":"
+			}
+			str += val.SexpString() + " "
+			wide = append(wide, len(str))
+		} else {
+			panic(err)
+		}
+	}
+	return wide
+}
+
+func (f *SexpField) AlignString(pad []int) string {
+	hash := (*SexpHash)(f)
+	str := " (" + hash.TypeName + " "
+
+	for i, key := range hash.KeyOrder {
+		val, err := hash.HashGet(nil, key)
+		if err == nil {
+			switch s := key.(type) {
+			case SexpStr:
+				str += s.S + ":"
+			case SexpSymbol:
+				str += s.name + ":"
+			default:
+				str += key.SexpString() + ":"
+			}
+			if i > 0 {
+				str += val.SexpString() + " "
+			} else {
+				str += val.SexpString() + strings.Repeat(" ", pad[i%len(pad)])
+			}
+		} else {
+			panic(err)
+		}
+	}
+	if len(hash.Map) > 0 {
+		return str[:len(str)-1] + ")"
+	}
+	return str + ")"
+}
+
 func (f *SexpField) SexpString() string {
 	hash := (*SexpHash)(f)
 	str := " (" + hash.TypeName + " "
@@ -123,7 +219,7 @@ func StructBuilder(env *Glisp, name string,
 	structName := symN.name
 
 	var xar []Sexp
-	var flat []Sexp
+	var flat []*SexpField
 	if n > 2 {
 		return SexpNull, fmt.Errorf("bad struct declaration: more than two arguments." +
 			"prototype is (struct name [(field ...)*] )")
@@ -170,7 +266,7 @@ func StructBuilder(env *Glisp, name string,
 					P("first = '%#v'", first)
 					xar = append(xar, first)
 					xar = append(xar, ev)
-					flat = append(flat, ev)
+					flat = append(flat, ev.(*SexpField))
 				}
 				P("no err from EvalExpressions, got xar = '%#v'", xar)
 			}
