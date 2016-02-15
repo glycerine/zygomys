@@ -679,6 +679,7 @@ func ConstructorFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	case "raw":
 		return MakeRaw(args)
 	case "field":
+		P("making hash for field")
 		return MakeHash(args, "field", env)
 	case "struct":
 		return MakeHash(args, "struct", env)

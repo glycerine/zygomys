@@ -126,6 +126,8 @@ type RegisteredType struct {
 	IsUser         bool
 	Aliases        map[string]bool
 	DisplayAs      string
+	OrigSexp       Sexp
+	StructFields   *SexpHash
 }
 
 func (p *RegisteredType) SexpString() string {

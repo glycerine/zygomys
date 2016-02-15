@@ -72,24 +72,80 @@ func StructBuilder(env *Glisp, name string,
 	*/
 	P("good: have struct name '%v'", symN)
 
-	var xar []Sexp
-	if n > 1 {
-		env.datastack.PushExpr(SexpNull)
-		arr, err := env.EvalExpressions(args[1:])
-		if err != nil {
-			return SexpNull, fmt.Errorf("bad struct declaration: bad "+
-				"array of fields, error was '%v'", err)
-		}
-		switch ar := arr.(type) {
-		case SexpArray:
-			P("good, have array %#v", ar)
-			xar = []Sexp(ar)
-		default:
-			return SexpNull, fmt.Errorf("bad struct declaration: did not find "+
-				"array of fields following name; instead found %v/type=%T", ar, ar)
-		}
-	}
+	env.datastack.PushExpr(SexpNull)
 	structName := symN.name
+
+	var xar []Sexp
+	var orig Sexp
+	if n > 2 {
+		return SexpNull, fmt.Errorf("bad struct declaration: more than two arguments." +
+			"prototype is (struct name [(field ...)*] )")
+	}
+	if n == 2 {
+		P("in case n == 2")
+		switch ar := args[1].(type) {
+		default:
+			return SexpNull, fmt.Errorf("bad struct declaration '%v': second argument "+
+				"must be a slice of fields."+
+				" prototype is (struct name [(field ...)*] )", structName)
+		case SexpArray:
+			orig = ar
+			arr := []Sexp(ar)
+			if len(arr) == 0 {
+				// allow this
+			} else {
+				// dup to avoid messing with the stack on eval:
+				dup := env.Duplicate()
+				for i, ele := range arr {
+					P("about to eval i=%v", i)
+					ev, err := dup.EvalExpressions([]Sexp{ele})
+					P("done with eval i=%v. ev=%v", i, ev.SexpString())
+					if err != nil {
+						return SexpNull, fmt.Errorf("bad struct declaration '%v': bad "+
+							"field at array entry %v; error was '%v'", structName, i, err)
+					}
+					P("checking for isHash at i=%v", i)
+					asHash, isHash := ev.(*SexpHash)
+					if !isHash {
+						P("was not hash, instead was %T", ev)
+						return SexpNull, fmt.Errorf("bad struct declaration '%v': bad "+
+							"field array at entry %v; a (field ...) is required. Instead saw '%T'/with value = '%v'",
+							structName, i, ev, ev.SexpString())
+					}
+					P("good eval i=%v, ev=%#v / %v", i, ev, ev.SexpString())
+					ko := asHash.KeyOrder
+					if len(ko) == 0 {
+						return SexpNull, fmt.Errorf("bad struct declaration '%v': bad "+
+							"field array at entry %v; field had no name",
+							structName, i)
+					}
+					P("ko = '%#v'", ko)
+					first := ko[0]
+					P("first = '%#v'", first)
+					xar = append(xar, first)
+					xar = append(xar, ev)
+				}
+				P("no err from EvalExpressions, got xar = '%#v'", xar)
+			}
+		}
+		/*
+				P("evaluating args[1:2] which is of type %T / val=%#v", args[1], args[1])
+				arr, err := env.EvalExpressions(args[1:2])
+				if err != nil {
+					return SexpNull, fmt.Errorf("bad struct declaration: bad "+
+						"array of fields, error was '%v'", err)
+				}
+
+			switch ar := arr.(type) {
+			case SexpArray:
+				P("good, have array %#v", ar)
+				xar = []Sexp(ar)
+			default:
+				return SexpNull, fmt.Errorf("bad struct declaration: did not find "+
+					"array of fields following name; instead found %v/type=%T", ar, ar)
+			}
+		*/
+	} // end n == 2
 
 	typeDefnHash, err := MakeHash(xar, structName, env)
 	if err != nil {
@@ -99,6 +155,8 @@ func StructBuilder(env *Glisp, name string,
 	rt := NewRegisteredType(func(env *Glisp) (interface{}, error) {
 		return typeDefnHash, nil
 	})
+	rt.OrigSexp = orig
+	rt.StructFields = typeDefnHash
 	GoStructRegistry.RegisterUserdef(structName, rt, false)
 	P("good: registered new userdefined struct '%s'", structName)
 	err = env.LexicalBindSymbol(symN, rt)
