@@ -1,7 +1,7 @@
 ;; types should act as constructors AND as type-variables
 (struct truck)
 (def t (truck name:"harley"))
-(def pty (pointer-to truck))
+(def pty (* truck))
 
 ;; check that base type ctors work too.
 (def n (int 7))

@@ -187,7 +187,7 @@ func (env *Glisp) ImportPackageBuilder() {
 	env.AddBuilder("package", PackageBuilder)
 
 	env.AddFunction("slice-of", SliceOfFunction)
-	env.AddFunction("pointer-to", PointerToFunction)
+	env.AddFunction("ptr", PointerToFunction)
 }
 
 func StructBuilder(env *Glisp, name string,
@@ -427,8 +427,8 @@ func PointerToFunction(env *Glisp, name string,
 	args []Sexp) (Sexp, error) {
 
 	if len(args) != 1 {
-		return SexpNull, fmt.Errorf("argument to pointer-to is missing. use: " +
-			"(pointer-to a-regtype)\n")
+		return SexpNull, fmt.Errorf("argument to pointer-to is missing. use: "+
+			"(%s a-regtype)\n", name)
 	}
 
 	var rt *RegisteredType
@@ -438,21 +438,26 @@ func PointerToFunction(env *Glisp, name string,
 	case *SexpHash:
 		rt = arg.GoStructFactory
 	default:
-		return SexpNull, fmt.Errorf("argument to pointer-to was not regtype, "+
+		return SexpNull, fmt.Errorf("argument x in (%s x) was not regtype, "+
 			"instead type %T displaying as '%v' ",
-			arg, arg.SexpString())
+			name, arg, arg.SexpString())
 	}
 
 	//Q("pointer-to arg = '%s' with type %T", args[0].SexpString(), args[0])
 
 	derivedType := reflect.PtrTo(rt.TypeCache)
-	sliceRt := NewRegisteredType(func(env *Glisp) (interface{}, error) {
+	ptrRt := NewRegisteredType(func(env *Glisp) (interface{}, error) {
 		return reflect.New(derivedType), nil
 	})
-	sliceRt.DisplayAs = fmt.Sprintf("(pointer-to %s)", rt.DisplayAs)
-	sliceName := "pointer-to-" + rt.RegisteredName
-	GoStructRegistry.RegisterUserdef(sliceName, sliceRt, false)
-	return sliceRt, nil
+	ptrRt.DisplayAs = fmt.Sprintf("(%s %s)", name, rt.DisplayAs)
+	ptrName := ""
+	if name == "*" {
+		ptrName = name + rt.RegisteredName
+	} else {
+		ptrName = name + "-" + rt.RegisteredName
+	}
+	GoStructRegistry.RegisterUserdef(ptrName, ptrRt, false)
+	return ptrRt, nil
 }
 
 func StructConstructorFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {

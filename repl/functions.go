@@ -106,6 +106,16 @@ func ComplementFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	return SexpNull, errors.New("Argument to bit-not should be integer")
 }
 
+func PointerOrNumericFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
+	n := len(args)
+	if n == 0 {
+		return SexpNull, WrongNargs
+	}
+	if n >= 2 {
+		return NumericFunction(env, name, args)
+	}
+	return PointerToFunction(env, name, args)
+}
 func NumericFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	if len(args) < 1 {
 		return SexpNull, WrongNargs
@@ -811,7 +821,7 @@ func CoreFunctions() map[string]GlispUserFunction {
 		"mod":        BinaryIntFunction,
 		"+":          NumericFunction,
 		"-":          NumericFunction,
-		"*":          NumericFunction,
+		"*":          PointerOrNumericFunction,
 		"**":         NumericFunction,
 		"/":          NumericFunction,
 		"bit-and":    BitwiseFunction,
