@@ -16,7 +16,7 @@ func SlurpfileFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	var fn string
 	switch fna := args[0].(type) {
 	case SexpStr:
-		fn = string(fna)
+		fn = fna.S
 	default:
 		return SexpNull, fmt.Errorf("slurp requires a string path to read. we got type %T / value = %v", args[0], args[0])
 	}
@@ -45,9 +45,9 @@ func SlurpfileFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		}
 		if n > 0 {
 			if lastline[n-1] == '\n' {
-				a = append(a, SexpStr(string(lastline[:n-1])))
+				a = append(a, SexpStr{S: string(lastline[:n-1])})
 			} else {
-				a = append(a, SexpStr(string(lastline)))
+				a = append(a, SexpStr{S: string(lastline)})
 			}
 			lineNum += 1
 		}
@@ -71,7 +71,7 @@ func WriteToFileFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	var fn string
 	switch fna := args[1].(type) {
 	case SexpStr:
-		fn = string(fna)
+		fn = fna.S
 	default:
 		return SexpNull, fmt.Errorf("owrite requires a string (SexpStr) path to write to as the first argument. we got type %T / value = %v", args[1], args[1])
 	}
@@ -99,6 +99,8 @@ func WriteToFileFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 			s := slice[i].SexpString()
 			if len(s) >= 2 && s[0] == '"' && s[len(s)-1] == '"' {
 				s = s[1 : len(s)-1]
+			} else if len(s) >= 2 && s[0] == '`' && s[len(s)-1] == '`' {
+				s = s[1 : len(s)-1]
 			}
 			_, err = fmt.Fprintf(f, "%s\n", s)
 			if err != nil {
@@ -114,6 +116,8 @@ func WriteToFileFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	default:
 		s := sl.SexpString()
 		if len(s) >= 2 && s[0] == '"' && s[len(s)-1] == '"' {
+			s = s[1 : len(s)-1]
+		} else if len(s) >= 2 && s[0] == '`' && s[len(s)-1] == '`' {
 			s = s[1 : len(s)-1]
 		}
 		_, err = fmt.Fprintf(f, "%s\n", s)
@@ -141,13 +145,13 @@ func SplitStringFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		return SexpNull, fmt.Errorf("split requires a string as a delimiter, got %T", args[1])
 	}
 
-	toSplit := string(s1)
-	splitter := string(s2)
+	toSplit := s1.S
+	splitter := s2.S
 	s := strings.Split(toSplit, splitter)
 
 	split := make([]Sexp, len(s))
 	for i := range split {
-		split[i] = SexpStr(s[i])
+		split[i] = SexpStr{S: s[i]}
 	}
 
 	return SexpArray(split), nil
@@ -158,7 +162,7 @@ func SplitStringOnNewlinesFunction(env *Glisp, name string, args []Sexp) (Sexp, 
 	if len(args) != 1 {
 		return SexpNull, WrongNargs
 	}
-	args = append(args, SexpStr("\n"))
+	args = append(args, SexpStr{S: "\n"})
 
 	return SplitStringFunction(env, name, args)
 }

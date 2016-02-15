@@ -68,7 +68,7 @@ func compareChar(c SexpChar, expr Sexp) (int, error) {
 func compareString(s SexpStr, expr Sexp) (int, error) {
 	switch e := expr.(type) {
 	case SexpStr:
-		return bytes.Compare([]byte(s), []byte(e)), nil
+		return bytes.Compare([]byte(s.S), []byte(e.S)), nil
 	}
 	errmsg := fmt.Sprintf("cannot compare %T to %T", s, expr)
 	return 0, errors.New(errmsg)

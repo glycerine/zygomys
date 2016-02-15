@@ -44,7 +44,7 @@ func CallGoMethodFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		case SexpSymbol:
 			methodname = m.name
 		case SexpStr:
-			methodname = string(m)
+			methodname = m.S
 		default:
 			return SexpNull, fmt.Errorf("_method error: second argument must be a method name in symbol or string form (got %T)", args[1])
 		}
@@ -144,7 +144,7 @@ func CallGoMethodFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 			case error:
 				r = append(r, SexpError{e})
 			case string:
-				r = append(r, SexpStr(e))
+				r = append(r, SexpStr{S: e})
 			case float64:
 				r = append(r, SexpFloat(e))
 			case []byte:

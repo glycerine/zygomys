@@ -10,7 +10,7 @@ func MakeRaw(args []Sexp) (SexpRaw, error) {
 	for i := 0; i < len(args); i++ {
 		switch e := args[i].(type) {
 		case SexpStr:
-			a := []byte(e)
+			a := []byte(e.S)
 			raw = append(raw, a...)
 		default:
 			return SexpRaw(nil),
@@ -27,7 +27,7 @@ func RawToStringFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 
 	switch t := args[0].(type) {
 	case SexpRaw:
-		return SexpStr(string(t)), nil
+		return SexpStr{S: string(t)}, nil
 	}
 	return SexpNull, errors.New("argument must be raw")
 }

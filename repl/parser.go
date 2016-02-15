@@ -422,7 +422,9 @@ func (parser *Parser) ParseExpression(depth int) (res Sexp, err error) {
 	case TokenChar:
 		return SexpChar(tok.str[0]), nil
 	case TokenString:
-		return SexpStr(tok.str), nil
+		return SexpStr{S: tok.str}, nil
+	case TokenBacktickString:
+		return SexpStr{S: tok.str, backtick: true}, nil
 	case TokenFloat:
 		f, err := strconv.ParseFloat(tok.str, SexpFloatSize)
 		if err != nil {

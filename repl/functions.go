@@ -283,7 +283,7 @@ func SgetFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		return SexpNull, errors.New("Second argument of sget must be integer")
 	}
 
-	return SexpChar(str[i]), nil
+	return SexpChar(str.S[i]), nil
 }
 
 func HashAccessFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
@@ -394,7 +394,7 @@ func SliceFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	case SexpArray:
 		return SexpArray(t[start:end]), nil
 	case SexpStr:
-		return SexpStr(t[start:end]), nil
+		return SexpStr{S: t.S[start:end]}, nil
 	}
 
 	return SexpNull, errors.New("First argument of slice must be array or string")
@@ -414,7 +414,7 @@ func LenFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	case SexpArray:
 		return SexpInt(len(t)), nil
 	case SexpStr:
-		return SexpInt(len(t)), nil
+		return SexpInt(len(t.S)), nil
 	case *SexpHash:
 		return SexpInt(HashCountKeys(t)), nil
 	case SexpPair:
@@ -478,7 +478,7 @@ func ReadFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	str := ""
 	switch t := args[0].(type) {
 	case SexpStr:
-		str = string(t)
+		str = t.S
 	default:
 		return SexpNull, WrongType
 	}
@@ -550,7 +550,7 @@ func PrintFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 
 	switch expr := args[0].(type) {
 	case SexpStr:
-		str = string(expr)
+		str = expr.S
 	default:
 		str = expr.SexpString()
 	}
@@ -692,7 +692,7 @@ func ConstructorFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 			}
 			switch nm := args[0].(type) {
 			case SexpStr:
-				return MakeHash(arr, string(nm), env)
+				return MakeHash(arr, nm.S, env)
 			case SexpSymbol:
 				return MakeHash(arr, nm.name, env)
 			default:
@@ -955,7 +955,7 @@ func StringifyFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		return SexpNull, WrongNargs
 	}
 
-	return SexpStr(args[0].SexpString()), nil
+	return SexpStr{S: args[0].SexpString()}, nil
 }
 
 func Sym2StrFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
@@ -965,7 +965,7 @@ func Sym2StrFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 
 	switch t := args[0].(type) {
 	case SexpSymbol:
-		r := SexpStr(t.name)
+		r := SexpStr{S: t.name}
 		return r, nil
 	}
 	return SexpNull, errors.New("argument must be symbol")
@@ -978,7 +978,7 @@ func Str2SymFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 
 	switch t := args[0].(type) {
 	case SexpStr:
-		return env.MakeSymbol(string(t)), nil
+		return env.MakeSymbol(t.S), nil
 	}
 	return SexpNull, errors.New("argument must be string")
 }
@@ -991,7 +991,7 @@ func GensymFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	case n == 1:
 		switch t := args[0].(type) {
 		case SexpStr:
-			return env.GenSymbol(string(t)), nil
+			return env.GenSymbol(t.S), nil
 		}
 		return SexpNull, errors.New("argument must be string")
 	default:
@@ -1039,7 +1039,7 @@ func StopFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 
 	switch s := args[0].(type) {
 	case SexpStr:
-		return SexpNull, fmt.Errorf(string(s))
+		return SexpNull, fmt.Errorf(s.S)
 	}
 	return SexpNull, stopErr
 }
@@ -1243,7 +1243,7 @@ func GOOSFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	if narg != 0 {
 		return SexpNull, WrongNargs
 	}
-	return SexpStr(runtime.GOOS), nil
+	return SexpStr{S: runtime.GOOS}, nil
 }
 
 // check is a symbol/string/value is defined
@@ -1256,7 +1256,7 @@ func DefinedFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	var checkme string
 	switch nm := args[0].(type) {
 	case SexpStr:
-		checkme = string(nm)
+		checkme = nm.S
 	case SexpSymbol:
 		checkme = nm.name
 	case *SexpFunction:

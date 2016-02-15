@@ -34,7 +34,7 @@ func RegexpFind(env *Glisp, name string,
 	var haystack string
 	switch t := args[1].(type) {
 	case SexpStr:
-		haystack = string(t)
+		haystack = t.S
 	default:
 		return SexpNull,
 			errors.New(fmt.Sprintf("2nd argument of %v should be a string", name))
@@ -52,7 +52,7 @@ func RegexpFind(env *Glisp, name string,
 	switch name {
 	case "regexp-find":
 		str := needle.FindString(haystack)
-		return SexpStr(str), nil
+		return SexpStr{S: str}, nil
 	case "regexp-find-index":
 		return regexpFindIndex(needle, haystack)
 	case "regexp-match":
@@ -72,7 +72,7 @@ func RegexpCompile(env *Glisp, name string,
 	var re string
 	switch t := args[0].(type) {
 	case SexpStr:
-		re = string(t)
+		re = t.S
 	default:
 		return SexpNull,
 			errors.New("argument of regexp-compile should be a string")

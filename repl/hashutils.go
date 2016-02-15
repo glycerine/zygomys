@@ -49,7 +49,7 @@ func hashHelper(expr Sexp) (hashcode int, isList bool, err error) {
 		return e.number, false, nil
 	case SexpStr:
 		hasher := fnv.New32()
-		_, err := hasher.Write([]byte(e))
+		_, err := hasher.Write([]byte(e.S))
 		if err != nil {
 			return 0, false, err
 		}
@@ -329,7 +329,7 @@ func (h *SexpHash) SetMethodList(env *Glisp) error {
 	sl := make([]reflect.Method, n)
 	for i := 0; i < n; i++ {
 		sl[i] = ty.Method(i)
-		sx[i] = SexpStr(sl[i].Name + " " + sl[i].Type.String())
+		sx[i] = SexpStr{S: sl[i].Name + " " + sl[i].Type.String()}
 	}
 	h.GoMethSx = sx
 	h.GoMethods = sl
@@ -369,7 +369,7 @@ func fillJsonMap(json2ptr *map[string]*HashFieldDet, fx *[]Sexp, fl *[]reflect.S
 	for i := 0; i < m; i++ {
 		fld := tye.Field(i)
 		*fl = append(*fl, fld)
-		*fx = append(*fx, SexpStr(fld.Name+" "+fld.Type.String()+suffix))
+		*fx = append(*fx, SexpStr{S: fld.Name + " " + fld.Type.String() + suffix})
 		det := &HashFieldDet{
 			FieldNum:     i,
 			FieldType:    fld.Type,
@@ -491,7 +491,7 @@ func fillHashHelper(r interface{}, depth int, env *Glisp, preferSym bool) (Sexp,
 		if preferSym {
 			return env.MakeSymbol(val), nil
 		}
-		return SexpStr(val), nil
+		return SexpStr{S: val}, nil
 
 	case int:
 		VPrintf("depth %d found int case: val = %#v\n", depth, val)

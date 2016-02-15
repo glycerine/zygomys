@@ -40,6 +40,7 @@ const (
 	TokenDollar
 	TokenDotSymbol
 	TokenFreshAssign
+	TokenBacktickString
 	TokenEnd
 )
 
@@ -288,6 +289,12 @@ func (lexer *Lexer) dumpString() {
 	lexer.tokens = append(lexer.tokens, lexer.Token(TokenString, str))
 }
 
+func (lexer *Lexer) dumpBacktickString() {
+	str := lexer.buffer.String()
+	lexer.buffer.Reset()
+	lexer.tokens = append(lexer.tokens, lexer.Token(TokenBacktickString, str))
+}
+
 func (x *Lexer) DecodeBrace(brace rune) Token {
 	switch brace {
 	case '(':
@@ -317,7 +324,7 @@ top:
 
 	case LexerBacktickString:
 		if r == '`' {
-			lexer.dumpString()
+			lexer.dumpBacktickString()
 			lexer.state = LexerNormal
 			return nil
 		}

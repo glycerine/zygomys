@@ -267,7 +267,7 @@ func decodeGoToSexpHelper(r interface{}, depth int, env *Glisp, preferSym bool) 
 		if preferSym {
 			return env.MakeSymbol(val)
 		}
-		return SexpStr(val)
+		return SexpStr{S: val}
 
 	case int:
 		VPrintf("depth %d found int case: val = %#v\n", depth, val)
@@ -397,7 +397,7 @@ func SexpToGo(sexp Sexp, env *Glisp) interface{} {
 		// so match that to make the decodings comparable.
 		return int64(e)
 	case SexpStr:
-		return string(e)
+		return e.S
 	case SexpChar:
 		return rune(e)
 	case SexpFloat:
@@ -459,7 +459,7 @@ func ToGoFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		}
 		asHash.GoShadowStruct = newStruct
 		asHash.GoShadowStructVa = reflect.ValueOf(newStruct)
-		return SexpStr(fmt.Sprintf("%#v", newStruct)), nil
+		return SexpStr{S: fmt.Sprintf("%#v", newStruct)}, nil
 	}
 	return SexpNull, nil
 }
@@ -532,7 +532,7 @@ func SexpToGoStructs(sexp Sexp, target interface{}, env *Glisp) (interface{}, er
 		// so match that to make the decodings comparable.
 		targVa.Elem().SetInt(int64(src))
 	case SexpStr:
-		targVa.Elem().SetString(string(src))
+		targVa.Elem().SetString(src.S)
 	case SexpChar:
 		targVa.Elem().Set(reflect.ValueOf(rune(src)))
 	case SexpFloat:
@@ -590,7 +590,7 @@ func SexpToGoStructs(sexp Sexp, target interface{}, env *Glisp) (interface{}, er
 				var recordKey string
 				switch k := pair.Head.(type) {
 				case SexpStr:
-					recordKey = string(k)
+					recordKey = k.S
 				case SexpSymbol:
 					recordKey = k.name
 				default:

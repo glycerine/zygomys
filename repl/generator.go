@@ -512,7 +512,7 @@ func (gen *Generator) GenerateInclude(args []Sexp) error {
 				expr = list.Tail
 			}
 		case SexpStr:
-			exps, err = gen.env.ParseFile(string(t))
+			exps, err = gen.env.ParseFile(t.S)
 			if err != nil {
 				return err
 			}

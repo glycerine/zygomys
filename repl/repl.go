@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"runtime/pprof"
+	"strconv"
 	"strings"
 )
 
@@ -259,7 +260,11 @@ func Repl(env *Glisp, cfg *GlispConfig) {
 			// try to print strings more elegantly!
 			switch e := expr.(type) {
 			case SexpStr:
-				fmt.Printf("`%s`\n", e)
+				if e.backtick {
+					fmt.Printf("`%s`\n", e.S)
+				} else {
+					fmt.Printf("%s\n", strconv.Quote(e.S))
+				}
 			default:
 				fmt.Println(expr.SexpString())
 			}

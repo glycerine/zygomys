@@ -684,7 +684,7 @@ func DumpClosureEnvFunction(env *Glisp, name string, args []Sexp) (Sexp, error) 
 	switch f := args[0].(type) {
 	case *SexpFunction:
 		s := ClosureToString(f, env)
-		return SexpStr(s), nil
+		return SexpStr{S: s}, nil
 	default:
 		return SexpNull, fmt.Errorf("_closdump needs an *SexpFunction to inspect")
 	}

@@ -166,5 +166,5 @@ func TypeOf(expr Sexp) SexpStr {
 	default:
 		fmt.Printf("\n error: unknown type: %T in '%#v'\n", e, e)
 	}
-	return SexpStr(v)
+	return SexpStr{S: v}
 }

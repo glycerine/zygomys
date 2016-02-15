@@ -25,7 +25,7 @@ func MsgpackMapMacro(env *Glisp, name string,
 		MakeList([]Sexp{
 			env.MakeSymbol("quote"),
 			env.MakeSymbol("msgmap"),
-			SexpStr(args[0].(SexpSymbol).name),
+			SexpStr{S: args[0].(SexpSymbol).name},
 		}),
 	}), nil
 }
@@ -37,7 +37,7 @@ func DeclareMsgpackMapFunction(env *Glisp, name string, args []Sexp) (Sexp, erro
 
 	switch t := args[0].(type) {
 	case SexpStr:
-		return SexpStr(string(t)), nil
+		return t, nil
 	}
 	return SexpNull, errors.New("argument must be string: the name of the new msgpack-map constructor function to create")
 }

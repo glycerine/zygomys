@@ -19,7 +19,10 @@ type SexpInt int64
 type SexpBool bool
 type SexpFloat float64
 type SexpChar rune
-type SexpStr string
+type SexpStr struct {
+	S        string
+	backtick bool
+}
 type SexpRaw []byte
 type SexpReflect reflect.Value
 type SexpError struct {
@@ -173,7 +176,7 @@ func CallZMethodOnRecordFunction(env *Glisp, name string, args []Sexp) (Sexp, er
 	case SexpSymbol:
 		method = s.name
 	case SexpStr:
-		method = string(s)
+		method = s.S
 	default:
 		return SexpNull, fmt.Errorf("can only _call with a " +
 			"symbol or string as the method name. example: (_call record method:)")
@@ -248,13 +251,12 @@ func NamedHashSexpString(hash *SexpHash) string {
 		if err == nil {
 			switch s := key.(type) {
 			case SexpStr:
-				str += string(s) + ":"
+				str += s.S + ":"
 			case SexpSymbol:
 				str += s.name + ":"
 			default:
 				str += key.SexpString() + ":"
 			}
-
 			str += val.SexpString() + " "
 		} else {
 			panic(err)
@@ -286,7 +288,10 @@ func (c SexpChar) SexpString() string {
 }
 
 func (s SexpStr) SexpString() string {
-	return strconv.Quote(string(s))
+	if s.backtick {
+		return "`" + s.S + "`"
+	}
+	return strconv.Quote(string(s.S))
 }
 
 func (r SexpRaw) SexpString() string {
