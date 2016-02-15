@@ -680,6 +680,8 @@ func ConstructorFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		return MakeRaw(args)
 	case "field":
 		return MakeHash(args, "field", env)
+	case "struct":
+		return MakeHash(args, "struct", env)
 	case "msgmap":
 		switch len(args) {
 		case 0:
@@ -841,6 +843,7 @@ func CoreFunctions() map[string]GlispUserFunction {
 		"append":     AppendFunction,
 		"concat":     ConcatFunction,
 		"field":      ConstructorFunction,
+		"struct":     ConstructorFunction,
 		"array":      ConstructorFunction,
 		"list":       ConstructorFunction,
 		"hash":       ConstructorFunction,

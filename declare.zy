@@ -11,8 +11,8 @@
         (field Id:          int64     e:0                  gotags:`json:"id",name:"id"`)
         (field Name:        string    e:1                  gotags:`json:"name"`)
         (field BadApple:    string    e:2  deprecated:true)
-        (field SliceOfLife: []string  e:3)
-        (field PointerSisters: *int64 e:4)
+        (field SliceOfLife: (slice-of string)  e:3)
+        (field PointerSisters: (pointer-to int64) e:4)
         ])
 
 (interface Driveable: [
