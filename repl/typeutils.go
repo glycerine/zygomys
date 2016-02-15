@@ -158,7 +158,7 @@ func TypeOf(expr Sexp) SexpStr {
 	case *SexpFunction:
 		v = "func"
 	case SexpSentinel:
-		v = "null"
+		v = "nil"
 	case SexpTime:
 		v = "time.Time"
 	case *RegisteredType:

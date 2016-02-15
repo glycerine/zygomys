@@ -317,7 +317,31 @@ func (c CallInstr) Execute(env *Glisp) error {
 
 	case *RegisteredType:
 		if f.Constructor == nil {
-			return errors.New(fmt.Sprintf("'%s' does not have a constructor function", c.sym.name))
+			env.pc++
+			res, err := baseConstruct(env, f, c.nargs)
+			if err != nil {
+				return err
+			}
+			env.datastack.PushExpr(res)
+			return nil
+			/*
+				v, err := f.Factory(env)
+				if err != nil {
+					//env.datastack.PushExpr(SexpNull)
+					return err
+				}
+				P("see call to *RegisteredType without constructor, putting %v/type=%T onto stack", v, v)
+				switch v.(type) {
+				case *int:
+					// it is already on the stack?
+					return nil
+				default:
+					panic("finish me")
+				}
+			*/
+			//_, err := env.CallUserFunction(env.baseTypeCtor, c.sym.name, c.nargs)
+			//return err
+			//return errors.New(fmt.Sprintf("'%s' does not have a constructor function", c.sym.name))
 		}
 		P("call instruction for RegisteredType!")
 		_, err := env.CallUserFunction(f.Constructor, c.sym.name, c.nargs)

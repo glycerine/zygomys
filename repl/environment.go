@@ -41,6 +41,7 @@ type Glisp struct {
 	debugSymbolNotFound bool
 
 	showGlobalScope bool
+	baseTypeCtor    *SexpFunction
 }
 
 const CallStackSize = 25
@@ -64,6 +65,7 @@ func NewGlispSandbox() *Glisp {
 // NewGlispWithFuncs returns a new *Glisp instance with access to only the given builtin functions
 func NewGlispWithFuncs(funcs map[string]GlispUserFunction) *Glisp {
 	env := new(Glisp)
+	env.baseTypeCtor = MakeUserFunction("__basetype_ctor", BaseTypeConstructorFunction)
 	env.parser = env.NewParser()
 	env.parser.Start()
 	env.datastack = env.NewStack(DataStackSize)
@@ -111,6 +113,7 @@ func NewGlispWithFuncs(funcs map[string]GlispUserFunction) *Glisp {
 
 func (env *Glisp) Clone() *Glisp {
 	dupenv := new(Glisp)
+	dupenv.baseTypeCtor = env.baseTypeCtor
 	dupenv.datastack = env.datastack.Clone()
 	dupenv.linearstack = env.linearstack.Clone()
 	dupenv.addrstack = env.addrstack.Clone()
@@ -138,6 +141,7 @@ func (env *Glisp) Clone() *Glisp {
 
 func (env *Glisp) Duplicate() *Glisp {
 	dupenv := new(Glisp)
+	dupenv.baseTypeCtor = env.baseTypeCtor
 	dupenv.datastack = dupenv.NewStack(DataStackSize)
 	dupenv.linearstack = dupenv.NewStack(ScopeStackSize)
 	dupenv.addrstack = dupenv.NewStack(CallStackSize)

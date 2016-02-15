@@ -5,3 +5,9 @@
 
 (def n (int 7))
 (assert (== n 7))
+
+(def s (string "hi"))
+(assert (== s "hi"))
+
+(assert (== "" (string)))
+(assert (== 0 (int)))

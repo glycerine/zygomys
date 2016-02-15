@@ -145,24 +145,31 @@ func init() {
 	// add go builtin types
 	// ====================
 
-	byteEntry := &RegisteredType{GenDefMap: false, Factory: func(env *Glisp) (interface{}, error) {
-		return new(byte), nil
-	}}
-	gsr.RegisterBuiltin("byte", byteEntry)
-	gsr.RegisterBuiltin("uint8", byteEntry)
+	gsr.RegisterBuiltin("byte",
+		&RegisteredType{GenDefMap: false, Factory: func(env *Glisp) (interface{}, error) {
+			return new(byte), nil
+		}})
+	gsr.RegisterBuiltin("uint8",
+		&RegisteredType{GenDefMap: false, Factory: func(env *Glisp) (interface{}, error) {
+			return new(byte), nil
+		}})
 
-	gsr.RegisterBuiltin("int", &RegisteredType{GenDefMap: false, Factory: func(env *Glisp) (interface{}, error) {
-		return new(int), nil
-	}})
-	gsr.RegisterBuiltin("uint16", &RegisteredType{GenDefMap: false, Factory: func(env *Glisp) (interface{}, error) {
-		return new(uint16), nil
-	}})
-	gsr.RegisterBuiltin("uint32", &RegisteredType{GenDefMap: false, Factory: func(env *Glisp) (interface{}, error) {
-		return new(uint32), nil
-	}})
-	gsr.RegisterBuiltin("uint64", &RegisteredType{GenDefMap: false, Factory: func(env *Glisp) (interface{}, error) {
-		return new(uint64), nil
-	}})
+	gsr.RegisterBuiltin("int",
+		&RegisteredType{GenDefMap: false, Factory: func(env *Glisp) (interface{}, error) {
+			return new(int), nil
+		}})
+	gsr.RegisterBuiltin("uint16",
+		&RegisteredType{GenDefMap: false, Factory: func(env *Glisp) (interface{}, error) {
+			return new(uint16), nil
+		}})
+	gsr.RegisterBuiltin("uint32",
+		&RegisteredType{GenDefMap: false, Factory: func(env *Glisp) (interface{}, error) {
+			return new(uint32), nil
+		}})
+	gsr.RegisterBuiltin("uint64",
+		&RegisteredType{GenDefMap: false, Factory: func(env *Glisp) (interface{}, error) {
+			return new(uint64), nil
+		}})
 	gsr.RegisterBuiltin("int8", &RegisteredType{GenDefMap: false, Factory: func(env *Glisp) (interface{}, error) {
 		return new(int8), nil
 	}})

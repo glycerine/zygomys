@@ -3,6 +3,7 @@ package zygo
 import (
 	"fmt"
 	"reflect"
+	"time"
 )
 
 // package.go: declare package, structs, function types
@@ -188,4 +189,78 @@ func StructConstructorFunction(env *Glisp, name string, args []Sexp) (Sexp, erro
 	}
 	P("in struct ctor, name = '%s', args = %#v", name, args)
 	return MakeHash(args, name, env)
+}
+
+func BaseTypeConstructorFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
+	if len(args) < 1 {
+		return SexpNull, WrongNargs
+	}
+	P("in base ctor, name = '%s', args = %#v", name, args)
+
+	return SexpNull, nil
+}
+
+func baseConstruct(env *Glisp, f *RegisteredType, nargs int) (Sexp, error) {
+	if nargs > 1 {
+		return SexpNull, fmt.Errorf("%d is too many arguments for a base type constructor", nargs)
+	}
+
+	v, err := f.Factory(env)
+	if err != nil {
+		return SexpNull, err
+	}
+	Q("see call to baseConstruct, v = %v/type=%T", v, v)
+	if nargs == 0 {
+		switch v.(type) {
+		case *int, *uint8, *uint16, *uint32, *uint64, *int8, *int16, *int32, *int64:
+			return SexpInt(0), nil
+		case *float32, *float64:
+			return SexpFloat(0), nil
+		case *string:
+			return SexpStr{S: ""}, nil
+		case *bool:
+			return SexpBool(false), nil
+		case *time.Time:
+			return SexpTime{}, nil
+		default:
+			return SexpNull, fmt.Errorf("unhandled no-arg case in baseConstruct, v has type=%T")
+		}
+	}
+
+	// get our one argument
+	args, err := env.datastack.PopExpressions(1)
+	if err != nil {
+		return SexpNull, err
+	}
+	arg := args[0]
+
+	switch v.(type) {
+	case *int, *uint8, *uint16, *uint32, *uint64, *int8, *int16, *int32, *int64:
+		myint, ok := arg.(SexpInt)
+		if !ok {
+			return SexpNull, fmt.Errorf("cannot convert %T to int", arg)
+		}
+		return myint, nil
+	case *float32, *float64:
+		myfloat, ok := arg.(SexpFloat)
+		if !ok {
+			return SexpNull, fmt.Errorf("cannot convert %T to float", arg)
+		}
+		return myfloat, nil
+	case *string:
+		mystring, ok := arg.(SexpStr)
+		if !ok {
+			return SexpNull, fmt.Errorf("cannot convert %T to string", arg)
+		}
+		return mystring, nil
+	case *bool:
+		mybool, ok := arg.(SexpBool)
+		if !ok {
+			return SexpNull, fmt.Errorf("cannot convert %T to bool", arg)
+		}
+		return mybool, nil
+	default:
+		return SexpNull, fmt.Errorf("unhandled case in baseConstruct, arg = %#v/type=%T", arg, arg)
+	}
+	return SexpNull, fmt.Errorf("unhandled no-arg case in baseConstruct, v has type=%T")
 }
