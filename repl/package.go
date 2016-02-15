@@ -34,36 +34,66 @@ func (env *Glisp) ImportPackageBuilder() {
 func StructBuilder(env *Glisp, name string,
 	args []Sexp) (Sexp, error) {
 
-	if len(args) < 1 {
+	n := len(args)
+	if n < 1 {
 		return SexpNull, fmt.Errorf("struct name is missing. use: " +
 			"(struct struct-name ...)\n")
 	}
 
-	P("in struct builder, args = ")
+	P("in struct builder, name = '%s', args = ", name)
 	for i := range args {
-		P("args[%v] = '%s'", i, args[i].SexpString())
+		P("args[%v] = '%s' of type %T", i, args[i].SexpString(), args[i])
+	}
+	symN, isSym := args[0].(SexpSymbol)
+	if !isSym {
+		return SexpNull, fmt.Errorf("bad struct name: symbol required")
 	}
 
-	var structNameSym SexpSymbol
-	var structName string
-	switch a := args[0].(type) {
-	case SexpSymbol:
-		structName = a.name
-		structNameSym = a
-		//	case SexpString:
-		//		structName = a.S
-	default:
-		return SexpNull, fmt.Errorf("struct name symbol missing")
-	}
+	/*
+		env.datastack.PushExpr(SexpNull)
+		sn, err := env.EvalExpressions(args[0:1])
+		if err != nil {
+			return SexpNull, fmt.Errorf("bad struct name: '%v'", err)
+		}
+		P("done with sn eval")
+		symN, isSym := sn.(SexpSymbol)
+		if !isSym {
+			return SexpNull, fmt.Errorf("bad struct name: symbol required")
+		}
+	*/
+	P("good: have struct name '%v'", symN)
 
+	var xar []Sexp
+	if n > 1 {
+		arr, err := env.EvalExpressions(args[1:])
+		if err != nil {
+			return SexpNull, fmt.Errorf("bad struct declaration: bad "+
+				"array of fields, error was '%v'", err)
+		}
+		switch ar := arr.(type) {
+		case SexpArray:
+			P("good, have array %#v", ar)
+			xar = []Sexp(ar)
+		default:
+			return SexpNull, fmt.Errorf("bad struct declaration: did not find "+
+				"array of fields following name; instead found %v/type=%T", ar, ar)
+		}
+	}
+	structName := symN.name
+
+	typeDefnHash, err := MakeHash(xar, structName, env)
+	if err != nil {
+		return SexpNull, fmt.Errorf("problem on MakeHash() for '%s' in StructBuilder: '%v'", structName, err)
+	}
 	rt := NewRegisteredType(func(env *Glisp) (interface{}, error) {
-		return &SexpHash{}, nil
+		return typeDefnHash, nil
 	})
 	GoStructRegistry.RegisterUserdef(structName, rt, false)
 
-	err := env.LexicalBindSymbol(structNameSym, rt)
+	err = env.LexicalBindSymbol(symN, rt)
 	if err != nil {
-		return SexpNull, fmt.Errorf("struct builder could not bind symbol '%': '%v'", structName, err)
+		return SexpNull, fmt.Errorf("struct builder could not bind symbol '%': '%v'",
+			structName, err)
 	}
 	return rt, nil
 }
