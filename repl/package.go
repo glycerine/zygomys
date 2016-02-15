@@ -14,7 +14,7 @@ type SexpUserStructDefn struct {
 
 // pretty print a struct
 func (p *SexpUserStructDefn) SexpString() string {
-	P("SexpUserStructDefn::SexpString() called!")
+	Q("SexpUserStructDefn::SexpString() called!")
 	if len(p.Fields) == 0 {
 		return fmt.Sprintf("(struct %s)", p.Name)
 	}
@@ -24,24 +24,24 @@ func (p *SexpUserStructDefn) SexpString() string {
 	maxnfield := 0
 	for i, f := range p.Fields {
 		w[i] = f.FieldWidths()
-		P("w[i=%v] = %v", i, w[i])
+		Q("w[i=%v] = %v", i, w[i])
 		maxnfield = maxi(maxnfield, len(w[i]))
 	}
 
 	biggestCol := make([]int, maxnfield)
-	P("\n")
+	Q("\n")
 	for j := 0; j < maxnfield; j++ {
 		for i := range p.Fields {
-			P("i= %v, j=%v, len(w[i])=%v  check=%v", i, j, len(w[i]), len(w[i]) < j)
+			Q("i= %v, j=%v, len(w[i])=%v  check=%v", i, j, len(w[i]), len(w[i]) < j)
 			if j < len(w[i]) {
 				fmt.Printf("w[i][j]=%v   ", w[i][j])
 				biggestCol[j] = maxi(biggestCol[j], w[i][j]+1)
 			}
 		}
-		P("\n")
+		Q("\n")
 	}
-	P("SexpUserStructDefn::SexpString(): maxnfield = %v, out of %v", maxnfield, len(p.Fields))
-	P("SexpUserStructDefn::SexpString(): biggestCol =  %#v", biggestCol)
+	Q("SexpUserStructDefn::SexpString(): maxnfield = %v, out of %v", maxnfield, len(p.Fields))
+	Q("SexpUserStructDefn::SexpString(): biggestCol =  %#v", biggestCol)
 
 	// computing padding
 	// x
@@ -55,11 +55,11 @@ func (p *SexpUserStructDefn) SexpString() string {
 	// xx      xx
 	// xxxxxxx
 	// xxx     x  x x
-	P("pad = %#v", biggestCol)
+	Q("pad = %#v", biggestCol)
 	for _, f := range p.Fields {
-		s += "        " + f.AlignString(biggestCol) + "\n"
+		s += " " + f.AlignString(biggestCol) + "\n"
 	}
-	s += "        ])\n"
+	s += " ])\n"
 	return s
 }
 
@@ -201,9 +201,9 @@ func StructBuilder(env *Glisp, name string,
 			"(struct struct-name ...)\n")
 	}
 
-	P("in struct builder, name = '%s', args = ", name)
+	Q("in struct builder, name = '%s', args = ", name)
 	for i := range args {
-		P("args[%v] = '%s' of type %T", i, args[i].SexpString(), args[i])
+		Q("args[%v] = '%s' of type %T", i, args[i].SexpString(), args[i])
 	}
 	var symN SexpSymbol
 	switch b := args[0].(type) {
@@ -225,7 +225,7 @@ func StructBuilder(env *Glisp, name string,
 		if err != nil {
 			return SexpNull, fmt.Errorf("bad struct name: '%v'", err)
 		}
-		P("done with sn eval")
+		Q("done with sn eval")
 		symN, isSym := sn.(SexpSymbol)
 		if !isSym {
 			return SexpNull, fmt.Errorf("bad struct name: symbol required")
