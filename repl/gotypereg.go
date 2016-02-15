@@ -126,16 +126,12 @@ type RegisteredType struct {
 	IsUser         bool
 	Aliases        map[string]bool
 	DisplayAs      string
-	OrigSexp       Sexp
-	StructFields   *SexpHash
+	UserStructDefn *SexpUserStructDefn
 }
 
 func (p *RegisteredType) SexpString() string {
-	if p.StructFields != nil {
-		if p.OrigSexp != nil {
-			return p.OrigSexp.SexpString()
-		}
-		return Sexp(p.StructFields).SexpString()
+	if p.UserStructDefn != nil {
+		return p.UserStructDefn.SexpString()
 	}
 	return p.DisplayAs
 }

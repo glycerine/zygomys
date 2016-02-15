@@ -6,6 +6,20 @@ import (
 	"time"
 )
 
+type SexpUserStructDefn struct {
+	Name   string
+	Fields []Sexp
+}
+
+func (p *SexpUserStructDefn) SexpString() string {
+	s := fmt.Sprintf("(struct %s [\n")
+	for _, f := range p.Fields {
+		s += "    " + f.SexpString() + "\n"
+	}
+	s += "    ])\n"
+	return s
+}
+
 // package.go: declare package, structs, function types
 
 // A builder is a special kind of function. Like
@@ -76,7 +90,7 @@ func StructBuilder(env *Glisp, name string,
 	structName := symN.name
 
 	var xar []Sexp
-	var orig Sexp
+	var flat []Sexp
 	if n > 2 {
 		return SexpNull, fmt.Errorf("bad struct declaration: more than two arguments." +
 			"prototype is (struct name [(field ...)*] )")
@@ -89,7 +103,6 @@ func StructBuilder(env *Glisp, name string,
 				"must be a slice of fields."+
 				" prototype is (struct name [(field ...)*] )", structName)
 		case SexpArray:
-			orig = ar
 			arr := []Sexp(ar)
 			if len(arr) == 0 {
 				// allow this
@@ -124,6 +137,7 @@ func StructBuilder(env *Glisp, name string,
 					P("first = '%#v'", first)
 					xar = append(xar, first)
 					xar = append(xar, ev)
+					flat = append(flat, ev)
 				}
 				P("no err from EvalExpressions, got xar = '%#v'", xar)
 			}
@@ -147,19 +161,15 @@ func StructBuilder(env *Glisp, name string,
 		*/
 	} // end n == 2
 
-	typeDefnHash, err := MakeHash(xar, structName, env)
-	if err != nil {
-		return SexpNull, fmt.Errorf("problem on MakeHash() for '%s' in StructBuilder: '%v'", structName, err)
-	}
-	P("good: made typeDefnHash")
+	uds := &SexpUserStructDefn{Name: structName, Fields: flat}
+	P("good: made typeDefnHash: '%s'", uds.SexpString())
 	rt := NewRegisteredType(func(env *Glisp) (interface{}, error) {
-		return typeDefnHash, nil
+		return uds, nil
 	})
-	rt.OrigSexp = orig
-	rt.StructFields = typeDefnHash
+	rt.UserStructDefn = uds
 	GoStructRegistry.RegisterUserdef(structName, rt, false)
 	P("good: registered new userdefined struct '%s'", structName)
-	err = env.LexicalBindSymbol(symN, rt)
+	err := env.LexicalBindSymbol(symN, rt)
 	if err != nil {
 		return SexpNull, fmt.Errorf("struct builder could not bind symbol '%': '%v'",
 			structName, err)
