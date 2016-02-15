@@ -34,11 +34,9 @@ func (p *SexpUserStructDefn) SexpString() string {
 		for i := range p.Fields {
 			Q("i= %v, j=%v, len(w[i])=%v  check=%v", i, j, len(w[i]), len(w[i]) < j)
 			if j < len(w[i]) {
-				fmt.Printf("w[i][j]=%v   ", w[i][j])
 				biggestCol[j] = maxi(biggestCol[j], w[i][j]+1)
 			}
 		}
-		Q("\n")
 	}
 	Q("SexpUserStructDefn::SexpString(): maxnfield = %v, out of %v", maxnfield, len(p.Fields))
 	Q("SexpUserStructDefn::SexpString(): biggestCol =  %#v", biggestCol)
