@@ -3,6 +3,7 @@
 (def t (truck name:"harley"))
 (def pty (pointer-to truck))
 
+;; check that base type ctors work too.
 (def n (int 7))
 (assert (== n 7))
 

@@ -1,0 +1,3 @@
+;; should be okay taking pointer to record
+(def f (pointer-to (pointer-to (slice-of snoopy))))
+(assert (== (str f) `(pointer-to (pointer-to (slice-of snoopy)))`))

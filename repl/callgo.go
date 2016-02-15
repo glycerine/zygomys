@@ -13,7 +13,7 @@ import (
 // args[1] is a hash representing a method call on that struct.
 // The returned Sexp is a hash that represents the result of that call.
 func CallGoMethodFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
-	VPrintf("_method user func running!\n")
+	P("_method user func running!\n")
 
 	// protect against bad calls/bad reflection
 	var wasPanic bool
@@ -94,7 +94,7 @@ func CallGoMethodFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 			typ := method.Type.In(i - 1)
 			pdepth := PointerDepth(typ)
 			// we only handle 0 and 1 for now
-			VPrintf("pdepth = %v\n", pdepth)
+			P("pdepth = %v\n", pdepth)
 			switch pdepth {
 			case 0:
 				va = reflect.New(typ)
@@ -105,7 +105,7 @@ func CallGoMethodFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 				return SexpNull, fmt.Errorf("error converting %d-th argument to "+
 					"Go: we don't handles double pointers", i-2)
 			}
-			VPrintf("converting to go '%#v' into -> %#v\n", args[i], va.Interface())
+			P("converting to go '%#v' into -> %#v\n", args[i], va.Interface())
 			iface, err := SexpToGoStructs(args[i], va.Interface(), env)
 			if err != nil {
 				return SexpNull, fmt.Errorf("error converting %d-th "+
@@ -117,10 +117,10 @@ func CallGoMethodFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 			case 1:
 				inputVa = append(inputVa, reflect.ValueOf(iface))
 			}
-			VPrintf("\n allocated new %T/val=%#v /i=%#v\n", va, va, va.Interface())
+			P("\n allocated new %T/val=%#v /i=%#v\n", va, va, va.Interface())
 		}
 
-		VPrintf("_method: about to .Call by reflection!\n")
+		P("_method: about to .Call by reflection!\n")
 
 		out := method.Func.Call(inputVa)
 
@@ -128,7 +128,8 @@ func CallGoMethodFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		for _, o := range out {
 			iout = append(iout, o.Interface())
 		}
-		VPrintf("done with _method call, iout = %#v\n", iout)
+		P("done with _method call, iout = %#v\n", iout)
+		P("done with _method call, iout[0] = %#v\n", iout[0])
 
 		nout := len(out)
 		r := make([]Sexp, 0)
@@ -160,13 +161,16 @@ func CallGoMethodFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 						return SexpNull, fmt.Errorf("MakeHash '%s' problem on Factory call: %s",
 							hashName, err)
 					}
+					P("got st from Factory, checking if types match")
 					if reflect.ValueOf(st).Type() == out[i].Type() {
+						P("types match")
 						retHash, err := MakeHash([]Sexp{}, factory.RegisteredName, env)
 						if err != nil {
 							return SexpNull, fmt.Errorf("MakeHash '%s' problem: %s",
 								hashName, err)
 						}
 
+						P("filling from shadow")
 						err = retHash.FillHashFromShadow(env, f)
 						if err != nil {
 							return SexpNull, err

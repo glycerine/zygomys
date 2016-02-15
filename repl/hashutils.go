@@ -117,19 +117,19 @@ func MakeHash(args []Sexp, typename string, env *Glisp) (*SexpHash, error) {
 		k++
 	}
 
-	P("doing factory, foundGoStruct := GoStructRegistry.Registry[typename]")
+	Q("doing factory, foundGoStruct := GoStructRegistry.Registry[typename]")
 	factory, foundGoStruct := GoStructRegistry.Registry[typename]
 	if foundGoStruct && factory.hasShadowStruct {
-		P("\n in MakeHash: found struct associated with '%s'\n", typename)
+		Q("\n in MakeHash: found struct associated with '%s'\n", typename)
 		hash.SetGoStructFactory(factory)
-		P("\n in MakeHash: after SetGoStructFactory for typename '%s'\n", typename)
+		Q("\n in MakeHash: after SetGoStructFactory for typename '%s'\n", typename)
 		err := hash.SetMethodList(env)
 		if err != nil {
 			return &SexpHash{}, fmt.Errorf("unexpected error "+
 				"from hash.SetMethodList(): %s", err)
 		}
 	} else {
-		P("\n in MakeHash: did not find Go struct with '%s'\n", typename)
+		Q("\n in MakeHash: did not find Go struct with '%s'\n", typename)
 	}
 
 	return &hash, nil
@@ -459,17 +459,20 @@ func GenericHpairFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 }
 
 func (h *SexpHash) FillHashFromShadow(env *Glisp, src interface{}) error {
+	Q("in FillHashFromShadow, with src = %#v", src)
 	h.GoShadowStruct = src
 	vaSrc := reflect.ValueOf(src).Elem()
 
-	for _, det := range h.DetOrder {
-		VPrintf("\n looking at det for %s\n", det.FieldJsonTag)
+	for i, det := range h.DetOrder {
+		Q("\n looking at det for %s; %v-th entry in h.DetOrder\n", det.FieldJsonTag, i)
 		goField := vaSrc.Field(det.FieldNum)
 		val, err := fillHashHelper(goField.Interface(), 0, env, false)
 		if err != nil {
+			Q("got err='%s' back from fillHashhelper", err)
 			return fmt.Errorf("error on GoToSexp for field '%s': '%s'",
 				det.FieldJsonTag, err)
 		}
+		Q("got err==nil back from fillHashhelper; key=%#v, val=%#v", det.FieldJsonTag, val)
 		key := env.MakeSymbol(det.FieldJsonTag)
 		err = h.HashSet(key, val)
 		if err != nil {
@@ -482,15 +485,19 @@ func (h *SexpHash) FillHashFromShadow(env *Glisp, src interface{}) error {
 // translate Go -> Sexp, assuming hard *T{} struct pointers
 // for all Go structs
 func fillHashHelper(r interface{}, depth int, env *Glisp, preferSym bool) (Sexp, error) {
-	VPrintf("fillHashHelper() at depth %d, decoded type is %T\n", depth, r)
+	Q("fillHashHelper() at depth %d, decoded type is %T\n", depth, r)
 
 	// check for one of our registered structs
 
 	// go through the type registry upfront
 	for hashName, factory := range GoStructRegistry.Registry {
+		Q("fillHashHelper is trying hashName='%s'", hashName)
 		st, err := factory.Factory(env)
-		return SexpNull, err
+		if err != nil {
+			return SexpNull, err
+		}
 		if reflect.ValueOf(st).Type() == reflect.ValueOf(r).Type() {
+			Q("we have a registered struct match for st=%T and r=%T", st, r)
 			retHash, err := MakeHash([]Sexp{}, hashName, env)
 			if err != nil {
 				return SexpNull, fmt.Errorf("MakeHash '%s' problem: %s",
@@ -501,38 +508,42 @@ func fillHashHelper(r interface{}, depth int, env *Glisp, preferSym bool) (Sexp,
 			if err != nil {
 				return SexpNull, err
 			}
-			VPrintf("retHash = %#v\n", retHash)
+			Q("retHash = %#v\n", retHash)
 			return retHash, nil // or return sx?
+		} else {
+			Q("fillHashHelper: no match for st=%T and r=%T", st, r)
 		}
 	}
+
+	Q("fillHashHelper: trying basic non-struct types for r=%T", r)
 
 	// now handle basic non struct types:
 	switch val := r.(type) {
 	case string:
-		VPrintf("depth %d found string case: val = %#v\n", depth, val)
+		Q("depth %d found string case: val = %#v\n", depth, val)
 		if preferSym {
 			return env.MakeSymbol(val), nil
 		}
 		return SexpStr{S: val}, nil
 
 	case int:
-		VPrintf("depth %d found int case: val = %#v\n", depth, val)
+		Q("depth %d found int case: val = %#v\n", depth, val)
 		return SexpInt(val), nil
 
 	case int32:
-		VPrintf("depth %d found int32 case: val = %#v\n", depth, val)
+		Q("depth %d found int32 case: val = %#v\n", depth, val)
 		return SexpInt(val), nil
 
 	case int64:
-		VPrintf("depth %d found int64 case: val = %#v\n", depth, val)
+		Q("depth %d found int64 case: val = %#v\n", depth, val)
 		return SexpInt(val), nil
 
 	case float64:
-		VPrintf("depth %d found float64 case: val = %#v\n", depth, val)
+		Q("depth %d found float64 case: val = %#v\n", depth, val)
 		return SexpFloat(val), nil
 
 	case []interface{}:
-		VPrintf("depth %d found []interface{} case: val = %#v\n", depth, val)
+		Q("depth %d found []interface{} case: val = %#v\n", depth, val)
 
 		slice := []Sexp{}
 		for i := range val {
@@ -546,7 +557,7 @@ func fillHashHelper(r interface{}, depth int, env *Glisp, preferSym bool) (Sexp,
 
 	case map[string]interface{}:
 
-		VPrintf("depth %d found map[string]interface case: val = %#v\n", depth, val)
+		Q("depth %d found map[string]interface case: val = %#v\n", depth, val)
 		sortedMapKey, sortedMapVal := makeSortedSlicesFromMap(val)
 
 		pairs := make([]Sexp, 0)
@@ -556,8 +567,8 @@ func fillHashHelper(r interface{}, depth int, env *Glisp, preferSym bool) (Sexp,
 		foundzKeyOrder := false
 		for i := range sortedMapKey {
 			// special field storing the name of our record (defmap) type.
-			VPrintf("\n i=%d sortedMapVal type %T, value=%v\n", i, sortedMapVal[i], sortedMapVal[i])
-			VPrintf("\n i=%d sortedMapKey type %T, value=%v\n", i, sortedMapKey[i], sortedMapKey[i])
+			Q("\n i=%d sortedMapVal type %T, value=%v\n", i, sortedMapVal[i], sortedMapVal[i])
+			Q("\n i=%d sortedMapKey type %T, value=%v\n", i, sortedMapKey[i], sortedMapKey[i])
 			if sortedMapKey[i] == "zKeyOrder" {
 				keyOrd = decodeGoToSexpHelper(sortedMapVal[i], depth+1, env, true)
 				foundzKeyOrder = true
@@ -582,7 +593,7 @@ func fillHashHelper(r interface{}, depth int, env *Glisp, preferSym bool) (Sexp,
 		return hash, nil
 
 	case []byte:
-		VPrintf("depth %d found []byte case: val = %#v\n", depth, val)
+		Q("depth %d found []byte case: val = %#v\n", depth, val)
 
 		return SexpRaw(val), nil
 
@@ -593,7 +604,7 @@ func fillHashHelper(r interface{}, depth int, env *Glisp, preferSym bool) (Sexp,
 		return SexpBool(val), nil
 
 	default:
-		VPrintf("unknown type in type switch, val = %#v.  type = %T.\n", val, val)
+		Q("unknown type in type switch, val = %#v.  type = %T.\n", val, val)
 	}
 
 	return SexpNull, nil
@@ -610,17 +621,17 @@ func (h *SexpHash) nestedPathGetSet(env *Glisp, dotpaths []string, setVal *Sexp)
 	var err error
 	askh := h
 	lenpath := len(dotpaths)
-	//P("\n in nestedPathGetSet, dotpaths=%#v\n", dotpaths)
+	//Q("\n in nestedPathGetSet, dotpaths=%#v\n", dotpaths)
 	for i := range dotpaths {
 		if setVal != nil && i == lenpath-1 {
 			// assign now
 			err = askh.HashSet(env.MakeSymbol(dotpaths[i][1:]), *setVal)
-			//P("\n i=%v in nestedPathGetSet, dotpaths[i][1:]='%v' call to "+
+			//Q("\n i=%v in nestedPathGetSet, dotpaths[i][1:]='%v' call to "+
 			//   "HashSet returned err = '%s'\n", i, dotpaths[i][1:], err)
 			return *setVal, err
 		}
 		ret, err = askh.HashGet(env, env.MakeSymbol(dotpaths[i][1:]))
-		//P("\n i=%v in nestedPathGet, dotpaths[i][1:]='%v' call to "+
+		//Q("\n i=%v in nestedPathGet, dotpaths[i][1:]='%v' call to "+
 		//	"HashGet returned '%s'\n", i, dotpaths[i][1:], ret.SexpString())
 		if err != nil {
 			return SexpNull, err
@@ -631,7 +642,7 @@ func (h *SexpHash) nestedPathGetSet(env *Glisp, dotpaths []string, setVal *Sexp)
 		// invar: i < lenpath-1, so go deeper
 		switch h2 := ret.(type) {
 		case *SexpHash:
-			//P("\n found hash in h2 at i=%d, looping to next i\n", i)
+			//Q("\n found hash in h2 at i=%d, looping to next i\n", i)
 			askh = h2
 		default:
 			return SexpNull, fmt.Errorf("not a record: cannot get field '%s'"+
