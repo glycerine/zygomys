@@ -362,7 +362,7 @@ func (d DispatchInstr) Execute(env *Glisp) error {
 			return err
 		}
 		// call along with the array as an argument so we know the size of the
-		// array / matrix / tensor to make
+		// array / matrix / tensor to make. The 2nd argument will be the dimension array.
 		env.datastack.PushExpr(arr)
 		_, err := env.CallUserFunction(sxArrayOf, funcobj.SexpString(), d.nargs+1)
 		return err
