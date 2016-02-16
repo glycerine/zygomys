@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"encoding/gob"
 	"fmt"
+	"io"
 	"os"
 	"runtime/pprof"
 	"strconv"
@@ -163,6 +164,9 @@ func Repl(env *Glisp, cfg *GlispConfig) {
 		//Q("\n exprsInput(%d) = '%v'\n line = '%s'\n", len(exprsInput), SexpArray(exprsInput).SexpString(), line)
 		if err != nil {
 			fmt.Println(err)
+			if err == io.EOF {
+				os.Exit(0)
+			}
 			env.Clear()
 			continue
 		}
