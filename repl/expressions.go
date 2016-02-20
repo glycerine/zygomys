@@ -7,14 +7,23 @@ import (
 	"strings"
 )
 
+// all Sexp are typed, and have a zero value corresponding to
+// the type of the Sexp.
+
 type Sexp interface {
 	SexpString() string
+	Type() *RegisteredType
 }
 
 type SexpPair struct {
 	Head Sexp
 	Tail Sexp
 }
+
+func (p *RegisteredType) Type() *RegisteredType {
+	return p
+}
+
 type SexpInt int64
 type SexpBool bool
 type SexpFloat float64

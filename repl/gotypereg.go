@@ -111,6 +111,17 @@ func (r *GoStructRegistryType) Lookup(name string) *RegisteredType {
 // the type of all maker functions
 type MakeGoStructFunc func(env *Glisp) (interface{}, error)
 
+var PairRT *RegisteredType
+var Int64RT *RegisteredType
+var BoolRT *RegisteredType
+var RuneRT *RegisteredType
+var Float64RT *RegisteredType
+var RawRT *RegisteredType
+var ReflectRT *RegisteredType
+var ErrorRT *RegisteredType
+var SentinelRT *RegisteredType
+var ClosureRT *RegisteredType
+
 type RegisteredType struct {
 	initDone        bool
 	hasShadowStruct bool
@@ -246,6 +257,26 @@ func init() {
 	gsr.RegisterUserdef("weather", &RegisteredType{GenDefMap: true, Factory: func(env *Glisp) (interface{}, error) {
 		return &Weather{}, nil
 	}}, true)
+
+	// add Sexp types
+
+	/* either:
+
+		gsr.RegisterBuiltin("time.Time", &RegisteredType{GenDefMap: false, Factory: func(env *Glisp) (interface{}, error) {
+			return new(time.Time), nil
+		}})
+	//or
+		gsr.RegisterUserdef("tm.Frame", &RegisteredType{GenDefMap: true, Factory: func(env *Glisp) (interface{}, error) {
+			return new(tm.Frame), nil
+		}}, true)
+	*/
+
+	// PairRT *RegisteredType
+	// RawRT *RegisteredType
+	// ReflectRT *RegisteredType
+	// ErrorRT *RegisteredType
+	// SentinelRT *RegisteredType
+	// ClosureRT *RegisteredType
 
 }
 
