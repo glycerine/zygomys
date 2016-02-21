@@ -558,7 +558,7 @@ func ArrayOfFunction(env *Glisp, name string,
 			"([size...] a-regtype)\n", name)
 	}
 	sz := 0
-	P("args = %#v in ArrayOfFunction", args)
+	Q("args = %#v in ArrayOfFunction", args)
 	switch ar := args[1].(type) {
 	case SexpArray:
 		if len(ar) == 0 {
@@ -607,9 +607,9 @@ func VarBuilder(env *Glisp, name string,
 			"(var name regtype)\n")
 	}
 
-	P("in var builder, name = '%s', args = ", name)
+	Q("in var builder, name = '%s', args = ", name)
 	for i := range args {
-		P("args[%v] = '%s' of type %T", i, args[i].SexpString(), args[i])
+		Q("args[%v] = '%s' of type %T", i, args[i].SexpString(), args[i])
 	}
 	var symN SexpSymbol
 	switch b := args[0].(type) {
@@ -625,12 +625,12 @@ func VarBuilder(env *Glisp, name string,
 	default:
 		return SexpNull, fmt.Errorf("bad var name: symbol required")
 	}
-	P("good: have var name '%v'", symN)
+	Q("good: have var name '%v'", symN)
 
 	dup := env.Duplicate()
-	P("about to eval args[1]=%v", args[1])
+	Q("about to eval args[1]=%v", args[1])
 	ev, err := dup.EvalExpressions(args[1:2])
-	P("done with eval, ev=%v / type %T", ev.SexpString(), ev)
+	Q("done with eval, ev=%v / type %T", ev.SexpString(), ev)
 	if err != nil {
 		return SexpNull, fmt.Errorf("bad var declaration, problem with type '%v': %v", args[1].SexpString(), err)
 	}
@@ -661,7 +661,7 @@ func VarBuilder(env *Glisp, name string,
 		return SexpNull, fmt.Errorf("var declaration error: could not bind symbol '%s': %v",
 			symN, err)
 	}
-	P("good: var decl bound symbol '%s' to '%s' of type '%s'", symN.SexpString(), valSexp.SexpString(), rt.SexpString())
+	Q("good: var decl bound symbol '%s' to '%s' of type '%s'", symN.SexpString(), valSexp.SexpString(), rt.SexpString())
 
 	env.datastack.PushExpr(valSexp)
 
@@ -681,10 +681,10 @@ func ExpectErrorBuilder(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	default:
 		return SexpNull, fmt.Errorf("first arg to expect-error must be the string of the error to expect")
 	}
-	P("expectedError = %v", expectedError)
+	Q("expectedError = %v", expectedError)
 	dup := env.Duplicate()
 	ev, err := dup.EvalExpressions(args[1:2])
-	P("done with eval, ev=%v / type %T. err = %v", ev.SexpString(), ev, err)
+	Q("done with eval, ev=%v / type %T. err = %v", ev.SexpString(), ev, err)
 	if err != nil {
 		if err.Error() == expectedError.S {
 			return SexpBool(true), nil
