@@ -1,6 +1,8 @@
 package zygo
 
-import "fmt"
+import (
+	"fmt"
+)
 
 func IsArray(expr Sexp) bool {
 	switch expr.(type) {
@@ -163,6 +165,12 @@ func TypeOf(expr Sexp) SexpStr {
 		v = "time.Time"
 	case *RegisteredType:
 		v = "regtype"
+	case SexpReflect:
+		//v = reflect.Value(e).Type().Name()
+		//if v == "Ptr" {
+		//	v = reflect.Value(e).Type().Elem().Kind().String()
+		//}
+		v = "reflect.Value"
 	default:
 		fmt.Printf("\n error: unknown type: %T in '%#v'\n", e, e)
 	}

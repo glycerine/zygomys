@@ -12,16 +12,15 @@ import (
 
 type Sexp interface {
 	SexpString() string
+}
+
+type Typed interface {
 	Type() *RegisteredType
 }
 
 type SexpPair struct {
 	Head Sexp
 	Tail Sexp
-}
-
-func (p *RegisteredType) Type() *RegisteredType {
-	return p
 }
 
 type SexpInt int64
@@ -219,7 +218,10 @@ var SexpIntSize = reflect.TypeOf(SexpInt(0)).Bits()
 var SexpFloatSize = reflect.TypeOf(SexpFloat(0.0)).Bits()
 
 func (r SexpReflect) SexpString() string {
-	return fmt.Sprintf("%#v", r)
+	if reflect.Value(r).Type().Kind() == reflect.Ptr {
+		return fmt.Sprintf("%v", reflect.Value(r).Elem().Interface())
+	}
+	return fmt.Sprintf("%v", reflect.Value(r).Interface())
 }
 
 func (arr SexpArray) SexpString() string {
@@ -269,7 +271,6 @@ type SexpSymbol struct {
 	name   string
 	number int
 	isDot  bool
-	ztype  string
 }
 
 func (sym SexpSymbol) SexpString() string {

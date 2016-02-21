@@ -7,6 +7,10 @@ import (
 	"time"
 )
 
+type SexpUserVarDefn struct {
+	Name string
+}
+
 type SexpUserStructDefn struct {
 	Name   string
 	Fields []*SexpField
@@ -620,99 +624,45 @@ func VarBuilder(env *Glisp, name string,
 	default:
 		return SexpNull, fmt.Errorf("bad var name: symbol required")
 	}
-
 	P("good: have var name '%v'", symN)
 
-	env.datastack.PushExpr(SexpNull)
-	varName := symN.name
-
-	{
-		// begin enable recursion -- add ourselves to the env early, then
-		// update later, so that vars can refer to themselves.
-		udsR := &SexpUserVarDefn{Name: varName}
-		rtR := NewRegisteredType(func(env *Glisp) (interface{}, error) {
-			return udsR, nil
-		})
-		rtR.UserVarDefn = udsR
-		rtR.DisplayAs = varName
-		GoStructRegistry.RegisterUserdef(structName, rtR, false)
-
-		err := env.LexicalBindSymbol(symN, rtR)
-		if err != nil {
-			return SexpNull, fmt.Errorf("var builder could not bind symbol '%s': '%v'",
-				varName, err)
-		}
-		// end enable recursion
-	}
-	var xar []Sexp
-	var flat []*SexpField
-	if n > 2 {
-		return SexpNull, fmt.Errorf("bad var declaration: more than two arguments." +
-			"prototype is (var name [(field ...)*] )")
-	}
-	if n == 2 {
-		P("in case n == 2")
-		switch ar := args[1].(type) {
-		default:
-			return SexpNull, fmt.Errorf("bad var declaration '%v': second argument "+
-				"must be a slice of fields."+
-				" prototype is (var name [(field ...)*] )", varName)
-		case SexpArray:
-			arr := []Sexp(ar)
-			if len(arr) == 0 {
-				// allow this
-			} else {
-				// dup to avoid messing with the stack on eval:
-				dup := env.Duplicate()
-				for i, ele := range arr {
-					P("about to eval i=%v", i)
-					ev, err := dup.EvalExpressions([]Sexp{ele})
-					P("done with eval i=%v. ev=%v", i, ev.SexpString())
-					if err != nil {
-						return SexpNull, fmt.Errorf("bad var declaration '%v': bad "+
-							"field at array entry %v; error was '%v'", varName, i, err)
-					}
-					P("checking for isHash at i=%v", i)
-					asHash, isHash := ev.(*SexpField)
-					if !isHash {
-						P("was not hash, instead was %T", ev)
-						return SexpNull, fmt.Errorf("bad var declaration '%v': bad "+
-							"field array at entry %v; a (field ...) is required. Instead saw '%T'/with value = '%v'",
-							varName, i, ev, ev.SexpString())
-					}
-					P("good eval i=%v, ev=%#v / %v", i, ev, ev.SexpString())
-					ko := asHash.KeyOrder
-					if len(ko) == 0 {
-						return SexpNull, fmt.Errorf("bad var declaration '%v': bad "+
-							"field array at entry %v; field had no name",
-							varName, i)
-					}
-					P("ko = '%#v'", ko)
-					first := ko[0]
-					P("first = '%#v'", first)
-					xar = append(xar, first)
-					xar = append(xar, ev)
-					flat = append(flat, ev.(*SexpField))
-				}
-				P("no err from EvalExpressions, got xar = '%#v'", xar)
-			}
-		}
-	} // end n == 2
-
-	uds := &SexpUserStructDefn{Name: varName, Fields: flat}
-	P("good: made typeDefnHash: '%s'", uds.SexpString())
-	rt := NewRegisteredType(func(env *Glisp) (interface{}, error) {
-		return uds, nil
-	})
-	rt.UserStructDefn = uds
-	rt.DisplayAs = varName
-	GoStructRegistry.RegisterUserdef(varName, rt, false)
-	P("good: registered new userdefined var '%s'", varName)
-	err := env.LexicalBindSymbol(symN, rt)
+	dup := env.Duplicate()
+	P("about to eval args[1]=%v", args[1])
+	ev, err := dup.EvalExpressions(args[1:2])
+	P("done with eval, ev=%v / type %T", ev.SexpString(), ev)
 	if err != nil {
-		return SexpNull, fmt.Errorf("var builder could not bind symbol '%s': '%v'",
-			varName, err)
+		return SexpNull, fmt.Errorf("bad var declaration, problem with type '%v': %v", args[1].SexpString(), err)
 	}
-	P("good: bound symbol '%s' to RegisteredType '%s'", symN.SexpString(), rt.SexpString())
-	return rt, nil
+
+	var rt *RegisteredType
+	switch myrt := ev.(type) {
+	case *RegisteredType:
+		rt = myrt
+	default:
+		return SexpNull, fmt.Errorf("bad var declaration, type '%v' is unknown", rt.SexpString())
+	}
+
+	val, err := rt.Factory(env)
+	if err != nil {
+		return SexpNull, fmt.Errorf("var declaration error: could not make type '%s': %v",
+			rt, err)
+	}
+	var valSexp Sexp
+	switch v := val.(type) {
+	case Sexp:
+		valSexp = v
+	default:
+		valSexp = SexpReflect(reflect.ValueOf(v))
+	}
+
+	err = env.LexicalBindSymbol(symN, valSexp)
+	if err != nil {
+		return SexpNull, fmt.Errorf("var declaration error: could not bind symbol '%s': %v",
+			symN, err)
+	}
+	P("good: var decl bound symbol '%s' to '%s' of type '%s'", symN.SexpString(), valSexp.SexpString(), rt.SexpString())
+
+	env.datastack.PushExpr(valSexp)
+
+	return SexpNull, nil
 }

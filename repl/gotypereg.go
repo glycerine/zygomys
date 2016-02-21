@@ -111,6 +111,7 @@ func (r *GoStructRegistryType) Lookup(name string) *RegisteredType {
 // the type of all maker functions
 type MakeGoStructFunc func(env *Glisp) (interface{}, error)
 
+var NullRT *RegisteredType
 var PairRT *RegisteredType
 var Int64RT *RegisteredType
 var BoolRT *RegisteredType
