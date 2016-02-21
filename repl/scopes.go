@@ -145,10 +145,38 @@ func (stack *Stack) BindSymbol(sym SexpSymbol, expr Sexp) error {
 			rhsTy := rhsAsTyped.Type()
 			Q("BindSymbol: both sides have type. rhs=%v, lhs=%v", rhsTy.SexpString(), lhsTy.SexpString())
 
-			if lhsTy != rhsTy {
+			// Implements reports whether the type implements the interface type u.
+			// Implements(u Type) bool
+
+			// AssignableTo reports whether a value of the type is assignable to type u.
+			// AssignableTo(u Type) bool
+
+			// ConvertibleTo reports whether a value of the type is convertible to type u.
+			// ConvertibleTo(u Type) bool
+
+			if lhsTy == rhsTy {
+				Q("BindSymbol: YES types match exactly. Good.")
+				stack.elements[stack.tos].(*Scope).Map[sym.number] = expr
+				return nil
+			}
+
+			if rhsTy.UserStructDefn != nil && rhsTy.UserStructDefn != lhsTy.UserStructDefn {
 				return fmt.Errorf("cannot assign %v to %v", rhsTy.ShortName(), lhsTy.ShortName())
 			}
-			Q("BindSymbol: YES types match. Good.")
+
+			if lhsTy.UserStructDefn != nil && lhsTy.UserStructDefn != rhsTy.UserStructDefn {
+				return fmt.Errorf("cannot assign %v to %v", rhsTy.ShortName(), lhsTy.ShortName())
+			}
+
+			if lhsTy.TypeCache != nil && rhsTy.TypeCache != nil {
+				if rhsTy.TypeCache.AssignableTo(lhsTy.TypeCache) {
+					Q("BindSymbol: YES: rhsTy.TypeCache (%v) is AssigntableTo(lhsTy.TypeCache) (%v). Good.", rhsTy.TypeCache, lhsTy.TypeCache)
+					stack.elements[stack.tos].(*Scope).Map[sym.number] = expr
+					return nil
+				}
+			}
+
+			return fmt.Errorf("cannot assign %v to %v", rhsTy.ShortName(), lhsTy.ShortName())
 		} else {
 			Q("BindSymbol: lhsHasType is false")
 		}
