@@ -18,3 +18,5 @@
 (var cc Cat)
 (cc = c)
 
+;; type checking the fields of a struct
+(expect-error "field Dog.Name is a string, cannot assign int64 '12'" (Dog Name:12))
