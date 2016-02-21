@@ -16,6 +16,12 @@ type SexpUserStructDefn struct {
 	Fields []*SexpField
 }
 
+func (p *SexpUserStructDefn) Type() *RegisteredType {
+	rt := GoStructRegistry.Registry[p.Name]
+	//Q("SexpUserStructDefn) Type() sees rt = %v", rt)
+	return rt
+}
+
 // pretty print a struct
 func (p *SexpUserStructDefn) SexpString() string {
 	Q("SexpUserStructDefn::SexpString() called!")
@@ -342,9 +348,15 @@ func StructBuilder(env *Glisp, name string,
 	rt.DisplayAs = structName
 	GoStructRegistry.RegisterUserdef(structName, rt, false)
 	Q("good: registered new userdefined struct '%s'", structName)
-	err := env.LexicalBindSymbol(symN, rt)
+	err := env.linearstack.DeleteSymbolFromTopOfStackScope(symN)
 	if err != nil {
-		return SexpNull, fmt.Errorf("struct builder could not bind symbol '%s': '%v'",
+		return SexpNull, fmt.Errorf("internal error: should have already had symbol '%s' "+
+			"bound, but DeleteSymbolFromTopOfStackScope returned error: '%v'",
+			symN.name, err)
+	}
+	err = env.LexicalBindSymbol(symN, rt)
+	if err != nil {
+		return SexpNull, fmt.Errorf("late: struct builder could not bind symbol '%s': '%v'",
 			structName, err)
 	}
 	Q("good: bound symbol '%s' to RegisteredType '%s'", symN.SexpString(), rt.SexpString())
@@ -656,10 +668,11 @@ func VarBuilder(env *Glisp, name string,
 		valSexp = SexpReflect(reflect.ValueOf(v))
 	}
 
+	Q("var decl: valSexp is '%v'", valSexp.SexpString())
 	err = env.LexicalBindSymbol(symN, valSexp)
 	if err != nil {
 		return SexpNull, fmt.Errorf("var declaration error: could not bind symbol '%s': %v",
-			symN, err)
+			symN.name, err)
 	}
 	Q("good: var decl bound symbol '%s' to '%s' of type '%s'", symN.SexpString(), valSexp.SexpString(), rt.SexpString())
 

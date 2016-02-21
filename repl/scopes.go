@@ -139,7 +139,7 @@ func (stack *Stack) BindSymbol(sym SexpSymbol, expr Sexp) error {
 			lhsTy := lhsAsTyped.Type()
 			rhsAsTyped, rhsHasType := expr.(Typed)
 			if !rhsHasType {
-				return fmt.Errorf("left-hand-side was type %v but right-hand-side had no type", lhsTy.SexpString())
+				return fmt.Errorf("left-hand-side was type %v but right-hand-side had no type; expr is type %T", lhsTy.SexpString(), expr)
 			}
 			// both sides have type
 			rhsTy := rhsAsTyped.Type()

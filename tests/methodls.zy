@@ -1,4 +1,4 @@
-(defmap snoopy)
+;;(defmap snoopy)
 (def s (snoopy))
 (assert (== 
          ["EchoWeather func(*zygo.Snoopy, *zygo.Weather) *zygo.Weather" "Fly func(*zygo.Snoopy, *zygo.Weather) (string, error)" "GetCry func(*zygo.Snoopy) string" "Sideeffect func(*zygo.Snoopy)"]

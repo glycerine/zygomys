@@ -14,3 +14,7 @@
 
 (expect-error "cannot assign Cat to Dog" (d = c))
 (expect-error "cannot assign Dog to Cat" (c = d))
+
+(var cc Cat)
+(cc = c)
+

@@ -52,6 +52,10 @@ func (r SexpChar) Type() *RegisteredType {
 	return GoStructRegistry.Registry["int32"]
 }
 
+func (r *RegisteredType) Type() *RegisteredType {
+	return r
+}
+
 type SexpRaw []byte
 
 type SexpReflect reflect.Value
