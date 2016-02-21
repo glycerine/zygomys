@@ -40,6 +40,18 @@ func (r SexpInt) Type() *RegisteredType {
 	return GoStructRegistry.Registry["int64"]
 }
 
+func (r SexpFloat) Type() *RegisteredType {
+	return GoStructRegistry.Registry["float64"]
+}
+
+func (r SexpBool) Type() *RegisteredType {
+	return GoStructRegistry.Registry["bool"]
+}
+
+func (r SexpChar) Type() *RegisteredType {
+	return GoStructRegistry.Registry["int32"]
+}
+
 type SexpRaw []byte
 
 type SexpReflect reflect.Value
@@ -241,10 +253,22 @@ var SexpIntSize = reflect.TypeOf(SexpInt(0)).Bits()
 var SexpFloatSize = reflect.TypeOf(SexpFloat(0.0)).Bits()
 
 func (r SexpReflect) SexpString() string {
+	Q("in SexpReflect.SexpString(); top; type = %T", r)
 	if reflect.Value(r).Type().Kind() == reflect.Ptr {
-		return fmt.Sprintf("%v", reflect.Value(r).Elem().Interface())
+		iface := reflect.Value(r).Interface()
+		switch iface.(type) {
+		case *string:
+			return fmt.Sprintf("`%v`", reflect.Value(r).Elem().Interface())
+		default:
+			return fmt.Sprintf("%v", reflect.Value(r).Elem().Interface())
+		}
 	}
-	return fmt.Sprintf("%v", reflect.Value(r).Interface())
+	iface := reflect.Value(r).Interface()
+	Q("in SexpReflect.SexpString(); type = %T", iface)
+	switch iface.(type) {
+	default:
+		return fmt.Sprintf("%v", iface)
+	}
 }
 
 func (arr SexpArray) SexpString() string {

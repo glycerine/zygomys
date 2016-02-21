@@ -222,6 +222,9 @@ func init() {
 	gsr.RegisterBuiltin("int32", &RegisteredType{GenDefMap: false, Factory: func(env *Glisp) (interface{}, error) {
 		return new(int32), nil
 	}})
+	gsr.RegisterBuiltin("rune", &RegisteredType{GenDefMap: false, Factory: func(env *Glisp) (interface{}, error) {
+		return new(int32), nil
+	}})
 	gsr.RegisterBuiltin("int64", &RegisteredType{GenDefMap: false, Factory: func(env *Glisp) (interface{}, error) {
 		return new(int64), nil
 	}})

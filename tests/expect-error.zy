@@ -8,3 +8,13 @@
 ;; type inference
 (b = "hello")
 (expect-error "cannot assign int64 to string" (b = 12))
+
+(expect-error "cannot assign float64 to int64" (a = 3.14))
+
+(var s string)
+
+(var r rune)
+
+(ch = #a)
+(expect-error "cannot assign int64 to int32" (ch = 3))
+(expect-error "cannot assign int32 to string" (s = ch))

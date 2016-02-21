@@ -2,6 +2,7 @@ package zygo
 
 import (
 	"fmt"
+	"reflect"
 )
 
 func IsArray(expr Sexp) bool {
@@ -170,7 +171,12 @@ func TypeOf(expr Sexp) SexpStr {
 		//if v == "Ptr" {
 		//	v = reflect.Value(e).Type().Elem().Kind().String()
 		//}
-		v = "reflect.Value"
+		kind := reflect.Value(e).Type().Kind()
+		if kind == reflect.Ptr {
+			v = reflect.Value(e).Elem().Type().Name()
+		} else {
+			v = "reflect.Value"
+		}
 	default:
 		fmt.Printf("\n error: unknown type: %T in '%#v'\n", e, e)
 	}
