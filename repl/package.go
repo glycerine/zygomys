@@ -190,6 +190,7 @@ func (env *Glisp) ImportPackageBuilder() {
 	env.AddBuilder("interface", InterfaceBuilder)
 	env.AddBuilder("package", PackageBuilder)
 	env.AddBuilder("var", VarBuilder)
+	env.AddBuilder("expect-error", ExpectErrorBuilder)
 
 	env.AddFunction("slice-of", SliceOfFunction)
 	env.AddFunction("ptr", PointerToFunction)
@@ -665,4 +666,34 @@ func VarBuilder(env *Glisp, name string,
 	env.datastack.PushExpr(valSexp)
 
 	return SexpNull, nil
+}
+
+func ExpectErrorBuilder(env *Glisp, name string, args []Sexp) (Sexp, error) {
+	narg := len(args)
+	if narg != 2 {
+		return SexpNull, WrongNargs
+	}
+
+	var expectedError SexpStr
+	switch e := args[0].(type) {
+	case SexpStr:
+		expectedError = e
+	default:
+		return SexpNull, fmt.Errorf("first arg to expect-error must be the string of the error to expect")
+	}
+	P("expectedError = %v", expectedError)
+	dup := env.Duplicate()
+	ev, err := dup.EvalExpressions(args[1:2])
+	P("done with eval, ev=%v / type %T. err = %v", ev.SexpString(), ev, err)
+	if err != nil {
+		if err.Error() == expectedError.S {
+			return SexpBool(true), nil
+		}
+		return SexpNull, fmt.Errorf("expect-error expected '%s' but saw '%s'", expectedError.S, err)
+	}
+
+	if expectedError.S == "" {
+		return SexpBool(true), nil
+	}
+	return SexpNull, fmt.Errorf("expect-error expected '%s' but go no error", expectedError.S)
 }
