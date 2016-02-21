@@ -1,5 +1,5 @@
 ;; types should act as constructors AND as type-variables
-(struct truck)
+(struct truck [(field name:string)])
 (def t (truck name:"harley"))
 (def pty (* truck))
 

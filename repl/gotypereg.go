@@ -149,7 +149,38 @@ type RegisteredType struct {
 	IsUser         bool
 	Aliases        map[string]bool
 	DisplayAs      string
-	UserStructDefn *SexpUserStructDefn
+	UserStructDefn *RecordDefn
+}
+
+func (p *RegisteredType) TypeCheckRecord(hash *SexpHash) error {
+	Q("in RegisteredType.TypeCheckRecord(hash = '%v')", hash.SexpString())
+	if hash.TypeName == "field" {
+		Q("in RegisteredType.TypeCheckRecord, TypeName == field, skipping.")
+		return nil
+	}
+	if p.UserStructDefn != nil {
+		Q("in RegisteredType.TypeCheckRecord, type checking against '%#v'", p.UserStructDefn)
+
+		for _, key := range hash.KeyOrder {
+			k := key.(SexpSymbol).name
+			Q("is key '%s' defined?", k)
+			declaredTyp, ok := p.UserStructDefn.FieldType[k]
+			if !ok {
+				return fmt.Errorf("%s has no field '%s'", p.UserStructDefn.Name, k)
+			}
+			obs, _ := hash.HashGet(nil, key)
+			obsTyp := obs.(Typed).Type()
+			if obsTyp != declaredTyp {
+				return fmt.Errorf("field %v.%v is %v, cannot assign %v '%v'",
+					p.UserStructDefn.Name,
+					k,
+					declaredTyp.SexpString(),
+					obsTyp.SexpString(),
+					obs.SexpString())
+			}
+		}
+	}
+	return nil
 }
 
 func (p *RegisteredType) SexpString() string {

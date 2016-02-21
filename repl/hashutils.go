@@ -118,9 +118,10 @@ func MakeHash(args []Sexp, typename string, env *Glisp) (*SexpHash, error) {
 		k++
 	}
 
-	Q("doing factory, foundGoStruct := GoStructRegistry.Registry[typename]")
-	factoryShad, foundGoStruct := GoStructRegistry.Registry[typename]
-	if foundGoStruct {
+	Q("doing factory, foundRecordType := GoStructRegistry.Registry[typename]")
+	factoryShad, foundRecordType := GoStructRegistry.Registry[typename]
+	if foundRecordType {
+		Q("factoryShad = %#v\n", factoryShad)
 		if factoryShad.hasShadowStruct {
 			Q("\n in MakeHash: found struct associated with '%s'\n", typename)
 			hash.SetGoStructFactory(factoryShad)
@@ -130,9 +131,14 @@ func MakeHash(args []Sexp, typename string, env *Glisp) (*SexpHash, error) {
 				return &SexpHash{}, fmt.Errorf("unexpected error "+
 					"from hash.SetMethodList(): %s", err)
 			}
+		} else {
+			err := factoryShad.TypeCheckRecord(&hash)
+			if err != nil {
+				return &SexpHash{}, err
+			}
 		}
 	} else {
-		Q("\n in MakeHash: did not find Go struct with '%s'\n", typename)
+		Q("\n in MakeHash: did not find Go struct with typename = '%s'\n", typename)
 		factory.initDone = true
 		factory.ReflectName = typename
 		factory.DisplayAs = typename

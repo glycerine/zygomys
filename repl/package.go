@@ -11,20 +11,40 @@ type SexpUserVarDefn struct {
 	Name string
 }
 
-type SexpUserStructDefn struct {
-	Name   string
-	Fields []*SexpField
+type RecordDefn struct {
+	Name      string
+	Fields    []*SexpField
+	FieldType map[string]*RegisteredType
 }
 
-func (p *SexpUserStructDefn) Type() *RegisteredType {
+func NewRecordDefn() *RecordDefn {
+	return &RecordDefn{
+		FieldType: make(map[string]*RegisteredType),
+	}
+}
+
+func (r *RecordDefn) SetName(name string) {
+	r.Name = name
+}
+func (r *RecordDefn) SetFields(flds []*SexpField) {
+	r.Fields = flds
+	for _, f := range flds {
+		g := (*SexpHash)(f)
+		rt, err := g.HashGet(nil, f.KeyOrder[0])
+		panicOn(err)
+		r.FieldType[g.KeyOrder[0].(SexpSymbol).name] = rt.(*RegisteredType)
+	}
+}
+
+func (p *RecordDefn) Type() *RegisteredType {
 	rt := GoStructRegistry.Registry[p.Name]
-	//Q("SexpUserStructDefn) Type() sees rt = %v", rt)
+	//Q("RecordDefn) Type() sees rt = %v", rt)
 	return rt
 }
 
 // pretty print a struct
-func (p *SexpUserStructDefn) SexpString() string {
-	Q("SexpUserStructDefn::SexpString() called!")
+func (p *RecordDefn) SexpString() string {
+	Q("RecordDefn::SexpString() called!")
 	if len(p.Fields) == 0 {
 		return fmt.Sprintf("(struct %s)", p.Name)
 	}
@@ -48,8 +68,8 @@ func (p *SexpUserStructDefn) SexpString() string {
 			}
 		}
 	}
-	Q("SexpUserStructDefn::SexpString(): maxnfield = %v, out of %v", maxnfield, len(p.Fields))
-	Q("SexpUserStructDefn::SexpString(): biggestCol =  %#v", biggestCol)
+	Q("RecordDefn::SexpString(): maxnfield = %v, out of %v", maxnfield, len(p.Fields))
+	Q("RecordDefn::SexpString(): biggestCol =  %#v", biggestCol)
 
 	// computing padding
 	// x
@@ -252,7 +272,8 @@ func StructBuilder(env *Glisp, name string,
 	{
 		// begin enable recursion -- add ourselves to the env early, then
 		// update later, so that structs can refer to themselves.
-		udsR := &SexpUserStructDefn{Name: structName}
+		udsR := NewRecordDefn()
+		udsR.SetName(structName)
 		rtR := NewRegisteredType(func(env *Glisp) (interface{}, error) {
 			return udsR, nil
 		})
@@ -339,7 +360,9 @@ func StructBuilder(env *Glisp, name string,
 		*/
 	} // end n == 2
 
-	uds := &SexpUserStructDefn{Name: structName, Fields: flat}
+	uds := NewRecordDefn()
+	uds.SetName(structName)
+	uds.SetFields(flat)
 	Q("good: made typeDefnHash: '%s'", uds.SexpString())
 	rt := NewRegisteredType(func(env *Glisp) (interface{}, error) {
 		return uds, nil
