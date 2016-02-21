@@ -76,7 +76,8 @@ func MakeHash(args []Sexp, typename string, env *Glisp) (*SexpHash, error) {
 	var got reflect.Type
 	var iface interface{}
 	jsonMap := make(map[string]*HashFieldDet)
-	factory := &RegisteredType{Factory: MakeGoStructFunc(func(env *Glisp) (interface{}, error) { return nil, nil })}
+	factory := &RegisteredType{Factory: MakeGoStructFunc(func(env *Glisp) (interface{}, error) { return MakeHash(nil, typename, env) })}
+	factory.Aliases = make(map[string]bool)
 	detOrder := []*HashFieldDet{}
 
 	var zmain SexpFunction
@@ -118,18 +119,25 @@ func MakeHash(args []Sexp, typename string, env *Glisp) (*SexpHash, error) {
 	}
 
 	Q("doing factory, foundGoStruct := GoStructRegistry.Registry[typename]")
-	factory, foundGoStruct := GoStructRegistry.Registry[typename]
-	if foundGoStruct && factory.hasShadowStruct {
-		Q("\n in MakeHash: found struct associated with '%s'\n", typename)
-		hash.SetGoStructFactory(factory)
-		Q("\n in MakeHash: after SetGoStructFactory for typename '%s'\n", typename)
-		err := hash.SetMethodList(env)
-		if err != nil {
-			return &SexpHash{}, fmt.Errorf("unexpected error "+
-				"from hash.SetMethodList(): %s", err)
+	factoryShad, foundGoStruct := GoStructRegistry.Registry[typename]
+	if foundGoStruct {
+		if factoryShad.hasShadowStruct {
+			Q("\n in MakeHash: found struct associated with '%s'\n", typename)
+			hash.SetGoStructFactory(factoryShad)
+			Q("\n in MakeHash: after SetGoStructFactory for typename '%s'\n", typename)
+			err := hash.SetMethodList(env)
+			if err != nil {
+				return &SexpHash{}, fmt.Errorf("unexpected error "+
+					"from hash.SetMethodList(): %s", err)
+			}
 		}
 	} else {
 		Q("\n in MakeHash: did not find Go struct with '%s'\n", typename)
+		factory.initDone = true
+		factory.ReflectName = typename
+		factory.DisplayAs = typename
+
+		GoStructRegistry.RegisterUserdef(typename, factory, false)
 	}
 
 	return &hash, nil
@@ -654,6 +662,14 @@ func (h *SexpHash) nestedPathGetSet(env *Glisp, dotpaths []string, setVal *Sexp)
 	return ret, err
 }
 
+type ShortNamer interface {
+	ShortName() string
+}
+
+func (hash *SexpHash) ShortName() string {
+	return hash.TypeName
+}
+
 func (hash *SexpHash) SexpString() string {
 	if hash.TypeName != "hash" {
 		return NamedHashSexpString(hash)
@@ -694,4 +710,8 @@ func NamedHashSexpString(hash *SexpHash) string {
 		return str[:len(str)-1] + ")"
 	}
 	return str + ")"
+}
+
+func (r *SexpHash) Type() *RegisteredType {
+	return GoStructRegistry.Registry[r.TypeName]
 }

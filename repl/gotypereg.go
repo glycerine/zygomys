@@ -159,6 +159,13 @@ func (p *RegisteredType) SexpString() string {
 	return p.DisplayAs
 }
 
+func (p *RegisteredType) ShortName() string {
+	if p.UserStructDefn != nil {
+		return p.UserStructDefn.Name
+	}
+	return p.DisplayAs
+}
+
 func NewRegisteredType(f MakeGoStructFunc) *RegisteredType {
 	rt := &RegisteredType{Factory: f}
 	rt.Init()

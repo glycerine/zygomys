@@ -141,12 +141,12 @@ func (stack *Stack) BindSymbol(sym SexpSymbol, expr Sexp) error {
 			if !rhsHasType {
 				return fmt.Errorf("left-hand-side was type %v but right-hand-side had no type", lhsTy.SexpString())
 			}
-			P("BindSymbol: both sides have type")
-
 			// both sides have type
 			rhsTy := rhsAsTyped.Type()
+			P("BindSymbol: both sides have type. rhs=%v, lhs=%v", rhsTy.SexpString(), lhsTy.SexpString())
+
 			if lhsTy != rhsTy {
-				return fmt.Errorf("cannot assign %v to %v", rhsTy.SexpString(), lhsTy.SexpString())
+				return fmt.Errorf("cannot assign %v to %v", rhsTy.ShortName(), lhsTy.ShortName())
 			}
 			P("BindSymbol: YES types match. Good.")
 		} else {

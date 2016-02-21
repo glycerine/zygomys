@@ -1,0 +1,8 @@
+;; verify that struct assign typechecks
+(struct Dog [(field Name:          string     e:0)])
+(def d (Dog Name:"Rover"))
+(def e (Dog Name:"Egbert"))
+
+(d = e)
+(assert (== (.d.Name) "Egbert"))
+(expect-error "cannot assign int64 to Dog" (e = 12))

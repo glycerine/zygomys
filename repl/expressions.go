@@ -41,6 +41,7 @@ func (r SexpInt) Type() *RegisteredType {
 }
 
 type SexpRaw []byte
+
 type SexpReflect reflect.Value
 
 func (r SexpReflect) Type() *RegisteredType {
