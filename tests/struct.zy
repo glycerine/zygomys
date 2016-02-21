@@ -8,3 +8,9 @@
 (expect-error "cannot assign int64 to Dog" (e = 12))
 (f = 4)
 (expect-error "cannot assign Dog to int64" (f = d))
+
+(struct Cat [(field Nip:          string     e:0)])
+(c = (Cat Nip:"green"))
+
+(expect-error "cannot assign Cat to Dog" (d = c))
+(expect-error "cannot assign Dog to Cat" (c = d))
