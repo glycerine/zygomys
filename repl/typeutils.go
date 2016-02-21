@@ -152,7 +152,7 @@ func TypeOf(expr Sexp) SexpStr {
 	case SexpFloat:
 		v = "float64"
 	case *SexpHash:
-		v = "hash"
+		v = e.TypeName
 	case SexpPair:
 		v = "list"
 	case SexpSymbol:

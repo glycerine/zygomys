@@ -6,6 +6,6 @@
 
 ; test that coroutines share the same global scope
 (def global "foo")
-(go (send! ch '()) (def global "bar"))
+(go (def global "bar") (send! ch '()))
 (<! ch)
 (assert (== global "bar"))
