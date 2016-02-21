@@ -46,13 +46,13 @@ type SexpReflect reflect.Value
 
 func (r SexpReflect) Type() *RegisteredType {
 	k := reflectName(reflect.Value(r))
-	P("SexpReflect.Type() looking up type named '%s'", k)
+	Q("SexpReflect.Type() looking up type named '%s'", k)
 	ty, ok := GoStructRegistry.Registry[k]
 	if !ok {
-		P("SexpReflect.Type(): type named '%s' not found", k)
+		Q("SexpReflect.Type(): type named '%s' not found", k)
 		return nil
 	}
-	P("SexpReflect.Type(): type named '%s' found as regtype '%v'", k, ty.SexpString())
+	Q("SexpReflect.Type(): type named '%s' found as regtype '%v'", k, ty.SexpString())
 	return ty
 }
 
