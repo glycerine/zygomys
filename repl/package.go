@@ -687,13 +687,13 @@ func ExpectErrorBuilder(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	Q("done with eval, ev=%v / type %T. err = %v", ev.SexpString(), ev, err)
 	if err != nil {
 		if err.Error() == expectedError.S {
-			return SexpBool(true), nil
+			return SexpNull, nil
 		}
 		return SexpNull, fmt.Errorf("expect-error expected '%s' but saw '%s'", expectedError.S, err)
 	}
 
 	if expectedError.S == "" {
-		return SexpBool(true), nil
+		return SexpNull, nil
 	}
 	return SexpNull, fmt.Errorf("expect-error expected '%s' but got no error", expectedError.S)
 }
