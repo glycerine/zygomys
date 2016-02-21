@@ -128,6 +128,33 @@ func (stack *Stack) BindSymbol(sym SexpSymbol, expr Sexp) error {
 		panic("empty stack!!")
 		return errors.New("no scope available")
 	}
+	cur, already := stack.elements[stack.tos].(*Scope).Map[sym.number]
+	if already {
+		P("BindSymbol already sees symbol %v, currently bound to '%v'", sym.name, cur.SexpString())
+		// type check if current binding is typed.
+		lhsAsTyped, lhsHasType := cur.(Typed)
+		if lhsHasType {
+			P("BindSymbol: lhsHasType is true")
+
+			lhsTy := lhsAsTyped.Type()
+			rhsAsTyped, rhsHasType := expr.(Typed)
+			if !rhsHasType {
+				return fmt.Errorf("left-hand-side was type %v but right-hand-side had no type", lhsTy.SexpString())
+			}
+			P("BindSymbol: both sides have type")
+
+			// both sides have type
+			rhsTy := rhsAsTyped.Type()
+			if lhsTy != rhsTy {
+				return fmt.Errorf("cannot assign %v to %v", rhsTy.SexpString(), lhsTy.SexpString())
+			}
+			P("BindSymbol: YES types match. Good.")
+		} else {
+			P("BindSymbol: lhsHasType is false")
+		}
+	} else {
+		P("BindSymbol: new symbol %v", sym.name)
+	}
 	stack.elements[stack.tos].(*Scope).Map[sym.number] = expr
 	return nil
 }

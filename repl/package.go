@@ -695,5 +695,5 @@ func ExpectErrorBuilder(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	if expectedError.S == "" {
 		return SexpBool(true), nil
 	}
-	return SexpNull, fmt.Errorf("expect-error expected '%s' but go no error", expectedError.S)
+	return SexpNull, fmt.Errorf("expect-error expected '%s' but got no error", expectedError.S)
 }

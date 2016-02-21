@@ -89,6 +89,17 @@ func (e *RegisteredType) Init() {
 	e.initDone = true
 }
 
+func reflectName(val reflect.Value) string {
+	pointerName := fmt.Sprintf("%T", val.Interface())
+	reflectName := pointerName[1:]
+	return reflectName
+}
+func ifaceName(val interface{}) string {
+	pointerName := fmt.Sprintf("%T", val)
+	reflectName := pointerName[1:]
+	return reflectName
+}
+
 func (r *GoStructRegistryType) RegisterUserdef(
 	name string,
 	e *RegisteredType,

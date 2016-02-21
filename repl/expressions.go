@@ -31,8 +31,30 @@ type SexpStr struct {
 	S        string
 	backtick bool
 }
+
+func (r SexpStr) Type() *RegisteredType {
+	return GoStructRegistry.Registry["string"]
+}
+
+func (r SexpInt) Type() *RegisteredType {
+	return GoStructRegistry.Registry["int64"]
+}
+
 type SexpRaw []byte
 type SexpReflect reflect.Value
+
+func (r SexpReflect) Type() *RegisteredType {
+	k := reflectName(reflect.Value(r))
+	P("SexpReflect.Type() looking up type named '%s'", k)
+	ty, ok := GoStructRegistry.Registry[k]
+	if !ok {
+		P("SexpReflect.Type(): type named '%s' not found", k)
+		return nil
+	}
+	P("SexpReflect.Type(): type named '%s' found as regtype '%v'", k, ty.SexpString())
+	return ty
+}
+
 type SexpError struct {
 	error
 }
