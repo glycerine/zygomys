@@ -5,10 +5,17 @@ import (
 	"fmt"
 )
 
-type SexpChannel chan Sexp
+type SexpChannel struct {
+	Val chan Sexp
+	Typ *RegisteredType
+}
 
 func (ch SexpChannel) SexpString() string {
 	return "[chan]"
+}
+
+func (ch SexpChannel) Type() *RegisteredType {
+	return ch.Typ // TODO what should this be?
 }
 
 func MakeChanFunction(env *Glisp, name string,
@@ -21,14 +28,14 @@ func MakeChanFunction(env *Glisp, name string,
 	if len(args) == 1 {
 		switch t := args[0].(type) {
 		case SexpInt:
-			size = int(t)
+			size = int(t.Val)
 		default:
 			return SexpNull, errors.New(
 				fmt.Sprintf("argument to %s must be int", name))
 		}
 	}
 
-	return SexpChannel(make(chan Sexp, size)), nil
+	return SexpChannel{Val: make(chan Sexp, size)}, nil
 }
 
 func ChanTxFunction(env *Glisp, name string,
@@ -39,7 +46,7 @@ func ChanTxFunction(env *Glisp, name string,
 	var channel chan Sexp
 	switch t := args[0].(type) {
 	case SexpChannel:
-		channel = chan Sexp(t)
+		channel = chan Sexp(t.Val)
 	default:
 		return SexpNull, errors.New(
 			fmt.Sprintf("argument 0 of %s must be channel", name))

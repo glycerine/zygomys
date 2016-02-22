@@ -27,7 +27,7 @@ func IntegerDo(op IntegerOp, a, b Sexp) (Sexp, error) {
 	case SexpInt:
 		ia = i
 	case SexpChar:
-		ia = SexpInt(i)
+		ia = SexpInt{Val: int64(i.Val)}
 	default:
 		return SexpNull, WrongType
 	}
@@ -36,26 +36,26 @@ func IntegerDo(op IntegerOp, a, b Sexp) (Sexp, error) {
 	case SexpInt:
 		ib = i
 	case SexpChar:
-		ib = SexpInt(i)
+		ib = SexpInt{Val: int64(i.Val)}
 	default:
 		return SexpNull, WrongType
 	}
 
 	switch op {
 	case ShiftLeft:
-		return ia << uint(ib), nil
+		return SexpInt{Val: ia.Val << uint(ib.Val)}, nil
 	case ShiftRightArith:
-		return ia >> uint(ib), nil
+		return SexpInt{Val: ia.Val >> uint(ib.Val)}, nil
 	case ShiftRightLog:
-		return SexpInt(uint(ia) >> uint(ib)), nil
+		return SexpInt{Val: int64(uint(ia.Val) >> uint(ib.Val))}, nil
 	case Modulo:
-		return ia % ib, nil
+		return SexpInt{Val: ia.Val % ib.Val}, nil
 	case BitAnd:
-		return ia & ib, nil
+		return SexpInt{Val: ia.Val & ib.Val}, nil
 	case BitOr:
-		return ia | ib, nil
+		return SexpInt{Val: ia.Val | ib.Val}, nil
 	case BitXor:
-		return ia ^ ib, nil
+		return SexpInt{Val: ia.Val ^ ib.Val}, nil
 	}
 	return SexpNull, errors.New("unrecognized shift operation")
 }
@@ -73,15 +73,15 @@ const (
 func NumericFloatDo(op NumericOp, a, b SexpFloat) Sexp {
 	switch op {
 	case Add:
-		return a + b
+		return SexpFloat{Val: a.Val + b.Val}
 	case Sub:
-		return a - b
+		return SexpFloat{Val: a.Val - b.Val}
 	case Mult:
-		return a * b
+		return SexpFloat{Val: a.Val * b.Val}
 	case Div:
-		return a / b
+		return SexpFloat{Val: a.Val / b.Val}
 	case Pow:
-		return SexpFloat(math.Pow(float64(a), float64(b)))
+		return SexpFloat{Val: math.Pow(float64(a.Val), float64(b.Val))}
 	}
 	return SexpNull
 }
@@ -89,19 +89,19 @@ func NumericFloatDo(op NumericOp, a, b SexpFloat) Sexp {
 func NumericIntDo(op NumericOp, a, b SexpInt) Sexp {
 	switch op {
 	case Add:
-		return a + b
+		return SexpInt{Val: a.Val + b.Val}
 	case Sub:
-		return a - b
+		return SexpInt{Val: a.Val - b.Val}
 	case Mult:
-		return a * b
+		return SexpInt{Val: a.Val * b.Val}
 	case Div:
-		if a%b == 0 {
-			return a / b
+		if a.Val%b.Val == 0 {
+			return SexpInt{Val: a.Val / b.Val}
 		} else {
-			return SexpFloat(a) / SexpFloat(b)
+			return SexpInt{Val: int64(float64(a.Val) / float64(b.Val))}
 		}
 	case Pow:
-		return SexpInt(math.Pow(float64(a), float64(b)))
+		return SexpInt{Val: int64(math.Pow(float64(a.Val), float64(b.Val)))}
 	}
 	return SexpNull
 }
@@ -112,9 +112,9 @@ func NumericMatchFloat(op NumericOp, a SexpFloat, b Sexp) (Sexp, error) {
 	case SexpFloat:
 		fb = tb
 	case SexpInt:
-		fb = SexpFloat(tb)
+		fb = SexpFloat{Val: float64(tb.Val)}
 	case SexpChar:
-		fb = SexpFloat(tb)
+		fb = SexpFloat{Val: float64(tb.Val)}
 	default:
 		return SexpNull, WrongType
 	}
@@ -124,11 +124,11 @@ func NumericMatchFloat(op NumericOp, a SexpFloat, b Sexp) (Sexp, error) {
 func NumericMatchInt(op NumericOp, a SexpInt, b Sexp) (Sexp, error) {
 	switch tb := b.(type) {
 	case SexpFloat:
-		return NumericFloatDo(op, SexpFloat(a), tb), nil
+		return NumericFloatDo(op, SexpFloat{Val: float64(a.Val)}, tb), nil
 	case SexpInt:
 		return NumericIntDo(op, a, tb), nil
 	case SexpChar:
-		return NumericIntDo(op, a, SexpInt(tb)), nil
+		return NumericIntDo(op, a, SexpInt{Val: int64(tb.Val)}), nil
 	}
 	return SexpNull, WrongType
 }
@@ -137,11 +137,11 @@ func NumericMatchChar(op NumericOp, a SexpChar, b Sexp) (Sexp, error) {
 	var res Sexp
 	switch tb := b.(type) {
 	case SexpFloat:
-		res = NumericFloatDo(op, SexpFloat(a), tb)
+		res = NumericFloatDo(op, SexpFloat{Val: float64(a.Val)}, tb)
 	case SexpInt:
-		res = NumericIntDo(op, SexpInt(a), tb)
+		res = NumericIntDo(op, SexpInt{Val: int64(a.Val)}, tb)
 	case SexpChar:
-		res = NumericIntDo(op, SexpInt(a), SexpInt(tb))
+		res = NumericIntDo(op, SexpInt{Val: int64(a.Val)}, SexpInt{Val: int64(tb.Val)})
 	default:
 		return SexpNull, WrongType
 	}
@@ -149,7 +149,7 @@ func NumericMatchChar(op NumericOp, a SexpChar, b Sexp) (Sexp, error) {
 	case SexpFloat:
 		return tres, nil
 	case SexpInt:
-		return SexpChar(tres), nil
+		return SexpChar{Val: rune(tres.Val)}, nil
 	}
 	return SexpNull, errors.New("unexpected result")
 }

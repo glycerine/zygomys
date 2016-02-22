@@ -394,33 +394,33 @@ func (parser *Parser) ParseExpression(depth int) (res Sexp, err error) {
 	case TokenDollar:
 		return env.MakeSymbol(tok.str), nil
 	case TokenBool:
-		return SexpBool(tok.str == "true"), nil
+		return SexpBool{Val: tok.str == "true"}, nil
 	case TokenDecimal:
 		i, err := strconv.ParseInt(tok.str, 10, SexpIntSize)
 		if err != nil {
 			return SexpNull, err
 		}
-		return SexpInt(i), nil
+		return SexpInt{Val: i}, nil
 	case TokenHex:
 		i, err := strconv.ParseInt(tok.str, 16, SexpIntSize)
 		if err != nil {
 			return SexpNull, err
 		}
-		return SexpInt(i), nil
+		return SexpInt{Val: i}, nil
 	case TokenOct:
 		i, err := strconv.ParseInt(tok.str, 8, SexpIntSize)
 		if err != nil {
 			return SexpNull, err
 		}
-		return SexpInt(i), nil
+		return SexpInt{Val: i}, nil
 	case TokenBinary:
 		i, err := strconv.ParseInt(tok.str, 2, SexpIntSize)
 		if err != nil {
 			return SexpNull, err
 		}
-		return SexpInt(i), nil
+		return SexpInt{Val: i}, nil
 	case TokenChar:
-		return SexpChar(tok.str[0]), nil
+		return SexpChar{Val: rune(tok.str[0])}, nil
 	case TokenString:
 		return SexpStr{S: tok.str}, nil
 	case TokenBacktickString:
@@ -430,7 +430,7 @@ func (parser *Parser) ParseExpression(depth int) (res Sexp, err error) {
 		if err != nil {
 			return SexpNull, err
 		}
-		return SexpFloat(f), nil
+		return SexpFloat{Val: f}, nil
 	case TokenEnd:
 		return SexpEnd, nil
 	case TokenDot:

@@ -12,6 +12,7 @@ import (
 
 type Sexp interface {
 	SexpString() string
+	Type() *RegisteredType
 }
 
 type Typed interface {
@@ -23,13 +24,53 @@ type SexpPair struct {
 	Tail Sexp
 }
 
-type SexpInt int64
-type SexpBool bool
-type SexpFloat float64
-type SexpChar rune
+type SexpPointer struct {
+	Target        Sexp
+	PointedToType *RegisteredType
+	MyType        *RegisteredType
+}
+
+func NewSexpPointer(pointedTo Sexp, pointedToType *RegisteredType) *SexpPointer {
+
+	ptrRt := GoStructRegistry.GetOrCreatePointerType(pointedToType)
+
+	p := &SexpPointer{
+		Target:        pointedTo,
+		PointedToType: pointedToType,
+		MyType:        ptrRt,
+	}
+	return p
+}
+
+func (p *SexpPointer) SexpString() string {
+	return fmt.Sprintf("%p", p.Target)
+	//return fmt.Sprintf("(* %v) %p", p.PointedToType.RegisteredName, p.Target)
+}
+
+func (p *SexpPointer) Type() *RegisteredType {
+	return p.MyType
+}
+
+type SexpInt struct {
+	Val int64
+	Typ *RegisteredType
+}
+type SexpBool struct {
+	Val bool
+	Typ *RegisteredType
+}
+type SexpFloat struct {
+	Val float64
+	Typ *RegisteredType
+}
+type SexpChar struct {
+	Val rune
+	Typ *RegisteredType
+}
 type SexpStr struct {
 	S        string
 	backtick bool
+	Typ      *RegisteredType
 }
 
 func (r SexpStr) Type() *RegisteredType {
@@ -56,7 +97,14 @@ func (r *RegisteredType) Type() *RegisteredType {
 	return r
 }
 
-type SexpRaw []byte
+type SexpRaw struct {
+	Val []byte
+	Typ *RegisteredType
+}
+
+func (r SexpRaw) Type() *RegisteredType {
+	return r.Typ
+}
 
 type SexpReflect reflect.Value
 
@@ -75,8 +123,22 @@ func (r SexpReflect) Type() *RegisteredType {
 type SexpError struct {
 	error
 }
+
+func (r SexpError) Type() *RegisteredType {
+	return nil // TODO what should this be?
+}
+
 type SexpSentinel int
+
+func (r SexpSentinel) Type() *RegisteredType {
+	return nil // TODO what should this be?
+}
+
 type SexpClosureEnv Scope
+
+func (r SexpClosureEnv) Type() *RegisteredType {
+	return nil // TODO what should this be?
+}
 
 func (c SexpClosureEnv) SexpString() string {
 	scop := Scope(c)
@@ -134,8 +196,15 @@ func (pair SexpPair) SexpString() string {
 
 	return str
 }
+func (r SexpPair) Type() *RegisteredType {
+	return nil // TODO what should this be?
+}
 
 type SexpArray []Sexp
+
+func (r SexpArray) Type() *RegisteredType {
+	return nil // TODO what should this be?
+}
 
 func (e SexpError) SexpString() string {
 	return e.error.Error()
@@ -253,8 +322,8 @@ func (h *SexpHash) SetGoStructFactory(factory *RegisteredType) {
 	h.GoStructFactory = factory
 }
 
-var SexpIntSize = reflect.TypeOf(SexpInt(0)).Bits()
-var SexpFloatSize = reflect.TypeOf(SexpFloat(0.0)).Bits()
+var SexpIntSize = 64
+var SexpFloatSize = 64
 
 func (r SexpReflect) SexpString() string {
 	Q("in SexpReflect.SexpString(); top; type = %T", r)
@@ -289,22 +358,22 @@ func (arr SexpArray) SexpString() string {
 }
 
 func (b SexpBool) SexpString() string {
-	if b {
+	if bool(b.Val) {
 		return "true"
 	}
 	return "false"
 }
 
 func (i SexpInt) SexpString() string {
-	return strconv.Itoa(int(i))
+	return strconv.Itoa(int(i.Val))
 }
 
 func (f SexpFloat) SexpString() string {
-	return strconv.FormatFloat(float64(f), 'g', 5, SexpFloatSize)
+	return strconv.FormatFloat(f.Val, 'g', 5, SexpFloatSize)
 }
 
 func (c SexpChar) SexpString() string {
-	return "#" + strings.Trim(strconv.QuoteRune(rune(c)), "'")
+	return "#" + strings.Trim(strconv.QuoteRune(c.Val), "'")
 }
 
 func (s SexpStr) SexpString() string {
@@ -315,7 +384,7 @@ func (s SexpStr) SexpString() string {
 }
 
 func (r SexpRaw) SexpString() string {
-	return fmt.Sprintf("%#v", []byte(r))
+	return fmt.Sprintf("%#v", []byte(r.Val))
 }
 
 type SexpSymbol struct {
@@ -326,6 +395,10 @@ type SexpSymbol struct {
 
 func (sym SexpSymbol) SexpString() string {
 	return sym.name
+}
+
+func (r SexpSymbol) Type() *RegisteredType {
+	return nil // TODO what should this be?
 }
 
 func (sym SexpSymbol) Name() string {
@@ -346,6 +419,10 @@ type SexpFunction struct {
 	orig              Sexp
 	closingOverScopes *Closing
 	isBuilder         bool // see defbuild; builders are builtins that receive un-evaluated expressions
+}
+
+func (sf *SexpFunction) Type() *RegisteredType {
+	return nil // TODO what goes here
 }
 
 func (sf *SexpFunction) Copy() *SexpFunction {
@@ -395,11 +472,11 @@ func (sf *SexpFunction) SexpString() string {
 func IsTruthy(expr Sexp) bool {
 	switch e := expr.(type) {
 	case SexpBool:
-		return bool(e)
+		return e.Val
 	case SexpInt:
-		return e != 0
+		return e.Val != 0
 	case SexpChar:
-		return e != 0
+		return e.Val != 0
 	case SexpSentinel:
 		return e != SexpNull
 	}
@@ -408,6 +485,10 @@ func IsTruthy(expr Sexp) bool {
 
 type SexpStackmark struct {
 	sym SexpSymbol
+}
+
+func (r SexpStackmark) Type() *RegisteredType {
+	return nil // TODO what should this be?
 }
 
 func (mark SexpStackmark) SexpString() string {

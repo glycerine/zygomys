@@ -139,19 +139,19 @@ func CallGoMethodFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 			case nil:
 				r = append(r, SexpNull)
 			case int64:
-				r = append(r, SexpInt(e))
+				r = append(r, SexpInt{Val: e})
 			case int:
-				r = append(r, SexpInt(e))
+				r = append(r, SexpInt{Val: int64(e)})
 			case error:
 				r = append(r, SexpError{e})
 			case string:
 				r = append(r, SexpStr{S: e})
 			case float64:
-				r = append(r, SexpFloat(e))
+				r = append(r, SexpFloat{Val: e})
 			case []byte:
-				r = append(r, SexpRaw(e))
+				r = append(r, SexpRaw{Val: e})
 			case rune:
-				r = append(r, SexpChar(e))
+				r = append(r, SexpChar{Val: e})
 			default:
 				// go through the type registry
 				found := false

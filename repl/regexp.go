@@ -13,6 +13,10 @@ func (re SexpRegexp) SexpString() string {
 	return fmt.Sprintf(`(regexp-compile "%v")`, r.String())
 }
 
+func (r SexpRegexp) Type() *RegisteredType {
+	return nil // TODO what should this be?
+}
+
 func regexpFindIndex(
 	needle regexp.Regexp, haystack string) (Sexp, error) {
 
@@ -20,7 +24,7 @@ func regexpFindIndex(
 
 	arr := make([]Sexp, len(loc))
 	for i := range arr {
-		arr[i] = Sexp(SexpInt(loc[i]))
+		arr[i] = Sexp(SexpInt{Val: int64(loc[i])})
 	}
 
 	return SexpArray(arr), nil
@@ -57,7 +61,7 @@ func RegexpFind(env *Glisp, name string,
 		return regexpFindIndex(needle, haystack)
 	case "regexp-match":
 		matches := needle.MatchString(haystack)
-		return SexpBool(matches), nil
+		return SexpBool{Val: matches}, nil
 	}
 
 	return SexpNull, errors.New("unknown function")

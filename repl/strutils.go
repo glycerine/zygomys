@@ -30,7 +30,7 @@ func AppendStr(str SexpStr, expr Sexp) (SexpStr, error) {
 		return SexpStr{}, errors.New("second argument is not a char")
 	}
 
-	return SexpStr{S: str.S + string(chr)}, nil
+	return SexpStr{S: str.S + string(chr.Val)}, nil
 }
 
 func StringUtilFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {

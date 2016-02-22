@@ -42,9 +42,9 @@ func HashExpression(env *Glisp, expr Sexp) (int, error) {
 func hashHelper(expr Sexp) (hashcode int, isList bool, err error) {
 	switch e := expr.(type) {
 	case SexpInt:
-		return int(e), false, nil
+		return int(e.Val), false, nil
 	case SexpChar:
-		return int(e), false, nil
+		return int(e.Val), false, nil
 	case SexpSymbol:
 		return e.number, false, nil
 	case SexpStr:
@@ -453,7 +453,7 @@ func GenericHpairFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	if !isInt {
 		return SexpNull, fmt.Errorf("hpair position request must be an integer")
 	}
-	pos := int(posreq)
+	pos := int(posreq.Val)
 
 	switch seq := args[0].(type) {
 	case *SexpHash:
@@ -465,7 +465,7 @@ func GenericHpairFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		if pos < 0 || pos >= len(seq) {
 			return SexpNull, fmt.Errorf("hpair position request %d out of bounds", pos)
 		}
-		return Cons(SexpInt(pos), Cons(seq[pos], SexpNull)), nil
+		return Cons(SexpInt{Val: int64(pos)}, Cons(seq[pos], SexpNull)), nil
 	default:
 		return SexpNull, errors.New("first argument of to hpair function must be hash, list, or array")
 	}
@@ -542,19 +542,19 @@ func fillHashHelper(r interface{}, depth int, env *Glisp, preferSym bool) (Sexp,
 
 	case int:
 		Q("depth %d found int case: val = %#v\n", depth, val)
-		return SexpInt(val), nil
+		return SexpInt{Val: int64(val)}, nil
 
 	case int32:
 		Q("depth %d found int32 case: val = %#v\n", depth, val)
-		return SexpInt(val), nil
+		return SexpInt{Val: int64(val)}, nil
 
 	case int64:
 		Q("depth %d found int64 case: val = %#v\n", depth, val)
-		return SexpInt(val), nil
+		return SexpInt{Val: int64(val)}, nil
 
 	case float64:
 		Q("depth %d found float64 case: val = %#v\n", depth, val)
-		return SexpFloat(val), nil
+		return SexpFloat{Val: val}, nil
 
 	case []interface{}:
 		Q("depth %d found []interface{} case: val = %#v\n", depth, val)
@@ -609,13 +609,13 @@ func fillHashHelper(r interface{}, depth int, env *Glisp, preferSym bool) (Sexp,
 	case []byte:
 		Q("depth %d found []byte case: val = %#v\n", depth, val)
 
-		return SexpRaw(val), nil
+		return SexpRaw{Val: val}, nil
 
 	case nil:
 		return SexpNull, nil
 
 	case bool:
-		return SexpBool(val), nil
+		return SexpBool{Val: val}, nil
 
 	default:
 		Q("unknown type in type switch, val = %#v.  type = %T.\n", val, val)
@@ -720,4 +720,21 @@ func NamedHashSexpString(hash *SexpHash) string {
 
 func (r *SexpHash) Type() *RegisteredType {
 	return GoStructRegistry.Registry[r.TypeName]
+}
+
+func compareHash(a *SexpHash, bs Sexp) (int, error) {
+
+	var b *SexpHash
+	switch bt := bs.(type) {
+	case *SexpHash:
+		b = bt
+	default:
+		return 0, fmt.Errorf("cannot compare %T to %T", a, bs)
+	}
+
+	if a.TypeName != b.TypeName {
+		return 1, nil
+	}
+
+	return 0, nil
 }

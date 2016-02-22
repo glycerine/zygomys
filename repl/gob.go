@@ -31,7 +31,7 @@ func GobEncodeFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		return SexpNull, fmt.Errorf("gob encode error: '%s'", err)
 	}
 
-	return SexpRaw(gobBytes.Bytes()), nil
+	return SexpRaw{Val: gobBytes.Bytes()}, nil
 }
 
 func GobDecodeFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
@@ -44,7 +44,7 @@ func GobDecodeFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		return SexpNull, fmt.Errorf("ungob argument must be raw []byte")
 	}
 
-	rawBuf := bytes.NewBuffer(raw)
+	rawBuf := bytes.NewBuffer(raw.Val)
 	dec := gob.NewDecoder(rawBuf)
 	var iface interface{}
 	err := dec.Decode(iface)

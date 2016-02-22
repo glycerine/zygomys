@@ -49,6 +49,19 @@ func (r *GoStructRegistryType) RegisterBuiltin(name string, e *RegisteredType) {
 	e.IsUser = false
 }
 
+func (r *GoStructRegistryType) RegisterPointer(pointedToName string, pointedToType *RegisteredType) *RegisteredType {
+	newRT := &RegisteredType{GenDefMap: false, Factory: func(env *Glisp) (interface{}, error) {
+		p, err := pointedToType.Factory(env)
+		if err != nil {
+			return nil, err
+		}
+		return &p, nil
+	}}
+	r.register(fmt.Sprintf("(* %s)", pointedToName), newRT, false)
+	newRT.IsPointer = true
+	return newRT
+}
+
 func (r *GoStructRegistryType) register(name string, e *RegisteredType, isUser bool) {
 	if !e.initDone {
 		e.Init()
@@ -150,6 +163,7 @@ type RegisteredType struct {
 	Aliases        map[string]bool
 	DisplayAs      string
 	UserStructDefn *RecordDefn
+	IsPointer      bool
 }
 
 func (p *RegisteredType) TypeCheckRecord(hash *SexpHash) error {
@@ -169,7 +183,16 @@ func (p *RegisteredType) TypeCheckRecord(hash *SexpHash) error {
 				return fmt.Errorf("%s has no field '%s'", p.UserStructDefn.Name, k)
 			}
 			obs, _ := hash.HashGet(nil, key)
-			obsTyp := obs.(Typed).Type()
+			obsTyped, obsIsTyped := obs.(Typed)
+			if !obsIsTyped {
+				return fmt.Errorf("%v is not Typed", obs.SexpString())
+			}
+			obsTyp := obsTyped.Type()
+			Q("")
+			Q("obsTyp is %T / val = %#v", obsTyp, obsTyp)
+			Q("")
+			Q("declaredTyp is %T / val = %#v", declaredTyp, declaredTyp)
+			Q("")
 			if obsTyp != declaredTyp {
 				return fmt.Errorf("field %v.%v is %v, cannot assign %v '%v'",
 					p.UserStructDefn.Name,
@@ -354,4 +377,39 @@ func (env *Glisp) ImportBaseTypes() {
 	for _, e := range GoStructRegistry.Userdef {
 		env.AddGlobal(e.RegisteredName, e)
 	}
+}
+
+func compareRegisteredTypes(a *RegisteredType, bs Sexp) (int, error) {
+
+	var b *RegisteredType
+	switch bt := bs.(type) {
+	case *RegisteredType:
+		b = bt
+	default:
+		return 0, fmt.Errorf("cannot compare %T to %T", a, bs)
+	}
+
+	if a == b {
+		// equal for sure
+		return 0, nil
+	}
+	return 1, nil
+}
+
+func (gsr *GoStructRegistryType) GetOrCreatePointerType(pointedToType *RegisteredType) *RegisteredType {
+	ptrName := "*" + pointedToType.RegisteredName
+	ptrRt := gsr.Lookup(ptrName)
+	if ptrRt != nil {
+		P("type named '%v' already registered, reusing the pointer type", ptrName)
+	} else {
+		P("registering new pointer type '%v'", ptrName)
+		derivedType := reflect.PtrTo(pointedToType.TypeCache)
+		ptrRt = NewRegisteredType(func(env *Glisp) (interface{}, error) {
+			return reflect.New(derivedType), nil
+		})
+		ptrRt.DisplayAs = fmt.Sprintf("(* %s)", pointedToType.DisplayAs)
+		ptrRt.RegisteredName = ptrName
+		gsr.RegisterUserdef(ptrName, ptrRt, false)
+	}
+	return ptrRt
 }

@@ -52,22 +52,22 @@ func JsonFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	switch name {
 	case "json":
 		str := SexpToJson(args[0])
-		return SexpRaw([]byte(str)), nil
+		return SexpRaw{Val: []byte(str)}, nil
 	case "unjson":
 		raw, isRaw := args[0].(SexpRaw)
 		if !isRaw {
 			return SexpNull, fmt.Errorf("unjson error: SexpRaw required, but we got %T instead.", args[0])
 		}
-		return JsonToSexp([]byte(raw), env)
+		return JsonToSexp([]byte(raw.Val), env)
 	case "msgpack":
 		by, _ := SexpToMsgpack(args[0])
-		return SexpRaw([]byte(by)), nil
+		return SexpRaw{Val: []byte(by)}, nil
 	case "unmsgpack":
 		raw, isRaw := args[0].(SexpRaw)
 		if !isRaw {
 			return SexpNull, fmt.Errorf("unmsgpack error: SexpRaw required, but we got %T instead.", args[0])
 		}
-		return MsgpackToSexp([]byte(raw), env)
+		return MsgpackToSexp([]byte(raw.Val), env)
 	default:
 		return SexpNull, fmt.Errorf("JsonFunction error: unrecognized function name: '%s'", name)
 	}
@@ -271,19 +271,19 @@ func decodeGoToSexpHelper(r interface{}, depth int, env *Glisp, preferSym bool) 
 
 	case int:
 		VPrintf("depth %d found int case: val = %#v\n", depth, val)
-		return SexpInt(val)
+		return SexpInt{Val: int64(val)}
 
 	case int32:
 		VPrintf("depth %d found int32 case: val = %#v\n", depth, val)
-		return SexpInt(val)
+		return SexpInt{Val: int64(val)}
 
 	case int64:
 		VPrintf("depth %d found int64 case: val = %#v\n", depth, val)
-		return SexpInt(val)
+		return SexpInt{Val: val}
 
 	case float64:
 		VPrintf("depth %d found float64 case: val = %#v\n", depth, val)
-		return SexpFloat(val)
+		return SexpFloat{Val: val}
 
 	case []interface{}:
 		VPrintf("depth %d found []interface{} case: val = %#v\n", depth, val)
@@ -334,13 +334,13 @@ func decodeGoToSexpHelper(r interface{}, depth int, env *Glisp, preferSym bool) 
 	case []byte:
 		VPrintf("depth %d found []byte case: val = %#v\n", depth, val)
 
-		return SexpRaw(val)
+		return SexpRaw{Val: val}
 
 	case nil:
 		return SexpNull
 
 	case bool:
-		return SexpBool(val)
+		return SexpBool{Val: val}
 
 	default:
 		fmt.Printf("unknown type in type switch, val = %#v.  type = %T.\n", val, val)
@@ -385,7 +385,7 @@ func SexpToGo(sexp Sexp, env *Glisp) interface{} {
 
 	switch e := sexp.(type) {
 	case SexpRaw:
-		return []byte(e)
+		return []byte(e.Val)
 	case SexpArray:
 		ar := make([]interface{}, len(e))
 		for i, ele := range e {
@@ -395,13 +395,13 @@ func SexpToGo(sexp Sexp, env *Glisp) interface{} {
 	case SexpInt:
 		// ugorji msgpack will give us int64 not int,
 		// so match that to make the decodings comparable.
-		return int64(e)
+		return int64(e.Val)
 	case SexpStr:
 		return e.S
 	case SexpChar:
-		return rune(e)
+		return rune(e.Val)
 	case SexpFloat:
-		return float64(e)
+		return float64(e.Val)
 	case *SexpHash:
 		m := make(map[string]interface{})
 		for _, arr := range e.Map {
@@ -505,7 +505,7 @@ func SexpToGoStructs(sexp Sexp, target interface{}, env *Glisp) (interface{}, er
 
 	switch src := sexp.(type) {
 	case SexpRaw:
-		targVa.Elem().Set(reflect.ValueOf([]byte(src)))
+		targVa.Elem().Set(reflect.ValueOf([]byte(src.Val)))
 	case SexpArray:
 		VPrintf("\n\n starting 5555555555 on SexpArray\n")
 		if targElemKind != reflect.Array && targElemKind != reflect.Slice {
@@ -534,13 +534,13 @@ func SexpToGoStructs(sexp Sexp, target interface{}, env *Glisp) (interface{}, er
 	case SexpInt:
 		// ugorji msgpack will give us int64 not int,
 		// so match that to make the decodings comparable.
-		targVa.Elem().SetInt(int64(src))
+		targVa.Elem().SetInt(int64(src.Val))
 	case SexpStr:
 		targVa.Elem().SetString(src.S)
 	case SexpChar:
-		targVa.Elem().Set(reflect.ValueOf(rune(src)))
+		targVa.Elem().Set(reflect.ValueOf(rune(src.Val)))
 	case SexpFloat:
-		targVa.Elem().SetFloat(float64(src))
+		targVa.Elem().SetFloat(float64(src.Val))
 	case *SexpHash:
 		VPrintf("\n ==== found SexpHash\n\n")
 		tn := src.TypeName

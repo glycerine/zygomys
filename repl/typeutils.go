@@ -105,11 +105,11 @@ func IsHash(expr Sexp) bool {
 func IsZero(expr Sexp) bool {
 	switch e := expr.(type) {
 	case SexpInt:
-		return int(e) == 0
+		return int(e.Val) == 0
 	case SexpChar:
-		return int(e) == 0
+		return int(e.Val) == 0
 	case SexpFloat:
-		return float64(e) == 0.0
+		return float64(e.Val) == 0.0
 	}
 	return false
 }
@@ -166,6 +166,8 @@ func TypeOf(expr Sexp) SexpStr {
 		v = "time.Time"
 	case *RegisteredType:
 		v = "regtype"
+	case *SexpPointer:
+		v = e.MyType.RegisteredName
 	case SexpReflect:
 		//v = reflect.Value(e).Type().Name()
 		//if v == "Ptr" {
@@ -175,6 +177,7 @@ func TypeOf(expr Sexp) SexpStr {
 		if kind == reflect.Ptr {
 			v = reflect.Value(e).Elem().Type().Name()
 		} else {
+			P("kind = %v", kind)
 			v = "reflect.Value"
 		}
 	default:

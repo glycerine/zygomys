@@ -108,7 +108,7 @@ func WriteToFileFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 			}
 		}
 	case SexpRaw:
-		_, err = f.Write([]byte(sl))
+		_, err = f.Write([]byte(sl.Val))
 		if err != nil {
 			return SexpNull, err
 		}

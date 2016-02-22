@@ -8,6 +8,10 @@ import (
 
 type SexpTime time.Time
 
+func (r SexpTime) Type() *RegisteredType {
+	return nil // TODO what should this be?
+}
+
 func (t SexpTime) SexpString() string {
 	return time.Time(t).String()
 }

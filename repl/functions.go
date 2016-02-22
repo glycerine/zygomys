@@ -41,7 +41,7 @@ func CompareFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		cond = res != 0
 	}
 
-	return SexpBool(cond), nil
+	return SexpBool{Val: cond}, nil
 }
 
 func BinaryIntFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
@@ -98,9 +98,9 @@ func ComplementFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 
 	switch t := args[0].(type) {
 	case SexpInt:
-		return ^t, nil
+		return SexpInt{Val: ^t.Val}, nil
 	case SexpChar:
-		return ^t, nil
+		return SexpChar{Val: ^t.Val}, nil
 	}
 
 	return SexpNull, errors.New("Argument to bit-not should be integer")
@@ -231,9 +231,9 @@ func ArrayAccessFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	var i int
 	switch t := args[1].(type) {
 	case SexpInt:
-		i = int(t)
+		i = int(t.Val)
 	case SexpChar:
-		i = int(t)
+		i = int(t.Val)
 	default:
 		// can we evaluate it?
 		res, err := EvalFunction(env, "eval-aget-index", []Sexp{args[1]})
@@ -243,7 +243,7 @@ func ArrayAccessFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		}
 		switch j := res.(type) {
 		case SexpInt:
-			i = int(j)
+			i = int(j.Val)
 		default:
 			return SexpNull, errors.New("Second argument of aget could not be evaluated to integer")
 		}
@@ -286,14 +286,14 @@ func SgetFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	var i int
 	switch t := args[1].(type) {
 	case SexpInt:
-		i = int(t)
+		i = int(t.Val)
 	case SexpChar:
-		i = int(t)
+		i = int(t.Val)
 	default:
 		return SexpNull, errors.New("Second argument of sget must be integer")
 	}
 
-	return SexpChar(str.S[i]), nil
+	return SexpChar{Val: rune(str.S[i])}, nil
 }
 
 func HashAccessFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
@@ -343,7 +343,7 @@ func HashAccessFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		}
 		switch posreq := args[1].(type) {
 		case SexpInt:
-			pos := int(posreq)
+			pos := int(posreq.Val)
 			if pos < 0 || pos >= len(hash.KeyOrder) {
 				return SexpNull, fmt.Errorf("hpair position request %d out of bounds", pos)
 			}
@@ -384,18 +384,18 @@ func SliceFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	var end int
 	switch t := args[1].(type) {
 	case SexpInt:
-		start = int(t)
+		start = int(t.Val)
 	case SexpChar:
-		start = int(t)
+		start = int(t.Val)
 	default:
 		return SexpNull, errors.New("Second argument of slice must be integer")
 	}
 
 	switch t := args[2].(type) {
 	case SexpInt:
-		end = int(t)
+		end = int(t.Val)
 	case SexpChar:
-		end = int(t)
+		end = int(t.Val)
 	default:
 		return SexpNull, errors.New("Third argument of slice must be integer")
 	}
@@ -418,21 +418,21 @@ func LenFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	switch t := args[0].(type) {
 	case SexpSentinel:
 		if t == SexpNull {
-			return SexpInt(0), nil
+			return SexpInt{}, nil
 		}
 		break
 	case SexpArray:
-		return SexpInt(len(t)), nil
+		return SexpInt{Val: int64(len(t))}, nil
 	case SexpStr:
-		return SexpInt(len(t.S)), nil
+		return SexpInt{Val: int64(len(t.S))}, nil
 	case *SexpHash:
-		return SexpInt(HashCountKeys(t)), nil
+		return SexpInt{Val: int64(HashCountKeys(t))}, nil
 	case SexpPair:
 		n, err := ListLen(t)
-		return SexpInt(n), err
+		return SexpInt{Val: int64(n)}, err
 	}
 
-	return SexpInt(0), errors.New("argument must be string, list, hash, or array")
+	return SexpInt{}, errors.New("argument must be string, list, hash, or array")
 }
 
 func AppendFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
@@ -548,7 +548,7 @@ func TypeQueryFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		result = IsFunc(args[0])
 	}
 
-	return SexpBool(result), nil
+	return SexpBool{Val: result}, nil
 }
 
 func PrintFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
@@ -590,7 +590,7 @@ func NotFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		return SexpNull, WrongNargs
 	}
 
-	result := SexpBool(!IsTruthy(args[0]))
+	result := SexpBool{Val: !IsTruthy(args[0])}
 	return result, nil
 }
 
@@ -658,7 +658,7 @@ func MakeArrayFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	var size int
 	switch e := args[0].(type) {
 	case SexpInt:
-		size = int(e)
+		size = int(e.Val)
 	default:
 		return SexpNull, errors.New("first argument must be integer")
 	}
@@ -735,7 +735,7 @@ func SymnumFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 
 	switch t := args[0].(type) {
 	case SexpSymbol:
-		return SexpInt(t.number), nil
+		return SexpInt{Val: int64(t.number)}, nil
 	}
 	return SexpNull, errors.New("argument must be symbol")
 }
@@ -882,6 +882,7 @@ func CoreFunctions() map[string]GlispUserFunction {
 		"stop":       StopFunction,
 		"joinsym":    JoinSymFunction,
 		"GOOS":       GOOSFunction,
+		"&":          AddressOfFunction,
 	}
 }
 
@@ -1031,7 +1032,7 @@ func ExitFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	}
 	switch e := args[0].(type) {
 	case SexpInt:
-		os.Exit(int(e))
+		os.Exit(int(e.Val))
 	}
 	return SexpNull, errors.New("argument must be int (the exit code)")
 }
@@ -1286,14 +1287,39 @@ func DefinedFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	case SexpSymbol:
 		checkme = nm.name
 	case *SexpFunction:
-		return SexpBool(true), nil
+		return SexpBool{Val: true}, nil
 	default:
-		return SexpBool(false), nil
+		return SexpBool{Val: false}, nil
 	}
 
 	_, err, _ := env.LexicalLookupSymbol(env.MakeSymbol(checkme), false)
 	if err != nil {
-		return SexpBool(false), nil
+		return SexpBool{Val: false}, nil
 	}
-	return SexpBool(true), nil
+	return SexpBool{Val: true}, nil
+}
+
+func AddressOfFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
+	narg := len(args)
+	if narg != 1 {
+		return SexpNull, WrongNargs
+	}
+
+	switch a := args[0].(type) {
+	case *SexpHash:
+		return NewSexpPointer(a, a.Type()), nil
+	}
+
+	return SexpNull, fmt.Errorf("cannot take address of argument '%s'", args[0].SexpString())
+	/*
+		asTyped, hasType := cur.(Typed)
+		if !hasType {
+			return SexpNull, fmt.Errorf("cannot take address of un-typed argument '%s'", args[0].SexpString())
+		}
+
+		ty := asTyped.Type()
+
+		if !ty.CanAddr() bool
+		Addr() Value
+	*/
 }

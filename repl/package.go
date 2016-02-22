@@ -100,6 +100,10 @@ func maxi(a, b int) int {
 
 type SexpField SexpHash
 
+func (r SexpField) Type() *RegisteredType {
+	return r.GoStructFactory
+}
+
 // compute key and value widths to assist alignment
 func (f *SexpField) FieldWidths() []int {
 	hash := (*SexpHash)(f)
@@ -481,26 +485,21 @@ func PointerToFunction(env *Glisp, name string,
 		rt = arg
 	case *SexpHash:
 		rt = arg.GoStructFactory
+	case *SexpPointer:
+		// dereference operation, rather than type declaration
+		Q("dereference operation on *SexpPointer detected, returning target")
+		return arg.Target, nil
+	case SexpReflect:
+		// TODO what goes here?
 	default:
-		return SexpNull, fmt.Errorf("argument x in (%s x) was not regtype, "+
+		return SexpNull, fmt.Errorf("argument x in (%s x) was not regtype or SexpPointer, "+
 			"instead type %T displaying as '%v' ",
 			name, arg, arg.SexpString())
 	}
 
 	//Q("pointer-to arg = '%s' with type %T", args[0].SexpString(), args[0])
 
-	derivedType := reflect.PtrTo(rt.TypeCache)
-	ptrRt := NewRegisteredType(func(env *Glisp) (interface{}, error) {
-		return reflect.New(derivedType), nil
-	})
-	ptrRt.DisplayAs = fmt.Sprintf("(%s %s)", name, rt.DisplayAs)
-	ptrName := ""
-	if name == "*" {
-		ptrName = name + rt.RegisteredName
-	} else {
-		ptrName = name + "-" + rt.RegisteredName
-	}
-	GoStructRegistry.RegisterUserdef(ptrName, ptrRt, false)
+	ptrRt := GoStructRegistry.GetOrCreatePointerType(rt)
 	return ptrRt, nil
 }
 
@@ -532,13 +531,13 @@ func baseConstruct(env *Glisp, f *RegisteredType, nargs int) (Sexp, error) {
 	if nargs == 0 {
 		switch v.(type) {
 		case *int, *uint8, *uint16, *uint32, *uint64, *int8, *int16, *int32, *int64:
-			return SexpInt(0), nil
+			return SexpInt{}, nil
 		case *float32, *float64:
-			return SexpFloat(0), nil
+			return SexpFloat{}, nil
 		case *string:
 			return SexpStr{S: ""}, nil
 		case *bool:
-			return SexpBool(false), nil
+			return SexpBool{Val: false}, nil
 		case *time.Time:
 			return SexpTime{}, nil
 		default:
@@ -603,7 +602,7 @@ func ArrayOfFunction(env *Glisp, name string,
 		if !isInt {
 			return SexpNull, fmt.Errorf("size must be an int (not %T) in array constructor; e.g. ([size ...] regtype)", ar[0])
 		}
-		sz = int(asInt)
+		sz = int(asInt.Val)
 		// TODO: implement multiple dimensional arrays (matrixes etc).
 	default:
 		return SexpNull, fmt.Errorf("at least one size must be specified in array constructor; e.g. ([size ...] regtype)")
@@ -642,9 +641,9 @@ func VarBuilder(env *Glisp, name string,
 			"(var name regtype)\n")
 	}
 
-	Q("in var builder, name = '%s', args = ", name)
+	P("in var builder, name = '%s', args = ", name)
 	for i := range args {
-		Q("args[%v] = '%s' of type %T", i, args[i].SexpString(), args[i])
+		P("args[%v] = '%s' of type %T", i, args[i].SexpString(), args[i])
 	}
 	var symN SexpSymbol
 	switch b := args[0].(type) {
@@ -660,12 +659,12 @@ func VarBuilder(env *Glisp, name string,
 	default:
 		return SexpNull, fmt.Errorf("bad var name: symbol required")
 	}
-	Q("good: have var name '%v'", symN)
+	P("good: have var name '%v'", symN)
 
 	dup := env.Duplicate()
-	Q("about to eval args[1]=%v", args[1])
+	P("about to eval args[1]=%v", args[1])
 	ev, err := dup.EvalExpressions(args[1:2])
-	Q("done with eval, ev=%v / type %T", ev.SexpString(), ev)
+	P("done with eval, ev=%v / type %T", ev.SexpString(), ev)
 	if err != nil {
 		return SexpNull, fmt.Errorf("bad var declaration, problem with type '%v': %v", args[1].SexpString(), err)
 	}
@@ -684,20 +683,28 @@ func VarBuilder(env *Glisp, name string,
 			rt, err)
 	}
 	var valSexp Sexp
+	P("val is of type %T", val)
 	switch v := val.(type) {
 	case Sexp:
 		valSexp = v
+	case reflect.Value:
+		P("v is of type %T", v.Interface())
+		switch rd := v.Interface().(type) {
+		case ***RecordDefn:
+			P("we have RecordDefn rd = %#v", *rd)
+		}
+		valSexp = SexpReflect(reflect.ValueOf(v))
 	default:
 		valSexp = SexpReflect(reflect.ValueOf(v))
 	}
 
-	Q("var decl: valSexp is '%v'", valSexp.SexpString())
+	P("var decl: valSexp is '%v'", valSexp.SexpString())
 	err = env.LexicalBindSymbol(symN, valSexp)
 	if err != nil {
 		return SexpNull, fmt.Errorf("var declaration error: could not bind symbol '%s': %v",
 			symN.name, err)
 	}
-	Q("good: var decl bound symbol '%s' to '%s' of type '%s'", symN.SexpString(), valSexp.SexpString(), rt.SexpString())
+	P("good: var decl bound symbol '%s' to '%s' of type '%s'", symN.SexpString(), valSexp.SexpString(), rt.SexpString())
 
 	env.datastack.PushExpr(valSexp)
 
@@ -717,10 +724,10 @@ func ExpectErrorBuilder(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	default:
 		return SexpNull, fmt.Errorf("first arg to expect-error must be the string of the error to expect")
 	}
-	Q("expectedError = %v", expectedError)
+	P("expectedError = %v", expectedError)
 	dup := env.Duplicate()
 	ev, err := dup.EvalExpressions(args[1:2])
-	Q("done with eval, ev=%v / type %T. err = %v", ev.SexpString(), ev, err)
+	P("done with eval, ev=%v / type %T. err = %v", ev.SexpString(), ev, err)
 	if err != nil {
 		if err.Error() == expectedError.S {
 			return SexpNull, nil
