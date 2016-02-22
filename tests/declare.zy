@@ -22,7 +22,7 @@
 ;; declares a zerotyped Car to be pointed at.
 (expect-error "Error calling '*': illegal to dereference nil pointer" (assert (== (:Id (* a)) 0)))
 
-(assert (== (type? a) "(* Car)"))
+(assert (== (type? a) "*Car"))
 (a = (& p))
 (assert (== (:Id (* a)) 99912))
 ;; not yet implemented stuff:

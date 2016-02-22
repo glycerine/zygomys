@@ -169,6 +169,10 @@ func TypeOf(expr Sexp) SexpStr {
 	case *SexpPointer:
 		v = e.MyType.RegisteredName
 	case SexpReflect:
+		rt := expr.Type()
+		if rt != nil {
+			return SexpStr{S: rt.RegisteredName}
+		}
 		//v = reflect.Value(e).Type().Name()
 		//if v == "Ptr" {
 		//	v = reflect.Value(e).Type().Elem().Kind().String()

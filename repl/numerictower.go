@@ -98,7 +98,7 @@ func NumericIntDo(op NumericOp, a, b SexpInt) Sexp {
 		if a.Val%b.Val == 0 {
 			return SexpInt{Val: a.Val / b.Val}
 		} else {
-			return SexpInt{Val: int64(float64(a.Val) / float64(b.Val))}
+			return SexpFloat{Val: float64(a.Val) / float64(b.Val)}
 		}
 	case Pow:
 		return SexpInt{Val: int64(math.Pow(float64(a.Val), float64(b.Val)))}
