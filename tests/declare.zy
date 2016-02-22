@@ -80,6 +80,16 @@
 ;; or with dot symbol notation:
 (assert (== (& w) (.w.OtherCar)))
 
+;; binding time for type should be the most recent definition in force.
+(struct Dog [(field tag: int64)])
+(def d (Dog))
+(struct Dog [(field big: bool)])
+(def e (Dog))
+(.d.tag = 12)
+(.e.big = true)
+(expect-error `Error calling '.e.tag': Dog has no field 'tag'` (.e.tag = 445))
+(expect-error `Error calling '.d.big': Dog has no field 'big'` (.d.big = true))
+
 ;; not sure yet how to point to non-records in a persistent fashion.
 ;; (.w.PointerSisters = (& 34))
 

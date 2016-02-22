@@ -76,8 +76,12 @@ func MakeHash(args []Sexp, typename string, env *Glisp) (*SexpHash, error) {
 	var got reflect.Type
 	var iface interface{}
 	jsonMap := make(map[string]*HashFieldDet)
-	factory := &RegisteredType{Factory: MakeGoStructFunc(func(env *Glisp) (interface{}, error) { return MakeHash(nil, typename, env) })}
-	factory.Aliases = make(map[string]bool)
+
+	factory := GoStructRegistry.Lookup(typename)
+	if factory == nil {
+		factory = &RegisteredType{Factory: MakeGoStructFunc(func(env *Glisp) (interface{}, error) { return MakeHash(nil, typename, env) })}
+		factory.Aliases = make(map[string]bool)
+	}
 	// how about UserStructDefn ? if TypeName != field/hash
 
 	detOrder := []*HashFieldDet{}
