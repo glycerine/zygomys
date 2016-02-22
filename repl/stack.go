@@ -120,12 +120,12 @@ func (stack Stack) Show(env *Glisp, indent int, label string) (string, error) {
 	for i := 0; i <= n; i++ {
 		ele, err := stack.Get(n - i)
 		if err != nil {
-			panic(fmt.Errorf("stack access error on %i: %v", i, err))
+			panic(fmt.Errorf("stack access error on %v: %v", i, err))
 		}
 		showme, canshow := ele.(Showable)
 		if canshow {
 			r, err := showme.Show(env, indent+4,
-				fmt.Sprintf("elem %v (%p) of %s:", i, showme, label))
+				fmt.Sprintf("elem %v (%#v) of %s:", i, showme, label))
 			if err != nil {
 				return "", err
 			}

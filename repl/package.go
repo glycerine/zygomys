@@ -19,7 +19,7 @@ import (
 // run/evaluation time, not at definition time.
 //
 // The primary use here is to be able to define
-// packges, structs, interfaces, functions,
+// packages, structs, interfaces, functions,
 // methods, and type aliases.
 //
 func (env *Glisp) ImportPackageBuilder() {
@@ -423,7 +423,7 @@ func SliceOfFunction(env *Glisp, name string,
 
 	if len(args) != 1 {
 		return SexpNull, fmt.Errorf("argument x to (%s x) is missing. use: "+
-			"(%s a-regtype)\n", name)
+			"(%s a-regtype)\n", name, name)
 	}
 
 	Q("in SliceOfFunction")
@@ -524,7 +524,7 @@ func baseConstruct(env *Glisp, f *RegisteredType, nargs int) (Sexp, error) {
 		case *time.Time:
 			return SexpTime{}, nil
 		default:
-			return SexpNull, fmt.Errorf("unhandled no-arg case in baseConstruct, v has type=%T")
+			return SexpNull, fmt.Errorf("unhandled no-arg case in baseConstruct, v has type=%T", v)
 		}
 	}
 
@@ -563,7 +563,7 @@ func baseConstruct(env *Glisp, f *RegisteredType, nargs int) (Sexp, error) {
 	default:
 		return SexpNull, fmt.Errorf("unhandled case in baseConstruct, arg = %#v/type=%T", arg, arg)
 	}
-	return SexpNull, fmt.Errorf("unhandled no-arg case in baseConstruct, v has type=%T")
+	//return SexpNull, fmt.Errorf("unhandled no-arg case in baseConstruct, v has type=%T", v)
 }
 
 // generate fixed size array
@@ -663,7 +663,7 @@ func VarBuilder(env *Glisp, name string,
 	val, err := rt.Factory(env)
 	if err != nil {
 		return SexpNull, fmt.Errorf("var declaration error: could not make type '%s': %v",
-			rt, err)
+			rt.SexpString(), err)
 	}
 	var valSexp Sexp
 	Q("val is of type %T", val)

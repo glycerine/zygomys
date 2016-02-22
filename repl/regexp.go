@@ -8,17 +8,17 @@ import (
 
 type SexpRegexp regexp.Regexp
 
-func (re SexpRegexp) SexpString() string {
-	r := regexp.Regexp(re)
+func (re *SexpRegexp) SexpString() string {
+	r := (*regexp.Regexp)(re)
 	return fmt.Sprintf(`(regexp-compile "%v")`, r.String())
 }
 
-func (r SexpRegexp) Type() *RegisteredType {
+func (r *SexpRegexp) Type() *RegisteredType {
 	return nil // TODO what should this be?
 }
 
 func regexpFindIndex(
-	needle regexp.Regexp, haystack string) (Sexp, error) {
+	needle *regexp.Regexp, haystack string) (Sexp, error) {
 
 	loc := needle.FindStringIndex(haystack)
 
@@ -44,10 +44,10 @@ func RegexpFind(env *Glisp, name string,
 			errors.New(fmt.Sprintf("2nd argument of %v should be a string", name))
 	}
 
-	var needle regexp.Regexp
+	var needle *regexp.Regexp
 	switch t := args[0].(type) {
-	case SexpRegexp:
-		needle = regexp.Regexp(t)
+	case *SexpRegexp:
+		needle = (*regexp.Regexp)(t)
 	default:
 		return SexpNull,
 			errors.New(fmt.Sprintf("1st argument of %v should be a compiled regular expression", name))
@@ -89,7 +89,7 @@ func RegexpCompile(env *Glisp, name string,
 			fmt.Sprintf("error during regexp-compile: '%v'", err))
 	}
 
-	return Sexp(SexpRegexp(*r)), nil
+	return Sexp((*SexpRegexp)(r)), nil
 }
 
 func (env *Glisp) ImportRegex() {

@@ -94,7 +94,7 @@ func flattenToWordsHelper(args []Sexp) ([]string, error) {
 		case SexpPair:
 			carry, err := ListToArray(c)
 			if err != nil {
-				return []string{}, fmt.Errorf("tried to convert list of strings to array but failed with error '%s'. Input was type %T / val = '%#v'", c, c)
+				return []string{}, fmt.Errorf("tried to convert list of strings to array but failed with error '%s'. Input was type %T / val = '%#v'", err, c, c)
 			}
 			moreWords, err := flattenToWordsHelper(carry)
 			if err != nil {

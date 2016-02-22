@@ -570,7 +570,7 @@ func GenericHpairFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	default:
 		return SexpNull, errors.New("first argument of to hpair function must be hash, list, or array")
 	}
-	return SexpNull, nil
+	//return SexpNull, nil
 }
 
 func (h *SexpHash) FillHashFromShadow(env *Glisp, src interface{}) error {
@@ -591,7 +591,7 @@ func (h *SexpHash) FillHashFromShadow(env *Glisp, src interface{}) error {
 		key := env.MakeSymbol(det.FieldJsonTag)
 		err = h.HashSet(key, val)
 		if err != nil {
-			return fmt.Errorf("error on HashSet for key '%s': '%s'", key, err)
+			return fmt.Errorf("error on HashSet for key '%s': '%s'", key.SexpString(), err)
 		}
 	}
 	return nil

@@ -832,7 +832,7 @@ func (gen *Generator) GenerateForLoop(args []Sexp) error {
 	// But this is preferred to having nested, sourced
 	// loops use repeat the use variable i in an index and then
 	// end up clobering the parents loop index
-	// inadvertantly.
+	// inadvertently.
 	gen.AddInstruction(AddScopeInstr{Name: "runtime " + loop.stmtname.name})
 	gen.AddInstruction(PushStackmarkInstr{sym: loop.stmtname})
 

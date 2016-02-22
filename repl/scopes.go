@@ -126,7 +126,7 @@ func (stack *Stack) LookupSymbolUntilFunction(sym SexpSymbol) (Sexp, error, *Sco
 func (stack *Stack) BindSymbol(sym SexpSymbol, expr Sexp) error {
 	if stack.IsEmpty() {
 		panic("empty stack!!")
-		return errors.New("no scope available")
+		//return errors.New("no scope available")
 	}
 	cur, already := stack.elements[stack.tos].(*Scope).Map[sym.number]
 	if already {
@@ -185,7 +185,7 @@ func (stack *Stack) BindSymbol(sym SexpSymbol, expr Sexp) error {
 func (stack *Stack) DeleteSymbolFromTopOfStackScope(sym SexpSymbol) error {
 	if stack.IsEmpty() {
 		panic("empty stack!!")
-		return errors.New("no scope available")
+		//return errors.New("no scope available")
 	}
 	_, present := stack.elements[stack.tos].(*Scope).Map[sym.number]
 	if !present {

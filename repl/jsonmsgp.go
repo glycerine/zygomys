@@ -465,7 +465,6 @@ func ToGoFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		asHash.GoShadowStructVa = reflect.ValueOf(newStruct)
 		return SexpStr{S: fmt.Sprintf("%#v", newStruct)}, nil
 	}
-	return SexpNull, nil
 }
 
 func GoonDumpFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
@@ -548,7 +547,7 @@ func SexpToGoStructs(sexp Sexp, target interface{}, env *Glisp) (interface{}, er
 			panic("not done here yet")
 			// TODO: don't try to translate into a Go struct,
 			// but instead... what? just a map[string]interface{}
-			return nil, nil
+			//return nil, nil
 		}
 
 		switch targTyp.Elem().Kind() {
@@ -564,7 +563,7 @@ func SexpToGoStructs(sexp Sexp, target interface{}, env *Glisp) (interface{}, er
 		factory, hasMaker := GoStructRegistry.Registry[tn]
 		if !hasMaker {
 			panic(fmt.Errorf("type '%s' not registered in GoStructRegistry", tn))
-			return nil, fmt.Errorf("type '%s' not registered in GoStructRegistry", tn)
+			//return nil, fmt.Errorf("type '%s' not registered in GoStructRegistry", tn)
 		}
 		VPrintf("factory = %#v  targTyp.Kind=%s\n", factory, targTyp.Kind())
 		checkPtrStruct, err := factory.Factory(env)
@@ -650,7 +649,7 @@ func SexpToGoStructs(sexp Sexp, target interface{}, env *Glisp) (interface{}, er
 				_, err := SexpToGoStructs(pair.Tail, ptrFld.Interface(), env)
 				if err != nil {
 					panic(err)
-					return nil, err
+					//return nil, err
 				}
 			}
 		}

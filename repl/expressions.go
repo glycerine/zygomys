@@ -39,7 +39,7 @@ func NewSexpPointer(pointedTo Sexp, pointedToType *RegisteredType) *SexpPointer 
 }
 
 func (p *SexpPointer) SexpString() string {
-	return fmt.Sprintf("%p", p.Target)
+	return fmt.Sprintf("%v", p.Target)
 	//return fmt.Sprintf("(* %v) %p", p.PointedToType.RegisteredName, p.Target)
 }
 
@@ -292,7 +292,7 @@ func (h *SexpHash) RunZmethod(method string, args []Sexp) (Sexp, error) {
 	}
 
 	panic(fmt.Errorf("not done calling %s", f.name))
-	return SexpNull, nil
+	//return SexpNull, nil
 }
 
 func CallZMethodOnRecordFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {

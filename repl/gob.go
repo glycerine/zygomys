@@ -55,5 +55,5 @@ func GobDecodeFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	// TODO convert to hash
 	panic("not done yet!")
 
-	return SexpNull, nil
+	//return SexpNull, nil
 }

@@ -601,7 +601,7 @@ func (env *Glisp) showStackHelper(stack *Stack, name string) {
 	for i := 0; i <= n; i++ {
 		ele, err := stack.Get(n - i)
 		if err != nil {
-			panic(fmt.Errorf("env.%s access error on %i: %v",
+			panic(fmt.Errorf("env.%s access error on %v: %v",
 				name, i, err))
 		}
 		label := fmt.Sprintf("%s %v", name, i)
