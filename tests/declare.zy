@@ -41,6 +41,10 @@
 (assert (== (type? a) "*Car"))
 (a = (& p))
 (assert (== (:Id (* a)) 99912))
+
+(hasSlice = (Car SliceOfLife: ["hi" "there"]))
+(assert (== (:SliceOfLife hasSlice) ["hi" "there"]))
+
 ;; not yet implemented stuff:
 
 ;; delcare functions
