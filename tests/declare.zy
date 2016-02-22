@@ -8,13 +8,13 @@
 
 ;; redefines on the fly:
 (struct Car [
-        (field Id:          int64     e:0                  gotags:`json:"id",name:"id"`)
-        (field Name:        string    e:1                  gotags:`json:"name"`)
-        (field BadApple:    string    e:2  deprecated:true)
-        (field SliceOfLife: ([] string)  e:3)
-        (field PointerSisters: (* int64) e:4)
-        (field OtherCar: (* Car) e:5)
-        ])
+ (field              Id: int64        e:0       gotags:`json:"id",name:"id"` )
+ (field            Name: string       e:1       gotags:`json:"name"`         )
+ (field        BadApple: string       e:2   deprecated:true                  )
+ (field     SliceOfLife: ([]string)   e:3 )
+ (field  PointerSisters: (* int64)    e:4 )
+ (field        OtherCar: (* Car)      e:5 )
+ ])
 
 (def p (Car Id: 99912))
 (def r (Car OtherCar: (& p)))
