@@ -207,6 +207,9 @@ func (p *RegisteredType) TypeCheckRecord(hash *SexpHash) error {
 }
 
 func (p *RegisteredType) SexpString() string {
+	if p == nil {
+		return "nil RegisteredType"
+	}
 	if p.UserStructDefn != nil {
 		return p.UserStructDefn.SexpString()
 	}

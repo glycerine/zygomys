@@ -487,10 +487,15 @@ func PointerToFunction(env *Glisp, name string,
 		rt = arg.GoStructFactory
 	case *SexpPointer:
 		// dereference operation, rather than type declaration
-		Q("dereference operation on *SexpPointer detected, returning target")
+		P("dereference operation on *SexpPointer detected, returning target")
+		if arg == nil || arg.Target == nil {
+			return SexpNull, fmt.Errorf("illegal to dereference nil pointer")
+		}
 		return arg.Target, nil
 	case SexpReflect:
+		P("dereference operation on SexpReflect detected")
 		// TODO what goes here?
+		return SexpNull, fmt.Errorf("illegal to dereference nil pointer")
 	default:
 		return SexpNull, fmt.Errorf("argument x in (%s x) was not regtype or SexpPointer, "+
 			"instead type %T displaying as '%v' ",
