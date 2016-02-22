@@ -15,10 +15,6 @@ type Sexp interface {
 	Type() *RegisteredType
 }
 
-type Typed interface {
-	Type() *RegisteredType
-}
-
 type SexpPair struct {
 	Head Sexp
 	Tail Sexp

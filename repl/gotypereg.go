@@ -183,16 +183,13 @@ func (p *RegisteredType) TypeCheckRecord(hash *SexpHash) error {
 				return fmt.Errorf("%s has no field '%s'", p.UserStructDefn.Name, k)
 			}
 			obs, _ := hash.HashGet(nil, key)
-			obsTyped, obsIsTyped := obs.(Typed)
-			if !obsIsTyped {
-				return fmt.Errorf("%v is not Typed", obs.SexpString())
+			obsTyp := obs.Type()
+			if obsTyp == nil {
+				return fmt.Errorf("%v has nil Type", obs.SexpString())
 			}
-			obsTyp := obsTyped.Type()
-			Q("")
+
 			Q("obsTyp is %T / val = %#v", obsTyp, obsTyp)
-			Q("")
 			Q("declaredTyp is %T / val = %#v", declaredTyp, declaredTyp)
-			Q("")
 			if obsTyp != declaredTyp {
 				return fmt.Errorf("field %v.%v is %v, cannot assign %v '%v'",
 					p.UserStructDefn.Name,

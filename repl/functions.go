@@ -1311,15 +1311,4 @@ func AddressOfFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	}
 
 	return SexpNull, fmt.Errorf("cannot take address of argument '%s'", args[0].SexpString())
-	/*
-		asTyped, hasType := cur.(Typed)
-		if !hasType {
-			return SexpNull, fmt.Errorf("cannot take address of un-typed argument '%s'", args[0].SexpString())
-		}
-
-		ty := asTyped.Type()
-
-		if !ty.CanAddr() bool
-		Addr() Value
-	*/
 }

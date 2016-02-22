@@ -23,6 +23,9 @@
 
 (assert (== p1 p2))
 
+(def car2 (Car Id: 7))
+(assert (!= (& car2) p1))
+(assert (!= (& car2) p2))
 
 (var a (* Car))
 ;; declares a zerotyped Car to be pointed at.
