@@ -257,9 +257,9 @@ func Test016ReflectCallOnGoMethodsZeroArgs(t *testing.T) {
 		VPrintf("got invoke =  %T/val=%#v\n", invok, invok)
 
 		switch arr := invok.(type) {
-		case SexpArray:
+		case *SexpArray:
 			// arr[0] should be string
-			cv.So(arr[0].(SexpStr).S, cv.ShouldEqual, "yowza")
+			cv.So(arr.Val[0].(SexpStr).S, cv.ShouldEqual, "yowza")
 		default:
 			VPrintf("got %T/val=%#v\n", arr, arr)
 			panic("expected array back from _method")
@@ -301,9 +301,9 @@ func Test017ReflectCallOnGoMethodsOneArg(t *testing.T) {
 		VPrintf("got invoke =  %T/val=%#v\n", invok, invok)
 
 		switch arr := invok.(type) {
-		case SexpArray:
+		case *SexpArray:
 			// arr[0] should be string
-			cv.So(arr[0].(SexpStr).S, cv.ShouldEqual,
+			cv.So(arr.Val[0].(SexpStr).S, cv.ShouldEqual,
 				`Snoopy sees weather 'sunny', cries 'yowza'`)
 		default:
 			VPrintf("got %T/val=%#v\n", arr, arr)

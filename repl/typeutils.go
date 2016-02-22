@@ -7,7 +7,7 @@ import (
 
 func IsArray(expr Sexp) bool {
 	switch expr.(type) {
-	case SexpArray:
+	case *SexpArray:
 		return true
 	}
 	return false
@@ -120,8 +120,8 @@ func IsEmpty(expr Sexp) bool {
 	}
 
 	switch e := expr.(type) {
-	case SexpArray:
-		return len(e) == 0
+	case *SexpArray:
+		return len(e.Val) == 0
 	case *SexpHash:
 		return HashIsEmpty(e)
 	}
@@ -142,7 +142,7 @@ func TypeOf(expr Sexp) SexpStr {
 	switch e := expr.(type) {
 	case SexpRaw:
 		v = "raw"
-	case SexpArray:
+	case *SexpArray:
 		v = "array"
 	case SexpInt:
 		v = "int64"

@@ -113,7 +113,7 @@ func (pr *Prompter) getExpressionWithLiner(env *Glisp) (readin string, xs []Sexp
 		switch err {
 		case nil:
 			line += "\n" + nextline
-			Q("no problem parsing line '%s' into '%s', proceeding...\n", line, SexpArray(x).SexpString())
+			Q("no problem parsing line '%s' into '%s', proceeding...\n", line, (&SexpArray{Val: x}).SexpString())
 			return line, xs, nil
 		case ResetRequested:
 			continue

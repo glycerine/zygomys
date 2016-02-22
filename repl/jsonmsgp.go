@@ -87,7 +87,7 @@ func SexpToJson(exp Sexp) string {
 	switch e := exp.(type) {
 	case *SexpHash:
 		return e.jsonHashHelper()
-	case SexpArray:
+	case *SexpArray:
 		return e.jsonArrayHelper()
 	case SexpSymbol:
 		return `"` + e.name + `"`
@@ -131,12 +131,12 @@ func (hash *SexpHash) jsonHashHelper() string {
 }
 
 func (arr *SexpArray) jsonArrayHelper() string {
-	if len(*arr) == 0 {
+	if len(arr.Val) == 0 {
 		return "[]"
 	}
 
-	str := "[" + SexpToJson((*arr)[0])
-	for _, sexp := range (*arr)[1:] {
+	str := "[" + SexpToJson(arr.Val[0])
+	for _, sexp := range arr.Val[1:] {
 		str += ", " + SexpToJson(sexp)
 	}
 	return str + "]"
@@ -292,7 +292,7 @@ func decodeGoToSexpHelper(r interface{}, depth int, env *Glisp, preferSym bool) 
 		for i := range val {
 			slice = append(slice, decodeGoToSexpHelper(val[i], depth+1, env, preferSym))
 		}
-		return SexpArray(slice)
+		return &SexpArray{Val: slice}
 
 	case map[string]interface{}:
 
@@ -386,9 +386,9 @@ func SexpToGo(sexp Sexp, env *Glisp) interface{} {
 	switch e := sexp.(type) {
 	case SexpRaw:
 		return []byte(e.Val)
-	case SexpArray:
-		ar := make([]interface{}, len(e))
-		for i, ele := range e {
+	case *SexpArray:
+		ar := make([]interface{}, len(e.Val))
+		for i, ele := range e.Val {
 			ar[i] = SexpToGo(ele, env)
 		}
 		return ar
@@ -506,18 +506,18 @@ func SexpToGoStructs(sexp Sexp, target interface{}, env *Glisp) (interface{}, er
 	switch src := sexp.(type) {
 	case SexpRaw:
 		targVa.Elem().Set(reflect.ValueOf([]byte(src.Val)))
-	case SexpArray:
+	case *SexpArray:
 		VPrintf("\n\n starting 5555555555 on SexpArray\n")
 		if targElemKind != reflect.Array && targElemKind != reflect.Slice {
 			panic(fmt.Errorf("tried to translate from SexpArray into non-array/type: %v", targKind))
 		}
 		// allocate the slice
-		n := len(src)
+		n := len(src.Val)
 		slc := reflect.MakeSlice(targElemTyp, 0, n)
 		VPrintf("\n slc starts out as %v/type = %T\n", slc, slc.Interface())
 		// if targ is *[]int, then targElem is []int, targElem.Elem() is int.
 		eTyp := targElemTyp.Elem()
-		for i, ele := range src {
+		for i, ele := range src.Val {
 			goElem := reflect.New(eTyp) // returns pointer to new value
 			VPrintf("\n goElem = %#v before filling i=%d\n", goElem, i)
 			if _, err := SexpToGoStructs(ele, goElem.Interface(), env); err != nil {

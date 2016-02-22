@@ -309,8 +309,8 @@ func StructBuilder(env *Glisp, name string,
 			return SexpNull, fmt.Errorf("bad struct declaration '%v': second argument "+
 				"must be a slice of fields."+
 				" prototype is (struct name [(field ...)*] )", structName)
-		case SexpArray:
-			arr := []Sexp(ar)
+		case *SexpArray:
+			arr := ar.Val
 			if len(arr) == 0 {
 				// allow this
 			} else {
@@ -603,13 +603,13 @@ func ArrayOfFunction(env *Glisp, name string,
 	sz := 0
 	Q("args = %#v in ArrayOfFunction", args)
 	switch ar := args[1].(type) {
-	case SexpArray:
-		if len(ar) == 0 {
+	case *SexpArray:
+		if len(ar.Val) == 0 {
 			return SexpNull, fmt.Errorf("at least one size must be specified in array constructor; e.g. ([size ...] regtype)")
 		}
-		asInt, isInt := ar[0].(SexpInt)
+		asInt, isInt := ar.Val[0].(SexpInt)
 		if !isInt {
-			return SexpNull, fmt.Errorf("size must be an int (not %T) in array constructor; e.g. ([size ...] regtype)", ar[0])
+			return SexpNull, fmt.Errorf("size must be an int (not %T) in array constructor; e.g. ([size ...] regtype)", ar.Val[0])
 		}
 		sz = int(asInt.Val)
 		// TODO: implement multiple dimensional arrays (matrixes etc).

@@ -286,7 +286,7 @@ func (parser *Parser) ParseArray(depth int) (Sexp, error) {
 		arr = append(arr, expr)
 	}
 
-	return SexpArray(arr), nil
+	return &SexpArray{Val: arr}, nil
 }
 
 func (parser *Parser) ParseHash(depth int) (Sexp, error) {
@@ -455,7 +455,7 @@ func (p *Parser) ParseTokens() ([]Sexp, error) {
 		r := make([]Sexp, 0)
 		for _, k := range out {
 			r = append(r, k.Expr...)
-			Q("\n ParseTokens k.Expr = '%v'\n\n", SexpArray(k.Expr).SexpString())
+			Q("\n ParseTokens k.Expr = '%v'\n\n", (&SexpArray{Val: k.Expr}).SexpString())
 			if k.Err != nil {
 				return r, k.Err
 			}

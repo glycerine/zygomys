@@ -268,11 +268,11 @@ func SetHashKeyOrder(hash *SexpHash, keyOrd Sexp) error {
 	// truncate down to zero, then build back up correctly.
 	hash.KeyOrder = hash.KeyOrder[:0]
 
-	keys, isArr := keyOrd.(SexpArray)
+	keys, isArr := keyOrd.(*SexpArray)
 	if !isArr {
 		return fmt.Errorf("must have SexpArray for keyOrd, but instead we have: %T with value='%#v'", keyOrd, keyOrd)
 	}
-	for _, key := range keys {
+	for _, key := range keys.Val {
 		hash.KeyOrder = append(hash.KeyOrder, key)
 	}
 
@@ -316,7 +316,7 @@ func GoMethodListFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	}
 	if h.NumMethod != -1 {
 		// use cached results
-		return h.GoMethSx, nil
+		return &h.GoMethSx, nil
 	}
 	v, err := h.GoStructFactory.Factory(env)
 	if v == nil {
@@ -327,7 +327,7 @@ func GoMethodListFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	}
 
 	h.SetMethodList(env)
-	return SexpArray(h.GoMethSx), nil
+	return &SexpArray{Val: h.GoMethSx.Val}, nil
 }
 
 func (h *SexpHash) SetMethodList(env *Glisp) error {
@@ -357,7 +357,7 @@ func (h *SexpHash) SetMethodList(env *Glisp) error {
 		sl[i] = ty.Method(i)
 		sx[i] = SexpStr{S: sl[i].Name + " " + sl[i].Type.String()}
 	}
-	h.GoMethSx = sx
+	h.GoMethSx.Val = sx
 	h.GoMethods = sl
 
 	// do the fields too
@@ -376,7 +376,7 @@ func (h *SexpHash) SetMethodList(env *Glisp) error {
 	json2ptr := make(map[string]*HashFieldDet)
 	detOrder := make([]*HashFieldDet, 0)
 	fillJsonMap(&json2ptr, &fx, &fl, embeds, tye, &detOrder)
-	h.GoFieldSx = fx
+	h.GoFieldSx.Val = fx
 	h.GoFields = fl
 	h.JsonTagMap = json2ptr
 	h.DetOrder = detOrder
@@ -440,7 +440,7 @@ func GoFieldListFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		return SexpNull, fmt.Errorf("problem during h.GoStructFactory.Factory() call: '%v'", err)
 	}
 
-	return SexpArray(h.GoFieldSx), nil
+	return &h.GoFieldSx, nil
 }
 
 // works over hashes and arrays
@@ -461,11 +461,11 @@ func GenericHpairFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 			return SexpNull, fmt.Errorf("hpair position request %d out of bounds", pos)
 		}
 		return seq.HashPairi(pos)
-	case SexpArray:
-		if pos < 0 || pos >= len(seq) {
+	case *SexpArray:
+		if pos < 0 || pos >= len(seq.Val) {
 			return SexpNull, fmt.Errorf("hpair position request %d out of bounds", pos)
 		}
-		return Cons(SexpInt{Val: int64(pos)}, Cons(seq[pos], SexpNull)), nil
+		return Cons(SexpInt{Val: int64(pos)}, Cons(seq.Val[pos], SexpNull)), nil
 	default:
 		return SexpNull, errors.New("first argument of to hpair function must be hash, list, or array")
 	}
@@ -567,7 +567,7 @@ func fillHashHelper(r interface{}, depth int, env *Glisp, preferSym bool) (Sexp,
 			}
 			slice = append(slice, sx2)
 		}
-		return SexpArray(slice), nil
+		return &SexpArray{Val: slice}, nil
 
 	case map[string]interface{}:
 

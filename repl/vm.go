@@ -356,8 +356,8 @@ func (d DispatchInstr) Execute(env *Glisp) error {
 	}
 	// allow ([] int64) to express slice of int64.
 	switch arr := funcobj.(type) {
-	case SexpArray:
-		if len(arr) == 0 {
+	case *SexpArray:
+		if len(arr.Val) == 0 {
 			_, err := env.CallUserFunction(sxSliceOf, funcobj.SexpString(), d.nargs)
 			return err
 		}
@@ -537,7 +537,7 @@ func (s VectorizeInstr) Execute(env *Glisp) error {
 		}
 		vec = append([]Sexp{expr}, vec...)
 	}
-	env.datastack.PushExpr(SexpArray(vec))
+	env.datastack.PushExpr(&SexpArray{Val: vec})
 	env.pc++
 	return nil
 }

@@ -196,10 +196,26 @@ func (r SexpPair) Type() *RegisteredType {
 	return nil // TODO what should this be?
 }
 
-type SexpArray []Sexp
+type SexpArray struct {
+	Val []Sexp
+	Typ *RegisteredType
+}
 
-func (r SexpArray) Type() *RegisteredType {
-	return nil // TODO what should this be?
+func (r *SexpArray) Type() *RegisteredType {
+	return r.Typ
+}
+
+func (arr *SexpArray) SexpString() string {
+	if len(arr.Val) == 0 {
+		return "[]"
+	}
+
+	str := "[" + arr.Val[0].SexpString()
+	for _, sexp := range arr.Val[1:] {
+		str += " " + sexp.SexpString()
+	}
+	str += "]"
+	return str
 }
 
 func (e SexpError) SexpString() string {
@@ -338,19 +354,6 @@ func (r SexpReflect) SexpString() string {
 	default:
 		return fmt.Sprintf("%v", iface)
 	}
-}
-
-func (arr SexpArray) SexpString() string {
-	if len(arr) == 0 {
-		return "[]"
-	}
-
-	str := "[" + arr[0].SexpString()
-	for _, sexp := range arr[1:] {
-		str += " " + sexp.SexpString()
-	}
-	str += "]"
-	return str
 }
 
 func (b SexpBool) SexpString() string {

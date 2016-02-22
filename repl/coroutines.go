@@ -38,7 +38,7 @@ func CreateGoroutineMacro(env *Glisp, name string,
 	// (apply StartGoroutineFunction [goro])
 	return MakeList([]Sexp{env.MakeSymbol("apply"),
 		MakeUserFunction("__start", StartGoroutineFunction),
-		SexpArray([]Sexp{goro})}), nil
+		&SexpArray{Val: []Sexp{goro}}}), nil
 }
 
 func (env *Glisp) ImportGoroutines() {

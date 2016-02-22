@@ -161,9 +161,9 @@ func FirstFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	switch expr := args[0].(type) {
 	case SexpPair:
 		return expr.Head, nil
-	case SexpArray:
-		if len(expr) > 0 {
-			return expr[0], nil
+	case *SexpArray:
+		if len(expr.Val) > 0 {
+			return expr.Val[0], nil
 		}
 		return SexpNull, fmt.Errorf("first called on empty array")
 	}
@@ -178,11 +178,11 @@ func RestFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	switch expr := args[0].(type) {
 	case SexpPair:
 		return expr.Tail, nil
-	case SexpArray:
-		if len(expr) == 0 {
+	case *SexpArray:
+		if len(expr.Val) == 0 {
 			return expr, nil
 		}
-		return expr[1:], nil
+		return &SexpArray{Val: expr.Val[1:]}, nil
 	case SexpSentinel:
 		if expr == SexpNull {
 			return SexpNull, nil
@@ -204,9 +204,9 @@ func SecondFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 			return p.Head, nil
 		}
 		return SexpNull, fmt.Errorf("list too small for second")
-	case SexpArray:
-		if len(expr) >= 2 {
-			return expr[1], nil
+	case *SexpArray:
+		if len(expr.Val) >= 2 {
+			return expr.Val[1], nil
 		}
 		return SexpNull, fmt.Errorf("array too small for second")
 	}
@@ -220,9 +220,9 @@ func ArrayAccessFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		return SexpNull, WrongNargs
 	}
 
-	var arr SexpArray
+	var arr *SexpArray
 	switch t := args[0].(type) {
-	case SexpArray:
+	case *SexpArray:
 		arr = t
 	default:
 		return SexpNull, errors.New("First argument of aget must be array")
@@ -253,19 +253,19 @@ func ArrayAccessFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	case "hget":
 		fallthrough
 	case "aget":
-		if i < 0 || i >= len(arr) {
+		if i < 0 || i >= len(arr.Val) {
 			// out of bounds -- do we have a default?
 			if narg == 3 {
 				return args[2], nil
 			}
 			return SexpNull, errors.New("Array index out of bounds")
 		}
-		return arr[i], nil
+		return arr.Val[i], nil
 	case "aset!":
 		if len(args) != 3 {
 			return SexpNull, WrongNargs
 		}
-		arr[i] = args[2]
+		arr.Val[i] = args[2]
 	}
 	return SexpNull, nil
 }
@@ -336,7 +336,7 @@ func HashAccessFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		for i := 0; i < n; i++ {
 			keys = append(keys, (hash.KeyOrder)[i])
 		}
-		return SexpArray(keys), nil
+		return &SexpArray{Val: keys}, nil
 	case "hpair":
 		if len(args) != 2 {
 			return SexpNull, WrongNargs
@@ -401,8 +401,8 @@ func SliceFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	}
 
 	switch t := args[0].(type) {
-	case SexpArray:
-		return SexpArray(t[start:end]), nil
+	case *SexpArray:
+		return &SexpArray{Val: t.Val[start:end]}, nil
 	case SexpStr:
 		return SexpStr{S: t.S[start:end]}, nil
 	}
@@ -421,8 +421,8 @@ func LenFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 			return SexpInt{}, nil
 		}
 		break
-	case SexpArray:
-		return SexpInt{Val: int64(len(t))}, nil
+	case *SexpArray:
+		return SexpInt{Val: int64(len(t.Val))}, nil
 	case SexpStr:
 		return SexpInt{Val: int64(len(t.S))}, nil
 	case *SexpHash:
@@ -441,8 +441,8 @@ func AppendFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	}
 
 	switch t := args[0].(type) {
-	case SexpArray:
-		return SexpArray(append(t, args[1])), nil
+	case *SexpArray:
+		return &SexpArray{Val: append(t.Val, args[1])}, nil
 	case SexpStr:
 		return AppendStr(t, args[1])
 	}
@@ -461,7 +461,7 @@ func ConcatFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	}
 
 	switch t := args[0].(type) {
-	case SexpArray:
+	case *SexpArray:
 		return ConcatArray(t, args[1:])
 	case SexpStr:
 		return ConcatStr(t, args[1:])
@@ -599,7 +599,7 @@ func ApplyFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		return SexpNull, WrongNargs
 	}
 	var fun *SexpFunction
-	var funargs SexpArray
+	var funargs []Sexp
 
 	switch e := args[0].(type) {
 	case *SexpFunction:
@@ -609,8 +609,8 @@ func ApplyFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	}
 
 	switch e := args[1].(type) {
-	case SexpArray:
-		funargs = e
+	case *SexpArray:
+		funargs = e.Val
 	case SexpPair:
 		var err error
 		funargs, err = ListToArray(e)
@@ -640,7 +640,7 @@ func MapFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	}
 
 	switch e := args[1].(type) {
-	case SexpArray:
+	case *SexpArray:
 		return MapArray(env, fun, e)
 	case SexpPair:
 		x, err := MapList(env, fun, e)
@@ -675,13 +675,13 @@ func MakeArrayFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		arr[i] = fill
 	}
 
-	return SexpArray(arr), nil
+	return &SexpArray{Val: arr}, nil
 }
 
 func ConstructorFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	switch name {
 	case "array":
-		return SexpArray(args), nil
+		return &SexpArray{Val: args}, nil
 	case "list":
 		return MakeList(args), nil
 	case "hash":
@@ -1046,7 +1046,7 @@ func GenericAccessFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	switch args[0].(type) {
 	case *SexpHash:
 		return HashAccessFunction(env, name, args)
-	case SexpArray:
+	case *SexpArray:
 		return ArrayAccessFunction(env, name, args)
 	}
 	return SexpNull, errors.New("first argument of to hget function must be hash or array")
@@ -1074,7 +1074,7 @@ func StopFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 // the assignment function, =
 func AssignmentFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	Q("\n AssignmentFunction called with name ='%s'. args='%s'\n", name,
-		SexpArray(args).SexpString())
+		(&SexpArray{Val: args}).SexpString())
 
 	narg := len(args)
 	if narg != 2 {
@@ -1128,8 +1128,8 @@ func JoinSymFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 
 		case SexpSymbol:
 			j = j + a.name
-		case SexpArray:
-			s, err := joinSymHelper(a)
+		case *SexpArray:
+			s, err := joinSymHelper(a.Val)
 			if err != nil {
 				return SexpNull, err
 			}

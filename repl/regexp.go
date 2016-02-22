@@ -27,7 +27,7 @@ func regexpFindIndex(
 		arr[i] = Sexp(SexpInt{Val: int64(loc[i])})
 	}
 
-	return SexpArray(arr), nil
+	return &SexpArray{Val: arr}, nil
 }
 
 func RegexpFind(env *Glisp, name string,

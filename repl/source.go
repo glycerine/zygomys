@@ -109,8 +109,8 @@ func SourceFileFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 
 	sourceItem = func(item Sexp) error {
 		switch t := item.(type) {
-		case SexpArray:
-			for _, v := range t {
+		case *SexpArray:
+			for _, v := range t.Val {
 				if err := sourceItem(v); err != nil {
 					return err
 				}

@@ -102,24 +102,24 @@ func comparePair(a SexpPair, b Sexp) (int, error) {
 	return Compare(a.Tail, bp.Tail)
 }
 
-func compareArray(a SexpArray, b Sexp) (int, error) {
-	var ba SexpArray
+func compareArray(a *SexpArray, b Sexp) (int, error) {
+	var ba *SexpArray
 	switch t := b.(type) {
-	case SexpArray:
+	case *SexpArray:
 		ba = t
 	default:
 		errmsg := fmt.Sprintf("cannot compare %T to %T", a, b)
 		return 0, errors.New(errmsg)
 	}
 	var length int
-	if len(a) < len(ba) {
-		length = len(a)
+	if len(a.Val) < len(ba.Val) {
+		length = len(a.Val)
 	} else {
-		length = len(ba)
+		length = len(ba.Val)
 	}
 
 	for i := 0; i < length; i++ {
-		res, err := Compare(a[i], ba[i])
+		res, err := Compare(a.Val[i], ba.Val[i])
 		if err != nil {
 			return 0, err
 		}
@@ -128,7 +128,7 @@ func compareArray(a SexpArray, b Sexp) (int, error) {
 		}
 	}
 
-	return signumInt(int64(len(a) - len(ba))), nil
+	return signumInt(int64(len(a.Val) - len(ba.Val))), nil
 }
 
 func compareBool(a SexpBool, b Sexp) (int, error) {
@@ -185,7 +185,7 @@ func Compare(a Sexp, b Sexp) (int, error) {
 		return compareSymbol(at, b)
 	case SexpPair:
 		return comparePair(at, b)
-	case SexpArray:
+	case *SexpArray:
 		return compareArray(at, b)
 	case *SexpHash:
 		return compareHash(at, b)

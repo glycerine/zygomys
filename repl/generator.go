@@ -68,7 +68,7 @@ func (gen *Generator) GenerateBegin(expressions []Sexp) error {
 func buildSexpFun(
 	env *Glisp,
 	name string,
-	funcargs SexpArray,
+	funcargs *SexpArray,
 	funcbody []Sexp,
 	orig Sexp) (*SexpFunction, error) {
 
@@ -85,9 +85,9 @@ func buildSexpFun(
 
 	gen.AddInstruction(AddFuncScopeInstr{Name: "runtime " + gen.funcname})
 
-	argsyms := make([]SexpSymbol, len(funcargs))
+	argsyms := make([]SexpSymbol, len(funcargs.Val))
 
-	for i, expr := range funcargs {
+	for i, expr := range funcargs.Val {
 		switch t := expr.(type) {
 		case SexpSymbol:
 			argsyms[i] = t
@@ -98,7 +98,7 @@ func buildSexpFun(
 	}
 
 	varargs := false
-	nargs := len(funcargs)
+	nargs := len(funcargs.Val)
 
 	if len(argsyms) >= 2 && argsyms[len(argsyms)-2].name == "&" {
 		argsyms[len(argsyms)-2] = argsyms[len(argsyms)-1]
@@ -134,10 +134,10 @@ func (gen *Generator) GenerateFn(args []Sexp, orig Sexp) error {
 		return errors.New("malformed function definition")
 	}
 
-	var funcargs SexpArray
+	var funcargs *SexpArray
 
 	switch expr := args[0].(type) {
-	case SexpArray:
+	case *SexpArray:
 		funcargs = expr
 	default:
 		return errors.New("function arguments must be in vector")
@@ -188,9 +188,9 @@ func (gen *Generator) GenerateDefn(args []Sexp, orig Sexp) error {
 		return errors.New("Wrong number of arguments to defn")
 	}
 
-	var funcargs SexpArray
+	var funcargs *SexpArray
 	switch expr := args[1].(type) {
-	case SexpArray:
+	case *SexpArray:
 		funcargs = expr
 	default:
 		return errors.New("function arguments must be in vector")
@@ -238,9 +238,9 @@ func (gen *Generator) GenerateDefmac(args []Sexp, orig Sexp) error {
 		return errors.New("Wrong number of arguments to defmac")
 	}
 
-	var funcargs SexpArray
+	var funcargs *SexpArray
 	switch expr := args[1].(type) {
-	case SexpArray:
+	case *SexpArray:
 		funcargs = expr
 	default:
 		return errors.New("defmac arguments must be in vector")
@@ -415,8 +415,8 @@ func (gen *Generator) GenerateLet(name string, args []Sexp) error {
 	var bindings []Sexp
 
 	switch expr := args[0].(type) {
-	case SexpArray:
-		bindings = []Sexp(expr)
+	case *SexpArray:
+		bindings = expr.Val
 	default:
 		return errors.New("let bindings must be in array")
 	}
@@ -496,8 +496,8 @@ func (gen *Generator) GenerateInclude(args []Sexp) error {
 
 	sourceItem = func(item Sexp) error {
 		switch t := item.(type) {
-		case SexpArray:
-			for _, v := range t {
+		case *SexpArray:
+			for _, v := range t.Val {
 				if err := sourceItem(v); err != nil {
 					return err
 				}
@@ -689,12 +689,12 @@ func (gen *Generator) GenerateCall(expr SexpPair) error {
 	return gen.GenerateDispatch(expr.Head, arr)
 }
 
-func (gen *Generator) GenerateArray(arr SexpArray) error {
-	err := gen.GenerateAll(arr)
+func (gen *Generator) GenerateArray(arr *SexpArray) error {
+	err := gen.GenerateAll(arr.Val)
 	if err != nil {
 		return err
 	}
-	gen.AddInstruction(CallInstr{gen.env.MakeSymbol("array"), len(arr)})
+	gen.AddInstruction(CallInstr{gen.env.MakeSymbol("array"), len(arr.Val)})
 	return nil
 }
 
@@ -732,7 +732,7 @@ func (gen *Generator) Generate(expr Sexp) error {
 		} else {
 			gen.AddInstruction(PushInstr{expr})
 		}
-	case SexpArray:
+	case *SexpArray:
 		return gen.GenerateArray(e)
 	default:
 		gen.AddInstruction(PushInstr{expr})
@@ -777,7 +777,7 @@ func (gen *Generator) GenerateForLoop(args []Sexp) error {
 	}
 
 	startgen := 1
-	var controlargs SexpArray
+	var controlargs *SexpArray
 	var labelsym SexpSymbol
 	var err error
 	foundSym := false
@@ -789,7 +789,7 @@ func (gen *Generator) GenerateForLoop(args []Sexp) error {
 		}
 		foundSym = true
 		startgen = 2
-	case SexpArray:
+	case *SexpArray:
 		controlargs = expr
 	default:
 		return ErrBadLoopSyntax
@@ -797,14 +797,14 @@ func (gen *Generator) GenerateForLoop(args []Sexp) error {
 
 	if foundSym {
 		switch expr := args[1].(type) {
-		case SexpArray:
+		case *SexpArray:
 			controlargs = expr
 		default:
 			return errors.New("for loop: 2nd argument after the label must be a vector of [init predicate advance]")
 		}
 	}
 
-	if len(controlargs) != 3 {
+	if len(controlargs.Val) != 3 {
 		return errors.New("for loop: control vector argument wrong size; must be a vector of three [init test advance]")
 	}
 
@@ -854,7 +854,7 @@ func (gen *Generator) GenerateForLoop(args []Sexp) error {
 	subgenInit.Tail = gen.Tail
 	subgenInit.scopes = gen.scopes
 	subgenInit.funcname = gen.funcname
-	err = subgenInit.Generate(controlargs[0])
+	err = subgenInit.Generate(controlargs.Val[0])
 	if err != nil {
 		return err
 	}
@@ -868,7 +868,7 @@ func (gen *Generator) GenerateForLoop(args []Sexp) error {
 	subgenT.scopes = gen.scopes
 	subgenT.funcname = gen.funcname
 
-	err = subgenT.Generate(controlargs[1])
+	err = subgenT.Generate(controlargs.Val[1])
 	if err != nil {
 		return err
 	}
@@ -882,7 +882,7 @@ func (gen *Generator) GenerateForLoop(args []Sexp) error {
 	subgenIncr.scopes = gen.scopes
 	subgenIncr.funcname = gen.funcname
 
-	err = subgenIncr.Generate(controlargs[2])
+	err = subgenIncr.Generate(controlargs.Val[2])
 	if err != nil {
 		return err
 	}
@@ -1073,9 +1073,9 @@ func (gen *Generator) GenerateSyntaxQuote(args []Sexp) error {
 
 	// need to handle arrays, since they can have unquotes
 	// in them too.
-	switch arg.(type) {
-	case SexpArray:
-		gen.generateSyntaxQuoteArray(arg)
+	switch aaa := arg.(type) {
+	case *SexpArray:
+		gen.generateSyntaxQuoteArray(aaa)
 		return nil
 	case SexpPair:
 		if !IsList(arg) {
@@ -1147,9 +1147,9 @@ func (gen *Generator) generateSyntaxQuoteList(arg Sexp) error {
 func (gen *Generator) generateSyntaxQuoteArray(arg Sexp) error {
 	VPrintf("\n GenerateSyntaxQuoteArray() called with arg='%#v'\n", arg)
 
-	var arr SexpArray
+	var arr *SexpArray
 	switch a := arg.(type) {
-	case SexpArray:
+	case *SexpArray:
 		//good, required here
 		arr = a
 	default:
@@ -1157,7 +1157,7 @@ func (gen *Generator) generateSyntaxQuoteArray(arg Sexp) error {
 	}
 
 	gen.AddInstruction(PushInstr{SexpMarker})
-	for _, expr := range arr {
+	for _, expr := range arr.Val {
 		gen.AddInstruction(PushInstr{SexpMarker})
 		gen.GenerateSyntaxQuote([]Sexp{expr})
 		gen.AddInstruction(SquashInstr(0))

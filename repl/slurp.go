@@ -58,7 +58,7 @@ func SlurpfileFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	}
 
 	VPrintf("read %d lines\n", lineNum)
-	return SexpArray(a), nil
+	return &SexpArray{Val: a}, nil
 }
 
 // (writef path); (write path) is the macro version.
@@ -93,8 +93,8 @@ func WriteToFileFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 
 	var slice []Sexp
 	switch sl := args[0].(type) {
-	case SexpArray:
-		slice = []Sexp(sl)
+	case *SexpArray:
+		slice = sl.Val
 		for i := range slice {
 			s := slice[i].SexpString()
 			if len(s) >= 2 && s[0] == '"' && s[len(s)-1] == '"' {
@@ -154,7 +154,7 @@ func SplitStringFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		split[i] = SexpStr{S: s[i]}
 	}
 
-	return SexpArray(split), nil
+	return &SexpArray{Val: split}, nil
 }
 
 // (nsplit "a\nb") -> ["a" "b"]
