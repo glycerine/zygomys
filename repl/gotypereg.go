@@ -403,9 +403,9 @@ func (gsr *GoStructRegistryType) GetOrCreatePointerType(pointedToType *Registere
 	ptrName := "*" + pointedToType.RegisteredName
 	ptrRt := gsr.Lookup(ptrName)
 	if ptrRt != nil {
-		P("type named '%v' already registered, reusing the pointer type", ptrName)
+		Q("type named '%v' already registered, reusing the pointer type", ptrName)
 	} else {
-		P("registering new pointer type '%v'", ptrName)
+		Q("registering new pointer type '%v'", ptrName)
 		derivedType := reflect.PtrTo(pointedToType.TypeCache)
 		ptrRt = NewRegisteredType(func(env *Glisp) (interface{}, error) {
 			return reflect.New(derivedType), nil

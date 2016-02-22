@@ -487,13 +487,13 @@ func PointerToFunction(env *Glisp, name string,
 		rt = arg.GoStructFactory
 	case *SexpPointer:
 		// dereference operation, rather than type declaration
-		P("dereference operation on *SexpPointer detected, returning target")
+		Q("dereference operation on *SexpPointer detected, returning target")
 		if arg == nil || arg.Target == nil {
 			return SexpNull, fmt.Errorf("illegal to dereference nil pointer")
 		}
 		return arg.Target, nil
 	case SexpReflect:
-		P("dereference operation on SexpReflect detected")
+		Q("dereference operation on SexpReflect detected")
 		// TODO what goes here?
 		return SexpNull, fmt.Errorf("illegal to dereference nil pointer")
 	default:
@@ -646,9 +646,9 @@ func VarBuilder(env *Glisp, name string,
 			"(var name regtype)\n")
 	}
 
-	P("in var builder, name = '%s', args = ", name)
+	Q("in var builder, name = '%s', args = ", name)
 	for i := range args {
-		P("args[%v] = '%s' of type %T", i, args[i].SexpString(), args[i])
+		Q("args[%v] = '%s' of type %T", i, args[i].SexpString(), args[i])
 	}
 	var symN SexpSymbol
 	switch b := args[0].(type) {
@@ -664,12 +664,12 @@ func VarBuilder(env *Glisp, name string,
 	default:
 		return SexpNull, fmt.Errorf("bad var name: symbol required")
 	}
-	P("good: have var name '%v'", symN)
+	Q("good: have var name '%v'", symN)
 
 	dup := env.Duplicate()
-	P("about to eval args[1]=%v", args[1])
+	Q("about to eval args[1]=%v", args[1])
 	ev, err := dup.EvalExpressions(args[1:2])
-	P("done with eval, ev=%v / type %T", ev.SexpString(), ev)
+	Q("done with eval, ev=%v / type %T", ev.SexpString(), ev)
 	if err != nil {
 		return SexpNull, fmt.Errorf("bad var declaration, problem with type '%v': %v", args[1].SexpString(), err)
 	}
@@ -688,28 +688,28 @@ func VarBuilder(env *Glisp, name string,
 			rt, err)
 	}
 	var valSexp Sexp
-	P("val is of type %T", val)
+	Q("val is of type %T", val)
 	switch v := val.(type) {
 	case Sexp:
 		valSexp = v
 	case reflect.Value:
-		P("v is of type %T", v.Interface())
+		Q("v is of type %T", v.Interface())
 		switch rd := v.Interface().(type) {
 		case ***RecordDefn:
-			P("we have RecordDefn rd = %#v", *rd)
+			Q("we have RecordDefn rd = %#v", *rd)
 		}
 		valSexp = SexpReflect(reflect.ValueOf(v))
 	default:
 		valSexp = SexpReflect(reflect.ValueOf(v))
 	}
 
-	P("var decl: valSexp is '%v'", valSexp.SexpString())
+	Q("var decl: valSexp is '%v'", valSexp.SexpString())
 	err = env.LexicalBindSymbol(symN, valSexp)
 	if err != nil {
 		return SexpNull, fmt.Errorf("var declaration error: could not bind symbol '%s': %v",
 			symN.name, err)
 	}
-	P("good: var decl bound symbol '%s' to '%s' of type '%s'", symN.SexpString(), valSexp.SexpString(), rt.SexpString())
+	Q("good: var decl bound symbol '%s' to '%s' of type '%s'", symN.SexpString(), valSexp.SexpString(), rt.SexpString())
 
 	env.datastack.PushExpr(valSexp)
 
@@ -729,10 +729,10 @@ func ExpectErrorBuilder(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	default:
 		return SexpNull, fmt.Errorf("first arg to expect-error must be the string of the error to expect")
 	}
-	P("expectedError = %v", expectedError)
+	Q("expectedError = %v", expectedError)
 	dup := env.Duplicate()
 	ev, err := dup.EvalExpressions(args[1:2])
-	P("done with eval, ev=%v / type %T. err = %v", ev.SexpString(), ev, err)
+	Q("done with eval, ev=%v / type %T. err = %v", ev.SexpString(), ev, err)
 	if err != nil {
 		if err.Error() == expectedError.S {
 			return SexpNull, nil
