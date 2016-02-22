@@ -190,7 +190,7 @@ func (hash *SexpHash) HashGetDefault(env *Glisp, key Sexp, defaultval Sexp) (Sex
 
 var KeyNotSymbol = fmt.Errorf("key is not a symbol")
 
-func (hash *SexpHash) TypeCheckField(key Sexp, val Sexp) error {
+func (h *SexpHash) TypeCheckField(key Sexp, val Sexp) error {
 	P("in TypeCheckField, key='%v' val='%v'", key.SexpString(), val.SexpString())
 
 	var keySym SexpSymbol
@@ -202,21 +202,43 @@ func (hash *SexpHash) TypeCheckField(key Sexp, val Sexp) error {
 	default:
 		return KeyNotSymbol
 	}
-	p := hash.GoStructFactory
+	p := h.GoStructFactory
 	if p == nil {
 		P("SexpHash.TypeCheckField() sees nil GoStructFactory, bailing out.")
 		return nil
+	} else {
+		P("SexpHash.TypeCheckField() sees h.GoStructFactory = '%#v'", h.GoStructFactory)
 	}
+
 	if p.UserStructDefn == nil {
 		P("SexpHash.TypeCheckField() sees nil has.GoStructFactory.UserStructDefn, bailing out.")
 
-		sliceRt := GoStructRegistry.Lookup(hash.TypeName)
-		return nil
+		// check in the registry for this type!
+		rt := GoStructRegistry.Lookup(h.TypeName)
+
+		// was it found? If so, use it!
+		if rt != nil && rt.UserStructDefn != nil {
+			if rt.UserStructDefn.FieldType != nil {
+				P("")
+				P("we have a type for hash.TypeName = '%s', using it by "+
+					"replacing the hash.GoStructFactory with rt", h.TypeName)
+				P("")
+				P("old: h.GoStructFactory = '%#v'", h.GoStructFactory)
+				P("")
+				P("new: rt = '%#v'", rt)
+				P("new rt.UserStructDefn.FieldType = '%#v'", rt.UserStructDefn.FieldType)
+				//p.UserStructDefn = rt.UserStructDefn
+				h.GoStructFactory = rt
+				p = h.GoStructFactory
+			}
+		} else {
+			return nil
+		}
 	}
 
 	// type-check record updates here, if we are a record with a
 	// registered type associated.
-	if wasSym && hash.TypeName != "hash" && hash.TypeName != "field" && p != nil {
+	if wasSym && h.TypeName != "hash" && h.TypeName != "field" && p != nil {
 		k := keySym.name
 		Q("is key '%s' defined?", k)
 		declaredTyp, ok := p.UserStructDefn.FieldType[k]

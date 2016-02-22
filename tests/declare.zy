@@ -52,7 +52,12 @@
 (.hasSlice.SliceOfLife = ["zygo" "rocks" "it"])
 (assert (== 3 (.hasSlice.SliceOfLife len)))
 
-(expect-error `Error: Car has no field 'NewField'` (.hasSlice.NewField = "wacky"))
+(expect-error `Error calling '.hasSlice.NewField': Car has no field 'NewField'`
+            (.hasSlice.NewField = "wacky"))
+
+(expect-error `Error calling '.hasSlice.SliceOfLife': field Car.SliceOfLife is ([]string), cannot assign ([]int64) '[1 2 3]'`
+              (.hasSlice.SliceOfLife = [1 2 3]))
+
 
 ;; nil for slices and pointers should be okay
 (Car SliceOfLife:nil)
