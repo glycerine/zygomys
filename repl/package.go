@@ -257,17 +257,6 @@ func StructBuilder(env *Glisp, name string,
 		return SexpNull, fmt.Errorf("bad struct name: symbol required")
 	}
 
-	/*
-		sn, err := env.EvalExpressions(args[0:1])
-		if err != nil {
-			return SexpNull, fmt.Errorf("bad struct name: '%v'", err)
-		}
-		Q("done with sn eval")
-		symN, isSym := sn.(SexpSymbol)
-		if !isSym {
-			return SexpNull, fmt.Errorf("bad struct name: symbol required")
-		}
-	*/
 	Q("good: have struct name '%v'", symN)
 
 	env.datastack.PushExpr(SexpNull)
@@ -286,7 +275,7 @@ func StructBuilder(env *Glisp, name string,
 		GoStructRegistry.RegisterUserdef(structName, rtR, false)
 
 		// overwrite any existing definition, deliberately ignore any error,
-		// as it may not be present at all.
+		// as there may not be a prior definition present at all.
 		env.linearstack.DeleteSymbolFromTopOfStackScope(symN)
 
 		err := env.LexicalBindSymbol(symN, rtR)
@@ -349,23 +338,6 @@ func StructBuilder(env *Glisp, name string,
 				Q("no err from EvalExpressions, got xar = '%#v'", xar)
 			}
 		}
-		/*
-				Q("evaluating args[1:2] which is of type %T / val=%#v", args[1], args[1])
-				arr, err := env.EvalExpressions(args[1:2])
-				if err != nil {
-					return SexpNull, fmt.Errorf("bad struct declaration: bad "+
-						"array of fields, error was '%v'", err)
-				}
-
-			switch ar := arr.(type) {
-			case SexpArray:
-				Q("good, have array %#v", ar)
-				xar = []Sexp(ar)
-			default:
-				return SexpNull, fmt.Errorf("bad struct declaration: did not find "+
-					"array of fields following name; instead found %v/type=%T", ar, ar)
-			}
-		*/
 	} // end n == 2
 
 	uds := NewRecordDefn()
@@ -379,6 +351,8 @@ func StructBuilder(env *Glisp, name string,
 	rt.DisplayAs = structName
 	GoStructRegistry.RegisterUserdef(structName, rt, false)
 	Q("good: registered new userdefined struct '%s'", structName)
+
+	// replace our recursive-reference-enabling symbol with the real one.
 	err := env.linearstack.DeleteSymbolFromTopOfStackScope(symN)
 	if err != nil {
 		return SexpNull, fmt.Errorf("internal error: should have already had symbol '%s' "+
@@ -512,7 +486,7 @@ func PointerToFunction(env *Glisp, name string,
 }
 
 func StructConstructorFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
-	Q("in struct ctor, name = '%s', args = %#v", name, args)
+	P("in struct ctor, name = '%s', args = %#v", name, args)
 	return MakeHash(args, name, env)
 }
 

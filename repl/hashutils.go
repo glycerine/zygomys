@@ -78,6 +78,8 @@ func MakeHash(args []Sexp, typename string, env *Glisp) (*SexpHash, error) {
 	jsonMap := make(map[string]*HashFieldDet)
 	factory := &RegisteredType{Factory: MakeGoStructFunc(func(env *Glisp) (interface{}, error) { return MakeHash(nil, typename, env) })}
 	factory.Aliases = make(map[string]bool)
+	// how about UserStructDefn ? if TypeName != field/hash
+
 	detOrder := []*HashFieldDet{}
 
 	var zmain SexpFunction
@@ -186,7 +188,68 @@ func (hash *SexpHash) HashGetDefault(env *Glisp, key Sexp, defaultval Sexp) (Sex
 	return defaultval, nil
 }
 
+var KeyNotSymbol = fmt.Errorf("key is not a symbol")
+
+func (hash *SexpHash) TypeCheckField(key Sexp, val Sexp) error {
+	P("in TypeCheckField, key='%v' val='%v'", key.SexpString(), val.SexpString())
+
+	var keySym SexpSymbol
+	wasSym := false
+	switch ks := key.(type) {
+	case SexpSymbol:
+		keySym = ks
+		wasSym = true
+	default:
+		return KeyNotSymbol
+	}
+	p := hash.GoStructFactory
+	if p == nil {
+		P("SexpHash.TypeCheckField() sees nil GoStructFactory, bailing out.")
+		return nil
+	}
+	if p.UserStructDefn == nil {
+		P("SexpHash.TypeCheckField() sees nil has.GoStructFactory.UserStructDefn, bailing out.")
+
+		sliceRt := GoStructRegistry.Lookup(hash.TypeName)
+		return nil
+	}
+
+	// type-check record updates here, if we are a record with a
+	// registered type associated.
+	if wasSym && hash.TypeName != "hash" && hash.TypeName != "field" && p != nil {
+		k := keySym.name
+		Q("is key '%s' defined?", k)
+		declaredTyp, ok := p.UserStructDefn.FieldType[k]
+		if !ok {
+			return fmt.Errorf("%s has no field '%s'", p.UserStructDefn.Name, k)
+		}
+		obsTyp := val.Type()
+		if obsTyp == nil {
+			return fmt.Errorf("%v has nil Type", val.SexpString())
+		}
+
+		Q("obsTyp is %T / val = %#v", obsTyp, obsTyp)
+		Q("declaredTyp is %T / val = %#v", declaredTyp, declaredTyp)
+		if obsTyp != declaredTyp {
+			return fmt.Errorf("field %v.%v is %v, cannot assign %v '%v'",
+				p.UserStructDefn.Name,
+				k,
+				declaredTyp.SexpString(),
+				obsTyp.SexpString(),
+				val.SexpString())
+		}
+	}
+	return nil
+}
+
 func (hash *SexpHash) HashSet(key Sexp, val Sexp) error {
+	P("in HashSet, key='%v' val='%v'", key.SexpString(), val.SexpString())
+
+	err := hash.TypeCheckField(key, val)
+	if err != nil {
+		return err
+	}
+
 	hashval, err := HashExpression(nil, key)
 	if err != nil {
 		return err
@@ -635,7 +698,7 @@ func (h *SexpHash) nestedPathGetSet(env *Glisp, dotpaths []string, setVal *Sexp)
 	var err error
 	askh := h
 	lenpath := len(dotpaths)
-	//Q("\n in nestedPathGetSet, dotpaths=%#v\n", dotpaths)
+	P("\n in nestedPathGetSet, dotpaths=%#v\n", dotpaths)
 	for i := range dotpaths {
 		if setVal != nil && i == lenpath-1 {
 			// assign now
@@ -645,8 +708,8 @@ func (h *SexpHash) nestedPathGetSet(env *Glisp, dotpaths []string, setVal *Sexp)
 			return *setVal, err
 		}
 		ret, err = askh.HashGet(env, env.MakeSymbol(dotpaths[i][1:]))
-		//Q("\n i=%v in nestedPathGet, dotpaths[i][1:]='%v' call to "+
-		//	"HashGet returned '%s'\n", i, dotpaths[i][1:], ret.SexpString())
+		P("\n i=%v in nestedPathGet, dotpaths[i][1:]='%v' call to "+
+			"HashGet returned '%s'\n", i, dotpaths[i][1:], ret.SexpString())
 		if err != nil {
 			return SexpNull, err
 		}

@@ -175,28 +175,12 @@ func (p *RegisteredType) TypeCheckRecord(hash *SexpHash) error {
 	if p.UserStructDefn != nil {
 		Q("in RegisteredType.TypeCheckRecord, type checking against '%#v'", p.UserStructDefn)
 
+		var err error
 		for _, key := range hash.KeyOrder {
-			k := key.(SexpSymbol).name
-			Q("is key '%s' defined?", k)
-			declaredTyp, ok := p.UserStructDefn.FieldType[k]
-			if !ok {
-				return fmt.Errorf("%s has no field '%s'", p.UserStructDefn.Name, k)
-			}
 			obs, _ := hash.HashGet(nil, key)
-			obsTyp := obs.Type()
-			if obsTyp == nil {
-				return fmt.Errorf("%v has nil Type", obs.SexpString())
-			}
-
-			Q("obsTyp is %T / val = %#v", obsTyp, obsTyp)
-			Q("declaredTyp is %T / val = %#v", declaredTyp, declaredTyp)
-			if obsTyp != declaredTyp {
-				return fmt.Errorf("field %v.%v is %v, cannot assign %v '%v'",
-					p.UserStructDefn.Name,
-					k,
-					declaredTyp.SexpString(),
-					obsTyp.SexpString(),
-					obs.SexpString())
+			err = hash.TypeCheckField(key, obs)
+			if err != nil {
+				return err
 			}
 		}
 	}

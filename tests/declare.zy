@@ -6,7 +6,7 @@
         (field BadApple:    string    e:2  deprecated:true)
         ])
 
-;; redefines on the fly work:
+;; redefines on the fly:
 (struct Car [
         (field Id:          int64     e:0                  gotags:`json:"id",name:"id"`)
         (field Name:        string    e:1                  gotags:`json:"name"`)
@@ -46,12 +46,17 @@
 (assert (== (:SliceOfLife hasSlice) ["hi" "there"]))
 (assert (== 2 (len (.hasSlice.SliceOfLife))))
 
-(.hasSlice.SliceOfLife = ["zygo" "rocks" "it"])
-(assert (== 3 (.hasSlice.SliceOfLife len)))
-
 (.hasSlice.SliceOfLife = [])
 (assert (== 0 (len (.hasSlice.SliceOfLife))))
 
+(.hasSlice.SliceOfLife = ["zygo" "rocks" "it"])
+(assert (== 3 (.hasSlice.SliceOfLife len)))
+
+(expect-error `Error: Car has no field 'NewField'` (.hasSlice.NewField = "wacky"))
+
+;; nil for slices and pointers should be okay
+(Car SliceOfLife:nil)
+(Car OtherCar:nil)
 
 
 ;; not yet implemented stuff:
