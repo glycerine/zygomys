@@ -74,7 +74,8 @@
 ;; or with dot symbol notation:
 (assert (== (& w) (.w.OtherCar)))
 
-(.w.PointerSisters = (& 34))
+;; not sure yet how to point to non-records in a persistent fashion.
+;; (.w.PointerSisters = (& 34))
 
 ;; not yet implemented stuff:
 

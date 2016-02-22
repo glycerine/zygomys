@@ -29,7 +29,7 @@ type SexpPointer struct {
 func NewSexpPointer(pointedTo Sexp, pointedToType *RegisteredType) *SexpPointer {
 
 	ptrRt := GoStructRegistry.GetOrCreatePointerType(pointedToType)
-	P("pointer type is ptrRt = '%#v'", ptrRt)
+	Q("pointer type is ptrRt = '%#v'", ptrRt)
 	p := &SexpPointer{
 		Target:        pointedTo,
 		PointedToType: pointedToType,
