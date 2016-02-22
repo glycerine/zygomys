@@ -1,2 +1,2 @@
-(assert(== "arrays.zy"(first (nsplit($ls tests/)))))
+(assert (== "arrays.zy" (first (nsplit ($ls tests/)))))
 

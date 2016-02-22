@@ -726,7 +726,8 @@ func (env *Glisp) ResolveDotSym(arg []Sexp) ([]Sexp, error) {
 	for i := range arg {
 		switch sym := arg[i].(type) {
 		case SexpSymbol:
-			resolved, err, _ := env.LexicalLookupSymbol(sym, true)
+			resolved, err := dotGetSetHelper(env, sym.name, nil)
+			//resolved, err, _ := env.LexicalLookupSymbol(sym, true)
 			if err != nil {
 				return nil, err
 			}

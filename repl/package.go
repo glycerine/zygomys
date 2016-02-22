@@ -451,7 +451,7 @@ func SliceOfFunction(env *Glisp, name string,
 			"(%s a-regtype)\n", name)
 	}
 
-	P("in SliceOfFunction")
+	Q("in SliceOfFunction")
 
 	var rt *RegisteredType
 	switch arg := args[0].(type) {
@@ -465,10 +465,10 @@ func SliceOfFunction(env *Glisp, name string,
 			name, arg, arg.SexpString())
 	}
 
-	P("slice-of arg = '%s' with type %T", args[0].SexpString(), args[0])
+	Q("slice-of arg = '%s' with type %T", args[0].SexpString(), args[0])
 
 	sliceRt := GoStructRegistry.GetOrCreateSliceType(rt)
-	P("in SliceOfFunction: returning sliceRt = '%#v'", sliceRt)
+	Q("in SliceOfFunction: returning sliceRt = '%#v'", sliceRt)
 	return sliceRt, nil
 }
 
@@ -480,7 +480,7 @@ func PointerToFunction(env *Glisp, name string,
 			"(%s a-regtype)\n", name)
 	}
 
-	P("in PointerToFunction(): args[0] = '%#v'", args[0])
+	Q("in PointerToFunction(): args[0] = '%#v'", args[0])
 
 	var rt *RegisteredType
 	switch arg := args[0].(type) {
@@ -490,13 +490,13 @@ func PointerToFunction(env *Glisp, name string,
 		rt = arg.GoStructFactory
 	case *SexpPointer:
 		// dereference operation, rather than type declaration
-		P("dereference operation on *SexpPointer detected, returning target")
+		Q("dereference operation on *SexpPointer detected, returning target")
 		if arg == nil || arg.Target == nil {
 			return SexpNull, fmt.Errorf("illegal to dereference nil pointer")
 		}
 		return arg.Target, nil
 	case SexpReflect:
-		P("dereference operation on SexpReflect detected")
+		Q("dereference operation on SexpReflect detected")
 		// TODO what goes here?
 		return SexpNull, fmt.Errorf("illegal to dereference nil pointer")
 	default:
@@ -505,7 +505,7 @@ func PointerToFunction(env *Glisp, name string,
 			name, arg, arg.SexpString())
 	}
 
-	P("pointer-to arg = '%s' with type %T", args[0].SexpString(), args[0])
+	Q("pointer-to arg = '%s' with type %T", args[0].SexpString(), args[0])
 
 	ptrRt := GoStructRegistry.GetOrCreatePointerType(rt)
 	return ptrRt, nil
@@ -596,8 +596,8 @@ func ArrayOfFunction(env *Glisp, name string,
 	args []Sexp) (Sexp, error) {
 
 	if len(args) != 2 {
-		return SexpNull, fmt.Errorf("insufficient arguments to ([size] regtype) array constructor. use: "+
-			"([size...] a-regtype)\n", name)
+		return SexpNull, fmt.Errorf("insufficient arguments to ([size] regtype) array constructor. use: " +
+			"([size...] a-regtype)\n")
 	}
 	sz := 0
 	Q("args = %#v in ArrayOfFunction", args)

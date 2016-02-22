@@ -397,7 +397,7 @@ func compareRegisteredTypes(a *RegisteredType, bs Sexp) (int, error) {
 }
 
 func (gsr *GoStructRegistryType) GetOrCreatePointerType(pointedToType *RegisteredType) *RegisteredType {
-	P("pointedToType = %#v", pointedToType)
+	Q("pointedToType = %#v", pointedToType)
 	ptrName := "*" + pointedToType.RegisteredName
 	ptrRt := gsr.Lookup(ptrName)
 	if ptrRt != nil {
@@ -420,9 +420,9 @@ func (gsr *GoStructRegistryType) GetOrCreateSliceType(rt *RegisteredType) *Regis
 	sliceName := "[]" + rt.RegisteredName
 	sliceRt := gsr.Lookup(sliceName)
 	if sliceRt != nil {
-		P("type named '%v' already registered, re-using the type", sliceName)
+		Q("type named '%v' already registered, re-using the type", sliceName)
 	} else {
-		P("registering new slice type '%v'", sliceName)
+		Q("registering new slice type '%v'", sliceName)
 		derivedType := reflect.SliceOf(rt.TypeCache)
 		sliceRt = NewRegisteredType(func(env *Glisp) (interface{}, error) {
 			return reflect.MakeSlice(derivedType, 0, 0), nil

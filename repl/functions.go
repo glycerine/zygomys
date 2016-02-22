@@ -415,6 +415,12 @@ func LenFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		return SexpNull, WrongNargs
 	}
 
+	var err error
+	args, err = env.ResolveDotSym(args)
+	if err != nil {
+		return SexpNull, err
+	}
+
 	switch t := args[0].(type) {
 	case SexpSentinel:
 		if t == SexpNull {
@@ -430,8 +436,9 @@ func LenFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	case SexpPair:
 		n, err := ListLen(t)
 		return SexpInt{Val: int64(n)}, err
+	default:
+		P("in LenFunction with args[0] of type %T", t)
 	}
-
 	return SexpInt{}, errors.New("argument must be string, list, hash, or array")
 }
 
