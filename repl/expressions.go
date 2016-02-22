@@ -205,7 +205,10 @@ func (r *SexpArray) Type() *RegisteredType {
 	if r.Typ == nil {
 		if len(r.Val) > 0 {
 			// take type from first element
-
+			ty := r.Val[0].Type()
+			if ty != nil {
+				r.Typ = GoStructRegistry.GetOrCreateSliceType(ty)
+			}
 		}
 	}
 	return r.Typ
