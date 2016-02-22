@@ -202,6 +202,12 @@ type SexpArray struct {
 }
 
 func (r *SexpArray) Type() *RegisteredType {
+	if r.Typ == nil {
+		if len(r.Val) > 0 {
+			// take type from first element
+
+		}
+	}
 	return r.Typ
 }
 

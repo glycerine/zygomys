@@ -1,4 +1,4 @@
 ;; slice types can be declared
-(assert (== (str (slice-of int64)) `(slice-of int64)`))
+(assert (== (str ([] int64)) `([]int64)`))
 
 

@@ -451,6 +451,8 @@ func SliceOfFunction(env *Glisp, name string,
 			"(%s a-regtype)\n", name)
 	}
 
+	P("in SliceOfFunction")
+
 	var rt *RegisteredType
 	switch arg := args[0].(type) {
 	case *RegisteredType:
@@ -463,15 +465,10 @@ func SliceOfFunction(env *Glisp, name string,
 			name, arg, arg.SexpString())
 	}
 
-	//Q("slice-of arg = '%s' with type %T", args[0].SexpString(), args[0])
+	P("slice-of arg = '%s' with type %T", args[0].SexpString(), args[0])
 
-	derivedType := reflect.SliceOf(rt.TypeCache)
-	sliceRt := NewRegisteredType(func(env *Glisp) (interface{}, error) {
-		return reflect.MakeSlice(derivedType, 0, 0), nil
-	})
-	sliceRt.DisplayAs = fmt.Sprintf("(%s %s)", name, rt.DisplayAs)
-	sliceName := "slice-of-" + rt.RegisteredName
-	GoStructRegistry.RegisterUserdef(sliceName, sliceRt, false)
+	sliceRt := GoStructRegistry.GetOrCreateSliceType(rt)
+	P("in SliceOfFunction: returning sliceRt = '%#v'", sliceRt)
 	return sliceRt, nil
 }
 
@@ -483,6 +480,8 @@ func PointerToFunction(env *Glisp, name string,
 			"(%s a-regtype)\n", name)
 	}
 
+	P("in PointerToFunction(): args[0] = '%#v'", args[0])
+
 	var rt *RegisteredType
 	switch arg := args[0].(type) {
 	case *RegisteredType:
@@ -491,13 +490,13 @@ func PointerToFunction(env *Glisp, name string,
 		rt = arg.GoStructFactory
 	case *SexpPointer:
 		// dereference operation, rather than type declaration
-		Q("dereference operation on *SexpPointer detected, returning target")
+		P("dereference operation on *SexpPointer detected, returning target")
 		if arg == nil || arg.Target == nil {
 			return SexpNull, fmt.Errorf("illegal to dereference nil pointer")
 		}
 		return arg.Target, nil
 	case SexpReflect:
-		Q("dereference operation on SexpReflect detected")
+		P("dereference operation on SexpReflect detected")
 		// TODO what goes here?
 		return SexpNull, fmt.Errorf("illegal to dereference nil pointer")
 	default:
@@ -506,7 +505,7 @@ func PointerToFunction(env *Glisp, name string,
 			name, arg, arg.SexpString())
 	}
 
-	//Q("pointer-to arg = '%s' with type %T", args[0].SexpString(), args[0])
+	P("pointer-to arg = '%s' with type %T", args[0].SexpString(), args[0])
 
 	ptrRt := GoStructRegistry.GetOrCreatePointerType(rt)
 	return ptrRt, nil
