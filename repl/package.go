@@ -29,7 +29,7 @@ func (env *Glisp) ImportPackageBuilder() {
 	env.AddBuilder("package", PackageBuilder)
 	env.AddBuilder("var", VarBuilder)
 	env.AddBuilder("expect-error", ExpectErrorBuilder)
-	env.AddBuilder("&", AddressOfBuilder)
+	//	env.AddBuilder("&", AddressOfBuilder)
 
 	env.AddFunction("slice-of", SliceOfFunction)
 	env.AddFunction("ptr", PointerToFunction)

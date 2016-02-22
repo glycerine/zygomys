@@ -889,7 +889,7 @@ func CoreFunctions() map[string]GlispUserFunction {
 		"stop":       StopFunction,
 		"joinsym":    JoinSymFunction,
 		"GOOS":       GOOSFunction,
-		//"&":          AddressOfFunction,
+		"&":          AddressOfFunction,
 	}
 }
 
