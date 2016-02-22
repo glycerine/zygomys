@@ -38,7 +38,6 @@
 (assert (!= (& car2) p2))
 
 (var a (* Car))
-;; declares a zerotyped Car to be pointed at.
 (expect-error "Error calling '*': illegal to dereference nil pointer" (assert (== (:Id (* a)) 0)))
 
 (assert (== (type? a) "*Car"))
