@@ -154,6 +154,21 @@ func compareBool(a SexpBool, b Sexp) (int, error) {
 	return 0, nil
 }
 
+func comparePointers(a *SexpPointer, bs Sexp) (int, error) {
+	var b *SexpPointer
+	switch bt := bs.(type) {
+	case *SexpPointer:
+		b = bt
+	default:
+		return 0, fmt.Errorf("cannot compare %T to %T", a, bs)
+	}
+
+	if a.Target == b.Target {
+		return 0, nil
+	}
+	return 1, nil
+}
+
 func Compare(a Sexp, b Sexp) (int, error) {
 	switch at := a.(type) {
 	case SexpInt:
@@ -176,6 +191,8 @@ func Compare(a Sexp, b Sexp) (int, error) {
 		return compareHash(at, b)
 	case *RegisteredType:
 		return compareRegisteredTypes(at, b)
+	case *SexpPointer:
+		return comparePointers(at, b)
 	case SexpSentinel:
 		if at == SexpNull && b == SexpNull {
 			return 0, nil
