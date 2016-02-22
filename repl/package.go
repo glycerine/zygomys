@@ -486,7 +486,7 @@ func PointerToFunction(env *Glisp, name string,
 }
 
 func StructConstructorFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
-	P("in struct ctor, name = '%s', args = %#v", name, args)
+	Q("in struct ctor, name = '%s', args = %#v", name, args)
 	return MakeHash(args, name, env)
 }
 
