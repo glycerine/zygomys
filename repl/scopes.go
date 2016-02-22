@@ -173,7 +173,7 @@ func (stack *Stack) BindSymbol(sym SexpSymbol, expr Sexp) error {
 				return nil
 			}
 		}
-
+		Q("BindSymbol: at end, defaulting to deny")
 		return fmt.Errorf("cannot assign %v to %v", rhsTy.ShortName(), lhsTy.ShortName())
 	} else {
 		Q("BindSymbol: new symbol %v", sym.name)

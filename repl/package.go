@@ -285,6 +285,10 @@ func StructBuilder(env *Glisp, name string,
 		rtR.DisplayAs = structName
 		GoStructRegistry.RegisterUserdef(structName, rtR, false)
 
+		// overwrite any existing definition, deliberately ignore any error,
+		// as it may not be present at all.
+		env.linearstack.DeleteSymbolFromTopOfStackScope(symN)
+
 		err := env.LexicalBindSymbol(symN, rtR)
 		if err != nil {
 			return SexpNull, fmt.Errorf("struct builder could not bind symbol '%s': '%v'",
