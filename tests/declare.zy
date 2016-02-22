@@ -30,7 +30,7 @@
 
 (def p1 (& p)) ;; (& p) takes the address of the object that p evaluates to;
 (def p2 (& p)) ;; since & is a normal function, the resulting pointer points to the
-               ;; Car Id: 99912) object, not to p itself.
+               ;; (Car Id: 99912) object, not to p itself.
 
 (assert (== p1 p2)) ;; hence two pointers to the same underlying object are equal.
 
