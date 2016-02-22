@@ -87,7 +87,7 @@
 
 ;; Here is how we'll declare functions:
 ;; 
-;; we'll always using named return types; so we can
+;; we'll always use named return types; so we can
 ;; have an implicit return; this facilitates automatic compile-down.
 ;;
 ;;(func doSomething [a:int b:string] [n:int err:error]
