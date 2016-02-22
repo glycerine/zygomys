@@ -24,7 +24,7 @@ func regexpFindIndex(
 
 	arr := make([]Sexp, len(loc))
 	for i := range arr {
-		arr[i] = Sexp(SexpInt{Val: int64(loc[i])})
+		arr[i] = Sexp(&SexpInt{Val: int64(loc[i])})
 	}
 
 	return &SexpArray{Val: arr}, nil

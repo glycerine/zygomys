@@ -271,15 +271,15 @@ func decodeGoToSexpHelper(r interface{}, depth int, env *Glisp, preferSym bool) 
 
 	case int:
 		VPrintf("depth %d found int case: val = %#v\n", depth, val)
-		return SexpInt{Val: int64(val)}
+		return &SexpInt{Val: int64(val)}
 
 	case int32:
 		VPrintf("depth %d found int32 case: val = %#v\n", depth, val)
-		return SexpInt{Val: int64(val)}
+		return &SexpInt{Val: int64(val)}
 
 	case int64:
 		VPrintf("depth %d found int64 case: val = %#v\n", depth, val)
-		return SexpInt{Val: val}
+		return &SexpInt{Val: val}
 
 	case float64:
 		VPrintf("depth %d found float64 case: val = %#v\n", depth, val)
@@ -392,7 +392,7 @@ func SexpToGo(sexp Sexp, env *Glisp) interface{} {
 			ar[i] = SexpToGo(ele, env)
 		}
 		return ar
-	case SexpInt:
+	case *SexpInt:
 		// ugorji msgpack will give us int64 not int,
 		// so match that to make the decodings comparable.
 		return int64(e.Val)
@@ -531,7 +531,7 @@ func SexpToGoStructs(sexp Sexp, target interface{}, env *Glisp) (interface{}, er
 		targVa.Elem().Set(slc)
 		VPrintf("\n targVa is now %v\n", targVa)
 
-	case SexpInt:
+	case *SexpInt:
 		// ugorji msgpack will give us int64 not int,
 		// so match that to make the decodings comparable.
 		targVa.Elem().SetInt(int64(src.Val))

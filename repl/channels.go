@@ -27,7 +27,7 @@ func MakeChanFunction(env *Glisp, name string,
 	size := 0
 	if len(args) == 1 {
 		switch t := args[0].(type) {
-		case SexpInt:
+		case *SexpInt:
 			size = int(t.Val)
 		default:
 			return SexpNull, errors.New(

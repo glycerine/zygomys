@@ -29,7 +29,7 @@ type SexpPointer struct {
 func NewSexpPointer(pointedTo Sexp, pointedToType *RegisteredType) *SexpPointer {
 
 	ptrRt := GoStructRegistry.GetOrCreatePointerType(pointedToType)
-
+	P("pointer type is ptrRt = '%#v'", ptrRt)
 	p := &SexpPointer{
 		Target:        pointedTo,
 		PointedToType: pointedToType,
@@ -73,7 +73,7 @@ func (r SexpStr) Type() *RegisteredType {
 	return GoStructRegistry.Registry["string"]
 }
 
-func (r SexpInt) Type() *RegisteredType {
+func (r *SexpInt) Type() *RegisteredType {
 	return GoStructRegistry.Registry["int64"]
 }
 
@@ -372,7 +372,7 @@ func (b SexpBool) SexpString() string {
 	return "false"
 }
 
-func (i SexpInt) SexpString() string {
+func (i *SexpInt) SexpString() string {
 	return strconv.Itoa(int(i.Val))
 }
 
@@ -481,7 +481,7 @@ func IsTruthy(expr Sexp) bool {
 	switch e := expr.(type) {
 	case SexpBool:
 		return e.Val
-	case SexpInt:
+	case *SexpInt:
 		return e.Val != 0
 	case SexpChar:
 		return e.Val != 0

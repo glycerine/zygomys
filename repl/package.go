@@ -7,6 +7,37 @@ import (
 	"time"
 )
 
+// package.go: declare package, structs, function types
+
+// A builder is a special kind of function. Like
+// a macro it receives the un-evaluated tree
+// of symbols from its caller. A builder
+// can therefore be used to build new types
+// and declarations new functions/methods.
+//
+// Like a function, a builder is called at
+// run/evaluation time, not at definition time.
+//
+// The primary use here is to be able to define
+// packges, structs, interfaces, functions,
+// methods, and type aliases.
+//
+func (env *Glisp) ImportPackageBuilder() {
+	env.AddBuilder("struct", StructBuilder)
+	env.AddBuilder("func", FuncBuilder)
+	env.AddBuilder("interface", InterfaceBuilder)
+	env.AddBuilder("package", PackageBuilder)
+	env.AddBuilder("var", VarBuilder)
+	env.AddBuilder("expect-error", ExpectErrorBuilder)
+	env.AddBuilder("&", AddressOfBuilder)
+
+	env.AddFunction("slice-of", SliceOfFunction)
+	env.AddFunction("ptr", PointerToFunction)
+}
+
+var sxSliceOf *SexpFunction = MakeUserFunction("slice-of", SliceOfFunction)
+var sxArrayOf *SexpFunction = MakeUserFunction("array-of", ArrayOfFunction)
+
 type SexpUserVarDefn struct {
 	Name string
 }
@@ -198,36 +229,6 @@ func (f *SexpField) SexpString() string {
 	}
 	return str + ")"
 }
-
-// package.go: declare package, structs, function types
-
-// A builder is a special kind of function. Like
-// a macro it receives the un-evaluated tree
-// of symbols from its caller. A builder
-// can therefore be used to build new types
-// and declarations new functions/methods.
-//
-// Like a function, a builder is called at
-// run/evaluation time, not at definition time.
-//
-// The primary use here is to be able to define
-// packges, structs, interfaces, functions,
-// methods, and type aliases.
-//
-func (env *Glisp) ImportPackageBuilder() {
-	env.AddBuilder("struct", StructBuilder)
-	env.AddBuilder("func", FuncBuilder)
-	env.AddBuilder("interface", InterfaceBuilder)
-	env.AddBuilder("package", PackageBuilder)
-	env.AddBuilder("var", VarBuilder)
-	env.AddBuilder("expect-error", ExpectErrorBuilder)
-
-	env.AddFunction("slice-of", SliceOfFunction)
-	env.AddFunction("ptr", PointerToFunction)
-}
-
-var sxSliceOf *SexpFunction = MakeUserFunction("slice-of", SliceOfFunction)
-var sxArrayOf *SexpFunction = MakeUserFunction("array-of", ArrayOfFunction)
 
 func StructBuilder(env *Glisp, name string,
 	args []Sexp) (Sexp, error) {
@@ -513,7 +514,7 @@ func baseConstruct(env *Glisp, f *RegisteredType, nargs int) (Sexp, error) {
 	if nargs == 0 {
 		switch v.(type) {
 		case *int, *uint8, *uint16, *uint32, *uint64, *int8, *int16, *int32, *int64:
-			return SexpInt{}, nil
+			return &SexpInt{}, nil
 		case *float32, *float64:
 			return SexpFloat{}, nil
 		case *string:
@@ -536,7 +537,7 @@ func baseConstruct(env *Glisp, f *RegisteredType, nargs int) (Sexp, error) {
 
 	switch v.(type) {
 	case *int, *uint8, *uint16, *uint32, *uint64, *int8, *int16, *int32, *int64:
-		myint, ok := arg.(SexpInt)
+		myint, ok := arg.(*SexpInt)
 		if !ok {
 			return SexpNull, fmt.Errorf("cannot convert %T to int", arg)
 		}
@@ -580,7 +581,7 @@ func ArrayOfFunction(env *Glisp, name string,
 		if len(ar.Val) == 0 {
 			return SexpNull, fmt.Errorf("at least one size must be specified in array constructor; e.g. ([size ...] regtype)")
 		}
-		asInt, isInt := ar.Val[0].(SexpInt)
+		asInt, isInt := ar.Val[0].(*SexpInt)
 		if !isInt {
 			return SexpNull, fmt.Errorf("size must be an int (not %T) in array constructor; e.g. ([size ...] regtype)", ar.Val[0])
 		}
@@ -721,4 +722,29 @@ func ExpectErrorBuilder(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		return SexpNull, nil
 	}
 	return SexpNull, fmt.Errorf("expect-error expected '%s' but got no error", expectedError.S)
+}
+
+func AddressOfBuilder(env *Glisp, name string, args []Sexp) (Sexp, error) {
+	narg := len(args)
+	if narg != 1 {
+		return SexpNull, WrongNargs
+	}
+
+	dup := env.Duplicate()
+	x, err := dup.EvalExpressions(args[0:1])
+	P("done with eval, ev=%v / type %T. err = %v", x.SexpString(), x, err)
+	if err != nil {
+		return SexpNull, err
+	}
+
+	return NewSexpPointer(x, x.Type()), nil
+	/*
+		        // structs only version:
+				switch a := args[0].(type) {
+				case *SexpHash:
+					return NewSexpPointer(a, a.Type()), nil
+				}
+
+				return SexpNull, fmt.Errorf("cannot take address of argument '%s'", args[0].SexpString())
+	*/
 }

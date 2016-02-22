@@ -139,9 +139,9 @@ func CallGoMethodFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 			case nil:
 				r = append(r, SexpNull)
 			case int64:
-				r = append(r, SexpInt{Val: e})
+				r = append(r, &SexpInt{Val: e})
 			case int:
-				r = append(r, SexpInt{Val: int64(e)})
+				r = append(r, &SexpInt{Val: int64(e)})
 			case error:
 				r = append(r, SexpError{e})
 			case string:

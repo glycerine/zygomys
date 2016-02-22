@@ -41,7 +41,7 @@ func HashExpression(env *Glisp, expr Sexp) (int, error) {
 
 func hashHelper(expr Sexp) (hashcode int, isList bool, err error) {
 	switch e := expr.(type) {
-	case SexpInt:
+	case *SexpInt:
 		return int(e.Val), false, nil
 	case SexpChar:
 		return int(e.Val), false, nil
@@ -546,7 +546,7 @@ func GenericHpairFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		return SexpNull, WrongNargs
 	}
 
-	posreq, isInt := args[1].(SexpInt)
+	posreq, isInt := args[1].(*SexpInt)
 	if !isInt {
 		return SexpNull, fmt.Errorf("hpair position request must be an integer")
 	}
@@ -562,7 +562,7 @@ func GenericHpairFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		if pos < 0 || pos >= len(seq.Val) {
 			return SexpNull, fmt.Errorf("hpair position request %d out of bounds", pos)
 		}
-		return Cons(SexpInt{Val: int64(pos)}, Cons(seq.Val[pos], SexpNull)), nil
+		return Cons(&SexpInt{Val: int64(pos)}, Cons(seq.Val[pos], SexpNull)), nil
 	default:
 		return SexpNull, errors.New("first argument of to hpair function must be hash, list, or array")
 	}
@@ -639,15 +639,15 @@ func fillHashHelper(r interface{}, depth int, env *Glisp, preferSym bool) (Sexp,
 
 	case int:
 		Q("depth %d found int case: val = %#v\n", depth, val)
-		return SexpInt{Val: int64(val)}, nil
+		return &SexpInt{Val: int64(val)}, nil
 
 	case int32:
 		Q("depth %d found int32 case: val = %#v\n", depth, val)
-		return SexpInt{Val: int64(val)}, nil
+		return &SexpInt{Val: int64(val)}, nil
 
 	case int64:
 		Q("depth %d found int64 case: val = %#v\n", depth, val)
-		return SexpInt{Val: int64(val)}, nil
+		return &SexpInt{Val: int64(val)}, nil
 
 	case float64:
 		Q("depth %d found float64 case: val = %#v\n", depth, val)

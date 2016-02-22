@@ -97,8 +97,8 @@ func ComplementFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	}
 
 	switch t := args[0].(type) {
-	case SexpInt:
-		return SexpInt{Val: ^t.Val}, nil
+	case *SexpInt:
+		return &SexpInt{Val: ^t.Val}, nil
 	case SexpChar:
 		return SexpChar{Val: ^t.Val}, nil
 	}
@@ -230,7 +230,7 @@ func ArrayAccessFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 
 	var i int
 	switch t := args[1].(type) {
-	case SexpInt:
+	case *SexpInt:
 		i = int(t.Val)
 	case SexpChar:
 		i = int(t.Val)
@@ -242,7 +242,7 @@ func ArrayAccessFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 				"array-access position argument: %s", err)
 		}
 		switch j := res.(type) {
-		case SexpInt:
+		case *SexpInt:
 			i = int(j.Val)
 		default:
 			return SexpNull, errors.New("Second argument of aget could not be evaluated to integer")
@@ -285,7 +285,7 @@ func SgetFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 
 	var i int
 	switch t := args[1].(type) {
-	case SexpInt:
+	case *SexpInt:
 		i = int(t.Val)
 	case SexpChar:
 		i = int(t.Val)
@@ -342,7 +342,7 @@ func HashAccessFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 			return SexpNull, WrongNargs
 		}
 		switch posreq := args[1].(type) {
-		case SexpInt:
+		case *SexpInt:
 			pos := int(posreq.Val)
 			if pos < 0 || pos >= len(hash.KeyOrder) {
 				return SexpNull, fmt.Errorf("hpair position request %d out of bounds", pos)
@@ -383,7 +383,7 @@ func SliceFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	var start int
 	var end int
 	switch t := args[1].(type) {
-	case SexpInt:
+	case *SexpInt:
 		start = int(t.Val)
 	case SexpChar:
 		start = int(t.Val)
@@ -392,7 +392,7 @@ func SliceFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	}
 
 	switch t := args[2].(type) {
-	case SexpInt:
+	case *SexpInt:
 		end = int(t.Val)
 	case SexpChar:
 		end = int(t.Val)
@@ -424,22 +424,22 @@ func LenFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	switch t := args[0].(type) {
 	case SexpSentinel:
 		if t == SexpNull {
-			return SexpInt{}, nil
+			return &SexpInt{}, nil
 		}
 		break
 	case *SexpArray:
-		return SexpInt{Val: int64(len(t.Val))}, nil
+		return &SexpInt{Val: int64(len(t.Val))}, nil
 	case SexpStr:
-		return SexpInt{Val: int64(len(t.S))}, nil
+		return &SexpInt{Val: int64(len(t.S))}, nil
 	case *SexpHash:
-		return SexpInt{Val: int64(HashCountKeys(t))}, nil
+		return &SexpInt{Val: int64(HashCountKeys(t))}, nil
 	case SexpPair:
 		n, err := ListLen(t)
-		return SexpInt{Val: int64(n)}, err
+		return &SexpInt{Val: int64(n)}, err
 	default:
 		P("in LenFunction with args[0] of type %T", t)
 	}
-	return SexpInt{}, errors.New("argument must be string, list, hash, or array")
+	return &SexpInt{}, errors.New("argument must be string, list, hash, or array")
 }
 
 func AppendFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
@@ -664,7 +664,7 @@ func MakeArrayFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 
 	var size int
 	switch e := args[0].(type) {
-	case SexpInt:
+	case *SexpInt:
 		size = int(e.Val)
 	default:
 		return SexpNull, errors.New("first argument must be integer")
@@ -742,7 +742,7 @@ func SymnumFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 
 	switch t := args[0].(type) {
 	case SexpSymbol:
-		return SexpInt{Val: int64(t.number)}, nil
+		return &SexpInt{Val: int64(t.number)}, nil
 	}
 	return SexpNull, errors.New("argument must be symbol")
 }
@@ -889,7 +889,7 @@ func CoreFunctions() map[string]GlispUserFunction {
 		"stop":       StopFunction,
 		"joinsym":    JoinSymFunction,
 		"GOOS":       GOOSFunction,
-		"&":          AddressOfFunction,
+		//"&":          AddressOfFunction,
 	}
 }
 
@@ -1038,7 +1038,7 @@ func ExitFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		return SexpNull, WrongNargs
 	}
 	switch e := args[0].(type) {
-	case SexpInt:
+	case *SexpInt:
 		os.Exit(int(e.Val))
 	}
 	return SexpNull, errors.New("argument must be int (the exit code)")
@@ -1312,10 +1312,14 @@ func AddressOfFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		return SexpNull, WrongNargs
 	}
 
-	switch a := args[0].(type) {
-	case *SexpHash:
-		return NewSexpPointer(a, a.Type()), nil
-	}
+	return NewSexpPointer(args[0], args[0].Type()), nil
+	/*
+		        // structs only version:
+				switch a := args[0].(type) {
+				case *SexpHash:
+					return NewSexpPointer(a, a.Type()), nil
+				}
 
-	return SexpNull, fmt.Errorf("cannot take address of argument '%s'", args[0].SexpString())
+				return SexpNull, fmt.Errorf("cannot take address of argument '%s'", args[0].SexpString())
+	*/
 }

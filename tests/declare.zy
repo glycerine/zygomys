@@ -1,4 +1,7 @@
 ;; declare structs
+;;
+;; and then have the struct definition enforced during type-checking
+;; of assignments.
 
 (struct Car [
         (field Id:          int64     e:0                  gotags:`json:"id",name:"id"`)
@@ -6,7 +9,7 @@
         (field BadApple:    string    e:2  deprecated:true)
         ])
 
-;; redefines on the fly:
+;; structs can be redefined at the repl
 (struct Car [
  (field              Id: int64        e:0       gotags:`json:"id",name:"id"` )
  (field            Name: string       e:1       gotags:`json:"name"`         )
@@ -64,7 +67,14 @@
 (.hasSlice.SliceOfLife = [])
 (assert (== 0 (len (.hasSlice.SliceOfLife))))
 
+;; we can point to ourselves if need be.
+(def w (Car Name: "Willow"))
+(.w.OtherCar = (& w))
+(assert (== (& w) (:OtherCar w)))
+;; or with dot symbol notation:
+(assert (== (& w) (.w.OtherCar)))
 
+(.w.PointerSisters = (& 34))
 
 ;; not yet implemented stuff:
 

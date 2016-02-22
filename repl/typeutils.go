@@ -52,7 +52,7 @@ func IsFloat(expr Sexp) bool {
 
 func IsInt(expr Sexp) bool {
 	switch expr.(type) {
-	case SexpInt:
+	case *SexpInt:
 		return true
 	}
 	return false
@@ -78,7 +78,7 @@ func IsNumber(expr Sexp) bool {
 	switch expr.(type) {
 	case SexpFloat:
 		return true
-	case SexpInt:
+	case *SexpInt:
 		return true
 	case SexpChar:
 		return true
@@ -104,7 +104,7 @@ func IsHash(expr Sexp) bool {
 
 func IsZero(expr Sexp) bool {
 	switch e := expr.(type) {
-	case SexpInt:
+	case *SexpInt:
 		return int(e.Val) == 0
 	case SexpChar:
 		return int(e.Val) == 0
@@ -144,7 +144,7 @@ func TypeOf(expr Sexp) SexpStr {
 		v = "raw"
 	case *SexpArray:
 		v = "array"
-	case SexpInt:
+	case *SexpInt:
 		v = "int64"
 	case SexpStr:
 		v = "string"

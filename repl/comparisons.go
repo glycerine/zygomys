@@ -28,7 +28,7 @@ func signumInt(i int64) int {
 
 func compareFloat(f SexpFloat, expr Sexp) (int, error) {
 	switch e := expr.(type) {
-	case SexpInt:
+	case *SexpInt:
 		return signumFloat(f.Val - float64(e.Val)), nil
 	case SexpFloat:
 		return signumFloat(f.Val - e.Val), nil
@@ -39,9 +39,9 @@ func compareFloat(f SexpFloat, expr Sexp) (int, error) {
 	return 0, errors.New(errmsg)
 }
 
-func compareInt(i SexpInt, expr Sexp) (int, error) {
+func compareInt(i *SexpInt, expr Sexp) (int, error) {
 	switch e := expr.(type) {
-	case SexpInt:
+	case *SexpInt:
 		return signumInt(i.Val - e.Val), nil
 	case SexpFloat:
 		return signumFloat(float64(i.Val) - e.Val), nil
@@ -54,7 +54,7 @@ func compareInt(i SexpInt, expr Sexp) (int, error) {
 
 func compareChar(c SexpChar, expr Sexp) (int, error) {
 	switch e := expr.(type) {
-	case SexpInt:
+	case *SexpInt:
 		return signumInt(int64(c.Val) - e.Val), nil
 	case SexpFloat:
 		return signumFloat(float64(c.Val) - e.Val), nil
@@ -171,7 +171,7 @@ func comparePointers(a *SexpPointer, bs Sexp) (int, error) {
 
 func Compare(a Sexp, b Sexp) (int, error) {
 	switch at := a.(type) {
-	case SexpInt:
+	case *SexpInt:
 		return compareInt(at, b)
 	case SexpChar:
 		return compareChar(at, b)
