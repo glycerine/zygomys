@@ -4,7 +4,7 @@ Speaker: Jason E. Aten, Ph.D.
 Affiliation: Betable.com, San Francisco, CA.
 
 The free and open-source programming language Go, helmed by a team from
-Google, offers fast compilation, statical-typing, and a multicore-oriented
+Google, offers fast compilation, static-typing, and a multicore-oriented
 programming environment that produces fast binaries from easy-to-maintain
 code.
 
@@ -23,7 +23,7 @@ https://github.com/glycerine/zygomys under a permissive 2-clause BSD
 license. Written in 100% Go (no CGO required!), zygomys makes it
 easy to dynamically control compiled code. zygomys automatically maps
 Lisp records to nested Go structures, including structs and slices that
-contain Go interfaces. Should scripts become large, zygomys makes it is
+contain Go interfaces. Should scripts become large, zygomys makes it
 easy to translate a piece of script code into compiled Go code to
 optimize execution.
 
