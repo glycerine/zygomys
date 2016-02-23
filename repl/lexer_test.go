@@ -58,7 +58,7 @@ func Test025LexingOfStringAtomsAndSymbols(t *testing.T) {
 			// and possibly later allow for shell style substitution,
 			// so it is always its own token/symbol, and should be accepted.
 			symbolNotOkay := []string{`~`, `@`, `(`, `)`, `[`, `]`, `{`, `}`, `'`, `#`,
-				`:`, `^`, `\`, `|`, `%`, `"`, `;`}
+				`:`, `^`, `\`, `|`, `%`, `"`, `;`, `,`}
 			// NB: have to allow  `a.b` and `a.b.` or else file paths,
 			// used as arguments in macro (req) for example, won't
 			// get lexed into symbols.
@@ -81,7 +81,7 @@ func Test025LexingOfStringAtomsAndSymbols(t *testing.T) {
 			//dotSymbolRegex := regexp.MustCompile(reg)
 
 			dotSymbolNotOkay := []string{`~`, `@`, `(`, `)`, `[`, `]`, `{`, `}`, `'`, `#`,
-				`:`, `^`, `\`, `|`, `%`, `"`, `;`, `.9`, `.a.`, `.a.b.`, `..`, `...`}
+				`:`, `^`, `\`, `|`, `%`, `"`, `;`, `.9`, `.a.`, `.a.b.`, `..`, `...`, `,`}
 
 			//okay := []string{`..`, `a.b`, `-`, `a-b`, `*a-b*`, `$`, `&`, `.`, `.method`}
 			dotSymbolOkay := []string{`.`, `.h`, `.method`, `.a.b`, `.a.b.c`}

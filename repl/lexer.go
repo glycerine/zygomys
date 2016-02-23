@@ -169,11 +169,11 @@ var (
 	// '$' is always a symbol on its own, handled specially.
 	// Symbols cannot start with a number. DotSymbols cannot have a number
 	// as the first character after '.'
-	SymbolRegex = regexp.MustCompile(`^[^'#:;\\~@\[\]{}\^|"()%0-9][^'#:;\\~@\[\]{}\^|"()%]*$`)
+	SymbolRegex = regexp.MustCompile(`^[^'#:;\\~@\[\]{}\^|"()%0-9,][^'#:;\\~@\[\]{}\^|"()%,]*$`)
 	// dot symbol examples: `.`, `.a`, `.a.b`, `.a.b.c`
 	// dot symbol non-examples: `.a.`, `..`
-	DotSymbolRegex = regexp.MustCompile(`^[.]$|^([.][^'#:;\\~@\[\]{}\^|"()%.0-9][^'#:;\\~@\[\]{}\^|"()%.]*)+$`)
-	DotPartsRegex  = regexp.MustCompile(`[.][^'#:;\\~@\[\]{}\^|"()%.0-9][^'#:;\\~@\[\]{}\^|"()%.]*`)
+	DotSymbolRegex = regexp.MustCompile(`^[.]$|^([.][^'#:;\\~@\[\]{}\^|"()%.0-9,][^'#:;\\~@\[\]{}\^|"()%.,]*)+$`)
+	DotPartsRegex  = regexp.MustCompile(`[.][^'#:;\\~@\[\]{}\^|"()%.0-9,][^'#:;\\~@\[\]{}\^|"()%.,]*`)
 	CharRegex      = regexp.MustCompile("^#\\\\?.$")
 	FloatRegex     = regexp.MustCompile("^-?([0-9]+\\.[0-9]*)|(\\.[0-9]+)|([0-9]+(\\.[0-9]*)?[eE](-?[0-9]+))$")
 )
@@ -478,6 +478,9 @@ top:
 			return nil
 		case '\n':
 			lexer.linenum++
+			fallthrough
+		case ',':
+			// comma, same as whitespace
 			fallthrough
 		case ' ':
 			fallthrough
