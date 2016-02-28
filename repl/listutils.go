@@ -35,10 +35,11 @@ func MapList(env *Glisp, fun *SexpFunction, expr Sexp) (Sexp, error) {
 		return SexpNull, nil
 	}
 
-	var list *SexpPair
+	var list = &SexpPair{}
 	switch e := expr.(type) {
 	case *SexpPair:
-		list = e
+		list.Head = e.Head
+		list.Tail = e.Tail
 	default:
 		return SexpNull, NotAList
 	}

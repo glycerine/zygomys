@@ -7,7 +7,7 @@ import (
 )
 
 func ConcatStr(str *SexpStr, rest []Sexp) (*SexpStr, error) {
-	res := str
+	res := &SexpStr{S: str.S}
 	for i, x := range rest {
 		switch t := x.(type) {
 		case *SexpStr:
