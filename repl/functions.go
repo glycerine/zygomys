@@ -1350,9 +1350,19 @@ func DerefFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 			Q("ptr.ReflectTarget.CanAddr() = '%#v'", ptr.ReflectTarget.Elem().CanAddr())
 			Q("ptr.ReflectTarget.CanSet() = '%#v'", ptr.ReflectTarget.Elem().CanSet())
 			Q("*SexpInt case: payload = '%#v'", payload)
-			ptr.ReflectTarget.Elem().Set(reflect.ValueOf(payload.Val))
+			vo := reflect.ValueOf(payload.Val)
+			vot := vo.Type()
+			if !vot.AssignableTo(ptr.ReflectTarget.Elem().Type()) {
+				return SexpNull, fmt.Errorf("type mismatch: value of type '%s' is not assignable to type '%v'", vot, ptr.ReflectTarget.Elem().Type())
+			}
+			ptr.ReflectTarget.Elem().Set(vo)
 		case *SexpStr:
-			ptr.ReflectTarget.Elem().Set(reflect.ValueOf(payload.S))
+			vo := reflect.ValueOf(payload.S)
+			vot := vo.Type()
+			if !vot.AssignableTo(ptr.ReflectTarget.Elem().Type()) {
+				return SexpNull, fmt.Errorf("type mismatch: value of type '%s' is not assignable to type '%v'", vot, ptr.ReflectTarget.Elem().Type())
+			}
+			ptr.ReflectTarget.Elem().Set(vo)
 		case *SexpHash:
 			Q("ptr.PointedToType = '%#v'", ptr.PointedToType)
 			if ptr.PointedToType == payload.Type() {

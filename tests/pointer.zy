@@ -33,6 +33,11 @@ ptr2
 (deref-set sptr "hiya")
 (assert (== s "hiya"))
 
+;; cross type assignment doesn't type check
+(expect-error "Error calling 'deref-set': type mismatch: value of type 'int64' is not assignable to type 'string'" (deref-set sptr 3))
+(expect-error "Error calling 'deref-set': type mismatch: value of type 'string' is not assignable to type 'int64'" (deref-set ptr "a-string"))
+
+
 ;; set a struct through a pointer
 (struct Dog [
         (field Name:          string     e:0)
