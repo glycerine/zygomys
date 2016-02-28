@@ -207,6 +207,12 @@ func Repl(env *Glisp, cfg *GlispConfig) {
 			exprsInput = []Sexp{MakeList(exprsInput)}
 		}
 
+		// allow * at the repl to dereference a pointer and print
+		if len(first) > 0 && first[0] == '*' {
+			//P("saw * at repl, first='%v', parts='%#v'. exprsInput = '%#v'", first, parts, exprsInput)
+			exprsInput = []Sexp{MakeList(exprsInput)}
+		}
+
 		if first == ".dump" {
 			processDumpCommand(env, parts[1:])
 			continue

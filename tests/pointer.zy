@@ -29,3 +29,18 @@ ptr2
 (assert (== 1 (* ptr)))
 (assert (== 1 (* ptr2)))
 
+;; set a string through a pointer
+(deref-set sptr "hiya")
+(assert (== s "hiya"))
+
+;; set a struct through a pointer
+(struct Dog [
+        (field Name:          string     e:0)
+        (field Number:          int64     e:1)
+        ])
+(def d (Dog Name:"Rover"))
+
+(pdog = (& d))
+(deref-set pdog (Dog Name:"Benicia"))
+(assert (== (.d.Name) "Benicia"))
+

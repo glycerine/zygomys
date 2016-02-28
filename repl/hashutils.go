@@ -839,3 +839,48 @@ func compareHash(a *SexpHash, bs Sexp) (int, error) {
 
 	return 0, nil
 }
+
+func (p *SexpHash) CopyMap() *map[int][]*SexpPair {
+	cp := make(map[int][]*SexpPair)
+	for k, v := range p.Map {
+		cp[k] = v
+	}
+	return &cp
+}
+
+// CloneFrom copys all the internals of src into p, effectively
+// blanking out whatever p held and replacing it with a copy of src.
+func (p *SexpHash) CloneFrom(src *SexpHash) {
+
+	p.TypeName = src.TypeName
+	p.Map = *(src.CopyMap())
+
+	p.KeyOrder = src.KeyOrder
+	p.GoStructFactory = src.GoStructFactory
+	p.NumKeys = src.NumKeys
+	p.GoMethods = src.GoMethods
+	p.GoFields = src.GoFields
+	p.GoMethSx = src.GoMethSx
+	p.GoFieldSx = src.GoFieldSx
+	p.GoType = src.GoType
+	p.NumMethod = src.NumMethod
+	p.GoShadowStruct = src.GoShadowStruct
+	p.GoShadowStructVa = src.GoShadowStructVa
+
+	// json tag name -> pointers to example values, as factories for SexpToGoStructs()
+	p.JsonTagMap = make(map[string]*HashFieldDet)
+	for k, v := range src.JsonTagMap {
+		p.JsonTagMap[k] = v
+	}
+	p.DetOrder = src.DetOrder
+
+	// for using these as a scoping model
+	p.DefnEnv = src.DefnEnv
+	p.SuperClass = src.SuperClass
+	p.ZMain = src.ZMain
+	p.ZMethods = make(map[string]*SexpFunction)
+	for k, v := range src.ZMethods {
+		p.ZMethods[k] = v
+	}
+	p.env = src.env
+}

@@ -1343,23 +1343,33 @@ func DerefFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 			return SexpNull, WrongNargs
 		}
 
-		P("deref-set: arg0 is %T and arg1 is %T,   ptr.Target = %#v", args[0], args[1], ptr.Target)
-		P("args[0] has ptr.ReflectTarget = '%#v'", ptr.ReflectTarget)
+		Q("deref-set: arg0 is %T and arg1 is %T,   ptr.Target = %#v", args[0], args[1], ptr.Target)
+		Q("args[0] has ptr.ReflectTarget = '%#v'", ptr.ReflectTarget)
 		switch payload := args[1].(type) {
 		case *SexpInt:
-			P("ptr.ReflectTarget.CanAddr() = '%#v'", ptr.ReflectTarget.Elem().CanAddr())
-			P("ptr.ReflectTarget.CanSet() = '%#v'", ptr.ReflectTarget.Elem().CanSet())
-			P("*SexpInt case: payload = '%#v'", payload)
+			Q("ptr.ReflectTarget.CanAddr() = '%#v'", ptr.ReflectTarget.Elem().CanAddr())
+			Q("ptr.ReflectTarget.CanSet() = '%#v'", ptr.ReflectTarget.Elem().CanSet())
+			Q("*SexpInt case: payload = '%#v'", payload)
 			ptr.ReflectTarget.Elem().Set(reflect.ValueOf(payload.Val))
+		case *SexpStr:
+			ptr.ReflectTarget.Elem().Set(reflect.ValueOf(payload.S))
+		case *SexpHash:
+			Q("ptr.PointedToType = '%#v'", ptr.PointedToType)
+			if ptr.PointedToType == payload.Type() {
+				Q("have matching type!")
+				ptr.Target.(*SexpHash).CloneFrom(payload)
+			} else {
+				Q("type mismatch %#v  is not  %#v", ptr.PointedToType, payload.Type())
+			}
 		case *SexpReflect:
-			P("good, e2 is SexpReflect with Val='%#v'", payload.Val)
+			Q("good, e2 is SexpReflect with Val='%#v'", payload.Val)
 
-			P("ptr.Target = '%#v'.  ... trying SexpToGoStructs()", ptr.Target)
+			Q("ptr.Target = '%#v'.  ... trying SexpToGoStructs()", ptr.Target)
 			iface, err := SexpToGoStructs(payload, ptr.Target, env)
 			if err != nil {
 				return SexpNull, err
 			}
-			P("got back iface = '%#v'", iface)
+			Q("got back iface = '%#v'", iface)
 
 		default:
 			return SexpNull, fmt.Errorf("deref-set doesn't handle assignment of type %T at present", payload)
