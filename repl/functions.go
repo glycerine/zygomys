@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"reflect"
 	"runtime"
 )
 
@@ -890,6 +891,8 @@ func CoreFunctions() map[string]GlispUserFunction {
 		"joinsym":    JoinSymFunction,
 		"GOOS":       GOOSFunction,
 		"&":          AddressOfFunction,
+		"deref-set":  DerefFunction,
+		"deref":      DerefFunction,
 	}
 }
 
@@ -1313,4 +1316,57 @@ func AddressOfFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	}
 
 	return NewSexpPointer(args[0], args[0].Type()), nil
+}
+
+func DerefFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
+	narg := len(args)
+	if narg != 1 && narg != 2 {
+		return SexpNull, WrongNargs
+	}
+	var ptr *SexpPointer
+	switch e := args[0].(type) {
+	case *SexpPointer:
+		ptr = e
+	default:
+		return SexpNull, fmt.Errorf("%s only operates on pointers (*SexpPointer); we saw %T instead", name, e)
+	}
+
+	switch name {
+	case "deref":
+		if narg != 1 {
+			return SexpNull, WrongNargs
+		}
+		return ptr.Target, nil
+
+	case "deref-set":
+		if narg != 2 {
+			return SexpNull, WrongNargs
+		}
+
+		P("deref-set: arg0 is %T and arg1 is %T,   ptr.Target = %#v", args[0], args[1], ptr.Target)
+		P("args[0] has ptr.ReflectTarget = '%#v'", ptr.ReflectTarget)
+		switch payload := args[1].(type) {
+		case *SexpInt:
+			P("ptr.ReflectTarget.CanAddr() = '%#v'", ptr.ReflectTarget.Elem().CanAddr())
+			P("ptr.ReflectTarget.CanSet() = '%#v'", ptr.ReflectTarget.Elem().CanSet())
+			P("*SexpInt case: payload = '%#v'", payload)
+			ptr.ReflectTarget.Elem().Set(reflect.ValueOf(payload.Val))
+		case *SexpReflect:
+			P("good, e2 is SexpReflect with Val='%#v'", payload.Val)
+
+			P("ptr.Target = '%#v'.  ... trying SexpToGoStructs()", ptr.Target)
+			iface, err := SexpToGoStructs(payload, ptr.Target, env)
+			if err != nil {
+				return SexpNull, err
+			}
+			P("got back iface = '%#v'", iface)
+
+		default:
+			return SexpNull, fmt.Errorf("deref-set doesn't handle assignment of type %T at present", payload)
+		}
+		return SexpNull, nil
+
+	default:
+		return SexpNull, fmt.Errorf("unimplemented operation '%s' in DerefFunction", name)
+	}
 }
