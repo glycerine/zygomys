@@ -58,7 +58,7 @@ func SystemFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	if err != nil {
 		return SexpNull, fmt.Errorf("error from command: '%s'. Output:'%s'", err, string(Chomp(out)))
 	}
-	return SexpStr{S: string(Chomp(out))}, nil
+	return &SexpStr{S: string(Chomp(out))}, nil
 }
 
 // given strings/lists of strings with possible whitespace
@@ -76,7 +76,7 @@ func FlattenToWordsFunction(env *Glisp, name string, args []Sexp) (Sexp, error) 
 	// Now convert to []Sexp{SexpStr}
 	res := make([]Sexp, len(stringArgs))
 	for i := range stringArgs {
-		res[i] = SexpStr{S: stringArgs[i]}
+		res[i] = &SexpStr{S: stringArgs[i]}
 	}
 	return &SexpArray{Val: res}, nil
 }
@@ -86,12 +86,12 @@ func flattenToWordsHelper(args []Sexp) ([]string, error) {
 
 	for i := range args {
 		switch c := args[i].(type) {
-		case SexpStr:
+		case *SexpStr:
 			many := strings.Split(c.S, " ")
 			stringArgs = append(stringArgs, many...)
-		case SexpSymbol:
+		case *SexpSymbol:
 			stringArgs = append(stringArgs, c.name)
-		case SexpPair:
+		case *SexpPair:
 			carry, err := ListToArray(c)
 			if err != nil {
 				return []string{}, fmt.Errorf("tried to convert list of strings to array but failed with error '%s'. Input was type %T / val = '%#v'", err, c, c)

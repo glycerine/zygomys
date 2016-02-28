@@ -56,7 +56,7 @@ func (stack *Stack) PopScope() error {
 
 // dynamic scoping lookup. See env.LexicalLookupSymbol() for the lexically
 // scoped equivalent.
-func (stack *Stack) lookupSymbol(sym SexpSymbol, minFrame int) (Sexp, error, *Scope) {
+func (stack *Stack) lookupSymbol(sym *SexpSymbol, minFrame int) (Sexp, error, *Scope) {
 	if !stack.IsEmpty() {
 		for i := 0; i <= stack.tos-minFrame; i++ {
 			elem, err := stack.Get(i)
@@ -79,19 +79,19 @@ func (stack *Stack) lookupSymbol(sym SexpSymbol, minFrame int) (Sexp, error, *Sc
 	return SexpNull, fmt.Errorf("symbol `%s` not found", sym.name), nil
 }
 
-func (stack *Stack) LookupSymbol(sym SexpSymbol) (Sexp, error, *Scope) {
+func (stack *Stack) LookupSymbol(sym *SexpSymbol) (Sexp, error, *Scope) {
 	return stack.lookupSymbol(sym, 0)
 }
 
 // LookupSymbolNonGlobal  - closures use this to only find symbols below the global scope, to avoid copying globals it'll always be-able to ref
-func (stack *Stack) LookupSymbolNonGlobal(sym SexpSymbol) (Sexp, error, *Scope) {
+func (stack *Stack) LookupSymbolNonGlobal(sym *SexpSymbol) (Sexp, error, *Scope) {
 	return stack.lookupSymbol(sym, 1)
 }
 
 var SymNotFound = errors.New("symbol not found")
 
 // lookup symbols, but don't go beyond a function boundary
-func (stack *Stack) LookupSymbolUntilFunction(sym SexpSymbol) (Sexp, error, *Scope) {
+func (stack *Stack) LookupSymbolUntilFunction(sym *SexpSymbol) (Sexp, error, *Scope) {
 
 	if !stack.IsEmpty() {
 	doneSearching:
@@ -123,7 +123,7 @@ func (stack *Stack) LookupSymbolUntilFunction(sym SexpSymbol) (Sexp, error, *Sco
 	return SexpNull, SymNotFound, nil
 }
 
-func (stack *Stack) BindSymbol(sym SexpSymbol, expr Sexp) error {
+func (stack *Stack) BindSymbol(sym *SexpSymbol, expr Sexp) error {
 	if stack.IsEmpty() {
 		panic("empty stack!!")
 		//return errors.New("no scope available")
@@ -182,7 +182,7 @@ func (stack *Stack) BindSymbol(sym SexpSymbol, expr Sexp) error {
 	return nil
 }
 
-func (stack *Stack) DeleteSymbolFromTopOfStackScope(sym SexpSymbol) error {
+func (stack *Stack) DeleteSymbolFromTopOfStackScope(sym *SexpSymbol) error {
 	if stack.IsEmpty() {
 		panic("empty stack!!")
 		//return errors.New("no scope available")
@@ -196,7 +196,7 @@ func (stack *Stack) DeleteSymbolFromTopOfStackScope(sym SexpSymbol) error {
 }
 
 // used to implement (set v 10)
-func (scope *Scope) UpdateSymbolInScope(sym SexpSymbol, expr Sexp) error {
+func (scope *Scope) UpdateSymbolInScope(sym *SexpSymbol, expr Sexp) error {
 
 	_, found := scope.Map[sym.number]
 	if !found {
@@ -206,7 +206,7 @@ func (scope *Scope) UpdateSymbolInScope(sym SexpSymbol, expr Sexp) error {
 	return nil
 }
 
-func (scope *Scope) DeleteSymbolInScope(sym SexpSymbol) error {
+func (scope *Scope) DeleteSymbolInScope(sym *SexpSymbol) error {
 
 	_, found := scope.Map[sym.number]
 	if !found {

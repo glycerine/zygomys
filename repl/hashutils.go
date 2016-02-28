@@ -43,18 +43,18 @@ func hashHelper(expr Sexp) (hashcode int, isList bool, err error) {
 	switch e := expr.(type) {
 	case *SexpInt:
 		return int(e.Val), false, nil
-	case SexpChar:
+	case *SexpChar:
 		return int(e.Val), false, nil
-	case SexpSymbol:
+	case *SexpSymbol:
 		return e.number, false, nil
-	case SexpStr:
+	case *SexpStr:
 		hasher := fnv.New32()
 		_, err := hasher.Write([]byte(e.S))
 		if err != nil {
 			return 0, false, err
 		}
 		return int(hasher.Sum32()), false, nil
-	case SexpPair:
+	case *SexpPair:
 		return 0, true, nil
 	}
 	return 0, false, fmt.Errorf("cannot hash type %T", expr)
@@ -93,7 +93,7 @@ func MakeHash(args []Sexp, typename string, env *Glisp) (*SexpHash, error) {
 
 	hash := SexpHash{
 		TypeName:         typename,
-		Map:              make(map[int][]SexpPair),
+		Map:              make(map[int][]*SexpPair),
 		KeyOrder:         []Sexp{},
 		GoStructFactory:  factory,
 		NumKeys:          memberCount,
@@ -197,10 +197,10 @@ var KeyNotSymbol = fmt.Errorf("key is not a symbol")
 func (h *SexpHash) TypeCheckField(key Sexp, val Sexp) error {
 	Q("in TypeCheckField, key='%v' val='%v'", key.SexpString(), val.SexpString())
 
-	var keySym SexpSymbol
+	var keySym *SexpSymbol
 	wasSym := false
 	switch ks := key.(type) {
-	case SexpSymbol:
+	case *SexpSymbol:
 		keySym = ks
 		wasSym = true
 	default:
@@ -295,7 +295,7 @@ func (hash *SexpHash) HashSet(key Sexp, val Sexp) error {
 	arr, ok := hash.Map[hashval]
 
 	if !ok {
-		hash.Map[hashval] = []SexpPair{Cons(key, val)}
+		hash.Map[hashval] = []*SexpPair{Cons(key, val)}
 		hash.KeyOrder = append(hash.KeyOrder, key)
 		hash.NumKeys++
 		return nil
@@ -380,10 +380,10 @@ func SetHashKeyOrder(hash *SexpHash, keyOrd Sexp) error {
 	return nil
 }
 
-func (hash *SexpHash) HashPairi(pos int) (SexpPair, error) {
+func (hash *SexpHash) HashPairi(pos int) (*SexpPair, error) {
 	nk := hash.NumKeys
 	if pos > nk {
-		return SexpPair{}, fmt.Errorf("hpair error: pos %d is beyond our key count %d",
+		return &SexpPair{}, fmt.Errorf("hpair error: pos %d is beyond our key count %d",
 			pos, nk)
 	}
 	lenKeyOrder := len(hash.KeyOrder)
@@ -404,7 +404,7 @@ func (hash *SexpHash) HashPairi(pos int) (SexpPair, error) {
 		panic(fmt.Errorf("hpair internal error: could not get element at pos %d in lenKeyOrder=%d", pos, lenKeyOrder))
 	}
 
-	return Cons(key, SexpPair{Head: val, Tail: SexpNull}), nil
+	return Cons(key, &SexpPair{Head: val, Tail: SexpNull}), nil
 }
 
 func GoMethodListFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
@@ -456,7 +456,7 @@ func (h *SexpHash) SetMethodList(env *Glisp) error {
 	sl := make([]reflect.Method, n)
 	for i := 0; i < n; i++ {
 		sl[i] = ty.Method(i)
-		sx[i] = SexpStr{S: sl[i].Name + " " + sl[i].Type.String()}
+		sx[i] = &SexpStr{S: sl[i].Name + " " + sl[i].Type.String()}
 	}
 	h.GoMethSx.Val = sx
 	h.GoMethods = sl
@@ -496,7 +496,7 @@ func fillJsonMap(json2ptr *map[string]*HashFieldDet, fx *[]Sexp, fl *[]reflect.S
 	for i := 0; i < m; i++ {
 		fld := tye.Field(i)
 		*fl = append(*fl, fld)
-		*fx = append(*fx, SexpStr{S: fld.Name + " " + fld.Type.String() + suffix})
+		*fx = append(*fx, &SexpStr{S: fld.Name + " " + fld.Type.String() + suffix})
 		det := &HashFieldDet{
 			FieldNum:     i,
 			FieldType:    fld.Type,
@@ -639,7 +639,7 @@ func fillHashHelper(r interface{}, depth int, env *Glisp, preferSym bool) (Sexp,
 		if preferSym {
 			return env.MakeSymbol(val), nil
 		}
-		return SexpStr{S: val}, nil
+		return &SexpStr{S: val}, nil
 
 	case int:
 		Q("depth %d found int case: val = %#v\n", depth, val)
@@ -655,7 +655,7 @@ func fillHashHelper(r interface{}, depth int, env *Glisp, preferSym bool) (Sexp,
 
 	case float64:
 		Q("depth %d found float64 case: val = %#v\n", depth, val)
-		return SexpFloat{Val: val}, nil
+		return &SexpFloat{Val: val}, nil
 
 	case []interface{}:
 		Q("depth %d found []interface{} case: val = %#v\n", depth, val)
@@ -710,13 +710,13 @@ func fillHashHelper(r interface{}, depth int, env *Glisp, preferSym bool) (Sexp,
 	case []byte:
 		Q("depth %d found []byte case: val = %#v\n", depth, val)
 
-		return SexpRaw{Val: val}, nil
+		return &SexpRaw{Val: val}, nil
 
 	case nil:
 		return SexpNull, nil
 
 	case bool:
-		return SexpBool{Val: val}, nil
+		return &SexpBool{Val: val}, nil
 
 	default:
 		Q("unknown type in type switch, val = %#v.  type = %T.\n", val, val)
@@ -801,9 +801,9 @@ func NamedHashSexpString(hash *SexpHash) string {
 		val, err := hash.HashGet(nil, key)
 		if err == nil {
 			switch s := key.(type) {
-			case SexpStr:
+			case *SexpStr:
 				str += s.S + ":"
-			case SexpSymbol:
+			case *SexpSymbol:
 				str += s.name + ":"
 			default:
 				str += key.SexpString() + ":"

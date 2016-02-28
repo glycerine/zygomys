@@ -63,7 +63,7 @@ func (r *RecordDefn) SetFields(flds []*SexpField) {
 		g := (*SexpHash)(f)
 		rt, err := g.HashGet(nil, f.KeyOrder[0])
 		panicOn(err)
-		r.FieldType[g.KeyOrder[0].(SexpSymbol).name] = rt.(*RegisteredType)
+		r.FieldType[g.KeyOrder[0].(*SexpSymbol).name] = rt.(*RegisteredType)
 	}
 }
 
@@ -144,9 +144,9 @@ func (f *SexpField) FieldWidths() []int {
 		str := ""
 		if err == nil {
 			switch s := key.(type) {
-			case SexpStr:
+			case *SexpStr:
 				str += s.S + ":"
-			case SexpSymbol:
+			case *SexpSymbol:
 				str += s.name + ":"
 			default:
 				str += key.SexpString() + ":"
@@ -169,9 +169,9 @@ func (f *SexpField) AlignString(pad []int) string {
 		r := ""
 		if err == nil {
 			switch s := key.(type) {
-			case SexpStr:
+			case *SexpStr:
 				r += s.S + ":"
-			case SexpSymbol:
+			case *SexpSymbol:
 				r += s.name + ":"
 			default:
 				r += key.SexpString() + ":"
@@ -208,9 +208,9 @@ func (f *SexpField) SexpString() string {
 		val, err := hash.HashGet(nil, key)
 		if err == nil {
 			switch s := key.(type) {
-			case SexpStr:
+			case *SexpStr:
 				str += s.S + ":"
-			case SexpSymbol:
+			case *SexpSymbol:
 				str += s.name + ":"
 			default:
 				str += key.SexpString() + ":"
@@ -243,14 +243,14 @@ func StructBuilder(env *Glisp, name string,
 	for i := range args {
 		Q("args[%v] = '%s' of type %T", i, args[i].SexpString(), args[i])
 	}
-	var symN SexpSymbol
+	var symN *SexpSymbol
 	switch b := args[0].(type) {
-	case SexpSymbol:
+	case *SexpSymbol:
 		symN = b
-	case SexpPair:
+	case *SexpPair:
 		sy, isQuo := isQuotedSymbol(b)
 		if isQuo {
-			symN = sy.(SexpSymbol)
+			symN = sy.(*SexpSymbol)
 		} else {
 			return SexpNull, fmt.Errorf("bad struct name: symbol required")
 		}
@@ -516,13 +516,13 @@ func baseConstruct(env *Glisp, f *RegisteredType, nargs int) (Sexp, error) {
 		case *int, *uint8, *uint16, *uint32, *uint64, *int8, *int16, *int32, *int64:
 			return &SexpInt{}, nil
 		case *float32, *float64:
-			return SexpFloat{}, nil
+			return &SexpFloat{}, nil
 		case *string:
-			return SexpStr{S: ""}, nil
+			return &SexpStr{S: ""}, nil
 		case *bool:
-			return SexpBool{Val: false}, nil
+			return &SexpBool{Val: false}, nil
 		case *time.Time:
-			return SexpTime{}, nil
+			return &SexpTime{}, nil
 		default:
 			return SexpNull, fmt.Errorf("unhandled no-arg case in baseConstruct, v has type=%T", v)
 		}
@@ -543,19 +543,19 @@ func baseConstruct(env *Glisp, f *RegisteredType, nargs int) (Sexp, error) {
 		}
 		return myint, nil
 	case *float32, *float64:
-		myfloat, ok := arg.(SexpFloat)
+		myfloat, ok := arg.(*SexpFloat)
 		if !ok {
 			return SexpNull, fmt.Errorf("cannot convert %T to float", arg)
 		}
 		return myfloat, nil
 	case *string:
-		mystring, ok := arg.(SexpStr)
+		mystring, ok := arg.(*SexpStr)
 		if !ok {
 			return SexpNull, fmt.Errorf("cannot convert %T to string", arg)
 		}
 		return mystring, nil
 	case *bool:
-		mybool, ok := arg.(SexpBool)
+		mybool, ok := arg.(*SexpBool)
 		if !ok {
 			return SexpNull, fmt.Errorf("cannot convert %T to bool", arg)
 		}
@@ -628,14 +628,14 @@ func VarBuilder(env *Glisp, name string,
 	for i := range args {
 		Q("args[%v] = '%s' of type %T", i, args[i].SexpString(), args[i])
 	}
-	var symN SexpSymbol
+	var symN *SexpSymbol
 	switch b := args[0].(type) {
-	case SexpSymbol:
+	case *SexpSymbol:
 		symN = b
-	case SexpPair:
+	case *SexpPair:
 		sy, isQuo := isQuotedSymbol(b)
 		if isQuo {
-			symN = sy.(SexpSymbol)
+			symN = sy.(*SexpSymbol)
 		} else {
 			return SexpNull, fmt.Errorf("bad var name: symbol required")
 		}
@@ -700,9 +700,9 @@ func ExpectErrorBuilder(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		return SexpNull, WrongNargs
 	}
 
-	var expectedError SexpStr
+	var expectedError *SexpStr
 	switch e := args[0].(type) {
-	case SexpStr:
+	case *SexpStr:
 		expectedError = e
 	default:
 		return SexpNull, fmt.Errorf("first arg to expect-error must be the string of the error to expect")

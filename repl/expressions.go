@@ -77,15 +77,15 @@ func (r *SexpInt) Type() *RegisteredType {
 	return GoStructRegistry.Registry["int64"]
 }
 
-func (r SexpFloat) Type() *RegisteredType {
+func (r *SexpFloat) Type() *RegisteredType {
 	return GoStructRegistry.Registry["float64"]
 }
 
-func (r SexpBool) Type() *RegisteredType {
+func (r *SexpBool) Type() *RegisteredType {
 	return GoStructRegistry.Registry["bool"]
 }
 
-func (r SexpChar) Type() *RegisteredType {
+func (r *SexpChar) Type() *RegisteredType {
 	return GoStructRegistry.Registry["int32"]
 }
 
@@ -98,7 +98,7 @@ type SexpRaw struct {
 	Typ *RegisteredType
 }
 
-func (r SexpRaw) Type() *RegisteredType {
+func (r *SexpRaw) Type() *RegisteredType {
 	return r.Typ
 }
 
@@ -120,7 +120,7 @@ type SexpError struct {
 	error
 }
 
-func (r SexpError) Type() *RegisteredType {
+func (r *SexpError) Type() *RegisteredType {
 	return nil // TODO what should this be?
 }
 
@@ -132,12 +132,12 @@ func (r SexpSentinel) Type() *RegisteredType {
 
 type SexpClosureEnv Scope
 
-func (r SexpClosureEnv) Type() *RegisteredType {
+func (r *SexpClosureEnv) Type() *RegisteredType {
 	return nil // TODO what should this be?
 }
 
-func (c SexpClosureEnv) SexpString() string {
-	scop := Scope(c)
+func (c *SexpClosureEnv) SexpString() string {
+	scop := (*Scope)(c)
 	s, err := scop.Show(scop.env, 0, "")
 	if err != nil {
 		panic(err)
@@ -165,18 +165,18 @@ func (sent SexpSentinel) SexpString() string {
 	return ""
 }
 
-func Cons(a Sexp, b Sexp) SexpPair {
-	return SexpPair{a, b}
+func Cons(a Sexp, b Sexp) *SexpPair {
+	return &SexpPair{a, b}
 }
 
-func (pair SexpPair) SexpString() string {
+func (pair *SexpPair) SexpString() string {
 	str := "("
 
 	for {
 		switch pair.Tail.(type) {
-		case SexpPair:
+		case *SexpPair:
 			str += pair.Head.SexpString() + " "
-			pair = pair.Tail.(SexpPair)
+			pair = pair.Tail.(*SexpPair)
 			continue
 		}
 		break
@@ -192,7 +192,7 @@ func (pair SexpPair) SexpString() string {
 
 	return str
 }
-func (r SexpPair) Type() *RegisteredType {
+func (r *SexpPair) Type() *RegisteredType {
 	return nil // TODO what should this be?
 }
 
@@ -227,7 +227,7 @@ func (arr *SexpArray) SexpString() string {
 	return str
 }
 
-func (e SexpError) SexpString() string {
+func (e *SexpError) SexpString() string {
 	return e.error.Error()
 }
 
@@ -258,7 +258,7 @@ type HashFieldDet struct {
 }
 type SexpHash struct {
 	TypeName         string
-	Map              map[int][]SexpPair
+	Map              map[int][]*SexpPair
 	KeyOrder         []Sexp
 	GoStructFactory  *RegisteredType
 	NumKeys          int
@@ -310,9 +310,9 @@ func CallZMethodOnRecordFunction(env *Glisp, name string, args []Sexp) (Sexp, er
 
 	method := ""
 	switch s := args[1].(type) {
-	case SexpSymbol:
+	case *SexpSymbol:
 		method = s.name
-	case SexpStr:
+	case *SexpStr:
 		method = s.S
 	default:
 		return SexpNull, fmt.Errorf("can only _call with a " +
@@ -335,7 +335,7 @@ func (h *SexpHash) Lookup(env *Glisp, key Sexp) (expr Sexp, err error) {
 	return h.HashGet(env, key)
 }
 
-func (h *SexpHash) BindSymbol(key SexpSymbol, val Sexp) error {
+func (h *SexpHash) BindSymbol(key *SexpSymbol, val Sexp) error {
 	return h.HashSet(key, val)
 }
 
@@ -365,7 +365,7 @@ func (r SexpReflect) SexpString() string {
 	}
 }
 
-func (b SexpBool) SexpString() string {
+func (b *SexpBool) SexpString() string {
 	if bool(b.Val) {
 		return "true"
 	}
@@ -376,22 +376,22 @@ func (i *SexpInt) SexpString() string {
 	return strconv.Itoa(int(i.Val))
 }
 
-func (f SexpFloat) SexpString() string {
+func (f *SexpFloat) SexpString() string {
 	return strconv.FormatFloat(f.Val, 'g', 5, SexpFloatSize)
 }
 
-func (c SexpChar) SexpString() string {
+func (c *SexpChar) SexpString() string {
 	return "#" + strings.Trim(strconv.QuoteRune(c.Val), "'")
 }
 
-func (s SexpStr) SexpString() string {
+func (s *SexpStr) SexpString() string {
 	if s.backtick {
 		return "`" + s.S + "`"
 	}
 	return strconv.Quote(string(s.S))
 }
 
-func (r SexpRaw) SexpString() string {
+func (r *SexpRaw) SexpString() string {
 	return fmt.Sprintf("%#v", []byte(r.Val))
 }
 
@@ -401,11 +401,11 @@ type SexpSymbol struct {
 	isDot  bool
 }
 
-func (sym SexpSymbol) SexpString() string {
+func (sym *SexpSymbol) SexpString() string {
 	return sym.name
 }
 
-func (r SexpSymbol) Type() *RegisteredType {
+func (r *SexpSymbol) Type() *RegisteredType {
 	return nil // TODO what should this be?
 }
 
@@ -456,14 +456,14 @@ func (sf *SexpFunction) ShowClosing(env *Glisp, indent int, label string) (strin
 	return sf.closingOverScopes.Show(env, indent, label)
 }
 
-func (sf *SexpFunction) ClosingLookupSymbolUntilFunction(sym SexpSymbol) (Sexp, error, *Scope) {
+func (sf *SexpFunction) ClosingLookupSymbolUntilFunction(sym *SexpSymbol) (Sexp, error, *Scope) {
 	if sf.closingOverScopes != nil {
 		return sf.closingOverScopes.LookupSymbolUntilFunction(sym)
 	}
 	return SexpNull, SymNotFound, nil
 }
 
-func (sf *SexpFunction) ClosingLookupSymbol(sym SexpSymbol) (Sexp, error, *Scope) {
+func (sf *SexpFunction) ClosingLookupSymbol(sym *SexpSymbol) (Sexp, error, *Scope) {
 	if sf.closingOverScopes != nil {
 		return sf.closingOverScopes.LookupSymbol(sym)
 	}
@@ -479,11 +479,11 @@ func (sf *SexpFunction) SexpString() string {
 
 func IsTruthy(expr Sexp) bool {
 	switch e := expr.(type) {
-	case SexpBool:
+	case *SexpBool:
 		return e.Val
 	case *SexpInt:
 		return e.Val != 0
-	case SexpChar:
+	case *SexpChar:
 		return e.Val != 0
 	case SexpSentinel:
 		return e != SexpNull
@@ -492,13 +492,13 @@ func IsTruthy(expr Sexp) bool {
 }
 
 type SexpStackmark struct {
-	sym SexpSymbol
+	sym *SexpSymbol
 }
 
-func (r SexpStackmark) Type() *RegisteredType {
+func (r *SexpStackmark) Type() *RegisteredType {
 	return nil // TODO what should this be?
 }
 
-func (mark SexpStackmark) SexpString() string {
+func (mark *SexpStackmark) SexpString() string {
 	return "stackmark " + mark.sym.name
 }

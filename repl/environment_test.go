@@ -19,7 +19,7 @@ func Test400SandboxFunctions(t *testing.T) {
 			for name := range sysFuncs {
 				env.Clear()
 				res, err := env.EvalString(fmt.Sprintf("(defined? '%s)", name))
-				cv.So(res, cv.ShouldResemble, SexpBool{Val: false})
+				cv.So(res, cv.ShouldResemble, &SexpBool{Val: false})
 				cv.So(err, cv.ShouldResemble, nil)
 			}
 
@@ -30,8 +30,8 @@ func Test400SandboxFunctions(t *testing.T) {
 				switch y := res.(type) {
 				case SexpSentinel:
 					P("'%s' wasn't defined but should be; defined? returned '%s'", name, y.SexpString())
-				case SexpBool:
-					cv.So(res, cv.ShouldResemble, SexpBool{Val: true})
+				case *SexpBool:
+					cv.So(res, cv.ShouldResemble, &SexpBool{Val: true})
 				}
 				cv.So(err, cv.ShouldEqual, nil)
 			}
@@ -43,7 +43,7 @@ func Test400SandboxFunctions(t *testing.T) {
 			for name := range sysFuncs {
 				env.Clear()
 				res, err := env.EvalString(fmt.Sprintf("(defined? '%s)", name))
-				cv.So(res, cv.ShouldResemble, SexpBool{Val: true})
+				cv.So(res, cv.ShouldResemble, &SexpBool{Val: true})
 				cv.So(err, cv.ShouldEqual, nil)
 			}
 
@@ -51,7 +51,7 @@ func Test400SandboxFunctions(t *testing.T) {
 			for name := range sandSafeFuncs {
 				env.Clear()
 				res, err := env.EvalString(fmt.Sprintf("(defined? '%s)", name))
-				cv.So(res, cv.ShouldResemble, SexpBool{Val: true})
+				cv.So(res, cv.ShouldResemble, &SexpBool{Val: true})
 				cv.So(err, cv.ShouldEqual, nil)
 			}
 

@@ -18,7 +18,7 @@ func IsList(expr Sexp) bool {
 		return true
 	}
 	switch list := expr.(type) {
-	case SexpPair:
+	case *SexpPair:
 		return IsList(list.Tail)
 	}
 	return false
@@ -29,8 +29,8 @@ func IsAssignmentList(expr Sexp, pos int) (bool, int) {
 		return false, -1
 	}
 	switch list := expr.(type) {
-	case SexpPair:
-		sym, isSym := list.Head.(SexpSymbol)
+	case *SexpPair:
+		sym, isSym := list.Head.(*SexpSymbol)
 		if !isSym {
 			return IsAssignmentList(list.Tail, pos+1)
 		}
@@ -44,7 +44,7 @@ func IsAssignmentList(expr Sexp, pos int) (bool, int) {
 
 func IsFloat(expr Sexp) bool {
 	switch expr.(type) {
-	case SexpFloat:
+	case *SexpFloat:
 		return true
 	}
 	return false
@@ -60,7 +60,7 @@ func IsInt(expr Sexp) bool {
 
 func IsString(expr Sexp) bool {
 	switch expr.(type) {
-	case SexpStr:
+	case *SexpStr:
 		return true
 	}
 	return false
@@ -68,7 +68,7 @@ func IsString(expr Sexp) bool {
 
 func IsChar(expr Sexp) bool {
 	switch expr.(type) {
-	case SexpChar:
+	case *SexpChar:
 		return true
 	}
 	return false
@@ -76,11 +76,11 @@ func IsChar(expr Sexp) bool {
 
 func IsNumber(expr Sexp) bool {
 	switch expr.(type) {
-	case SexpFloat:
+	case *SexpFloat:
 		return true
 	case *SexpInt:
 		return true
-	case SexpChar:
+	case *SexpChar:
 		return true
 	}
 	return false
@@ -88,7 +88,7 @@ func IsNumber(expr Sexp) bool {
 
 func IsSymbol(expr Sexp) bool {
 	switch expr.(type) {
-	case SexpSymbol:
+	case *SexpSymbol:
 		return true
 	}
 	return false
@@ -106,9 +106,9 @@ func IsZero(expr Sexp) bool {
 	switch e := expr.(type) {
 	case *SexpInt:
 		return int(e.Val) == 0
-	case SexpChar:
+	case *SexpChar:
 		return int(e.Val) == 0
-	case SexpFloat:
+	case *SexpFloat:
 		return float64(e.Val) == 0.0
 	}
 	return false
@@ -137,32 +137,32 @@ func IsFunc(expr Sexp) bool {
 	return false
 }
 
-func TypeOf(expr Sexp) SexpStr {
+func TypeOf(expr Sexp) *SexpStr {
 	v := ""
 	switch e := expr.(type) {
-	case SexpRaw:
+	case *SexpRaw:
 		v = "raw"
 	case *SexpArray:
 		v = "array"
 	case *SexpInt:
 		v = "int64"
-	case SexpStr:
+	case *SexpStr:
 		v = "string"
-	case SexpChar:
+	case *SexpChar:
 		v = "char"
-	case SexpFloat:
+	case *SexpFloat:
 		v = "float64"
 	case *SexpHash:
 		v = e.TypeName
-	case SexpPair:
+	case *SexpPair:
 		v = "list"
-	case SexpSymbol:
+	case *SexpSymbol:
 		v = "symbol"
 	case *SexpFunction:
 		v = "func"
 	case SexpSentinel:
 		v = "nil"
-	case SexpTime:
+	case *SexpTime:
 		v = "time.Time"
 	case *RegisteredType:
 		v = "regtype"
@@ -171,7 +171,7 @@ func TypeOf(expr Sexp) SexpStr {
 	case SexpReflect:
 		rt := expr.Type()
 		if rt != nil {
-			return SexpStr{S: rt.RegisteredName}
+			return &SexpStr{S: rt.RegisteredName}
 		}
 		//v = reflect.Value(e).Type().Name()
 		//if v == "Ptr" {
@@ -187,5 +187,5 @@ func TypeOf(expr Sexp) SexpStr {
 	default:
 		fmt.Printf("\n error: unknown type: %T in '%#v'\n", e, e)
 	}
-	return SexpStr{S: v}
+	return &SexpStr{S: v}
 }

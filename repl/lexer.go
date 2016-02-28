@@ -169,7 +169,7 @@ var (
 	// '$' is always a symbol on its own, handled specially.
 	// Symbols cannot start with a number. DotSymbols cannot have a number
 	// as the first character after '.'
-	SymbolRegex = regexp.MustCompile(`^[^'#:;\\~@\[\]{}\^|"()%0-9,][^'#:;\\~@\[\]{}\^|"()%,]*$`)
+	SymbolRegex = regexp.MustCompile(`^[^'#:;\\~@\[\]{}\^|"()%0-9,&][^'#:;\\~@\[\]{}\^|"()%,&]*$`)
 	// dot symbol examples: `.`, `.a`, `.a.b`, `.a.b.c`
 	// dot symbol non-examples: `.a.`, `..`
 	DotSymbolRegex = regexp.MustCompile(`^[.]$|^([.][^'#:;\\~@\[\]{}\^|"()%.0-9,][^'#:;\\~@\[\]{}\^|"()%.,]*)+$`)
@@ -228,6 +228,9 @@ func DecodeChar(atom string) (string, error) {
 func (x *Lexer) DecodeAtom(atom string) (Token, error) {
 	if atom == "$" {
 		return x.Token(TokenSymbol, "$"), nil
+	}
+	if atom == "&" {
+		return x.Token(TokenSymbol, "&"), nil
 	}
 	if atom == "\\" {
 		return x.Token(TokenBackslash, ""), nil
@@ -434,6 +437,17 @@ top:
 				}
 			}
 			lexer.tokens = append(lexer.tokens, lexer.Token(TokenDollar, "$"))
+			return nil
+
+		// likewise &
+		case '&':
+			if lexer.buffer.Len() > 0 {
+				err := lexer.dumpBuffer()
+				if err != nil {
+					return err
+				}
+			}
+			lexer.tokens = append(lexer.tokens, lexer.Token(TokenSymbol, "&"))
 			return nil
 
 		case '\'':

@@ -14,7 +14,7 @@ func SimpleSourceFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		return SexpNull, WrongNargs
 	}
 
-	src, isStr := args[0].(SexpStr)
+	src, isStr := args[0].(*SexpStr)
 	if !isStr {
 		return SexpNull, fmt.Errorf("-> error: first argument be a string")
 	}
@@ -115,16 +115,16 @@ func SourceFileFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 					return err
 				}
 			}
-		case SexpPair:
+		case *SexpPair:
 			expr := item
 			for expr != SexpNull {
-				list := expr.(SexpPair)
+				list := expr.(*SexpPair)
 				if err := sourceItem(list.Head); err != nil {
 					return err
 				}
 				expr = list.Tail
 			}
-		case SexpStr:
+		case *SexpStr:
 			var f *os.File
 			var err error
 

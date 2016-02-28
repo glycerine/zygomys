@@ -199,7 +199,7 @@ tokFilled:
 		return SexpNull, nil
 	}
 
-	var start SexpPair
+	var start = &SexpPair{}
 
 	expr, err := parser.ParseExpression(depth + 1)
 	if err != nil {
@@ -334,7 +334,7 @@ func (parser *Parser) ParseHash(depth int) (Sexp, error) {
 	list.Head = parser.env.MakeSymbol("hash")
 	list.Tail = MakeList(arr)
 
-	return list, nil
+	return &list, nil
 }
 
 func (parser *Parser) ParseExpression(depth int) (res Sexp, err error) {
@@ -394,7 +394,7 @@ func (parser *Parser) ParseExpression(depth int) (res Sexp, err error) {
 	case TokenDollar:
 		return env.MakeSymbol(tok.str), nil
 	case TokenBool:
-		return SexpBool{Val: tok.str == "true"}, nil
+		return &SexpBool{Val: tok.str == "true"}, nil
 	case TokenDecimal:
 		i, err := strconv.ParseInt(tok.str, 10, SexpIntSize)
 		if err != nil {
@@ -420,17 +420,17 @@ func (parser *Parser) ParseExpression(depth int) (res Sexp, err error) {
 		}
 		return &SexpInt{Val: i}, nil
 	case TokenChar:
-		return SexpChar{Val: rune(tok.str[0])}, nil
+		return &SexpChar{Val: rune(tok.str[0])}, nil
 	case TokenString:
-		return SexpStr{S: tok.str}, nil
+		return &SexpStr{S: tok.str}, nil
 	case TokenBacktickString:
-		return SexpStr{S: tok.str, backtick: true}, nil
+		return &SexpStr{S: tok.str, backtick: true}, nil
 	case TokenFloat:
 		f, err := strconv.ParseFloat(tok.str, SexpFloatSize)
 		if err != nil {
 			return SexpNull, err
 		}
-		return SexpFloat{Val: f}, nil
+		return &SexpFloat{Val: f}, nil
 	case TokenEnd:
 		return SexpEnd, nil
 	case TokenDot:

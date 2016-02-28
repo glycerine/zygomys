@@ -116,7 +116,7 @@ func (d DupInstr) Execute(env *Glisp) error {
 }
 
 type EnvToStackInstr struct {
-	sym SexpSymbol
+	sym *SexpSymbol
 }
 
 func (g EnvToStackInstr) InstrString() string {
@@ -146,7 +146,7 @@ func (g EnvToStackInstr) Execute(env *Glisp) error {
 }
 
 type PopStackPutEnvInstr struct {
-	sym SexpSymbol
+	sym *SexpSymbol
 }
 
 func (p PopStackPutEnvInstr) InstrString() string {
@@ -174,7 +174,7 @@ func (p PopStackPutEnvInstr) Execute(env *Glisp) error {
 // (set x 3) to change x upscope.
 //
 type UpdateInstr struct {
-	sym SexpSymbol
+	sym *SexpSymbol
 }
 
 func (p UpdateInstr) InstrString() string {
@@ -205,7 +205,7 @@ func (p UpdateInstr) Execute(env *Glisp) error {
 }
 
 type CallInstr struct {
-	sym   SexpSymbol
+	sym   *SexpSymbol
 	nargs int
 }
 
@@ -230,7 +230,7 @@ func (c CallInstr) Execute(env *Glisp) error {
 	//Q("\n in CallInstr, after looking up c.sym='%s', got funcobj='%v'. datastack is:\n", c.sym.name, funcobj.SexpString())
 	//env.datastack.PrintStack()
 	switch f := funcobj.(type) {
-	case SexpSymbol:
+	case *SexpSymbol:
 		// is it a dot-symbol call?
 		//Q("\n in CallInstr, found symbol\n")
 		if c.sym.isDot {
@@ -483,7 +483,7 @@ func (s SquashInstr) Execute(env *Glisp) error {
 // bind these symbols to the SexpPair list found at
 // datastack top.
 type BindlistInstr struct {
-	syms []SexpSymbol
+	syms []*SexpSymbol
 }
 
 func (b BindlistInstr) InstrString() string {
@@ -657,7 +657,7 @@ func (s LoopStartInstr) Execute(env *Glisp) error {
 
 // create a stack mark
 type PushStackmarkInstr struct {
-	sym SexpSymbol
+	sym *SexpSymbol
 }
 
 func (s PushStackmarkInstr) InstrString() string {
@@ -665,14 +665,14 @@ func (s PushStackmarkInstr) InstrString() string {
 }
 
 func (s PushStackmarkInstr) Execute(env *Glisp) error {
-	env.datastack.PushExpr(SexpStackmark{sym: s.sym})
+	env.datastack.PushExpr(&SexpStackmark{sym: s.sym})
 	env.pc++
 	return nil
 }
 
 // cleanup until our stackmark, but leave it in place
 type PopUntilStackmarkInstr struct {
-	sym SexpSymbol
+	sym *SexpSymbol
 }
 
 func (s PopUntilStackmarkInstr) InstrString() string {
@@ -687,7 +687,7 @@ toploop:
 			return err
 		}
 		switch m := expr.(type) {
-		case SexpStackmark:
+		case *SexpStackmark:
 			if m.sym.number == s.sym.number {
 				env.datastack.PushExpr(m)
 				break toploop
@@ -700,7 +700,7 @@ toploop:
 
 // erase everything up-to-and-including our mark
 type ClearStackmarkInstr struct {
-	sym SexpSymbol
+	sym *SexpSymbol
 }
 
 func (s ClearStackmarkInstr) InstrString() string {
@@ -715,7 +715,7 @@ toploop:
 			return err
 		}
 		switch m := expr.(type) {
-		case SexpStackmark:
+		case *SexpStackmark:
 			if m.sym.number == s.sym.number {
 				break toploop
 			}

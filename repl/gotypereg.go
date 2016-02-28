@@ -348,7 +348,7 @@ func TypeListFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	r := ListRegisteredTypes
 	s := make([]Sexp, len(r))
 	for i := range r {
-		s[i] = SexpStr{S: r[i]}
+		s[i] = &SexpStr{S: r[i]}
 	}
 	return &SexpArray{Val: s}, nil
 }

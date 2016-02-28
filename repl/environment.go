@@ -167,24 +167,24 @@ func (env *Glisp) Duplicate() *Glisp {
 	return dupenv
 }
 
-func (env *Glisp) MakeDotSymbol(name string) SexpSymbol {
+func (env *Glisp) MakeDotSymbol(name string) *SexpSymbol {
 	x := env.MakeSymbol(name)
 	x.isDot = true
 	return x
 }
-func (env *Glisp) MakeSymbol(name string) SexpSymbol {
+func (env *Glisp) MakeSymbol(name string) *SexpSymbol {
 	symnum, ok := env.symtable[name]
 	if ok {
-		return SexpSymbol{name: name, number: symnum}
+		return &SexpSymbol{name: name, number: symnum}
 	}
-	symbol := SexpSymbol{name: name, number: env.nextsymbol}
+	symbol := &SexpSymbol{name: name, number: env.nextsymbol}
 	env.symtable[name] = symbol.number
 	env.revsymtable[symbol.number] = name
 	env.nextsymbol++
 	return symbol
 }
 
-func (env *Glisp) GenSymbol(prefix string) SexpSymbol {
+func (env *Glisp) GenSymbol(prefix string) *SexpSymbol {
 	symname := prefix + strconv.Itoa(env.nextsymbol)
 	return env.MakeSymbol(symname)
 }
@@ -418,7 +418,7 @@ func (env *Glisp) AddMacro(name string, function GlispUserFunction) {
 	env.macros[sym.number] = MakeUserFunction(name, function)
 }
 
-func (env *Glisp) HasMacro(sym SexpSymbol) bool {
+func (env *Glisp) HasMacro(sym *SexpSymbol) bool {
 	_, found := env.macros[sym.number]
 	return found
 }
@@ -627,7 +627,7 @@ func (env *Glisp) ShowStackStackAndScopeStack() error {
 	return nil
 }
 
-func (env *Glisp) LexicalLookupSymbol(sym SexpSymbol, undot bool) (Sexp, error, *Scope) {
+func (env *Glisp) LexicalLookupSymbol(sym *SexpSymbol, undot bool) (Sexp, error, *Scope) {
 
 	// DotSymbols always evaluate to themselves, unless
 	// undot is true.
@@ -675,7 +675,7 @@ func (env *Glisp) LexicalLookupSymbol(sym SexpSymbol, undot bool) (Sexp, error, 
 	return SexpNull, fmt.Errorf("symbol `%s` not found", sym.name), nil
 }
 
-func (env *Glisp) LexicalBindSymbol(sym SexpSymbol, expr Sexp) error {
+func (env *Glisp) LexicalBindSymbol(sym *SexpSymbol, expr Sexp) error {
 	return env.linearstack.BindSymbol(sym, expr)
 }
 
@@ -688,7 +688,7 @@ func DumpClosureEnvFunction(env *Glisp, name string, args []Sexp) (Sexp, error) 
 	switch f := args[0].(type) {
 	case *SexpFunction:
 		s := ClosureToString(f, env)
-		return SexpStr{S: s}, nil
+		return &SexpStr{S: s}, nil
 	default:
 		return SexpNull, fmt.Errorf("_closdump needs an *SexpFunction to inspect")
 	}
@@ -703,7 +703,7 @@ func ClosureToString(f *SexpFunction, env *Glisp) string {
 	return s
 }
 
-func (env *Glisp) IsBuiltinSym(sym SexpSymbol) (builtin bool, typ string) {
+func (env *Glisp) IsBuiltinSym(sym *SexpSymbol) (builtin bool, typ string) {
 
 	_, isBuiltin := env.builtins[sym.number]
 	if isBuiltin {
@@ -725,7 +725,7 @@ func (env *Glisp) ResolveDotSym(arg []Sexp) ([]Sexp, error) {
 	r := []Sexp{}
 	for i := range arg {
 		switch sym := arg[i].(type) {
-		case SexpSymbol:
+		case *SexpSymbol:
 			resolved, err := dotGetSetHelper(env, sym.name, nil)
 			//resolved, err, _ := env.LexicalLookupSymbol(sym, true)
 			if err != nil {

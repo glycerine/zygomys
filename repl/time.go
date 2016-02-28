@@ -6,19 +6,21 @@ import (
 	"time"
 )
 
-type SexpTime time.Time
+type SexpTime struct {
+	Tm time.Time
+}
 
-func (r SexpTime) Type() *RegisteredType {
+func (r *SexpTime) Type() *RegisteredType {
 	return nil // TODO what should this be?
 }
 
-func (t SexpTime) SexpString() string {
-	return time.Time(t).String()
+func (t *SexpTime) SexpString() string {
+	return t.Tm.String()
 }
 
 func NowFunction(env *Glisp, name string,
 	args []Sexp) (Sexp, error) {
-	return SexpTime(time.Now()), nil
+	return &SexpTime{Tm: time.Now()}, nil
 }
 
 func TimeitFunction(env *Glisp, name string,

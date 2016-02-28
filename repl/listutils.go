@@ -14,7 +14,7 @@ func ListToArray(expr Sexp) ([]Sexp, error) {
 	arr := make([]Sexp, 0)
 
 	for expr != SexpNull {
-		list := expr.(SexpPair)
+		list := expr.(*SexpPair)
 		arr = append(arr, list.Head)
 		expr = list.Tail
 	}
@@ -35,9 +35,9 @@ func MapList(env *Glisp, fun *SexpFunction, expr Sexp) (Sexp, error) {
 		return SexpNull, nil
 	}
 
-	var list SexpPair
+	var list *SexpPair
 	switch e := expr.(type) {
-	case SexpPair:
+	case *SexpPair:
 		list = e
 	default:
 		return SexpNull, NotAList
@@ -60,7 +60,7 @@ func MapList(env *Glisp, fun *SexpFunction, expr Sexp) (Sexp, error) {
 	return list, nil
 }
 
-func ConcatList(a SexpPair, b Sexp) (Sexp, error) {
+func ConcatList(a *SexpPair, b Sexp) (Sexp, error) {
 	if !IsList(b) {
 		return SexpNull, NotAList
 	}
@@ -70,7 +70,7 @@ func ConcatList(a SexpPair, b Sexp) (Sexp, error) {
 	}
 
 	switch t := a.Tail.(type) {
-	case SexpPair:
+	case *SexpPair:
 		newtail, err := ConcatList(t, b)
 		if err != nil {
 			return SexpNull, err
@@ -83,10 +83,10 @@ func ConcatList(a SexpPair, b Sexp) (Sexp, error) {
 
 func ListLen(expr Sexp) (int, error) {
 	sz := 0
-	var list SexpPair
+	var list *SexpPair
 	ok := false
 	for expr != SexpNull {
-		list, ok = expr.(SexpPair)
+		list, ok = expr.(*SexpPair)
 		if !ok {
 			return 0, fmt.Errorf("ListLen() called on non-list")
 		}

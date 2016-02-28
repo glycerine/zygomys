@@ -171,7 +171,8 @@ func Repl(env *Glisp, cfg *GlispConfig) {
 			continue
 		}
 
-		parts := strings.Split(line, " ")
+		parts := strings.Split(strings.Trim(line, " "), " ")
+		//parts := strings.Split(line, " ")
 		if len(parts) == 0 {
 			continue
 		}
@@ -198,6 +199,12 @@ func Repl(env *Glisp, cfg *GlispConfig) {
 				fmt.Printf("error: %s\n", err)
 			}
 			continue
+		}
+
+		// allow & at the repl to take the address of an expression
+		if len(first) > 0 && first[0] == '&' {
+			//P("saw & at repl, first='%v', parts='%#v'. exprsInput = '%#v'", first, parts, exprsInput)
+			exprsInput = []Sexp{MakeList(exprsInput)}
 		}
 
 		if first == ".dump" {
@@ -264,7 +271,7 @@ func Repl(env *Glisp, cfg *GlispConfig) {
 		if expr != SexpNull {
 			// try to print strings more elegantly!
 			switch e := expr.(type) {
-			case SexpStr:
+			case *SexpStr:
 				if e.backtick {
 					fmt.Printf("`%s`\n", e.S)
 				} else {

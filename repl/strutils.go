@@ -6,14 +6,14 @@ import (
 	"strings"
 )
 
-func ConcatStr(str SexpStr, rest []Sexp) (SexpStr, error) {
+func ConcatStr(str *SexpStr, rest []Sexp) (*SexpStr, error) {
 	res := str
 	for i, x := range rest {
 		switch t := x.(type) {
-		case SexpStr:
+		case *SexpStr:
 			res.S += t.S
 		default:
-			return SexpStr{}, fmt.Errorf("ConcatStr error: %d-th argument (0-based) is "+
+			return &SexpStr{}, fmt.Errorf("ConcatStr error: %d-th argument (0-based) is "+
 				"not a string (was %T)", i, t)
 		}
 	}
@@ -21,16 +21,16 @@ func ConcatStr(str SexpStr, rest []Sexp) (SexpStr, error) {
 	return res, nil
 }
 
-func AppendStr(str SexpStr, expr Sexp) (SexpStr, error) {
-	var chr SexpChar
+func AppendStr(str *SexpStr, expr Sexp) (*SexpStr, error) {
+	var chr *SexpChar
 	switch t := expr.(type) {
-	case SexpChar:
+	case *SexpChar:
 		chr = t
 	default:
-		return SexpStr{}, errors.New("second argument is not a char")
+		return &SexpStr{}, errors.New("second argument is not a char")
 	}
 
-	return SexpStr{S: str.S + string(chr.Val)}, nil
+	return &SexpStr{S: str.S + string(chr.Val)}, nil
 }
 
 func StringUtilFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
@@ -39,7 +39,7 @@ func StringUtilFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	}
 	var s string
 	switch str := args[0].(type) {
-	case SexpStr:
+	case *SexpStr:
 		s = str.S
 	default:
 		return SexpNull, fmt.Errorf("string required, got %T", s)
@@ -49,11 +49,11 @@ func StringUtilFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	case "chomp":
 		n := len(s)
 		if n > 0 && s[n-1] == '\n' {
-			return SexpStr{S: s[:n-1]}, nil
+			return &SexpStr{S: s[:n-1]}, nil
 		}
-		return SexpStr{S: s}, nil
+		return &SexpStr{S: s}, nil
 	case "trim":
-		return SexpStr{S: strings.TrimSpace(s)}, nil
+		return &SexpStr{S: strings.TrimSpace(s)}, nil
 	}
 	return SexpNull, fmt.Errorf("unrecognized command '%s'", name)
 }

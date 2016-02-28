@@ -37,7 +37,7 @@ func RegexpFind(env *Glisp, name string,
 	}
 	var haystack string
 	switch t := args[1].(type) {
-	case SexpStr:
+	case *SexpStr:
 		haystack = t.S
 	default:
 		return SexpNull,
@@ -56,12 +56,12 @@ func RegexpFind(env *Glisp, name string,
 	switch name {
 	case "regexp-find":
 		str := needle.FindString(haystack)
-		return SexpStr{S: str}, nil
+		return &SexpStr{S: str}, nil
 	case "regexp-find-index":
 		return regexpFindIndex(needle, haystack)
 	case "regexp-match":
 		matches := needle.MatchString(haystack)
-		return SexpBool{Val: matches}, nil
+		return &SexpBool{Val: matches}, nil
 	}
 
 	return SexpNull, errors.New("unknown function")
@@ -75,7 +75,7 @@ func RegexpCompile(env *Glisp, name string,
 
 	var re string
 	switch t := args[0].(type) {
-	case SexpStr:
+	case *SexpStr:
 		re = t.S
 	default:
 		return SexpNull,

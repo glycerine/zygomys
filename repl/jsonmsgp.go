@@ -8,7 +8,6 @@ import (
 	"reflect"
 	"sort"
 	"strings"
-	"time"
 )
 
 /*
@@ -52,18 +51,18 @@ func JsonFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	switch name {
 	case "json":
 		str := SexpToJson(args[0])
-		return SexpRaw{Val: []byte(str)}, nil
+		return &SexpRaw{Val: []byte(str)}, nil
 	case "unjson":
-		raw, isRaw := args[0].(SexpRaw)
+		raw, isRaw := args[0].(*SexpRaw)
 		if !isRaw {
 			return SexpNull, fmt.Errorf("unjson error: SexpRaw required, but we got %T instead.", args[0])
 		}
 		return JsonToSexp([]byte(raw.Val), env)
 	case "msgpack":
 		by, _ := SexpToMsgpack(args[0])
-		return SexpRaw{Val: []byte(by)}, nil
+		return &SexpRaw{Val: []byte(by)}, nil
 	case "unmsgpack":
-		raw, isRaw := args[0].(SexpRaw)
+		raw, isRaw := args[0].(*SexpRaw)
 		if !isRaw {
 			return SexpNull, fmt.Errorf("unmsgpack error: SexpRaw required, but we got %T instead.", args[0])
 		}
@@ -89,7 +88,7 @@ func SexpToJson(exp Sexp) string {
 		return e.jsonHashHelper()
 	case *SexpArray:
 		return e.jsonArrayHelper()
-	case SexpSymbol:
+	case *SexpSymbol:
 		return `"` + e.name + `"`
 	default:
 		return exp.SexpString()
@@ -267,7 +266,7 @@ func decodeGoToSexpHelper(r interface{}, depth int, env *Glisp, preferSym bool) 
 		if preferSym {
 			return env.MakeSymbol(val)
 		}
-		return SexpStr{S: val}
+		return &SexpStr{S: val}
 
 	case int:
 		VPrintf("depth %d found int case: val = %#v\n", depth, val)
@@ -283,7 +282,7 @@ func decodeGoToSexpHelper(r interface{}, depth int, env *Glisp, preferSym bool) 
 
 	case float64:
 		VPrintf("depth %d found float64 case: val = %#v\n", depth, val)
-		return SexpFloat{Val: val}
+		return &SexpFloat{Val: val}
 
 	case []interface{}:
 		VPrintf("depth %d found []interface{} case: val = %#v\n", depth, val)
@@ -334,13 +333,13 @@ func decodeGoToSexpHelper(r interface{}, depth int, env *Glisp, preferSym bool) 
 	case []byte:
 		VPrintf("depth %d found []byte case: val = %#v\n", depth, val)
 
-		return SexpRaw{Val: val}
+		return &SexpRaw{Val: val}
 
 	case nil:
 		return SexpNull
 
 	case bool:
-		return SexpBool{Val: val}
+		return &SexpBool{Val: val}
 
 	default:
 		fmt.Printf("unknown type in type switch, val = %#v.  type = %T.\n", val, val)
@@ -384,7 +383,7 @@ func makeSortedSlicesFromMap(m map[string]interface{}) ([]string, []interface{})
 func SexpToGo(sexp Sexp, env *Glisp) interface{} {
 
 	switch e := sexp.(type) {
-	case SexpRaw:
+	case *SexpRaw:
 		return []byte(e.Val)
 	case *SexpArray:
 		ar := make([]interface{}, len(e.Val))
@@ -396,11 +395,11 @@ func SexpToGo(sexp Sexp, env *Glisp) interface{} {
 		// ugorji msgpack will give us int64 not int,
 		// so match that to make the decodings comparable.
 		return int64(e.Val)
-	case SexpStr:
+	case *SexpStr:
 		return e.S
-	case SexpChar:
+	case *SexpChar:
 		return rune(e.Val)
-	case SexpFloat:
+	case *SexpFloat:
 		return float64(e.Val)
 	case *SexpHash:
 		m := make(map[string]interface{})
@@ -422,10 +421,10 @@ func SexpToGo(sexp Sexp, env *Glisp) interface{} {
 		}
 		m["zKeyOrder"] = ko
 		return m
-	case SexpPair:
+	case *SexpPair:
 		// no conversion
 		return e
-	case SexpSymbol:
+	case *SexpSymbol:
 		return e.name
 	case *SexpFunction:
 		// no conversion done
@@ -463,7 +462,7 @@ func ToGoFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		}
 		asHash.GoShadowStruct = newStruct
 		asHash.GoShadowStructVa = reflect.ValueOf(newStruct)
-		return SexpStr{S: fmt.Sprintf("%#v", newStruct)}, nil
+		return &SexpStr{S: fmt.Sprintf("%#v", newStruct)}, nil
 	}
 }
 
@@ -503,7 +502,7 @@ func SexpToGoStructs(sexp Sexp, target interface{}, env *Glisp) (interface{}, er
 	}
 
 	switch src := sexp.(type) {
-	case SexpRaw:
+	case *SexpRaw:
 		targVa.Elem().Set(reflect.ValueOf([]byte(src.Val)))
 	case *SexpArray:
 		VPrintf("\n\n starting 5555555555 on SexpArray\n")
@@ -534,11 +533,11 @@ func SexpToGoStructs(sexp Sexp, target interface{}, env *Glisp) (interface{}, er
 		// ugorji msgpack will give us int64 not int,
 		// so match that to make the decodings comparable.
 		targVa.Elem().SetInt(int64(src.Val))
-	case SexpStr:
+	case *SexpStr:
 		targVa.Elem().SetString(src.S)
-	case SexpChar:
+	case *SexpChar:
 		targVa.Elem().Set(reflect.ValueOf(rune(src.Val)))
-	case SexpFloat:
+	case *SexpFloat:
 		targVa.Elem().SetFloat(float64(src.Val))
 	case *SexpHash:
 		VPrintf("\n ==== found SexpHash\n\n")
@@ -595,9 +594,9 @@ func SexpToGoStructs(sexp Sexp, target interface{}, env *Glisp) (interface{}, er
 			for _, pair := range arr {
 				var recordKey string
 				switch k := pair.Head.(type) {
-				case SexpStr:
+				case *SexpStr:
 					recordKey = k.S
-				case SexpSymbol:
+				case *SexpSymbol:
 					recordKey = k.name
 				default:
 					fmt.Printf("\n skipping field '%#v' which we don't know how to lookup.\n", pair.Head)
@@ -653,11 +652,11 @@ func SexpToGoStructs(sexp Sexp, target interface{}, env *Glisp) (interface{}, er
 				}
 			}
 		}
-	case SexpPair:
+	case *SexpPair:
 		panic("unimplemented")
 		// no conversion
 		//return src
-	case SexpSymbol:
+	case *SexpSymbol:
 		targVa.Elem().SetString(src.name)
 	case *SexpFunction:
 		panic("unimplemented: *SexpFunction converstion.")
@@ -665,8 +664,8 @@ func SexpToGoStructs(sexp Sexp, target interface{}, env *Glisp) (interface{}, er
 		//return src
 	case SexpSentinel:
 		targVa.Elem().Set(reflect.ValueOf(nil))
-	case SexpTime:
-		targVa.Elem().Set(reflect.ValueOf(time.Time(src)))
+	case *SexpTime:
+		targVa.Elem().Set(reflect.ValueOf(src.Tm))
 	default:
 		fmt.Printf("\n error: unknown type: %T in '%#v'\n", src, src)
 	}

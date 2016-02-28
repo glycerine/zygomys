@@ -41,9 +41,9 @@ func CallGoMethodFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 
 		var methodname string
 		switch m := args[1].(type) {
-		case SexpSymbol:
+		case *SexpSymbol:
 			methodname = m.name
-		case SexpStr:
+		case *SexpStr:
 			methodname = m.S
 		default:
 			return SexpNull, fmt.Errorf("_method error: second argument must be a method name in symbol or string form (got %T)", args[1])
@@ -143,15 +143,15 @@ func CallGoMethodFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 			case int:
 				r = append(r, &SexpInt{Val: int64(e)})
 			case error:
-				r = append(r, SexpError{e})
+				r = append(r, &SexpError{e})
 			case string:
-				r = append(r, SexpStr{S: e})
+				r = append(r, &SexpStr{S: e})
 			case float64:
-				r = append(r, SexpFloat{Val: e})
+				r = append(r, &SexpFloat{Val: e})
 			case []byte:
-				r = append(r, SexpRaw{Val: e})
+				r = append(r, &SexpRaw{Val: e})
 			case rune:
-				r = append(r, SexpChar{Val: e})
+				r = append(r, &SexpChar{Val: e})
 			default:
 				// go through the type registry
 				found := false
