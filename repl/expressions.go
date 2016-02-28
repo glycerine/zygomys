@@ -124,8 +124,6 @@ func (r *SexpError) Type() *RegisteredType {
 	return nil // TODO what should this be?
 }
 
-type SexpSentinel int
-
 func (r SexpSentinel) Type() *RegisteredType {
 	return nil // TODO what should this be?
 }
@@ -145,11 +143,12 @@ func (c *SexpClosureEnv) SexpString() string {
 	return s
 }
 
-const (
-	SexpNull SexpSentinel = iota
-	SexpEnd
-	SexpMarker
-)
+type SexpSentinel int
+
+// these are values now so that they also have addresses.
+var SexpNull SexpSentinel = 0
+var SexpEnd SexpSentinel = 1
+var SexpMarker SexpSentinel = 2
 
 func (sent SexpSentinel) SexpString() string {
 	if sent == SexpNull {
