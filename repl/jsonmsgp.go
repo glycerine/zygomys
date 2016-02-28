@@ -429,7 +429,7 @@ func SexpToGo(sexp Sexp, env *Glisp) interface{} {
 	case *SexpFunction:
 		// no conversion done
 		return e
-	case SexpSentinel:
+	case *SexpSentinel:
 		// no conversion done
 		return e
 	default:
@@ -662,7 +662,7 @@ func SexpToGoStructs(sexp Sexp, target interface{}, env *Glisp) (interface{}, er
 		panic("unimplemented: *SexpFunction converstion.")
 		// no conversion done
 		//return src
-	case SexpSentinel:
+	case *SexpSentinel:
 		targVa.Elem().Set(reflect.ValueOf(nil))
 	case *SexpTime:
 		targVa.Elem().Set(reflect.ValueOf(src.Tm))

@@ -160,7 +160,7 @@ func TypeOf(expr Sexp) *SexpStr {
 		v = "symbol"
 	case *SexpFunction:
 		v = "func"
-	case SexpSentinel:
+	case *SexpSentinel:
 		v = "nil"
 	case *SexpTime:
 		v = "time.Time"

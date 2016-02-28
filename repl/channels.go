@@ -10,11 +10,11 @@ type SexpChannel struct {
 	Typ *RegisteredType
 }
 
-func (ch SexpChannel) SexpString() string {
+func (ch *SexpChannel) SexpString() string {
 	return "[chan]"
 }
 
-func (ch SexpChannel) Type() *RegisteredType {
+func (ch *SexpChannel) Type() *RegisteredType {
 	return ch.Typ // TODO what should this be?
 }
 
@@ -35,7 +35,7 @@ func MakeChanFunction(env *Glisp, name string,
 		}
 	}
 
-	return SexpChannel{Val: make(chan Sexp, size)}, nil
+	return &SexpChannel{Val: make(chan Sexp, size)}, nil
 }
 
 func ChanTxFunction(env *Glisp, name string,
@@ -45,7 +45,7 @@ func ChanTxFunction(env *Glisp, name string,
 	}
 	var channel chan Sexp
 	switch t := args[0].(type) {
-	case SexpChannel:
+	case *SexpChannel:
 		channel = chan Sexp(t.Val)
 	default:
 		return SexpNull, errors.New(

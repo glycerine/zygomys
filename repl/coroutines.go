@@ -8,17 +8,17 @@ type SexpGoroutine struct {
 	env *Glisp
 }
 
-func (goro SexpGoroutine) SexpString() string {
+func (goro *SexpGoroutine) SexpString() string {
 	return "[coroutine]"
 }
-func (goro SexpGoroutine) Type() *RegisteredType {
+func (goro *SexpGoroutine) Type() *RegisteredType {
 	return nil // TODO what goes here
 }
 
 func StartGoroutineFunction(env *Glisp, name string,
 	args []Sexp) (Sexp, error) {
 	switch t := args[0].(type) {
-	case SexpGoroutine:
+	case *SexpGoroutine:
 		go t.env.Run()
 	default:
 		return SexpNull, errors.New("not a goroutine")
@@ -33,7 +33,7 @@ func CreateGoroutineMacro(env *Glisp, name string,
 	if err != nil {
 		return SexpNull, nil
 	}
-	goro := SexpGoroutine{goroenv}
+	goro := &SexpGoroutine{goroenv}
 
 	// (apply StartGoroutineFunction [goro])
 	return MakeList([]Sexp{env.MakeSymbol("apply"),

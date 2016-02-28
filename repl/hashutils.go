@@ -257,7 +257,7 @@ func (h *SexpHash) TypeCheckField(key Sexp, val Sexp) error {
 				if len(a.Val) == 0 {
 					return nil // okay
 				}
-			case SexpSentinel:
+			case *SexpSentinel:
 				return nil // okay
 			default:
 				return fmt.Errorf("%v has nil Type", val.SexpString())

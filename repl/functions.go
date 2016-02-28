@@ -183,7 +183,7 @@ func RestFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 			return expr, nil
 		}
 		return &SexpArray{Val: expr.Val[1:]}, nil
-	case SexpSentinel:
+	case *SexpSentinel:
 		if expr == SexpNull {
 			return SexpNull, nil
 		}
@@ -422,7 +422,7 @@ func LenFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	}
 
 	switch t := args[0].(type) {
-	case SexpSentinel:
+	case *SexpSentinel:
 		if t == SexpNull {
 			return &SexpInt{}, nil
 		}

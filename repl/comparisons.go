@@ -214,7 +214,7 @@ func Compare(a Sexp, b Sexp) (int, error) {
 		return compareRegisteredTypes(at, b)
 	case *SexpPointer:
 		return comparePointers(at, b)
-	case SexpSentinel:
+	case *SexpSentinel:
 		if at == SexpNull && b == SexpNull {
 			return 0, nil
 		} else {

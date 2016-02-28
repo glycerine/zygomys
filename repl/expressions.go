@@ -39,7 +39,7 @@ func NewSexpPointer(pointedTo Sexp, pointedToType *RegisteredType) *SexpPointer 
 }
 
 func (p *SexpPointer) SexpString() string {
-	return fmt.Sprintf("%v", p.Target)
+	return fmt.Sprintf("%p", p.Target)
 	//return fmt.Sprintf("(* %v) %p", p.PointedToType.RegisteredName, p.Target)
 }
 
@@ -124,7 +124,7 @@ func (r *SexpError) Type() *RegisteredType {
 	return nil // TODO what should this be?
 }
 
-func (r SexpSentinel) Type() *RegisteredType {
+func (r *SexpSentinel) Type() *RegisteredType {
 	return nil // TODO what should this be?
 }
 
@@ -143,14 +143,16 @@ func (c *SexpClosureEnv) SexpString() string {
 	return s
 }
 
-type SexpSentinel int
+type SexpSentinel struct {
+	Val int
+}
 
 // these are values now so that they also have addresses.
-var SexpNull SexpSentinel = 0
-var SexpEnd SexpSentinel = 1
-var SexpMarker SexpSentinel = 2
+var SexpNull = &SexpSentinel{Val: 0}
+var SexpEnd = &SexpSentinel{Val: 1}
+var SexpMarker = &SexpSentinel{Val: 2}
 
-func (sent SexpSentinel) SexpString() string {
+func (sent *SexpSentinel) SexpString() string {
 	if sent == SexpNull {
 		return "nil"
 	}
@@ -484,7 +486,7 @@ func IsTruthy(expr Sexp) bool {
 		return e.Val != 0
 	case *SexpChar:
 		return e.Val != 0
-	case SexpSentinel:
+	case *SexpSentinel:
 		return e != SexpNull
 	}
 	return true
