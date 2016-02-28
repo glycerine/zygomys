@@ -168,7 +168,7 @@ func TypeOf(expr Sexp) *SexpStr {
 		v = "regtype"
 	case *SexpPointer:
 		v = e.MyType.RegisteredName
-	case SexpReflect:
+	case *SexpReflect:
 		rt := expr.Type()
 		if rt != nil {
 			return &SexpStr{S: rt.RegisteredName}
@@ -177,9 +177,9 @@ func TypeOf(expr Sexp) *SexpStr {
 		//if v == "Ptr" {
 		//	v = reflect.Value(e).Type().Elem().Kind().String()
 		//}
-		kind := reflect.Value(e).Type().Kind()
+		kind := reflect.Value(e.Val).Type().Kind()
 		if kind == reflect.Ptr {
-			v = reflect.Value(e).Elem().Type().Name()
+			v = reflect.Value(e.Val).Elem().Type().Name()
 		} else {
 			P("kind = %v", kind)
 			v = "reflect.Value"

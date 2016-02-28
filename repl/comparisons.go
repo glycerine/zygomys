@@ -48,8 +48,8 @@ func compareInt(i *SexpInt, expr Sexp) (int, error) {
 		return signumFloat(float64(i.Val) - e.Val), nil
 	case *SexpChar:
 		return signumInt(i.Val - int64(e.Val)), nil
-	case SexpReflect:
-		r := reflect.Value(e)
+	case *SexpReflect:
+		r := reflect.Value(e.Val)
 		ifa := r.Interface()
 		switch z := ifa.(type) {
 		case *int64:
@@ -82,8 +82,8 @@ func compareString(s *SexpStr, expr Sexp) (int, error) {
 	switch e := expr.(type) {
 	case *SexpStr:
 		return bytes.Compare([]byte(s.S), []byte(e.S)), nil
-	case SexpReflect:
-		r := reflect.Value(e)
+	case *SexpReflect:
+		r := reflect.Value(e.Val)
 		ifa := r.Interface()
 		switch z := ifa.(type) {
 		case *string:
@@ -220,8 +220,8 @@ func Compare(a Sexp, b Sexp) (int, error) {
 		} else {
 			return -1, nil
 		}
-	case SexpReflect:
-		r := reflect.Value(at)
+	case *SexpReflect:
+		r := reflect.Value(at.Val)
 		ifa := r.Interface()
 		//P("Compare(): ifa = %v/%t", ifa, ifa)
 		//P("Compare(): r.Elem() = %v/%T", r.Elem(), r.Elem())

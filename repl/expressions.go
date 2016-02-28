@@ -102,10 +102,12 @@ func (r *SexpRaw) Type() *RegisteredType {
 	return r.Typ
 }
 
-type SexpReflect reflect.Value
+type SexpReflect struct {
+	Val reflect.Value
+}
 
-func (r SexpReflect) Type() *RegisteredType {
-	k := reflectName(reflect.Value(r))
+func (r *SexpReflect) Type() *RegisteredType {
+	k := reflectName(reflect.Value(r.Val))
 	Q("SexpReflect.Type() looking up type named '%s'", k)
 	ty, ok := GoStructRegistry.Registry[k]
 	if !ok {
@@ -347,18 +349,18 @@ func (h *SexpHash) SetGoStructFactory(factory *RegisteredType) {
 var SexpIntSize = 64
 var SexpFloatSize = 64
 
-func (r SexpReflect) SexpString() string {
+func (r *SexpReflect) SexpString() string {
 	Q("in SexpReflect.SexpString(); top; type = %T", r)
-	if reflect.Value(r).Type().Kind() == reflect.Ptr {
-		iface := reflect.Value(r).Interface()
+	if reflect.Value(r.Val).Type().Kind() == reflect.Ptr {
+		iface := reflect.Value(r.Val).Interface()
 		switch iface.(type) {
 		case *string:
-			return fmt.Sprintf("`%v`", reflect.Value(r).Elem().Interface())
+			return fmt.Sprintf("`%v`", reflect.Value(r.Val).Elem().Interface())
 		default:
-			return fmt.Sprintf("%v", reflect.Value(r).Elem().Interface())
+			return fmt.Sprintf("%v", reflect.Value(r.Val).Elem().Interface())
 		}
 	}
-	iface := reflect.Value(r).Interface()
+	iface := reflect.Value(r.Val).Interface()
 	Q("in SexpReflect.SexpString(); type = %T", iface)
 	switch iface.(type) {
 	default:

@@ -181,7 +181,7 @@ func CallGoMethodFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 					}
 				}
 				if !found {
-					r = append(r, SexpReflect(out[i]))
+					r = append(r, &SexpReflect{Val: out[i]})
 				}
 			}
 		}

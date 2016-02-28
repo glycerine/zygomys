@@ -470,7 +470,7 @@ func PointerToFunction(env *Glisp, name string,
 			return SexpNull, fmt.Errorf("illegal to dereference nil pointer")
 		}
 		return arg.Target, nil
-	case SexpReflect:
+	case *SexpReflect:
 		Q("dereference operation on SexpReflect detected")
 		// TODO what goes here?
 		return SexpNull, fmt.Errorf("illegal to dereference nil pointer")
@@ -676,9 +676,9 @@ func VarBuilder(env *Glisp, name string,
 		case ***RecordDefn:
 			Q("we have RecordDefn rd = %#v", *rd)
 		}
-		valSexp = SexpReflect(reflect.ValueOf(v))
+		valSexp = &SexpReflect{Val: reflect.ValueOf(v)}
 	default:
-		valSexp = SexpReflect(reflect.ValueOf(v))
+		valSexp = &SexpReflect{Val: reflect.ValueOf(v)}
 	}
 
 	Q("var decl: valSexp is '%v'", valSexp.SexpString())
