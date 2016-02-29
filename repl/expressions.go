@@ -448,6 +448,8 @@ type SexpFunction struct {
 	orig              Sexp
 	closingOverScopes *Closing
 	isBuilder         bool // see defbuild; builders are builtins that receive un-evaluated expressions
+	inputTypes        *SexpHash
+	returnTypes       *SexpHash
 }
 
 func (sf *SexpFunction) Type() *RegisteredType {

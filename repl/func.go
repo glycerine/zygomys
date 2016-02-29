@@ -30,9 +30,10 @@ func FuncBuilder(env *Glisp, name string,
 		} else {
 			return SexpNull, fmt.Errorf("bad func name: symbol required")
 		}
+
 	case *SexpArray:
 		// anonymous function
-		symN = env.GenSymbol("__anon_func_")
+		symN = env.GenSymbol("__anon")
 		isAnon = true
 		inputsLoc--
 		returnsLoc--
@@ -42,6 +43,18 @@ func FuncBuilder(env *Glisp, name string,
 	}
 	P("good: have func name '%v'", symN.name)
 	funcName := symN.name
+
+	builtin, builtTyp := env.IsBuiltinSym(symN)
+	if builtin {
+		return SexpNull,
+			fmt.Errorf("already have %s '%s', refusing to overwrite with defn",
+				builtTyp, symN.name)
+	}
+
+	if env.HasMacro(symN) {
+		return SexpNull, fmt.Errorf("Already have macro named '%s': refusing"+
+			" to define function of same name.", symN.name)
+	}
 
 	if n < inputsLoc+1 {
 		return SexpNull, fmt.Errorf("func [inputs] array is missing. %s", use)
@@ -94,15 +107,82 @@ func FuncBuilder(env *Glisp, name string,
 
 	env.datastack.PushExpr(SexpNull)
 
-	/*
-		err := env.LexicalBindSymbol(symN, rt)
-		if err != nil {
-			return SexpNull, fmt.Errorf("late: struct builder could not bind symbol '%s': '%v'",
-				structName, err)
-		}
-		P("good: bound symbol '%s' to new func", symN.SexpString())
-	*/
-	return SexpNull, nil
+	P("FuncBuilder() about to call buildSexpFun")
+
+	// ===================================
+	// ===================================
+	//
+	// from buildSexpFun, adapted
+	//
+	// todo: type checking the inputs and handling the returns as well
+	//
+	// ===================================
+	// ===================================
+
+	//	sfun, err := buildSexpFun(env, symN.name, funcargs, body, orig)
+
+	orig := &SexpArray{Val: args}
+	funcargs := inHash.KeyOrder
+
+	gen := NewGenerator(env)
+	gen.Tail = true
+
+	gen.funcname = funcName
+
+	gen.AddInstruction(AddFuncScopeInstr{Name: "runtime " + gen.funcname})
+
+	argsyms := make([]*SexpSymbol, len(funcargs))
+
+	// copy
+	for i := range funcargs {
+		argsyms[i] = funcargs[i].(*SexpSymbol)
+	}
+
+	varargs := false
+	nargs := len(funcargs)
+
+	if len(argsyms) >= 2 && argsyms[len(argsyms)-2].name == "&" {
+		argsyms[len(argsyms)-2] = argsyms[len(argsyms)-1]
+		argsyms = argsyms[0 : len(argsyms)-1]
+		varargs = true
+		nargs = len(argsyms) - 1
+	}
+
+	VPrintf("\n in buildSexpFun(): DumpFunction just before %v args go onto stack\n",
+		len(argsyms))
+	if Working {
+		DumpFunction(GlispFunction(gen.instructions), -1)
+	}
+	for i := len(argsyms) - 1; i >= 0; i-- {
+		gen.AddInstruction(PopStackPutEnvInstr{argsyms[i]})
+	}
+	err = gen.GenerateBegin(body)
+	if err != nil {
+		return MissingFunction, err
+	}
+
+	gen.AddInstruction(RemoveScopeInstr{})
+	gen.AddInstruction(ReturnInstr{nil})
+
+	newfunc := GlispFunction(gen.instructions)
+	sfun := gen.env.MakeFunction(gen.funcname, nargs,
+		varargs, newfunc, orig)
+	sfun.inputTypes = inHash
+	sfun.returnTypes = retHash
+
+	clos := CreateClosureInstr{sfun}
+	notePc := env.pc
+	clos.Execute(env)
+
+	invok, err := env.datastack.PopExpr()
+	panicOn(err) // we just pushed in the clos.Execute(), so this should always be err == nil
+	env.pc = notePc
+	err = env.LexicalBindSymbol(symN, invok)
+	if err != nil {
+		return SexpNull, fmt.Errorf("internal error: could not bind symN:'%s' into env: %v", symN.name, err)
+	}
+
+	return invok, nil
 }
 
 func GetFuncArgArray(arr *SexpArray, env *Glisp, where string) (*SexpHash, error) {

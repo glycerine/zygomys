@@ -186,7 +186,7 @@ func (gen *Generator) GenerateDef(args []Sexp) error {
 
 func (gen *Generator) GenerateDefn(args []Sexp, orig Sexp) error {
 	if len(args) < 3 {
-		return errors.New("Wrong number of arguments to defn")
+		return WrongNargs
 	}
 
 	var funcargs *SexpArray
