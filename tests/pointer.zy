@@ -68,3 +68,28 @@ ptr2
 (expect-error "Error calling 'deref-set': cannot assign type 'Dog' to type 'Cat'"
               (deref-set pcat (Dog Name:"barker")))
 
+
+(def iii (& 34))
+(deref-set iii 5)
+(assert (== (deref iii) 5))
+
+(def sss (& "sad"))
+(deref-set sss "happy")
+(assert (== (* sss) "happy"))
+
+(def h {a:(& 1) b:2})
+(deref-set (.h.a) 45)
+(assert (== (* (.h.a)) 45))
+
+(def cat (Cat Name:"Claude"))
+(expect-error "Error calling 'deref-set': deref-set only operates on pointers (*SexpPointer); we saw *zygo.SexpStr instead"
+              (deref-set (:Name cat) "Jupiter"))
+
+(struct Kanga [(field roo: (* Cat))])
+
+(def kanga (Kanga roo: (& cat)))
+(assert (== (:Name (* (.kanga.roo))) "Claude"))
+(def jup (Cat Name:"Jupiter"))
+(deref-set (:roo kanga) jup)
+(assert (== (:Name (* (.kanga.roo))) "Jupiter"))
+

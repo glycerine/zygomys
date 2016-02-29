@@ -1319,6 +1319,8 @@ func AddressOfFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 }
 
 func DerefFunction(env *Glisp, name string, args []Sexp) (result Sexp, err error) {
+	result = SexpNull
+
 	defer func() {
 		e := recover()
 		if e != nil {
@@ -1358,10 +1360,32 @@ func DerefFunction(env *Glisp, name string, args []Sexp) (result Sexp, err error
 			return SexpNull, WrongNargs
 		}
 
+		// delegate as much as we can to the Go type system
+		// and reflection
+		rhs := reflect.ValueOf(args[1])
+		rhstype := rhs.Type()
+		lhstype := ptr.ReflectTarget.Type()
+		//P("rhstype = %#v, lhstype = %#v", rhstype, lhstype)
+		if lhstype == rhstype {
+			// have to exclude *SexpHash and *SexpReflect from this
+			switch args[1].(type) {
+			case *SexpHash:
+				// handle below
+			case *SexpReflect:
+				// handle below
+			default:
+				//P("we have a reflection capable type match!")
+				ptr.ReflectTarget.Elem().Set(rhs.Elem())
+				return
+			}
+		}
+
 		//P("deref-set: arg0 is %T and arg1 is %T,   ptr.Target = %#v", args[0], args[1], ptr.Target)
 		//P("args[0] has ptr.ReflectTarget = '%#v'", ptr.ReflectTarget)
 		switch payload := args[1].(type) {
 		case *SexpInt:
+			Q("ptr = '%#v'", ptr)
+			Q("ptr.ReflectTarget = '%#v'", ptr.ReflectTarget)
 			Q("ptr.ReflectTarget.CanAddr() = '%#v'", ptr.ReflectTarget.Elem().CanAddr())
 			Q("ptr.ReflectTarget.CanSet() = '%#v'", ptr.ReflectTarget.Elem().CanSet())
 			Q("*SexpInt case: payload = '%#v'", payload)
@@ -1372,6 +1396,7 @@ func DerefFunction(env *Glisp, name string, args []Sexp) (result Sexp, err error
 					vot, ptr.ReflectTarget.Elem().Type())
 			}
 			ptr.ReflectTarget.Elem().Set(vo)
+			return
 		case *SexpStr:
 			vo := reflect.ValueOf(payload.S)
 			vot := vo.Type()
@@ -1386,6 +1411,7 @@ func DerefFunction(env *Glisp, name string, args []Sexp) (result Sexp, err error
 			}
 			//P("payload is *SexpStr, got past type check")
 			ptr.ReflectTarget.Elem().Set(vo)
+			return
 		case *SexpHash:
 			//P("ptr.PointedToType = '%#v'", ptr.PointedToType)
 			pt := payload.Type()
@@ -1393,6 +1419,7 @@ func DerefFunction(env *Glisp, name string, args []Sexp) (result Sexp, err error
 			if tt == pt && tt.RegisteredName == pt.RegisteredName {
 				//P("have matching type!: %v", tt.RegisteredName)
 				ptr.Target.(*SexpHash).CloneFrom(payload)
+				return
 			} else {
 				return SexpNull, fmt.Errorf("cannot assign type '%v' to type '%v'",
 					payload.Type().RegisteredName,
@@ -1408,10 +1435,8 @@ func DerefFunction(env *Glisp, name string, args []Sexp) (result Sexp, err error
 			}
 			Q("got back iface = '%#v'", iface)
 
-		default:
-			return SexpNull, fmt.Errorf("deref-set doesn't handle assignment of type %T at present", payload)
 		}
-		return SexpNull, nil
+		return SexpNull, fmt.Errorf("deref-set doesn't handle assignment of type %T at present", args[1])
 
 	default:
 		return SexpNull, fmt.Errorf("unimplemented operation '%s' in DerefFunction", name)
