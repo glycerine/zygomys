@@ -93,3 +93,8 @@ ptr2
 (deref-set (:roo kanga) jup)
 (assert (== (:Name (* (.kanga.roo))) "Jupiter"))
 
+(def sn1 (snoopy of:"charlie"))
+(def sn2 (snoopy of:"sarah"))
+(psnoop = (& sn1))
+(* psnoop)
+(deref-set psnoop sn2)

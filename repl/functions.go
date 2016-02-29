@@ -1371,8 +1371,8 @@ func DerefFunction(env *Glisp, name string, args []Sexp) (result Sexp, err error
 			switch args[1].(type) {
 			case *SexpHash:
 				// handle below
-			case *SexpReflect:
-				// handle below
+			//case *SexpReflect:
+			// handle here or below?
 			default:
 				//P("we have a reflection capable type match!")
 				ptr.ReflectTarget.Elem().Set(rhs.Elem())
@@ -1425,6 +1425,7 @@ func DerefFunction(env *Glisp, name string, args []Sexp) (result Sexp, err error
 					payload.Type().RegisteredName,
 					ptr.PointedToType.RegisteredName)
 			}
+
 		case *SexpReflect:
 			Q("good, e2 is SexpReflect with Val='%#v'", payload.Val)
 
@@ -1434,7 +1435,7 @@ func DerefFunction(env *Glisp, name string, args []Sexp) (result Sexp, err error
 				return SexpNull, err
 			}
 			Q("got back iface = '%#v'", iface)
-
+			panic("not done yet with this implementation of args[1] of type *SexpReflect")
 		}
 		return SexpNull, fmt.Errorf("deref-set doesn't handle assignment of type %T at present", args[1])
 

@@ -723,28 +723,3 @@ func ExpectErrorBuilder(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	}
 	return SexpNull, fmt.Errorf("expect-error expected '%s' but got no error", expectedError.S)
 }
-
-func AddressOfBuilder(env *Glisp, name string, args []Sexp) (Sexp, error) {
-	narg := len(args)
-	if narg != 1 {
-		return SexpNull, WrongNargs
-	}
-
-	dup := env.Duplicate()
-	x, err := dup.EvalExpressions(args[0:1])
-	P("done with eval, ev=%v / type %T. err = %v", x.SexpString(), x, err)
-	if err != nil {
-		return SexpNull, err
-	}
-
-	return NewSexpPointer(x), nil
-	/*
-		        // structs only version:
-				switch a := args[0].(type) {
-				case *SexpHash:
-					return NewSexpPointer(a, a.Type()), nil
-				}
-
-				return SexpNull, fmt.Errorf("cannot take address of argument '%s'", args[0].SexpString())
-	*/
-}
