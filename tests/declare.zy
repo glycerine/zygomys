@@ -90,9 +90,6 @@
 (expect-error `Error calling '.e.tag': Dog has no field 'tag'` (.e.tag = 445))
 (expect-error `Error calling '.d.big': Dog has no field 'big'` (.d.big = true))
 
-;; not sure yet how to point to non-records in a persistent fashion.
-;; (.w.PointerSisters = (& 34))
-
 ;; not yet implemented stuff:
 
 ;; Here is how we'll declare functions:
