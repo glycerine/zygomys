@@ -141,7 +141,7 @@ type SexpError struct {
 }
 
 func (r *SexpError) Type() *RegisteredType {
-	return nil // TODO what should this be?
+	return GoStructRegistry.Registry["error"]
 }
 
 func (r *SexpSentinel) Type() *RegisteredType {

@@ -335,6 +335,11 @@ func init() {
 	// RawRT *RegisteredType
 	// ReflectRT *RegisteredType
 	// ErrorRT *RegisteredType
+	gsr.RegisterBuiltin("error", &RegisteredType{GenDefMap: false, Factory: func(env *Glisp) (interface{}, error) {
+		var err error
+		return &err, nil
+	}})
+
 	// SentinelRT *RegisteredType
 	// ClosureRT *RegisteredType
 

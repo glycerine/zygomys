@@ -684,15 +684,20 @@ func ExpectErrorBuilder(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		return SexpNull, WrongNargs
 	}
 
+	dup := env.Duplicate()
+	es, err := dup.EvalExpressions(args[0:1])
+	if err != nil {
+		return SexpNull, fmt.Errorf("error evaluating the error string to expect: %s", err)
+	}
+
 	var expectedError *SexpStr
-	switch e := args[0].(type) {
+	switch e := es.(type) {
 	case *SexpStr:
 		expectedError = e
 	default:
 		return SexpNull, fmt.Errorf("first arg to expect-error must be the string of the error to expect")
 	}
 	Q("expectedError = %v", expectedError)
-	dup := env.Duplicate()
 	ev, err := dup.EvalExpressions(args[1:2])
 	Q("done with eval, ev=%v / type %T. err = %v", ev.SexpString(), ev, err)
 	if err != nil {
