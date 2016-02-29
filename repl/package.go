@@ -402,22 +402,6 @@ func InterfaceBuilder(env *Glisp, name string,
 	return SexpNull, nil
 }
 
-func FuncBuilder(env *Glisp, name string,
-	args []Sexp) (Sexp, error) {
-
-	if len(args) < 1 {
-		return SexpNull, fmt.Errorf("func name is missing. use: " +
-			"(func func-name ...)\n")
-	}
-
-	Q("in func builder, args = ")
-	for i := range args {
-		Q("args[%v] = '%s'", i, args[i].SexpString())
-	}
-
-	return SexpNull, nil
-}
-
 func SliceOfFunction(env *Glisp, name string,
 	args []Sexp) (Sexp, error) {
 

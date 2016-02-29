@@ -1,6 +1,10 @@
 ;; declare functions with types
+
 (func trundle [a:int b:string] [n:int err:error]
   (return 78 nil))
+
+;; anonymous function. 
+(func [][] (printf "anon called"))
 
 (assert (== 78 (trundle a:3 b:"hi")))
 
