@@ -1315,10 +1315,23 @@ func AddressOfFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		return SexpNull, WrongNargs
 	}
 
-	return NewSexpPointer(args[0], args[0].Type()), nil
+	return NewSexpPointer(args[0]), nil
 }
 
-func DerefFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
+func DerefFunction(env *Glisp, name string, args []Sexp) (result Sexp, err error) {
+	defer func() {
+		e := recover()
+		if e != nil {
+			//Q("in recover() of DerefFunction, e = '%#v'", e)
+			switch ve := e.(type) {
+			case *reflect.ValueError:
+				err = ve
+			default:
+				err = fmt.Errorf("unknown typecheck error during %s: %v", name, ve)
+			}
+		}
+	}()
+
 	narg := len(args)
 	if narg != 1 && narg != 2 {
 		return SexpNull, WrongNargs
@@ -1327,6 +1340,8 @@ func DerefFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	switch e := args[0].(type) {
 	case *SexpPointer:
 		ptr = e
+	case *SexpReflect:
+		ptr = NewSexpPointer(e)
 	default:
 		return SexpNull, fmt.Errorf("%s only operates on pointers (*SexpPointer); we saw %T instead", name, e)
 	}
@@ -1343,8 +1358,8 @@ func DerefFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 			return SexpNull, WrongNargs
 		}
 
-		Q("deref-set: arg0 is %T and arg1 is %T,   ptr.Target = %#v", args[0], args[1], ptr.Target)
-		Q("args[0] has ptr.ReflectTarget = '%#v'", ptr.ReflectTarget)
+		//P("deref-set: arg0 is %T and arg1 is %T,   ptr.Target = %#v", args[0], args[1], ptr.Target)
+		//P("args[0] has ptr.ReflectTarget = '%#v'", ptr.ReflectTarget)
 		switch payload := args[1].(type) {
 		case *SexpInt:
 			Q("ptr.ReflectTarget.CanAddr() = '%#v'", ptr.ReflectTarget.Elem().CanAddr())
@@ -1353,23 +1368,35 @@ func DerefFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 			vo := reflect.ValueOf(payload.Val)
 			vot := vo.Type()
 			if !vot.AssignableTo(ptr.ReflectTarget.Elem().Type()) {
-				return SexpNull, fmt.Errorf("type mismatch: value of type '%s' is not assignable to type '%v'", vot, ptr.ReflectTarget.Elem().Type())
+				return SexpNull, fmt.Errorf("type mismatch: value of type '%s' is not assignable to type '%v'",
+					vot, ptr.ReflectTarget.Elem().Type())
 			}
 			ptr.ReflectTarget.Elem().Set(vo)
 		case *SexpStr:
 			vo := reflect.ValueOf(payload.S)
 			vot := vo.Type()
-			if !vot.AssignableTo(ptr.ReflectTarget.Elem().Type()) {
-				return SexpNull, fmt.Errorf("type mismatch: value of type '%s' is not assignable to type '%v'", vot, ptr.ReflectTarget.Elem().Type())
+			//P("payload is *SexpStr")
+			//tele := ptr.ReflectTarget.Elem()
+			//P("ptr = %#v", ptr)
+			tele := ptr.ReflectTarget
+			//P("got past tele : %#v", tele)
+			if !reflect.PtrTo(vot).AssignableTo(tele.Type()) {
+				return SexpNull, fmt.Errorf("type mismatch: value of type '%v' is not assignable to '%v'",
+					vot, ptr.PointedToType.RegisteredName) // tele.Type())
 			}
+			//P("payload is *SexpStr, got past type check")
 			ptr.ReflectTarget.Elem().Set(vo)
 		case *SexpHash:
-			Q("ptr.PointedToType = '%#v'", ptr.PointedToType)
-			if ptr.PointedToType == payload.Type() {
-				Q("have matching type!")
+			//P("ptr.PointedToType = '%#v'", ptr.PointedToType)
+			pt := payload.Type()
+			tt := ptr.PointedToType
+			if tt == pt && tt.RegisteredName == pt.RegisteredName {
+				//P("have matching type!: %v", tt.RegisteredName)
 				ptr.Target.(*SexpHash).CloneFrom(payload)
 			} else {
-				Q("type mismatch %#v  is not  %#v", ptr.PointedToType, payload.Type())
+				return SexpNull, fmt.Errorf("cannot assign type '%v' to type '%v'",
+					payload.Type().RegisteredName,
+					ptr.PointedToType.RegisteredName)
 			}
 		case *SexpReflect:
 			Q("good, e2 is SexpReflect with Val='%#v'", payload.Val)

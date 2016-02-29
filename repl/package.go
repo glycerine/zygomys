@@ -737,7 +737,7 @@ func AddressOfBuilder(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		return SexpNull, err
 	}
 
-	return NewSexpPointer(x, x.Type()), nil
+	return NewSexpPointer(x), nil
 	/*
 		        // structs only version:
 				switch a := args[0].(type) {

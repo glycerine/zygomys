@@ -27,26 +27,23 @@ type SexpPointer struct {
 	MyType        *RegisteredType
 }
 
-func NewSexpPointer(pointedTo Sexp, pointedToType *RegisteredType) *SexpPointer {
+func NewSexpPointer(pointedTo Sexp) *SexpPointer {
+	pointedToType := pointedTo.Type()
 
 	var reftarg reflect.Value
 
-	if pointedToType.hasShadowStruct {
-		reftarg = pointedTo.(*SexpHash).GoShadowStructVa
-	} else {
-		Q("NewSexpPointer sees pointedTo of '%#v'", pointedTo)
-		switch e := pointedTo.(type) {
-		case *SexpReflect:
-			Q("SexpReflect.Val = '%#v'", e.Val)
-			reftarg = e.Val
-		default:
-			Q("NewSexpPointer cannot set reftarg with e= '%#v'", e) // e.g. *SexpHash
-		}
+	//	if pointedToType.hasShadowStruct {
+	//		reftarg = pointedTo.(*SexpHash).GoShadowStructVa
+	//	} else {
+	Q("NewSexpPointer sees pointedTo of '%#v'", pointedTo)
+	switch e := pointedTo.(type) {
+	case *SexpReflect:
+		Q("SexpReflect.Val = '%#v'", e.Val)
+		reftarg = e.Val
+	default:
+		reftarg = reflect.ValueOf(pointedTo)
 	}
-
-	//	switch p := pointedTo.(type) {
-	//		case
-	//	}
+	//	} // end else
 
 	ptrRt := GoStructRegistry.GetOrCreatePointerType(pointedToType)
 	Q("pointer type is ptrRt = '%#v'", ptrRt)
