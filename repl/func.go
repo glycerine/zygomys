@@ -40,7 +40,7 @@ func FuncBuilder(env *Glisp, name string,
 	default:
 		return SexpNull, fmt.Errorf("bad func name: symbol required")
 	}
-	P("good: have func name '%v'", symN)
+	P("good: have func name '%v'", symN.name)
 	funcName := symN.name
 
 	if n < inputsLoc+1 {
@@ -76,9 +76,9 @@ func FuncBuilder(env *Glisp, name string,
 		P("args[%v] = '%s'", i, args[i].SexpString())
 	}
 	P("in func builder, isAnon = %v", isAnon)
-	P("in func builder, inputs = %#v", inputs)
-	P("in func builder, returns = %#v", returns)
-	P("in func builder, body = %#v", body)
+	P("in func builder, inputs = %v", inputs.SexpString())
+	P("in func builder, returns = %v", returns.SexpString())
+	P("in func builder, body = %v", (&SexpArray{Val: body}).SexpString())
 	env.datastack.PushExpr(SexpNull)
 
 	/*
