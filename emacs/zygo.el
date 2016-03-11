@@ -305,7 +305,7 @@ code line."
 ))
 
 (defun skip-lisp-comment-lines ()
-  "skip over lines that start with semi-colons before they have another non-whitespace character"
+  "skip over lines that start with // before they have another non-whitespace character"
   (interactive)
   (let* ((done-skipping)
 	 (startp (point))
