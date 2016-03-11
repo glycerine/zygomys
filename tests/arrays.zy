@@ -9,7 +9,7 @@
 (assert (== [1 2 3] (append [1 2] 3)))
 (assert (== [0 1 2 3] (concat [0 1] [2 3])))
 (assert (== 6 (len testarr)))
-(assert (== ['() '() '()] (make-array 3)))
+(assert (== [%() %() %()] (make-array 3)))
 (assert (== [0 0 0] (make-array 3 0)))
 
 (let [a 0]
@@ -26,6 +26,6 @@
 (assert (== 1 (:2 a)))
 (assert (== 7 (:3 a)))
 
-(assert (== 'default (:99 a 'default)))
+(assert (== %default (:99 a %default)))
 
 

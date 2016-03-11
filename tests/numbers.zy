@@ -21,12 +21,12 @@
 (assert (== 1.5 (/ 3 2)))
 (assert (== 1.2e3 (* 1.2e2 10)))
 
-(def selection '(1 1.0 0 0.0))
+(def selection %(1 1.0 0 0.0))
 
-(assert (== '(true true true true) (map number? selection)))
-(assert (== '(true false true false) (map int? selection)))
-(assert (== '(false true false true) (map float? selection)))
-(assert (== '(false false true true) (map zero? selection)))
+(assert (== %(true true true true) (map number? selection)))
+(assert (== %(true false true false) (map int? selection)))
+(assert (== %(false true false true) (map float? selection)))
+(assert (== %(false false true true) (map zero? selection)))
 
 // exponentiation
 (assert (== 16 (** 2 4)))

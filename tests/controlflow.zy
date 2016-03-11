@@ -14,14 +14,14 @@
 (assert (== 1 (or 1 0)))
 (assert (== 1 (or 1 2)))
 
-(assert (== 'a
-  (cond true 'a 'b)))
+(assert (== %a
+  (cond true %a %b)))
 
-(assert (== 'b
-  (cond false 'a 'b)))
+(assert (== %b
+  (cond false %a %b)))
 
-(assert (== 'c
+(assert (== %c
   (cond
-    false 'a
-    false 'b
-          'c)))
+    false %a
+    false %b
+          %c)))

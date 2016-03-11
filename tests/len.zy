@@ -1,5 +1,5 @@
 // list len
-(def a '(a b c d))
+(def a %(a b c d))
 (assert (== (len a) 4))
 (assert (== (len ()) 0))
 (assert (== (len (rest a)) 3))

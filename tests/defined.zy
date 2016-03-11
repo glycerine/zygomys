@@ -1,6 +1,6 @@
 (assert (defined? **))
 (assert (defined? "**"))
-(assert (defined? '**))
+(assert (defined? %**))
 (assert (defined? "mod"))
 
 (assert (not (defined? "i-am-not-a-defined-function")))

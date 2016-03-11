@@ -2,9 +2,9 @@
 // should each get their own scope for that instantiation
 (defn new-closure [sym] (let* [a 1
                            f (fn [addme] (set a (+ a addme)) (printf "a is now %v\n" a) a)] f))
-(def g (new-closure 'hello_g))
+(def g (new-closure %hello_g))
 (_closdump g)
-(def h (new-closure 'hello_h))
+(def h (new-closure %hello_h))
 (_closdump h)
 (_closdump g) // showing hello_h arg!!!
 (assert (== (g 1) 2))

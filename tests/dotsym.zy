@@ -3,7 +3,7 @@
 // (def) on a dot-symbol is illegal
 (def a 9)
 //(def .a 3)
-(assert (== .a '.a))
+(assert (== .a %.a))
 (assert (== a 9))
 
 

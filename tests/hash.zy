@@ -1,7 +1,7 @@
-(def h {'a 21 2 5 "c" #c})
+(def h {%a 21 2 5 "c" #c})
 
 // testing hget
-(assert (== 21 (hget h 'a)))
+(assert (== 21 (hget h %a)))
 (assert (== 5 (hget h 2)))
 (assert (== #c (hget h "c")))
 // default value
@@ -13,19 +13,19 @@
 
 // testing confict resolution
 // b and its symbol number have same hash value
-(hset! h 'b 13)
-(hset! h (symnum 'b) 42)
+(hset! h %b 13)
+(hset! h (symnum %b) 42)
 
-(assert (== 13 (hget h 'b)))
-(assert (== 42 (hget h (symnum 'b))))
+(assert (== 13 (hget h %b)))
+(assert (== 42 (hget h (symnum %b))))
 
 // testing delete
-(hdel! h 'a)
-// 'a should be gone
-(assert (== 0 (hget h 'a 0)))
-(hdel! h (symnum 'b))
+(hdel! h %a)
+// %a should be gone
+(assert (== 0 (hget h %a 0)))
+(hdel! h (symnum %b))
 // b should still be in there
-(assert (== 13 (hget h 'b)))
+(assert (== 13 (hget h %b)))
 
 (assert (hash? h))
 (assert (empty? {}))

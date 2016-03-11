@@ -8,6 +8,6 @@
 		))
 (defn f [a acc] (+ 1 acc))
 
-(foldl '(a b c d e f g h i j) f 0) 
+(foldl %(a b c d e f g h i j) f 0) 
 
 

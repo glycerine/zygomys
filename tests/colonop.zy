@@ -18,5 +18,5 @@
 (assert (== (:heath h) 10))
 
 // NB doesn't work because hash expects symbols as keys
-// (defn f [] 'heath)
+// (defn f [] %heath)
 // (assert (== (:(f) h) 10))

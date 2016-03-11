@@ -1,5 +1,5 @@
-(set 'y 10)
-(def 'x 10)
+(set %y 10)
+(def %x 10)
 (assert (== (+ x y) 20))
 
 

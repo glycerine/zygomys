@@ -8,8 +8,8 @@
 // the lambda below should refer to s as in 10, not s as in the argument to mymap.
 (def mapres2
      (let [s 10]
-          (mymap (fn [r] (def rover 12) (+ r s)) '(1 2 3))))
-(assert (== mapres2 '(11 12 13)))
+          (mymap (fn [r] (def rover 12) (+ r s)) %(1 2 3))))
+(assert (== mapres2 %(11 12 13)))
 
 // functions defn-ed should be closures too
 
@@ -17,8 +17,8 @@
 (defn f [r] (+ r z))
 (assert (== 14 (f 4)))
 
-(def mapres (let [z 2] (mymap f '(1 2 3))))
-(assert (== mapres '(11 12 13)))
+(def mapres (let [z 2] (mymap f %(1 2 3))))
+(assert (== mapres %(11 12 13)))
 
 
 // just playing below, before had detected mis-impl, now fixed.

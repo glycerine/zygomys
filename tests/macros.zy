@@ -1,7 +1,7 @@
-(def l '(1 2 3))
+(def l %(1 2 3))
 (def b 4)
 
-(assert (== ^(0 ~@l ~b) '(0 1 2 3 4)))
+(assert (== ^(0 ~@l ~b) %(0 1 2 3 4)))
 
 // note that we use ^ caret to start a template,
 // as opposed to the traditional lisp `` backtick.
@@ -10,10 +10,10 @@
 (defmac when [predicate & body]
   ^(cond ~predicate
       (begin
-        ~@body) '()))
+        ~@body) %()))
 
-(assert (null? (when false 'c)))
-(assert (== 'a (when true 'c 'b 'a)))
+(assert (null? (when false %c)))
+(assert (== %a (when true %c %b %a)))
 
 (def h (hash a:1 b:2))
 // check that arrays and hashes are getting scanned for ~ syntax unquotes.
