@@ -441,8 +441,6 @@ func (parser *Parser) ParseExpression(depth int) (res Sexp, err error) {
 		sym := env.MakeSymbol(tok.str)
 		sym.isDot = true
 		return sym, nil
-	case TokenComment:
-		return &SexpComment{Comment: tok.str}, nil
 	}
 	return SexpNull, errors.New(fmt.Sprint("Invalid syntax, didn't know what to do with ", tok.typ, " ", tok))
 }

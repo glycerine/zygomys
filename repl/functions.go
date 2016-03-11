@@ -1285,6 +1285,7 @@ func GOOSFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 
 // check is a symbol/string/value is defined
 func DefinedFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
+	//P("in DefinedFunction, args = '%#v'", args)
 	narg := len(args)
 	if narg != 1 {
 		return SexpNull, WrongNargs

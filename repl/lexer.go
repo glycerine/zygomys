@@ -290,9 +290,10 @@ func (lexer *Lexer) dumpBuffer() error {
 }
 
 func (lexer *Lexer) dumpComment() {
-	str := lexer.buffer.String()
+	// discard for now, until we're ready.
+	//str := lexer.buffer.String()
 	lexer.buffer.Reset()
-	lexer.tokens = append(lexer.tokens, lexer.Token(TokenComment, str))
+	//lexer.tokens = append(lexer.tokens, lexer.Token(TokenComment, str))
 }
 
 func (lexer *Lexer) dumpString() {

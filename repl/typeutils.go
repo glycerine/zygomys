@@ -184,8 +184,6 @@ func TypeOf(expr Sexp) *SexpStr {
 			P("kind = %v", kind)
 			v = "reflect.Value"
 		}
-	case *SexpComment:
-		v = "comment"
 	default:
 		fmt.Printf("\n error: unknown type: %T in '%#v'\n", e, e)
 	}
