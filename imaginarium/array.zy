@@ -1,0 +1,22 @@
+;; is array declaration possible
+
+(a[1 2] = 23)
+
+(b[0] = 2.4)
+
+;; and we need a complex number parsing notation
+
+3+2i
+
+5+4j
+
+5.5+4.6i
+
+;; and how about a scientific notation?
+
+3e9
+
+;; simple math expressions (3+3)*3 % 4 would be great
+
+(infix ``)
+

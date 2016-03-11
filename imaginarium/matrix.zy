@@ -1,0 +1,11 @@
+// comments
+// as matrix line separator
+// (def a [8 4 1 7 ])
+// assert (== 8 (:0 a)))
+
+// tree 
+
+// type variables
+
+// can we mix infix in?
+nil
