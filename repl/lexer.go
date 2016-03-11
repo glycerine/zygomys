@@ -86,8 +86,7 @@ func (t Token) String() string {
 	case TokenBinary:
 		return "0b" + t.str
 	case TokenChar:
-		quoted := strconv.Quote(t.str)
-		return "#" + quoted[1:len(quoted)-1]
+		return strconv.Quote(t.str)
 	case TokenColonOperator:
 		return ":"
 	case TokenThreadingOperator:
@@ -217,13 +216,16 @@ func EscapeChar(char rune) (rune, error) {
 
 func DecodeChar(atom string) (string, error) {
 	runes := StringToRunes(atom)
-	if len(runes) == 3 {
-		char, err := EscapeChar(runes[2])
+	n := len(runes)
+	runes = runes[:n-1]
+	runes = runes[1:]
+	if len(runes) == 2 {
+		char, err := EscapeChar(runes[1])
 		return string(char), err
 	}
 
-	if len(runes) == 2 {
-		return string(runes[1:2]), nil
+	if len(runes) == 1 {
+		return string(runes[0]), nil
 	}
 	return "", errors.New("not a char literal")
 }

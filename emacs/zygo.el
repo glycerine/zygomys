@@ -87,7 +87,7 @@
 (setq *inferior-zygo-buffer* "*zygo*")
 
 ;; the comment character
-(setq *inferior-zygo-comment-char* ";")
+(setq *inferior-zygo-comment-char* "//")
 
 (setq  comment-start   *inferior-zygo-comment-char*)
 (setq  comment-end     nil)

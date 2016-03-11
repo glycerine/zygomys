@@ -1,15 +1,15 @@
-(def h {%a 21 2 5 "c" #c})
+(def h {%a 21 2 5 "c" 'c'})
 
 // testing hget
 (assert (== 21 (hget h %a)))
 (assert (== 5 (hget h 2)))
-(assert (== #c (hget h "c")))
+(assert (== 'c' (hget h "c")))
 // default value
 (assert (== 0 (hget h 22 0)))
 
 // testing set
-(hset! h #a 3)
-(assert (== 3 (hget h #a)))
+(hset! h 'a' 3)
+(assert (== 3 (hget h 'a')))
 
 // testing confict resolution
 // b and its symbol number have same hash value

@@ -15,6 +15,6 @@
 
 (var r rune)
 
-(ch = #a)
+(ch = 'a')
 (expect-error "cannot assign int64 to int32" (ch = 3))
 (expect-error "cannot assign int32 to string" (s = ch))

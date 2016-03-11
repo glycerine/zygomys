@@ -3,7 +3,7 @@
 (.a = 4) // leaving 4 on datastack??
 (assert (== a 4))
 
-(= 'v 10)
+(= %v 10)
 (assert (== v 10))
 
 (def greet "hello")

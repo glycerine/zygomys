@@ -21,4 +21,4 @@ l9
 (assert (== (:cowgirl l10) "Jane"))
 
 // symbols become strings
-(defmap castle) (unjson (json (castle cats:'loveit)))
+(defmap castle) (unjson (json (castle cats:%loveit)))

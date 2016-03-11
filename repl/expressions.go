@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"reflect"
 	"strconv"
-	"strings"
 )
 
 // all Sexp are typed, and have a zero value corresponding to
@@ -402,7 +401,7 @@ func (f *SexpFloat) SexpString() string {
 }
 
 func (c *SexpChar) SexpString() string {
-	return "#" + strings.Trim(strconv.QuoteRune(c.Val), "'")
+	return strconv.QuoteRune(c.Val)
 }
 
 func (s *SexpStr) SexpString() string {
