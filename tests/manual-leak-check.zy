@@ -1,4 +1,4 @@
-;; check for scope leaks in the tail recursion
+// check for scope leaks in the tail recursion
 (defn foldl [lst fun acc]
     (cond
         (empty? lst) acc
@@ -7,4 +7,4 @@
 (defn f [a acc] (+ 1 acc))
 
 (foldl '(a b c d e f g h i j) f 0) 
-;; check for any leftovers manually here
+// check for any leftovers manually here

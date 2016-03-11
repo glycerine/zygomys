@@ -1,4 +1,4 @@
-;; typelist should have some basic types in it
+// typelist should have some basic types in it
 (tl = (typelist))
 (found = false)
 (range k v tl 

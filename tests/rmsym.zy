@@ -1,4 +1,4 @@
-;; rmsym removes a symbol from the local scope
+// rmsym removes a symbol from the local scope
 (assert (== `12` (new-scope (.b = 5) (new-scope (.b = 12) (str b)  ))))
 (assert (== `5` (new-scope (.b = 5) (new-scope (.b = 12) (rmsym 'b) (str b)  ))))
 

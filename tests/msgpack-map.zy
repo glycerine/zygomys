@@ -1,4 +1,4 @@
-(def h (hash a:b:)) ;; check kw: symbols: should not crash
+(def h (hash a:b:)) // check kw: symbols: should not crash
 
 (def recor (event-demo id:"Id" person-demo: (person-demo first:"george" last:"washington")))
 

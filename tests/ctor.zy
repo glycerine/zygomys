@@ -1,9 +1,9 @@
-;; types should act as constructors AND as type-variables
+// types should act as constructors AND as type-variables
 (struct truck [(field name:string)])
 (def t (truck name:"harley"))
 (def pty (* truck))
 
-;; check that base type ctors work too.
+// check that base type ctors work too.
 (def n (int 7))
 (assert (== n 7))
 

@@ -1,12 +1,12 @@
-;; defmap is automatically invoked for each GostructRegistry 
-;;(defmap event-demo)
-;;(defmap person-demo)
+// defmap is automatically invoked for each GostructRegistry 
+//(defmap event-demo)
+//(defmap person-demo)
 (def ev1 (event-demo id:456 user: (person-demo first:"jay" last:"son") flight:"A" pilot:["u" "2"]))
 
-;; togo has the side effect of decoding the Sexp into a predefined go Shadow
-;; struct, waiting to be called.
-;; The only advance requirement is that the struct be added to interpreter/makego.go's
-;; registry.
+// togo has the side effect of decoding the Sexp into a predefined go Shadow
+// struct, waiting to be called.
+// The only advance requirement is that the struct be added to interpreter/makego.go's
+// registry.
 (def txt (togo ev1))
 
 

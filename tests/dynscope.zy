@@ -5,23 +5,23 @@
 (defn f [] (let [x 3] (g) (set f_after_g_sees_x x)))
 (f)
 
-;; currently zygomys does lexical / static scoping
+// currently zygomys does lexical / static scoping
 
-;; under dynamic scoping
-;(assert (== g_saw_x 3))
-;(assert (== f_after_g_sees_x 2))
-;(assert (== x 1))
+// under dynamic scoping
+//(assert (== g_saw_x 3))
+//(assert (== f_after_g_sees_x 2))
+//(assert (== x 1))
 
-;; under lexical scoping
+// under lexical scoping
 (assert (== g_saw_x 1))
 (assert (== f_after_g_sees_x 3))
 (assert (== x 2))
 
-;; above is necessary but not sufficient:
-;; also needed: see tests/closure2.zy
-;; we can't have too much sharing. i.e.
-;; each new activation frame should
-;; obviously generate new variables,
-;; so closures capturing distinct
-;; activation frames should have
-;; distinct variables.
+// above is necessary but not sufficient:
+// also needed: see tests/closure2.zy
+// we can't have too much sharing. i.e.
+// each new activation frame should
+// obviously generate new variables,
+// so closures capturing distinct
+// activation frames should have
+// distinct variables.

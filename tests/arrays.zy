@@ -19,7 +19,7 @@
 (assert (empty? []))
 (assert (not (empty? [1])))
 
-;; colon used as shorthand for aget
+// colon used as shorthand for aget
 (def a [8 4 1 7])
 (assert (== 8 (:0 a)))
 (assert (== 4 (:1 a)))

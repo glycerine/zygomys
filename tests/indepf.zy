@@ -1,10 +1,10 @@
-;; indendent invocations of same closure
-;; should each get their own scope for that instantiation
+// indendent invocations of same closure
+// should each get their own scope for that instantiation
 (defn new-closure [] (let* [a 1
                            f (fn [addme] (set a (+ a addme)) (printf "a is now %v\n" a) a)] f))
 (def g (new-closure))
 (def h (new-closure))
 (assert (== (g 1) 2))
-;; if they are mistakenly sharing the same closure variables.
-;; then the increment on g will have impacted h as well.
+// if they are mistakenly sharing the same closure variables.
+// then the increment on g will have impacted h as well.
 (assert (== (h 1) 2)) 

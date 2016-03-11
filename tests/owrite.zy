@@ -1,8 +1,8 @@
-;; owrite writes lines out to a file
+// owrite writes lines out to a file
 (def b (slurp tests/lines))
 (owrite b tests/lines2)
 
-;; diff not in the assummed location on windows.
+// diff not in the assummed location on windows.
 (cond (== (GOOS) "windows") ()
    (assert (== "" (system "/usr/bin/diff tests/lines tests/lines2"))))
    

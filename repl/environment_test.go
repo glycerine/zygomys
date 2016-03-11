@@ -18,6 +18,7 @@ func Test400SandboxFunctions(t *testing.T) {
 			// no system functions should pass
 			for name := range sysFuncs {
 				env.Clear()
+				P("checking name = '%v'", name)
 				res, err := env.EvalString(fmt.Sprintf("(defined? '%s)", name))
 				cv.So(res, cv.ShouldResemble, &SexpBool{Val: false})
 				cv.So(err, cv.ShouldResemble, nil)

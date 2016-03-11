@@ -1,4 +1,4 @@
-;; recursive function definition
+// recursive function definition
 (defn f []
      (defn g [] 23)
      (defn h [] 77)

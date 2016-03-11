@@ -1,6 +1,6 @@
-;; tail recursion
+// tail recursion
 
-;; check for scope leaks in the tail recursion
+// check for scope leaks in the tail recursion
 (defn foldl [lst fun acc]
     (cond
         (empty? lst) acc

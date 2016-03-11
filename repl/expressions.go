@@ -87,6 +87,18 @@ type SexpStr struct {
 	Typ      *RegisteredType
 }
 
+type SexpComment struct {
+	Comment string
+}
+
+func (r *SexpComment) SexpString() string {
+	return "//" + r.Comment
+}
+
+func (r *SexpComment) Type() *RegisteredType {
+	return GoStructRegistry.Registry["comment"]
+}
+
 func (r SexpStr) Type() *RegisteredType {
 	return GoStructRegistry.Registry["string"]
 }

@@ -1,4 +1,4 @@
-;; verify that struct assign typechecks
+// verify that struct assign typechecks
 (struct Dog [
         (field Name:          string     e:0)
         (field Number:          int64     e:1)
@@ -21,7 +21,7 @@
 (var cc Cat)
 (cc = c)
 
-;; type checking the fields of a struct
+// type checking the fields of a struct
 (expect-error "Error calling 'Dog': field Dog.Name is string, cannot assign int64 '12'" (Dog Name:12))
 (expect-error `Error calling 'Dog': field Dog.Number is int64, cannot assign string '"hello"'` (Dog Number:"hello"))
 (expect-error `Error calling 'Dog': Dog has no field 'NotHere'` (Dog NotHere:"hello"))

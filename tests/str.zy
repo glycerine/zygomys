@@ -1,5 +1,5 @@
-;; should be able to show function defintions, at
-;; the repl and with (str)
+// should be able to show function defintions, at
+// the repl and with (str)
 
 (def a (fn [] (println "a says hi")))
 

@@ -1,4 +1,4 @@
-;; to point to non-records in a persistent fashion.
+// to point to non-records in a persistent fashion.
 (var a int64)
 (ptr = (& a))
 (assert (== 0 a))
@@ -19,26 +19,26 @@
 (ptr2 = (& a))
 ptr2
 
-;; deref-set is a setter that is equivalent to *ptr = 1 in Go.
+// deref-set is a setter that is equivalent to *ptr = 1 in Go.
 (deref-set ptr 1)
 (assert (== 1 a))
 
-;; deref with only 1 argument is a getter; same as (* ptr)
+// deref with only 1 argument is a getter; same as (* ptr)
 (assert (== 1 (deref ptr)))
 (assert (== 1 (deref ptr2)))
 (assert (== 1 (* ptr)))
 (assert (== 1 (* ptr2)))
 
-;; set a string through a pointer
+// set a string through a pointer
 (deref-set sptr "hiya")
 (assert (== s "hiya"))
 
-;; cross type assignment doesn't type check
+// cross type assignment doesn't type check
 (expect-error "Error calling 'deref-set': type mismatch: value of type 'int64' is not assignable to type 'string'" (deref-set sptr 3))
 (expect-error "Error calling 'deref-set': type mismatch: value of type 'string' is not assignable to 'int64'" (deref-set ptr "a-string"))
 
 
-;; set a struct through a pointer
+// set a struct through a pointer
 (struct Dog [
         (field Name:          string     e:0)
         (field Number:          int64     e:1)

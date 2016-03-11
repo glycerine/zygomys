@@ -1,6 +1,6 @@
-;; dotcalls to user functions and sexp functions
-;; should work
-(.a = 4) ;; leaving 4 on datastack??
+// dotcalls to user functions and sexp functions
+// should work
+(.a = 4) // leaving 4 on datastack??
 (assert (== a 4))
 
 (= 'v 10)

@@ -1,23 +1,23 @@
-;; indendent invocations of same closure
-;; should each get their own scope for that instantiation
+// indendent invocations of same closure
+// should each get their own scope for that instantiation
 (defn new-closure [sym] (let* [a 1
                            f (fn [addme] (set a (+ a addme)) (printf "a is now %v\n" a) a)] f))
 (def g (new-closure 'hello_g))
 (_closdump g)
 (def h (new-closure 'hello_h))
 (_closdump h)
-(_closdump g) ;; showing hello_h arg!!!
+(_closdump g) // showing hello_h arg!!!
 (assert (== (g 1) 2))
-;; if they are mistakenly sharing the same closure variables.
-;; then the increment on g will have impacted h as well.
+// if they are mistakenly sharing the same closure variables.
+// then the increment on g will have impacted h as well.
 (assert (== (h 1) 2)) 
 
 
-;; but two functions that closed over the same variable should
-;; share it!
+// but two functions that closed over the same variable should
+// share it!
 
 (defn factory []
-  (let* [a [1] ;; a is shared by f and g!
+  (let* [a [1] // a is shared by f and g!
         f (fn [addme] (aset! a 0 (+ (aget a 0) addme)) (aget a 0))
         g (fn [addme] (aset! a 0 (+ (aget a 0) addme)) (aget a 0))]
         (list f g)))

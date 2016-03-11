@@ -1,7 +1,7 @@
-;; declare structs
-;;
-;; and then have the struct definition enforced during type-checking
-;; of assignments.
+// declare structs
+//
+// and then have the struct definition enforced during type-checking
+// of assignments.
 
 (struct Car [
         (field Id:          int64     e:0                  gotags:`json:"id",name:"id"`)
@@ -9,78 +9,78 @@
         (field BadApple:    string    e:2  deprecated:true)
         ])
 
-;; structs can be redefined at the repl
+// structs can be redefined at the repl
 (struct Car [
  (field              Id: int64        e:0       gotags:`json:"id",name:"id"` )
  (field            Name: string       e:1       gotags:`json:"name"`         )
  (field        BadApple: string       e:2   deprecated:true                  )
- (field     SliceOfLife: ([]string)   e:3 ) ;; slice of string, matching Go's syntax.
- (field  PointerSisters: (* int64)    e:4 ) ;; a pointer to an int64
- (field        OtherCar: (* Car)      e:5 ) ;; a pointer to a Car struct
+ (field     SliceOfLife: ([]string)   e:3 ) // slice of string, matching Go's syntax.
+ (field  PointerSisters: (* int64)    e:4 ) // a pointer to an int64
+ (field        OtherCar: (* Car)      e:5 ) // a pointer to a Car struct
  ])
 
 (def p (Car Id: 99912))
-(def r (Car OtherCar: (& p))) ;; & is the address-of operator, like in Go/C.
+(def r (Car OtherCar: (& p))) // & is the address-of operator, like in Go/C.
 
 (assert (==
-         (* (& p)) ;; * is the dereference operator, the opposite of &, like in Go/C.
-         p         ;; Notice how * and & cancel out, leaving us with p again.
+         (* (& p)) // * is the dereference operator, the opposite of &, like in Go/C.
+         p         // Notice how * and & cancel out, leaving us with p again.
         )
    )
 
-(def p1 (& p)) ;; (& p) takes the address of the object that p evaluates to;
-(def p2 (& p)) ;; since & is a normal function, the resulting pointer points to the
-               ;; (Car Id: 99912) object, not to p itself.
+(def p1 (& p)) // (& p) takes the address of the object that p evaluates to;
+(def p2 (& p)) // since & is a normal function, the resulting pointer points to the
+               // (Car Id: 99912) object, not to p itself.
 
-(assert (== p1 p2)) ;; hence two pointers to the same underlying object are equal.
+(assert (== p1 p2)) // hence two pointers to the same underlying object are equal.
 
 (def car2 (Car Id: 7))
 (assert (!= (& car2) p1))
 (assert (!= (& car2) p2))
 
-;; declare a pointer without binding it; it will default to nil (The zero type, as in Go).
+// declare a pointer without binding it; it will default to nil (The zero type, as in Go).
 (var a (* Car))
 (expect-error "Error calling '*': illegal to dereference nil pointer" (assert (== (:Id (* a)) 0)))
 
 (assert (== (type? a) "*Car"))
-(a = (& p)) ;; once assigned...
-(assert (== (:Id (* a)) 99912)) ;; then a can be used.
+(a = (& p)) // once assigned...
+(assert (== (:Id (* a)) 99912)) // then a can be used.
 
-;; structs can be changed in type-safe ways
-;; First lets make a Car struct, using the already declared Car type.
+// structs can be changed in type-safe ways
+// First lets make a Car struct, using the already declared Car type.
 (hasSlice = (Car SliceOfLife: ["hi" "there"]))
 (assert (== (:SliceOfLife hasSlice) ["hi" "there"]))
 (assert (== 2 (len (.hasSlice.SliceOfLife))))
 
-;; then lets change the struct
+// then lets change the struct
 (.hasSlice.SliceOfLife = ["zygo" "rocks" "it"])
 (assert (== 3 (.hasSlice.SliceOfLife len)))
 
-;; if we try to update a non-existant field (good for catching typos), we cannot:
+// if we try to update a non-existant field (good for catching typos), we cannot:
 (expect-error `Error calling '.hasSlice.NewField': Car has no field 'NewField'`
             (.hasSlice.NewField = "wacky"))
 
-;; and the decalred types must be matched.
+// and the decalred types must be matched.
 (expect-error `Error calling '.hasSlice.SliceOfLife': field Car.SliceOfLife is ([]string), cannot assign ([]int64) '[1 2 3]'`
               (.hasSlice.SliceOfLife = [1 2 3]))
 
 
-;; nil for slices and pointers should be okay
+// nil for slices and pointers should be okay
 (Car SliceOfLife:nil)
 (Car OtherCar:nil)
 
-;; assignment of [] (the empty slice) should also work
+// assignment of [] (the empty slice) should also work
 (.hasSlice.SliceOfLife = [])
 (assert (== 0 (len (.hasSlice.SliceOfLife))))
 
-;; we can point to ourselves if need be.
+// we can point to ourselves if need be.
 (def w (Car Name: "Willow"))
 (.w.OtherCar = (& w))
 (assert (== (& w) (:OtherCar w)))
-;; or with dot symbol notation:
+// or with dot symbol notation:
 (assert (== (& w) (.w.OtherCar)))
 
-;; binding time for type should be the most recent definition in force.
+// binding time for type should be the most recent definition in force.
 (struct Dog [(field tag: int64)])
 (def d (Dog))
 (struct Dog [(field big: bool)])
@@ -90,24 +90,24 @@
 (expect-error `Error calling '.e.tag': Dog has no field 'tag'` (.e.tag = 445))
 (expect-error `Error calling '.d.big': Dog has no field 'big'` (.d.big = true))
 
-;; not yet implemented stuff:
+// not yet implemented stuff:
 
-;; Here is how we'll declare functions:
-;; 
-;; we'll always use named return types; so we can
-;; have an implicit return; this facilitates automatic compile-down.
-;;
-;;(func doSomething [a:int b:string] [n:int err:error]
-;;  (return a nil))
-;;
-;; And here is how to declare interfaces:
-;;
-;; declare interfaces
-;; (interface Driveable [
-;;      (func driveIt [a:int b:string] [n:int err:error])
-;;   ])
-;;
-;; declare methods like this:
-;;
-;; (func [p: (* Car)] driveIt [a:int b:string] [n:int err:error])
-;;
+// Here is how we'll declare functions:
+// 
+// we'll always use named return types; so we can
+// have an implicit return; this facilitates automatic compile-down.
+//
+//(func doSomething [a:int b:string] [n:int err:error]
+//  (return a nil))
+//
+// And here is how to declare interfaces:
+//
+// declare interfaces
+// (interface Driveable [
+//      (func driveIt [a:int b:string] [n:int err:error])
+//   ])
+//
+// declare methods like this:
+//
+// (func [p: (* Car)] driveIt [a:int b:string] [n:int err:error])
+//

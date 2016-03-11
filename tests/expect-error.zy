@@ -1,11 +1,11 @@
-;; expect-error: squash errors and generate error if we don't get one we expected.
-;; used to check the type checking.
+// expect-error: squash errors and generate error if we don't get one we expected.
+// used to check the type checking.
 
-;; type-checking against variable of declared type
+// type-checking against variable of declared type
 (var a int64)
 (expect-error "cannot assign string to int64" (a = "hello"))
 
-;; type inference
+// type inference
 (b = "hello")
 (expect-error "cannot assign int64 to string" (b = 12))
 

@@ -1,4 +1,4 @@
-;; simple for [init test advance]
+// simple for [init test advance]
 (def sum 0)
 (for [(def i 0) (< i 10) (def i (+ i 1))]
      (set sum (+ sum i)))
@@ -7,11 +7,11 @@
 
 (def a [0 2 4 6])
 
-;; hpair works on arrays
+// hpair works on arrays
 (assert (== (hpair a 3) '(3 6)))
 (assert (== (hpair a 2) '(2 4)))
 
-;; therefore range works on arrays
+// therefore range works on arrays
 (def sum 0)
 (def isum 0)
 (range i v a

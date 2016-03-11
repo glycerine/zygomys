@@ -1,7 +1,7 @@
-;; source all the tests - interesting but fraught with peril
-;; because tests can collide and stomp on each others variables.
-;; Regular testing should prefer the testall.sh script herein for
-;; this reason. It will run each test in its own zygo process.
+// source all the tests - interesting but fraught with peril
+// because tests can collide and stomp on each others variables.
+// Regular testing should prefer the testall.sh script herein for
+// this reason. It will run each test in its own zygo process.
 (def tests (nsplit (system `ls -1 tests/*.zy`)))
 (for [(def irunner 0) (< irunner (len tests)) (def irunner (+ irunner 1))]
      (def cur (aget tests irunner))

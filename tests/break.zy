@@ -1,4 +1,4 @@
-;; simplest
+// simplest
 
 (def i 0)
 (for [() true ()]

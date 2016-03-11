@@ -41,6 +41,8 @@ const (
 	TokenDotSymbol
 	TokenFreshAssign
 	TokenBacktickString
+	TokenComment
+	TokenSemicolon
 	TokenEnd
 )
 
@@ -108,6 +110,7 @@ const (
 	LexerUnquote                   //
 	LexerBacktickString            //
 	LexerFreshAssignOrColon
+	LexerFirstFwdSlash // could be start of // comment
 )
 
 type Lexer struct {
@@ -174,7 +177,7 @@ var (
 	// dot symbol non-examples: `.a.`, `..`
 	DotSymbolRegex = regexp.MustCompile(`^[.]$|^([.][^'#:;\\~@\[\]{}\^|"()%.0-9,][^'#:;\\~@\[\]{}\^|"()%.,]*)+$`)
 	DotPartsRegex  = regexp.MustCompile(`[.][^'#:;\\~@\[\]{}\^|"()%.0-9,][^'#:;\\~@\[\]{}\^|"()%.,]*`)
-	CharRegex      = regexp.MustCompile("^#\\\\?.$")
+	CharRegex      = regexp.MustCompile("^'\\\\?.'$")
 	FloatRegex     = regexp.MustCompile("^-?([0-9]+\\.[0-9]*)|(\\.[0-9]+)|([0-9]+(\\.[0-9]*)?[eE](-?[0-9]+))$")
 )
 
@@ -286,6 +289,12 @@ func (lexer *Lexer) dumpBuffer() error {
 	return nil
 }
 
+func (lexer *Lexer) dumpComment() {
+	str := lexer.buffer.String()
+	lexer.buffer.Reset()
+	lexer.tokens = append(lexer.tokens, lexer.Token(TokenComment, str))
+}
+
 func (lexer *Lexer) dumpString() {
 	str := lexer.buffer.String()
 	lexer.buffer.Reset()
@@ -319,11 +328,25 @@ func (x *Lexer) DecodeBrace(brace rune) Token {
 func (lexer *Lexer) LexNextRune(r rune) error {
 top:
 	switch lexer.state {
+
+	case LexerFirstFwdSlash:
+		if r == '/' {
+			lexer.state = LexerComment
+			return nil
+		}
+		lexer.state = LexerNormal
+		_, err := lexer.buffer.WriteRune('/')
+		if err != nil {
+			return err
+		}
+		goto top // process the unknown rune r in Normal mode
+
 	case LexerComment:
 		if r == '\n' {
+			lexer.dumpComment()
 			lexer.state = LexerNormal
+			return nil
 		}
-		return nil
 
 	case LexerBacktickString:
 		if r == '`' {
@@ -400,6 +423,10 @@ top:
 
 	case LexerNormal:
 		switch r {
+		case '/':
+			lexer.state = LexerFirstFwdSlash
+			return nil
+
 		case '`':
 			if lexer.buffer.Len() > 0 {
 				return errors.New("Unexpected backtick")
@@ -415,7 +442,7 @@ top:
 			return nil
 
 		case ';':
-			lexer.state = LexerComment
+			lexer.tokens = append(lexer.tokens, lexer.Token(TokenSemicolon, ";"))
 			return nil
 
 		// colon terminates a keyword symbol, e.g. in `mykey: "myvalue"`;
@@ -450,9 +477,9 @@ top:
 			lexer.tokens = append(lexer.tokens, lexer.Token(TokenSymbol, "&"))
 			return nil
 
-		case '\'':
+		case '%': // replaces ' as our quote shorthand
 			if lexer.buffer.Len() > 0 {
-				return errors.New("Unexpected quote")
+				return errors.New("Unexpected % quote")
 			}
 			lexer.tokens = append(lexer.tokens, lexer.Token(TokenQuote, ""))
 			return nil

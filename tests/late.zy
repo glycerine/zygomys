@@ -1,4 +1,4 @@
-;; scopes working
+// scopes working
 (defn f [] 23)
 (defn g []
       (let [f (fn [] 11)]
@@ -6,7 +6,7 @@
            45)
 g()
 
-;; check for late binding
+// check for late binding
 (defn a [] (b))
 (defn b [] (c))
 (defn c [] 88)
