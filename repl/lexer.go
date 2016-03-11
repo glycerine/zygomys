@@ -165,13 +165,14 @@ var (
 	BinaryRegex  = regexp.MustCompile("^0b[01]+$")
 
 	// SymbolRegex = regexp.MustCompile("^[^'#]+$")
+	// (Sigil) symbols can begin with #, $, ?, but these cannot
+	// appear later in any symbol.
 	// Symbols cannot contain whitespace nor `~`, `@`, `(`, `)`, `[`, `]`,
 	// `{`, `}`, `'`, `#`, `:`, `^`, `\`, `|`, `%`, `"`, `;`
 	// Nor, obviously, can they contain backticks, "`".
-	// '$' is always a symbol on its own, handled specially.
 	// Symbols cannot start with a number. DotSymbols cannot have a number
 	// as the first character after '.'
-	SymbolRegex = regexp.MustCompile(`^[^'#:;\\~@\[\]{}\^|"()%0-9,&][^'#:;\\~@\[\]{}\^|"()%,&]*$`)
+	SymbolRegex = regexp.MustCompile(`^[^':;\\~@\[\]{}\^|"()%0-9,&][^'#:;\\~@\[\]{}\^|"()%,&]*$`)
 	// dot symbol examples: `.`, `.a`, `.a.b`, `.a.b.c`
 	// dot symbol non-examples: `.a.`, `..`
 	DotSymbolRegex = regexp.MustCompile(`^[.]$|^([.][^'#:;\\~@\[\]{}\^|"()%.0-9,][^'#:;\\~@\[\]{}\^|"()%.,]*)+$`)
@@ -457,18 +458,19 @@ top:
 			// until we get the next rune
 			return nil
 
-		// $ is always a token and symbol on its own. There
-		// is implicit whitespace around it.
-		case '$':
-			if lexer.buffer.Len() > 0 {
-				err := lexer.dumpBuffer()
-				if err != nil {
-					return err
-				}
-			}
-			lexer.tokens = append(lexer.tokens, lexer.Token(TokenDollar, "$"))
-			return nil
-
+			/*
+				// $ is always a token and symbol on its own. There
+				// is implicit whitespace around it.
+				case '$':
+					if lexer.buffer.Len() > 0 {
+						err := lexer.dumpBuffer()
+						if err != nil {
+							return err
+						}
+					}
+					lexer.tokens = append(lexer.tokens, lexer.Token(TokenDollar, "$"))
+					return nil
+			*/
 		// likewise &
 		case '&':
 			if lexer.buffer.Len() > 0 {

@@ -1,10 +1,10 @@
-;; is array declaration possible
+// is array declaration possible
 
 (a[1 2] = 23)
 
 (b[0] = 2.4)
 
-;; and we need a complex number parsing notation
+// and we need a complex number parsing notation
 
 3+2i
 
@@ -12,11 +12,71 @@
 
 5.5+4.6i
 
-;; and how about a scientific notation?
+// and how about a scientific notation?
 
 3e9
 
-;; simple math expressions (3+3)*3 % 4 would be great
+// simple math expressions (3+3)*3 mod 4 would be great
 
 (infix ``)
+
+<< 3 + 5 / 4 >>
+
+translates to
+
+(+ 3 (/ 5 4))
+
+can we use @ and ~ outside of macros to mean something else?
+
+
+(a[1 2] = 23) // how about if the a is still the controller;
+
+a is an object that is being sent a message [1 2], it then
+knows to return a reference to a setable element.
+
+is defining a grammar like defining a type?
+
+can we parse a type and parse a grammar in the same way?
+
+claim of pratt parser is dynamic extensibility: truly
+extensible languages.
+
+would this imply extensible types?
+
+haskell:
+
+data Bool = False | True
+
+I already have (bool ) the record type. 
+
+lets have a general system for sigil symbols, somewhat perl like
+
+#symbol
+$symbol
+?symbol
+@symbol
+~symbol
+
+I like the idea of #symbols being special kind of thing,
+like maybe they are objects that have their own lookup rules.
+
+abilty to define grammars, and parse grammars. where
+the #symbol represents a non-terminal in the grammar.
+
+one of these can be a type variable.
+
+user-defined symbols
+type variables
+
+?symbols
+
+(#a[3 3] = 3+i)
+
+can we get back : so that := works?
+
+well, then what happens to (a:3 b:2) 
+
+we could make := distict from; it already is.
+
+
 

@@ -2,3 +2,10 @@
 (def a 10)
 (.a = 24)
 (assert (== 24 a))
+
+// assignment with := works
+(b := 2)
+(assert (== b 2))
+
+(g:=2)
+(assert (== g 2))
