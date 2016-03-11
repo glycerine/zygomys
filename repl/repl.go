@@ -394,20 +394,6 @@ func (env *Glisp) StandardSetup() {
 
 	gob.Register(SexpHash{})
 	gob.Register(SexpArray{})
-
-	// create constructors for each of our pre-registered Go struct types
-	/*
-		for name, fac := range GoStructRegistry.Registry {
-			strct, err := fac.Factory(env)
-			panicOn(err)
-			if false fac.GenDefMap {
-				gob.Register(strct)
-				makeRec := fmt.Sprintf(`(defmap %s)`, name)
-				_, err = env.EvalString(makeRec)
-			}
-			panicOn(err)
-		}
-	*/
 }
 
 // like main() for a standalone repl, now in library
