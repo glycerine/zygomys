@@ -279,7 +279,7 @@ func (h *SexpHash) TypeCheckField(key Sexp, val Sexp) error {
 }
 
 func (hash *SexpHash) HashSet(key Sexp, val Sexp) error {
-	Q("in HashSet, key='%v' val='%v'", key.SexpString(), val.SexpString())
+	P("in HashSet, key='%v' val='%v'", key.SexpString(), val.SexpString())
 
 	err := hash.TypeCheckField(key, val)
 	if err != nil {
@@ -298,6 +298,7 @@ func (hash *SexpHash) HashSet(key Sexp, val Sexp) error {
 		hash.Map[hashval] = []*SexpPair{Cons(key, val)}
 		hash.KeyOrder = append(hash.KeyOrder, key)
 		hash.NumKeys++
+		P("in HashSet, added key to KeyOrder: '%v'", key)
 		return nil
 	}
 
@@ -782,21 +783,22 @@ func (hash *SexpHash) SexpString() string {
 		return NamedHashSexpString(hash)
 	}
 	str := "{"
-	for _, arr := range hash.Map {
-		for _, pair := range arr {
-			str += pair.Head.SexpString() + " "
-			str += pair.Tail.SexpString() + " "
+	str += coreStringifyHash(hash)
+	/*	for _, arr := range hash.Map {
+			for _, pair := range arr {
+				str += pair.Head.SexpString() + " "
+				str += pair.Tail.SexpString() + " "
+			}
 		}
-	}
+	*/
 	if len(str) > 1 {
 		return str[:len(str)-1] + "}"
 	}
 	return str + "}"
 }
 
-func NamedHashSexpString(hash *SexpHash) string {
-	str := " (" + hash.TypeName + " "
-
+func coreStringifyHash(hash *SexpHash) string {
+	str := ""
 	for _, key := range hash.KeyOrder {
 		val, err := hash.HashGet(nil, key)
 		if err == nil {
@@ -813,6 +815,12 @@ func NamedHashSexpString(hash *SexpHash) string {
 			panic(err)
 		}
 	}
+	return str
+}
+
+func NamedHashSexpString(hash *SexpHash) string {
+	str := " (" + hash.TypeName + " "
+	str += coreStringifyHash(hash)
 	if len(hash.Map) > 0 {
 		return str[:len(str)-1] + ")"
 	}

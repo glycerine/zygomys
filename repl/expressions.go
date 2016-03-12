@@ -425,6 +425,9 @@ type SexpSymbol struct {
 }
 
 func (sym *SexpSymbol) SexpString() string {
+	//	if sym.colonTail {
+	//		return sym.name + ":"
+	//	}
 	return sym.name
 }
 
