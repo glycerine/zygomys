@@ -40,7 +40,7 @@
 
 // declare a pointer without binding it; it will default to nil (The zero type, as in Go).
 (var a (* Car))
-(expect-error "Error calling '*': illegal to dereference nil pointer" (assert (== (:Id (* a)) 0)))
+(expect-error "Error calling ':': Error calling '*': illegal to dereference nil pointer"  (assert (== (:Id (* a)) 0)))
 
 (assert (== (type? a) "*Car"))
 (a = (& p)) // once assigned...

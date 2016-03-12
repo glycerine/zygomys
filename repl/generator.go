@@ -783,6 +783,9 @@ func (gen *Generator) GenerateForLoop(args []Sexp) error {
 	var err error
 	foundSym := false
 	switch expr := args[0].(type) {
+	case *SexpSymbol:
+		labelsym = expr
+		foundSym = true
 	case *SexpPair:
 		labelsym, err = getQuotedSymbol(expr)
 		if err != nil {
@@ -1220,6 +1223,9 @@ func (gen *Generator) GenerateContinue(args []Sexp) error {
 
 	if len(args) == 1 {
 		switch expr := args[0].(type) {
+		case *SexpSymbol:
+			labelsym = expr
+			foundSym = true
 		case *SexpPair:
 			labelsym, err = getQuotedSymbol(expr)
 			if err != nil {
@@ -1286,6 +1292,9 @@ func (gen *Generator) GenerateBreak(args []Sexp) error {
 
 	if len(args) == 1 {
 		switch expr := args[0].(type) {
+		case *SexpSymbol:
+			labelsym = expr
+			foundSym = true
 		case *SexpPair:
 			labelsym, err = getQuotedSymbol(expr)
 			if err != nil {

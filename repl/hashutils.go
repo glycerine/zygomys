@@ -279,7 +279,7 @@ func (h *SexpHash) TypeCheckField(key Sexp, val Sexp) error {
 }
 
 func (hash *SexpHash) HashSet(key Sexp, val Sexp) error {
-	P("in HashSet, key='%v' val='%v'", key.SexpString(), val.SexpString())
+	//P("in HashSet, key='%v' val='%v'", key.SexpString(), val.SexpString())
 
 	err := hash.TypeCheckField(key, val)
 	if err != nil {
@@ -298,7 +298,7 @@ func (hash *SexpHash) HashSet(key Sexp, val Sexp) error {
 		hash.Map[hashval] = []*SexpPair{Cons(key, val)}
 		hash.KeyOrder = append(hash.KeyOrder, key)
 		hash.NumKeys++
-		P("in HashSet, added key to KeyOrder: '%v'", key)
+		//P("in HashSet, added key to KeyOrder: '%v'", key)
 		return nil
 	}
 

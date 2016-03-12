@@ -865,35 +865,35 @@ func CoreFunctions() map[string]GlispUserFunction {
 		"aset!":      ArrayAccessFunction,
 		"sget":       SgetFunction,
 		"hget":       GenericAccessFunction, // handles arrays or hashes
-		":":          ColonAccessFunction,
-		"hset!":      HashAccessFunction,
-		"hdel!":      HashAccessFunction,
-		"keys":       HashAccessFunction,
-		"hpair":      GenericHpairFunction,
-		"slice":      SliceFunction,
-		"len":        LenFunction,
-		"append":     AppendFunction,
-		"concat":     ConcatFunction,
-		"field":      ConstructorFunction,
-		"struct":     ConstructorFunction,
-		"array":      ConstructorFunction,
-		"list":       ConstructorFunction,
-		"hash":       ConstructorFunction,
-		"raw":        ConstructorFunction,
-		"str":        StringifyFunction,
-		"->":         ThreadMapFunction,
-		"flatten":    FlattenToWordsFunction,
-		"quotelist":  QuoteListFunction,
-		"=":          AssignmentFunction,
-		":=":         AssignmentFunction,
-		"fieldls":    GoFieldListFunction,
-		"defined?":   DefinedFunction,
-		"stop":       StopFunction,
-		"joinsym":    JoinSymFunction,
-		"GOOS":       GOOSFunction,
-		"&":          AddressOfFunction,
-		"deref-set":  DerefFunction,
-		"deref":      DerefFunction,
+		//":":          ColonAccessFunction,
+		"hset!":     HashAccessFunction,
+		"hdel!":     HashAccessFunction,
+		"keys":      HashAccessFunction,
+		"hpair":     GenericHpairFunction,
+		"slice":     SliceFunction,
+		"len":       LenFunction,
+		"append":    AppendFunction,
+		"concat":    ConcatFunction,
+		"field":     ConstructorFunction,
+		"struct":    ConstructorFunction,
+		"array":     ConstructorFunction,
+		"list":      ConstructorFunction,
+		"hash":      ConstructorFunction,
+		"raw":       ConstructorFunction,
+		"str":       StringifyFunction,
+		"->":        ThreadMapFunction,
+		"flatten":   FlattenToWordsFunction,
+		"quotelist": QuoteListFunction,
+		"=":         AssignmentFunction,
+		":=":        AssignmentFunction,
+		"fieldls":   GoFieldListFunction,
+		"defined?":  DefinedFunction,
+		"stop":      StopFunction,
+		"joinsym":   JoinSymFunction,
+		"GOOS":      GOOSFunction,
+		"&":         AddressOfFunction,
+		"deref-set": DerefFunction,
+		"deref":     DerefFunction,
 	}
 }
 
@@ -1061,24 +1061,6 @@ func GenericAccessFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		return ArrayAccessFunction(env, name, args)
 	}
 	return SexpNull, errors.New("first argument to hget function must be hash or array")
-}
-
-func ColonAccessFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
-	if len(args) < 1 || len(args) > 3 {
-		return SexpNull, WrongNargs
-	}
-	name = "hget"
-	collec := args[1]
-	swapped := args
-	swapped[0], swapped[1] = swapped[1], swapped[0]
-
-	switch collec.(type) {
-	case *SexpHash:
-		return HashAccessFunction(env, name, swapped)
-	case *SexpArray:
-		return ArrayAccessFunction(env, name, swapped)
-	}
-	return SexpNull, errors.New("second argument to ':' function must be hash or array")
 }
 
 var stopErr error = fmt.Errorf("stop")

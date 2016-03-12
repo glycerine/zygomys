@@ -23,6 +23,7 @@ import (
 // methods, and type aliases.
 //
 func (env *Glisp) ImportPackageBuilder() {
+	env.AddBuilder(":", ColonAccessBuilder)
 	env.AddBuilder("struct", StructBuilder)
 	env.AddBuilder("func", FuncBuilder)
 	env.AddBuilder("interface", InterfaceBuilder)
@@ -711,4 +712,38 @@ func ExpectErrorBuilder(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		return SexpNull, nil
 	}
 	return SexpNull, fmt.Errorf("expect-error expected '%s' but got no error", expectedError.S)
+}
+
+func ColonAccessBuilder(env *Glisp, name string, args []Sexp) (Sexp, error) {
+	if len(args) < 1 || len(args) > 3 {
+		return SexpNull, WrongNargs
+	}
+	//P("ColonAccessBuilder, args = %#v", args)
+	name = "hget"
+
+	dup := env.Duplicate()
+	collec, err := dup.EvalExpressions(args[1:2])
+	if err != nil {
+		return SexpNull, err
+	}
+	swapped := args
+	swapped[1] = swapped[0]
+	swapped[0] = collec
+
+	if len(args) == 3 {
+		// have default, needs eval too
+		defaul, err := dup.EvalExpressions(args[2:3])
+		if err != nil {
+			return SexpNull, err
+		}
+		swapped[2] = defaul
+	}
+
+	switch collec.(type) {
+	case *SexpHash:
+		return HashAccessFunction(env, name, swapped)
+	case *SexpArray:
+		return ArrayAccessFunction(env, name, swapped)
+	}
+	return SexpNull, fmt.Errorf("second argument to ':' function must be hash or array")
 }
