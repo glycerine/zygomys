@@ -71,6 +71,7 @@ func FuncBuilder(env *Glisp, name string,
 			"must be a array of input declarations. %s", funcName, use)
 	case *SexpArray:
 		inputs = ar
+		inputs.IsFuncDeclTypeArray = true
 	}
 
 	var returns *SexpArray
@@ -80,6 +81,7 @@ func FuncBuilder(env *Glisp, name string,
 			"must be a array of return declarations. %s", funcName, use)
 	case *SexpArray:
 		returns = ar
+		returns.IsFuncDeclTypeArray = true
 	}
 
 	body := args[bodyLoc:]
@@ -121,7 +123,11 @@ func FuncBuilder(env *Glisp, name string,
 
 	//	sfun, err := buildSexpFun(env, symN.name, funcargs, body, orig)
 
-	orig := &SexpArray{Val: args}
+	//orig := &SexpArray{Val: args}
+	origa := []Sexp{env.MakeSymbol("func")}
+	origa = append(origa, args...)
+	orig := MakeList(origa)
+
 	funcargs := inHash.KeyOrder
 
 	gen := NewGenerator(env)

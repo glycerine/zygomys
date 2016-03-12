@@ -219,6 +219,8 @@ func (r *SexpPair) Type() *RegisteredType {
 type SexpArray struct {
 	Val []Sexp
 	Typ *RegisteredType
+
+	IsFuncDeclTypeArray bool
 }
 
 func (r *SexpArray) Type() *RegisteredType {
@@ -238,12 +240,18 @@ func (arr *SexpArray) SexpString() string {
 	if len(arr.Val) == 0 {
 		return "[]"
 	}
-
-	str := "[" + arr.Val[0].SexpString()
-	for _, sexp := range arr.Val[1:] {
-		str += " " + sexp.SexpString()
+	ta := arr.IsFuncDeclTypeArray
+	str := "["
+	for i, sexp := range arr.Val {
+		str += sexp.SexpString()
+		if ta && i%2 == 0 {
+			str += ":"
+		} else {
+			str += " "
+		}
 	}
-	str += "]"
+	m := len(str)
+	str = str[:m-1] + "]"
 	return str
 }
 
@@ -425,9 +433,9 @@ type SexpSymbol struct {
 }
 
 func (sym *SexpSymbol) SexpString() string {
-	//	if sym.colonTail {
-	//		return sym.name + ":"
-	//	}
+	if sym.colonTail {
+		//		return sym.name + ":"
+	}
 	return sym.name
 }
 

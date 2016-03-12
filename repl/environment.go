@@ -690,7 +690,7 @@ func (env *Glisp) LexicalLookupSymbol(sym *SexpSymbol, undot bool) (Sexp, error,
 		break
 	}
 
-	return SexpNull, fmt.Errorf("symbol `%s` not found in lexical scope", sym.name), nil
+	return SexpNull, fmt.Errorf("symbol `%s` not found", sym.name), nil
 }
 
 func (env *Glisp) LexicalBindSymbol(sym *SexpSymbol, expr Sexp) error {
