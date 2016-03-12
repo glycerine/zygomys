@@ -43,6 +43,7 @@ const (
 	TokenBacktickString
 	TokenComment
 	TokenSemicolon
+	TokenSymbolColon
 	TokenEnd
 )
 
@@ -168,11 +169,12 @@ var (
 	// (Sigil) symbols can begin with #, $, ?, but these cannot
 	// appear later in any symbol.
 	// Symbols cannot contain whitespace nor `~`, `@`, `(`, `)`, `[`, `]`,
-	// `{`, `}`, `'`, `#`, `:`, `^`, `\`, `|`, `%`, `"`, `;`
-	// Nor, obviously, can they contain backticks, "`".
+	// `{`, `}`, `'`, `#`, `^`, `\`, `|`, `%`, `"`, `;`. They can optionally
+	// end in `:`.
+	// Nor, obviously, can symbols contain backticks, "`".
 	// Symbols cannot start with a number. DotSymbols cannot have a number
 	// as the first character after '.'
-	SymbolRegex = regexp.MustCompile(`^[^':;\\~@\[\]{}\^|"()%0-9,&][^'#:;\\~@\[\]{}\^|"()%,&]*$`)
+	SymbolRegex = regexp.MustCompile(`^[^':;\\~@\[\]{}\^|"()%0-9,&][^'#:;\\~@\[\]{}\^|"()%,&]*[:]?$`)
 	// dot symbol examples: `.`, `.a`, `.a.b`, `.a.b.c`
 	// dot symbol non-examples: `.a.`, `..`
 	DotSymbolRegex = regexp.MustCompile(`^[.]$|^([.][^'#:;\\~@\[\]{}\^|"()%.0-9,][^'#:;\\~@\[\]{}\^|"()%.,]*)+$`)
@@ -262,7 +264,15 @@ func (x *Lexer) DecodeAtom(atom string) (Token, error) {
 	if DotSymbolRegex.MatchString(atom) {
 		return x.Token(TokenDotSymbol, atom), nil
 	}
-	if SymbolRegex.MatchString(atom) {
+	if atom == ":" {
+		return x.Token(TokenSymbol, atom), nil
+	} else if SymbolRegex.MatchString(atom) {
+		//P("matched symbol regex, atom='%v'", atom)
+		n := len(atom)
+		if atom[n-1] == ':' {
+			//P("matched symbol regex with colon, atom[:n-1]='%v'", atom[:n-1])
+			return x.Token(TokenSymbolColon, atom[:n-1]), nil
+		}
 		return x.Token(TokenSymbol, atom), nil
 	}
 	if CharRegex.MatchString(atom) {
@@ -405,8 +415,8 @@ top:
 				lexer.tokens = append(lexer.tokens, lexer.Token(TokenFreshAssign, ":="))
 				return nil
 			}
-			lexer.tokens = append(lexer.tokens, lexer.Token(TokenColonOperator, ":"))
-			goto top // process the unknown rune r in Normal mode
+			//lexer.tokens = append(lexer.tokens, lexer.Token(TokenColonOperator, ":"))
+			//goto top // process the unknown rune r in Normal mode
 		}
 		if r == '=' {
 			err := lexer.dumpBuffer()
@@ -417,8 +427,12 @@ top:
 			return nil
 		} else {
 			// but still allow ':' to be a token terminator at the end of a word.
-			lexer.tokens = append(lexer.tokens, lexer.Token(TokenQuote, ""))
-			err := lexer.dumpBuffer()
+			_, err := lexer.buffer.WriteRune(':')
+			if err != nil {
+				return err
+			}
+			//lexer.tokens = append(lexer.tokens, lexer.Token(TokenQuote, ""))
+			err = lexer.dumpBuffer()
 			if err != nil {
 				return err
 			}
@@ -458,19 +472,6 @@ top:
 			// until we get the next rune
 			return nil
 
-			/*
-				// $ is always a token and symbol on its own. There
-				// is implicit whitespace around it.
-				case '$':
-					if lexer.buffer.Len() > 0 {
-						err := lexer.dumpBuffer()
-						if err != nil {
-							return err
-						}
-					}
-					lexer.tokens = append(lexer.tokens, lexer.Token(TokenDollar, "$"))
-					return nil
-			*/
 		// likewise &
 		case '&':
 			if lexer.buffer.Len() > 0 {

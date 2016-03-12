@@ -338,9 +338,9 @@ func (env *Glisp) StandardSetup() {
 	_, err := env.EvalString(defmap)
 	panicOn(err)
 
-	colonOp := `(defmac : [key hmap & def] ^(hget ~hmap (quote ~key) ~@def))`
-	_, err = env.EvalString(colonOp)
-	panicOn(err)
+	//	colonOp := `(defmac : [key hmap & def] ^(hget ~hmap (quote ~key) ~@def))`
+	//	_, err = env.EvalString(colonOp)
+	//	panicOn(err)
 
 	rangeMacro := `(defmac range [key value my-hash & body]
   ^(let [n (len ~my-hash)]
@@ -367,9 +367,9 @@ func (env *Glisp) StandardSetup() {
 	_, err = env.EvalString(writeMacro)
 	panicOn(err)
 
-	systemMacro := `(defmac $ [ & body] ^(system (quote ~body)))`
-	_, err = env.EvalString(systemMacro)
-	panicOn(err)
+	//	systemMacro := `(defmac $ [ & body] ^(system (quote ~body)))`
+	//	_, err = env.EvalString(systemMacro)
+	//	panicOn(err)
 
 	incrMacro := `(defmac ++ [a] ^(set ~a (+ ~a 1)))`
 	_, err = env.EvalString(incrMacro)

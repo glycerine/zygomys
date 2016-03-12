@@ -865,6 +865,7 @@ func CoreFunctions() map[string]GlispUserFunction {
 		"aset!":      ArrayAccessFunction,
 		"sget":       SgetFunction,
 		"hget":       GenericAccessFunction, // handles arrays or hashes
+		":":          ColonAccessFunction,
 		"hset!":      HashAccessFunction,
 		"hdel!":      HashAccessFunction,
 		"keys":       HashAccessFunction,
@@ -1059,7 +1060,25 @@ func GenericAccessFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	case *SexpArray:
 		return ArrayAccessFunction(env, name, args)
 	}
-	return SexpNull, errors.New("first argument of to hget function must be hash or array")
+	return SexpNull, errors.New("first argument to hget function must be hash or array")
+}
+
+func ColonAccessFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
+	if len(args) < 1 || len(args) > 3 {
+		return SexpNull, WrongNargs
+	}
+	name = "hget"
+	collec := args[1]
+	swapped := args
+	swapped[0], swapped[1] = swapped[1], swapped[0]
+
+	switch collec.(type) {
+	case *SexpHash:
+		return HashAccessFunction(env, name, swapped)
+	case *SexpArray:
+		return ArrayAccessFunction(env, name, swapped)
+	}
+	return SexpNull, errors.New("second argument to ':' function must be hash or array")
 }
 
 var stopErr error = fmt.Errorf("stop")

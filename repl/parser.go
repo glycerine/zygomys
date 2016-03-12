@@ -385,8 +385,6 @@ func (parser *Parser) ParseExpression(depth int) (res Sexp, err error) {
 			return SexpNull, err
 		}
 		return MakeList([]Sexp{env.MakeSymbol("unquote-splicing"), expr}), nil
-	case TokenSymbol:
-		return env.MakeSymbol(tok.str), nil
 	case TokenFreshAssign:
 		return env.MakeSymbol(tok.str), nil
 	case TokenColonOperator:
@@ -433,6 +431,12 @@ func (parser *Parser) ParseExpression(depth int) (res Sexp, err error) {
 		return &SexpFloat{Val: f}, nil
 	case TokenEnd:
 		return SexpEnd, nil
+	case TokenSymbol:
+		return env.MakeSymbol(tok.str), nil
+	case TokenSymbolColon:
+		sym := env.MakeSymbol(tok.str)
+		sym.colonTail = true
+		return sym, nil
 	case TokenDot:
 		sym := env.MakeSymbol(tok.str)
 		sym.isDot = true

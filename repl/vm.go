@@ -189,7 +189,7 @@ func (p UpdateInstr) Execute(env *Glisp) error {
 	env.pc++
 	var scope *Scope
 
-	if p.sym.isDot {
+	if p.sym.isDot || p.sym.isSigil {
 		return nil
 	}
 

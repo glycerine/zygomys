@@ -172,15 +172,33 @@ func (env *Glisp) MakeDotSymbol(name string) *SexpSymbol {
 	x.isDot = true
 	return x
 }
+
+func (env *Glisp) DetectSigils(sym *SexpSymbol) {
+	switch sym.name[0] {
+	case '$':
+		sym.isSigil = true
+		sym.sigil = "$"
+	case '#':
+		sym.isSigil = true
+		sym.sigil = "#"
+	case '?':
+		sym.isSigil = true
+		sym.sigil = "?"
+	}
+}
+
 func (env *Glisp) MakeSymbol(name string) *SexpSymbol {
 	symnum, ok := env.symtable[name]
 	if ok {
-		return &SexpSymbol{name: name, number: symnum}
+		symbol := &SexpSymbol{name: name, number: symnum}
+		env.DetectSigils(symbol)
+		return symbol
 	}
 	symbol := &SexpSymbol{name: name, number: env.nextsymbol}
 	env.symtable[name] = symbol.number
 	env.revsymtable[symbol.number] = name
 	env.nextsymbol++
+	env.DetectSigils(symbol)
 	return symbol
 }
 
@@ -631,7 +649,7 @@ func (env *Glisp) LexicalLookupSymbol(sym *SexpSymbol, undot bool) (Sexp, error,
 
 	// DotSymbols always evaluate to themselves, unless
 	// undot is true.
-	if sym.isDot && !undot {
+	if (sym.isDot || sym.isSigil || sym.colonTail) && !undot {
 		return sym, nil, nil
 	}
 
@@ -672,7 +690,7 @@ func (env *Glisp) LexicalLookupSymbol(sym *SexpSymbol, undot bool) (Sexp, error,
 		break
 	}
 
-	return SexpNull, fmt.Errorf("symbol `%s` not found", sym.name), nil
+	return SexpNull, fmt.Errorf("symbol `%s` not found in lexical scope", sym.name), nil
 }
 
 func (env *Glisp) LexicalBindSymbol(sym *SexpSymbol, expr Sexp) error {

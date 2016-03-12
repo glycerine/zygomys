@@ -416,9 +416,12 @@ func (r *SexpRaw) SexpString() string {
 }
 
 type SexpSymbol struct {
-	name   string
-	number int
-	isDot  bool
+	name      string
+	number    int
+	isDot     bool
+	isSigil   bool
+	colonTail bool
+	sigil     string
 }
 
 func (sym *SexpSymbol) SexpString() string {

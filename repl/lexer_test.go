@@ -64,7 +64,8 @@ func Test025LexingOfStringAtomsAndSymbols(t *testing.T) {
 			// get lexed into symbols.
 
 			//okay := []string{`..`, `a.b`, `-`, `a-b`, `*a-b*`, `$`, `.`, `.method`}
-			symbolOkay := []string{`-`, `a-b`, `*a-b*`, `$`, `$hello`, `#hello`, `?a`}
+			symbolOkay := []string{`-`, `a-b`, `*a-b*`, `$`, `$hello`,
+				`#hello`, `?a`, `a:`}
 
 			// for experimentation, comment out the actual test below
 			//reg := `^[^'#:;\\~@\[\]{}\^|"()%.]+$`
