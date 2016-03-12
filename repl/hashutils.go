@@ -61,6 +61,7 @@ func hashHelper(expr Sexp) (hashcode int, isList bool, err error) {
 }
 
 func MakeHash(args []Sexp, typename string, env *Glisp) (*SexpHash, error) {
+	//P("MakeHash called")
 	if len(args)%2 != 0 {
 		return &SexpHash{},
 			errors.New("hash requires even number of arguments")
@@ -91,6 +92,7 @@ func MakeHash(args []Sexp, typename string, env *Glisp) (*SexpHash, error) {
 	var superClass *SexpHash
 	var defnEnv *SexpHash
 
+	//P("generating SexpHash with typename: '%s'", typename)
 	hash := SexpHash{
 		TypeName:         typename,
 		Map:              make(map[int][]*SexpPair),
@@ -779,6 +781,7 @@ func (hash *SexpHash) ShortName() string {
 }
 
 func (hash *SexpHash) SexpString() string {
+	//P("top of SexpString, hash = '%#v'", hash)
 	if hash.TypeName != "hash" {
 		return NamedHashSexpString(hash)
 	}

@@ -1072,7 +1072,7 @@ func isQuotedSymbol(list *SexpPair) (unquotedSymbol Sexp, isQuo bool) {
 // side-effect (or main effect) has to be pushing an expression on the top of
 // the datastack that represents the expanded and substituted expression
 func (gen *Generator) GenerateSyntaxQuote(args []Sexp) error {
-	VPrintf("\n GenerateSyntaxQuote() called with args[0]='%#v'\n", args[0])
+	//P("GenerateSyntaxQuote() called with args[0]='%#v'", args[0])
 
 	if len(args) != 1 {
 		return errors.New("syntax-quote takes exactly one argument")
@@ -1100,7 +1100,7 @@ func (gen *Generator) GenerateSyntaxQuote(args []Sexp) error {
 }
 
 func (gen *Generator) generateSyntaxQuoteList(arg Sexp) error {
-	VPrintf("\n GenerateSyntaxQuoteList() called with arg='%#v'\n", arg)
+	//P("GenerateSyntaxQuoteList() called with arg='%#v'", arg)
 
 	switch a := arg.(type) {
 	case *SexpPair:
@@ -1116,7 +1116,7 @@ func (gen *Generator) generateSyntaxQuoteList(arg Sexp) error {
 	// being "unquote" and second being the symbol
 	// to substitute.
 	quotebody, _ := ListToArray(arg)
-	VPrintf("\n quotebody = '%#v'\n", quotebody)
+	//P("quotebody = '%#v'", quotebody)
 
 	if len(quotebody) == 2 {
 		var issymbol bool

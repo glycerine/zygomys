@@ -1,0 +1,14 @@
+// sigil system. allow sigils to
+// designate special symbols, to
+// represent various types of special
+// symbols: objects, type variables, grammar non-terminals,
+// etc.
+
+(#symbol = "I'm a sigil-symbol")
+(expect-error "cannot assign int64 to string" (#symbol = 23))
+($symbol = "I'm a sigil-symbol")
+(?symbol = "I'm a sigil-symbol")
+
+// can a: always be a sigil-symbol, colon style,
+// so that it prints without extra rigamorole.
+(a: = 1)
