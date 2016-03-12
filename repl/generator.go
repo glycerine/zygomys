@@ -1,11 +1,10 @@
 package zygo
 
 import (
-	"errors"
 	"fmt"
 )
 
-var NoExpressionsFound = errors.New("No expressions found")
+var NoExpressionsFound = fmt.Errorf("No expressions found")
 
 type Generator struct {
 	env          *Glisp
@@ -93,7 +92,7 @@ func buildSexpFun(
 			argsyms[i] = t
 		default:
 			return MissingFunction,
-				errors.New("function argument must be symbol")
+				fmt.Errorf("function argument must be symbol")
 		}
 	}
 
@@ -131,7 +130,7 @@ func buildSexpFun(
 
 func (gen *Generator) GenerateFn(args []Sexp, orig Sexp) error {
 	if len(args) < 2 {
-		return errors.New("malformed function definition")
+		return fmt.Errorf("malformed function definition")
 	}
 
 	var funcargs *SexpArray
@@ -140,7 +139,7 @@ func (gen *Generator) GenerateFn(args []Sexp, orig Sexp) error {
 	case *SexpArray:
 		funcargs = expr
 	default:
-		return errors.New("function arguments must be in vector")
+		return fmt.Errorf("function arguments must be in vector")
 	}
 
 	VPrintf("GenerateFn() about to call buildSexpFun\n")
@@ -161,7 +160,7 @@ func (gen *Generator) GenerateFn(args []Sexp, orig Sexp) error {
 
 func (gen *Generator) GenerateDef(args []Sexp) error {
 	if len(args) != 2 {
-		return errors.New("Wrong number of arguments to def")
+		return fmt.Errorf("Wrong number of arguments to def")
 	}
 
 	plhs, err := gen.GetLHS(args[0], "def")
@@ -194,7 +193,7 @@ func (gen *Generator) GenerateDefn(args []Sexp, orig Sexp) error {
 	case *SexpArray:
 		funcargs = expr
 	default:
-		return errors.New("function arguments must be in vector")
+		return fmt.Errorf("function arguments must be in vector")
 	}
 
 	var sym *SexpSymbol
@@ -202,7 +201,7 @@ func (gen *Generator) GenerateDefn(args []Sexp, orig Sexp) error {
 	case *SexpSymbol:
 		sym = expr
 	default:
-		return errors.New("Definition name must be symbol")
+		return fmt.Errorf("Definition name must be symbol")
 	}
 
 	builtin, typ := gen.env.IsBuiltinSym(sym)
@@ -236,7 +235,7 @@ func (gen *Generator) GenerateDefn(args []Sexp, orig Sexp) error {
 
 func (gen *Generator) GenerateDefmac(args []Sexp, orig Sexp) error {
 	if len(args) < 3 {
-		return errors.New("Wrong number of arguments to defmac")
+		return fmt.Errorf("Wrong number of arguments to defmac")
 	}
 
 	var funcargs *SexpArray
@@ -244,7 +243,7 @@ func (gen *Generator) GenerateDefmac(args []Sexp, orig Sexp) error {
 	case *SexpArray:
 		funcargs = expr
 	default:
-		return errors.New("defmac arguments must be in vector")
+		return fmt.Errorf("defmac arguments must be in vector")
 	}
 
 	var sym *SexpSymbol
@@ -252,7 +251,7 @@ func (gen *Generator) GenerateDefmac(args []Sexp, orig Sexp) error {
 	case *SexpSymbol:
 		sym = expr
 	default:
-		return errors.New("defmac name must be symbol")
+		return fmt.Errorf("defmac name must be symbol")
 	}
 
 	_, isBuiltin := gen.env.builtins[sym.number]
@@ -355,7 +354,7 @@ func (gen *Generator) GenerateShortCircuit(or bool, args []Sexp) error {
 
 func (gen *Generator) GenerateCond(args []Sexp) error {
 	if len(args)%2 == 0 {
-		return errors.New("missing default case")
+		return fmt.Errorf("missing default case")
 	}
 
 	subgen := NewGenerator(gen.env)
@@ -408,7 +407,7 @@ func (gen *Generator) GenerateQuote(args []Sexp) error {
 
 func (gen *Generator) GenerateLet(name string, args []Sexp) error {
 	if len(args) < 2 {
-		return errors.New("malformed let statement")
+		return fmt.Errorf("malformed let statement")
 	}
 
 	lstatements := make([]*SexpSymbol, 0)
@@ -419,11 +418,11 @@ func (gen *Generator) GenerateLet(name string, args []Sexp) error {
 	case *SexpArray:
 		bindings = expr.Val
 	default:
-		return errors.New("let bindings must be in array")
+		return fmt.Errorf("let bindings must be in array")
 	}
 
 	if len(bindings)%2 != 0 {
-		return errors.New("uneven let binding list")
+		return fmt.Errorf("uneven let binding list")
 	}
 
 	for i := 0; i < len(bindings)/2; i++ {
@@ -431,7 +430,7 @@ func (gen *Generator) GenerateLet(name string, args []Sexp) error {
 		case *SexpSymbol:
 			lstatements = append(lstatements, t)
 		default:
-			return errors.New("cannot bind to non-symbol")
+			return fmt.Errorf("cannot bind to non-symbol")
 		}
 		rstatements = append(rstatements, bindings[2*i+1])
 	}
@@ -480,7 +479,7 @@ func (gen *Generator) GenerateAssert(args []Sexp) error {
 	reterrmsg := fmt.Sprintf("Assertion failed: %s\n",
 		args[0].SexpString())
 	gen.AddInstruction(BranchInstr{true, 2})
-	gen.AddInstruction(ReturnInstr{errors.New(reterrmsg)})
+	gen.AddInstruction(ReturnInstr{fmt.Errorf(reterrmsg)})
 	gen.AddInstruction(PushInstr{SexpNull})
 	return nil
 }
@@ -584,6 +583,8 @@ func (gen *Generator) GenerateCallBySymbol(sym *SexpSymbol, args []Sexp, orig Se
 		return gen.GenerateContinue(args)
 	case "new-scope":
 		return gen.GenerateNewScope(args)
+	case "return":
+		return gen.GenerateReturn(args)
 	case "_ls":
 		return gen.GenerateDebug("show-scopes")
 	}
@@ -717,17 +718,15 @@ func (gen *Generator) Generate(expr Sexp) error {
 			if isAssign && pos > 0 && legalLeftHandSide {
 				err := gen.GenerateAssignment(e, pos)
 				if err != nil {
-					return errors.New(
-						fmt.Sprintf("Error generating %s:\n%v",
-							expr.SexpString(), err))
+					return fmt.Errorf("Error generating %s:\n%v",
+						expr.SexpString(), err)
 				}
 				return nil
 			}
 			err := gen.GenerateCall(e)
 			if err != nil {
-				return errors.New(
-					fmt.Sprintf("Error generating %s:\n%v",
-						expr.SexpString(), err))
+				return fmt.Errorf("Error generating %s:\n%v",
+					expr.SexpString(), err)
 			}
 			return nil
 		} else {
@@ -758,7 +757,7 @@ func (gen *Generator) Reset() {
 	gen.scopes = 0
 }
 
-var ErrBadLoopSyntax = errors.New("for loop: first argument must be a label or a vector of [init predicate advance]")
+var ErrBadLoopSyntax = fmt.Errorf("for loop: first argument must be a label or a vector of [init predicate advance]")
 
 // for loops: Just like in C.
 //
@@ -774,7 +773,7 @@ var ErrBadLoopSyntax = errors.New("for loop: first argument must be a label or a
 func (gen *Generator) GenerateForLoop(args []Sexp) error {
 	narg := len(args)
 	if narg < 2 {
-		return errors.New("malformed for loop")
+		return fmt.Errorf("malformed for loop")
 	}
 
 	startgen := 1
@@ -805,12 +804,12 @@ func (gen *Generator) GenerateForLoop(args []Sexp) error {
 		case *SexpArray:
 			controlargs = expr
 		default:
-			return errors.New("for loop: 2nd argument after the label must be a vector of [init predicate advance]")
+			return fmt.Errorf("for loop: 2nd argument after the label must be a vector of [init predicate advance]")
 		}
 	}
 
 	if len(controlargs.Val) != 3 {
-		return errors.New("for loop: control vector argument wrong size; must be a vector of three [init test advance]")
+		return fmt.Errorf("for loop: control vector argument wrong size; must be a vector of three [init test advance]")
 	}
 
 	var loop *Loop
@@ -944,7 +943,7 @@ func (gen *Generator) GenerateForLoop(args []Sexp) error {
 func (gen *Generator) GenerateSet(args []Sexp) error {
 	narg := len(args)
 	if narg != 2 {
-		return errors.New("malformed set statement, need 2 arguments")
+		return fmt.Errorf("malformed set statement, need 2 arguments")
 	}
 
 	plhs, err := gen.GetLHS(args[0], "set")
@@ -1008,7 +1007,7 @@ func (gen *Generator) GetLHS(arg Sexp, opname string) (*SexpSymbol, error) {
 // (mdef a b c (list 1 2 3)) will bind a:1 b:2 c:3
 func (gen *Generator) GenerateMultiDef(args []Sexp) error {
 	if len(args) < 2 {
-		return errors.New("Wrong number of arguments to def")
+		return fmt.Errorf("Wrong number of arguments to def")
 	}
 
 	nsym := len(args) - 1
@@ -1075,7 +1074,7 @@ func (gen *Generator) GenerateSyntaxQuote(args []Sexp) error {
 	//P("GenerateSyntaxQuote() called with args[0]='%#v'", args[0])
 
 	if len(args) != 1 {
-		return errors.New("syntax-quote takes exactly one argument")
+		return fmt.Errorf("syntax-quote takes exactly one argument")
 	}
 	arg := args[0]
 
@@ -1279,8 +1278,8 @@ scanUpTheLoops:
 	return nil
 }
 
-var ErrBadBreakLabel = errors.New("bad break label")
-var ErrBadContinueLabel = errors.New("bad continue label")
+var ErrBadBreakLabel = fmt.Errorf("bad break label")
+var ErrBadContinueLabel = fmt.Errorf("bad continue label")
 
 func (gen *Generator) GenerateBreak(args []Sexp) error {
 	if len(args) > 1 {
@@ -1407,4 +1406,15 @@ func getQuotedSymbol(expr *SexpPair) (*SexpSymbol, error) {
 		return &SexpSymbol{}, ErrBadQuotedSym
 	}
 	return labelsym, nil
+}
+
+func (gen *Generator) GenerateReturn(expressions []Sexp) error {
+	size := len(expressions)
+	if size == 0 {
+
+		return nil
+	}
+
+	//gen.AddInstruction()
+	return nil
 }

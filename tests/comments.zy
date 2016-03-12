@@ -1,0 +1,6 @@
+// allow block comments too...
+/*
+(assert false)
+*/
+
+

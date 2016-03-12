@@ -58,14 +58,14 @@ func Test025LexingOfStringAtomsAndSymbols(t *testing.T) {
 			// and possibly later allow for shell style substitution,
 			// so it is always its own token/symbol, and should be accepted.
 			symbolNotOkay := []string{`(`, `)`, `[`, `]`, `{`, `}`, `'`,
-				`:`, `^`, `\`, `|`, `%`, `"`, `;`, `,`, `&`}
+				`:`, `^`, `\`, `|`, `%`, `"`, `;`, `,`, `&`, `#`, `?`, `$`}
 			// NB: have to allow  `a.b` and `a.b.` or else file paths,
 			// used as arguments in macro (req) for example, won't
 			// get lexed into symbols.
 
-			//okay := []string{`..`, `a.b`, `-`, `a-b`, `*a-b*`, `$`, `.`, `.method`}
-			symbolOkay := []string{`-`, `a-b`, `*a-b*`, `$`, `$hello`,
-				`#hello`, `?a`, `a:`}
+			//okay := []string{`..`, `a.b`, `-`, `a-b`, `*a-b*`,, `.`, `.method`}
+			symbolOkay := []string{`-`, `a-b`, `*a-b*`, `$hello`,
+				`#a`, `?a`, `a:`, `$a:`, `#a:`, `?a:`}
 
 			// for experimentation, comment out the actual test below
 			//reg := `^[^'#:;\\~@\[\]{}\^|"()%.]+$`

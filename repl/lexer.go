@@ -166,15 +166,15 @@ var (
 	BinaryRegex  = regexp.MustCompile("^0b[01]+$")
 
 	// SymbolRegex = regexp.MustCompile("^[^'#]+$")
-	// (Sigil) symbols can begin with #, $, ?, but these cannot
-	// appear later in any symbol.
+	// (Sigil) symbols can begin with #, $, ?, but
+	// sigils cannot appear later in any symbol.
 	// Symbols cannot contain whitespace nor `~`, `@`, `(`, `)`, `[`, `]`,
 	// `{`, `}`, `'`, `#`, `^`, `\`, `|`, `%`, `"`, `;`. They can optionally
 	// end in `:`.
 	// Nor, obviously, can symbols contain backticks, "`".
 	// Symbols cannot start with a number. DotSymbols cannot have a number
 	// as the first character after '.'
-	SymbolRegex = regexp.MustCompile(`^[^':;\\~@\[\]{}\^|"()%0-9,&][^'#:;\\~@\[\]{}\^|"()%,&]*[:]?$`)
+	SymbolRegex = regexp.MustCompile(`^[#$?]?[^#$?':;\\~@\[\]{}\^|"()%0-9,&][^'#:;\\~@\[\]{}\^|"()%,&]*[:]?$`)
 	// dot symbol examples: `.`, `.a`, `.a.b`, `.a.b.c`
 	// dot symbol non-examples: `.a.`, `..`
 	DotSymbolRegex = regexp.MustCompile(`^[.]$|^([.][^'#:;\\~@\[\]{}\^|"()%.0-9,][^'#:;\\~@\[\]{}\^|"()%.,]*)+$`)
@@ -234,9 +234,9 @@ func DecodeChar(atom string) (string, error) {
 }
 
 func (x *Lexer) DecodeAtom(atom string) (Token, error) {
-	if atom == "$" {
-		return x.Token(TokenSymbol, "$"), nil
-	}
+	//	if atom == "$" {
+	//		return x.Token(TokenSymbol, "$"), nil
+	//	}
 	if atom == "&" {
 		return x.Token(TokenSymbol, "&"), nil
 	}
