@@ -24,6 +24,7 @@ import (
 //
 func (env *Glisp) ImportPackageBuilder() {
 	env.AddBuilder(":", ColonAccessBuilder)
+	env.AddBuilder("sys", SystemBuilder)
 	env.AddBuilder("struct", StructBuilder)
 	env.AddBuilder("func", FuncBuilder)
 	env.AddBuilder("interface", InterfaceBuilder)

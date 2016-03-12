@@ -32,7 +32,12 @@ func SetShellCmd() {
 	}
 }
 
-// system: ($) is macro. shell out, return the combined output.
+// sys is a builder. shell out, return the combined output.
+func SystemBuilder(env *Glisp, name string, args []Sexp) (Sexp, error) {
+	//P("SystemBuilder called with args='%#v'", args)
+	return SystemFunction(env, name, args)
+}
+
 func SystemFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	if len(args) == 0 {
 		return SexpNull, WrongNargs
