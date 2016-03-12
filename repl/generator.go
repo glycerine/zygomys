@@ -786,6 +786,7 @@ func (gen *Generator) GenerateForLoop(args []Sexp) error {
 	case *SexpSymbol:
 		labelsym = expr
 		foundSym = true
+		startgen = 2
 	case *SexpPair:
 		labelsym, err = getQuotedSymbol(expr)
 		if err != nil {
