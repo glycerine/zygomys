@@ -1,7 +1,6 @@
 package zygo
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 )
@@ -77,7 +76,9 @@ func (stack *Stack) Size() int {
 }
 func (stack *Stack) Get(n int) (StackElem, error) {
 	if stack.tos-n < 0 {
-		return nil, errors.New(fmt.Sprint("invalid stack access asked for ", n, " Top was ", stack.tos))
+		err := fmt.Errorf("invalid stack access asked for %v, Top was %v", n, stack.tos)
+		panic(err)
+		return nil, err
 	}
 	return stack.elements[stack.tos-n], nil
 }

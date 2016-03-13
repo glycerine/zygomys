@@ -226,6 +226,10 @@ func init() {
 	// add go builtin types
 	// ====================
 
+	gsr.RegisterBuiltin("comment",
+		&RegisteredType{GenDefMap: false, Factory: func(env *Glisp) (interface{}, error) {
+			return SexpNull, nil
+		}})
 	gsr.RegisterBuiltin("byte",
 		&RegisteredType{GenDefMap: false, Factory: func(env *Glisp) (interface{}, error) {
 			return new(byte), nil

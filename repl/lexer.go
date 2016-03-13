@@ -42,6 +42,8 @@ const (
 	TokenFreshAssign
 	TokenBacktickString
 	TokenComment
+	TokenBeginBlockComment
+	TokenEndBlockComment
 	TokenSemicolon
 	TokenSymbolColon
 	TokenEnd
@@ -104,13 +106,15 @@ type LexerState int
 
 const (
 	LexerNormal         LexerState = iota
-	LexerComment                   //
+	LexerCommentLine               //
 	LexerStrLit                    //
 	LexerStrEscaped                //
 	LexerUnquote                   //
 	LexerBacktickString            //
 	LexerFreshAssignOrColon
-	LexerFirstFwdSlash // could be start of // comment
+	LexerFirstFwdSlash // could be start of // comment or /*
+	LexerCommentBlock
+	LexerCommentBlockAsterisk // could be end of block comment */
 )
 
 type Lexer struct {
@@ -234,9 +238,6 @@ func DecodeChar(atom string) (string, error) {
 }
 
 func (x *Lexer) DecodeAtom(atom string) (Token, error) {
-	//	if atom == "$" {
-	//		return x.Token(TokenSymbol, "$"), nil
-	//	}
 	if atom == "&" {
 		return x.Token(TokenSymbol, "&"), nil
 	}
@@ -302,11 +303,14 @@ func (lexer *Lexer) dumpBuffer() error {
 	return nil
 }
 
+// with block comments, we've got to tell
+// the parser about them, so it can recognize
+// when another line is needed to finish a
+// block comment.
 func (lexer *Lexer) dumpComment() {
-	// discard for now, until we're ready.
-	//str := lexer.buffer.String()
+	str := lexer.buffer.String()
 	lexer.buffer.Reset()
-	//lexer.tokens = append(lexer.tokens, lexer.Token(TokenComment, str))
+	lexer.tokens = append(lexer.tokens, lexer.Token(TokenComment, str))
 }
 
 func (lexer *Lexer) dumpString() {
@@ -343,9 +347,64 @@ func (lexer *Lexer) LexNextRune(r rune) error {
 top:
 	switch lexer.state {
 
-	case LexerFirstFwdSlash:
+	case LexerCommentBlock:
+		P("lexer.state = LexerCommentBlock")
+		if r == '\n' {
+			_, err := lexer.buffer.WriteRune('\n')
+			if err != nil {
+				return err
+			}
+			lexer.dumpComment()
+			// stay in LexerCommentBlock
+			return nil
+		}
+		if r == '*' {
+			lexer.state = LexerCommentBlockAsterisk
+			return nil
+		}
+	case LexerCommentBlockAsterisk:
+		P("lexer.state = LexerCommentBlockAsterisk")
 		if r == '/' {
-			lexer.state = LexerComment
+			_, err := lexer.buffer.WriteString("*/")
+			if err != nil {
+				return err
+			}
+			lexer.dumpComment()
+			lexer.tokens = append(lexer.tokens, lexer.Token(
+				TokenEndBlockComment, ""))
+			lexer.state = LexerNormal
+			return nil
+		}
+		_, err := lexer.buffer.WriteRune('*')
+		if err != nil {
+			return err
+		}
+		lexer.state = LexerCommentBlock
+		goto writeRuneToBuffer
+
+	case LexerFirstFwdSlash:
+		P("lexer.state = LexerFirstFwdSlash")
+		if r == '/' {
+			err := lexer.dumpBuffer()
+			if err != nil {
+				return err
+			}
+			lexer.state = LexerCommentLine
+			_, err = lexer.buffer.WriteString("//")
+			return err
+		}
+		if r == '*' {
+			err := lexer.dumpBuffer()
+			if err != nil {
+				return err
+			}
+			_, err = lexer.buffer.WriteString("/*")
+			if err != nil {
+				return err
+			}
+			lexer.state = LexerCommentBlock
+			lexer.tokens = append(lexer.tokens, lexer.Token(
+				TokenBeginBlockComment, ""))
 			return nil
 		}
 		lexer.state = LexerNormal
@@ -355,8 +414,10 @@ top:
 		}
 		goto top // process the unknown rune r in Normal mode
 
-	case LexerComment:
+	case LexerCommentLine:
+		P("lexer.state = LexerCommentLine")
 		if r == '\n' {
+			P("lexer.state = LexerCommentLine sees end of line comment: '%s', going to LexerNormal", string(lexer.buffer.Bytes()))
 			lexer.dumpComment()
 			lexer.state = LexerNormal
 			return nil
@@ -543,6 +604,7 @@ top:
 
 	} // end switch lexer.state
 
+writeRuneToBuffer:
 	_, err := lexer.buffer.WriteRune(r)
 	if err != nil {
 		return err

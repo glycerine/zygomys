@@ -574,10 +574,13 @@ func (env *Glisp) Run() (Sexp, error) {
 	}
 
 	if env.datastack.IsEmpty() {
-		fmt.Printf("env.datastack was empty!!\n")
-		env.DumpEnvironment()
-		panic("env.datastack was empty!!")
-		//os.Exit(-1)
+		env.datastack.PushExpr(SexpNull)
+		/*
+			fmt.Printf("env.datastack was empty!!\n")
+			env.DumpEnvironment()
+			panic("env.datastack was empty!!")
+			//os.Exit(-1)
+		*/
 	}
 
 	return env.datastack.PopExpr()

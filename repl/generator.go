@@ -49,7 +49,8 @@ func (gen *Generator) GenerateBegin(expressions []Sexp) error {
 	oldtail := gen.Tail
 	gen.Tail = false
 	if size == 0 {
-		return NoExpressionsFound
+		return nil
+		//return NoExpressionsFound
 	}
 	for _, expr := range expressions[:size-1] {
 		err := gen.Generate(expr)
@@ -159,6 +160,7 @@ func (gen *Generator) GenerateFn(args []Sexp, orig Sexp) error {
 }
 
 func (gen *Generator) GenerateDef(args []Sexp) error {
+	args = gen.RemoveComments(args)
 	if len(args) != 2 {
 		return fmt.Errorf("Wrong number of arguments to def")
 	}
@@ -540,6 +542,7 @@ func (gen *Generator) GenerateInclude(args []Sexp) error {
 }
 
 func (gen *Generator) GenerateCallBySymbol(sym *SexpSymbol, args []Sexp, orig Sexp) error {
+	args = gen.RemoveComments(args)
 	switch sym.name {
 	case "and":
 		return gen.GenerateShortCircuit(false, args)
@@ -624,6 +627,7 @@ func (gen *Generator) GenerateCallBySymbol(sym *SexpSymbol, args []Sexp, orig Se
 }
 
 func (gen *Generator) GenerateBuilder(fun Sexp, args []Sexp) error {
+	args = gen.RemoveComments(args)
 	//Q("GenerateBuilder is pushing unevaluated arguments onto the stack")
 	n := len(args)
 	for i := 0; i < n; i++ {
@@ -635,6 +639,7 @@ func (gen *Generator) GenerateBuilder(fun Sexp, args []Sexp) error {
 }
 
 func (gen *Generator) GenerateDispatch(fun Sexp, args []Sexp) error {
+	args = gen.RemoveComments(args)
 	gen.GenerateAll(args)
 	gen.Generate(fun)
 	gen.AddInstruction(DispatchInstr{len(args)})
@@ -647,6 +652,8 @@ func (gen *Generator) GenerateAssignment(expr *SexpPair, assignPos int) error {
 	}
 	arr, err := ListToArray(expr)
 	panicOn(err) // internal error, should never happen since we prevalidate that we have a list.
+
+	arr = gen.RemoveComments(arr)
 
 	if len(arr) <= 1 || assignPos == len(arr)-1 {
 		return fmt.Errorf("bad assignment syntax: no right-hand-side")
@@ -673,6 +680,7 @@ func (gen *Generator) GenerateAssignment(expr *SexpPair, assignPos int) error {
 
 func (gen *Generator) GenerateCall(expr *SexpPair) error {
 	arr, _ := ListToArray(expr.Tail)
+	arr = gen.RemoveComments(arr)
 	switch head := expr.Head.(type) {
 	case *SexpSymbol:
 		// detect builtin builder calls
@@ -701,6 +709,9 @@ func (gen *Generator) GenerateArray(arr *SexpArray) error {
 }
 
 func (gen *Generator) Generate(expr Sexp) error {
+	if _, isComment := expr.(*SexpComment); isComment {
+		return nil
+	}
 	switch e := expr.(type) {
 	case *SexpSymbol:
 		gen.AddInstruction(EnvToStackInstr{e})
@@ -1353,7 +1364,8 @@ func (gen *Generator) GenerateNewScope(expressions []Sexp) error {
 	oldtail := gen.Tail
 	gen.Tail = false
 	if size == 0 {
-		return NoExpressionsFound
+		return nil
+		//return NoExpressionsFound
 	}
 
 	gen.AddInstruction(AddScopeInstr{Name: "new-scope"})
@@ -1417,4 +1429,16 @@ func (gen *Generator) GenerateReturn(expressions []Sexp) error {
 
 	//gen.AddInstruction()
 	return nil
+}
+
+func (gen *Generator) RemoveComments(x []Sexp) []Sexp {
+	res := []Sexp{}
+	for i := range x {
+		switch x[i].(type) {
+		case *SexpComment:
+		default:
+			res = append(res, x[i])
+		}
+	}
+	return res
 }

@@ -338,13 +338,18 @@ func (parser *Parser) ParseHash(depth int) (Sexp, error) {
 }
 
 func (parser *Parser) ParseExpression(depth int) (res Sexp, err error) {
-	//	defer func() {
-	//		P("returning from ParseExpression at depth=%v with res='%s'\n", depth, res.SexpString())
-	//	}()
+	defer func() {
+		if res != nil {
+			P("returning from ParseExpression at depth=%v with res='%s'\n", depth, res.SexpString())
+		} else {
+			P("returning from ParseExpression at depth=%v, res = nil", depth)
+		}
+	}()
 
 	lexer := parser.lexer
 	env := parser.env
 
+	//getAnother:
 	tok, err := lexer.GetNextToken()
 	if err != nil {
 		return SexpEnd, err
@@ -445,8 +450,18 @@ func (parser *Parser) ParseExpression(depth int) (res Sexp, err error) {
 		sym := env.MakeSymbol(tok.str)
 		sym.isDot = true
 		return sym, nil
+	case TokenComment:
+		P("parser making SexpComment from '%s'", tok.str)
+		return &SexpComment{Comment: tok.str}, nil
+		// parser skips comments
+		//goto getAnother
+	case TokenBeginBlockComment:
+		// parser skips comments
+		return parser.ParseBlockComment(&tok)
+		//parser.ParseBlockComment(&tok)
+		//goto getAnother
 	}
-	return SexpNull, errors.New(fmt.Sprint("Invalid syntax, didn't know what to do with ", tok.typ, " ", tok))
+	return SexpNull, fmt.Errorf("Invalid syntax, don't know what to do with %v '%v'", tok.typ, tok)
 }
 
 // ParseTokens is the main service the Parser provides.
@@ -471,3 +486,56 @@ func (p *Parser) ParseTokens() ([]Sexp, error) {
 }
 
 var ErrShuttingDown error = fmt.Errorf("lexer shutting down")
+
+func (parser *Parser) ParseBlockComment(start *Token) (sx Sexp, err error) {
+	defer func() {
+		if sx != nil {
+			P("returning from ParseBlockComment with sx ='%v', err='%v'",
+				sx.SexpString(), err)
+		}
+	}()
+	lexer := parser.lexer
+	var tok Token
+	var block = &SexpComment{Block: true, Comment: start.str}
+
+	for {
+	tokFilled:
+		for {
+			tok, err = lexer.PeekNextToken()
+			if err != nil {
+				return SexpNull, err
+			}
+			if tok.typ != TokenEnd {
+				break tokFilled
+			}
+			err = parser.GetMoreInput(nil, ErrMoreInputNeeded)
+			switch err {
+			case ParserHaltRequested:
+				return SexpNull, err
+			case ResetRequested:
+				return SexpEnd, err
+			}
+			// have to still fill tok, so
+			// loop to the top to PeekNextToken
+		}
+
+		// consume it
+
+		cons, err := lexer.GetNextToken()
+		if err != nil {
+			return nil, err
+		}
+		P("parse block comment is consuming '%v'", cons)
+
+		switch tok.typ {
+		case TokenEndBlockComment:
+			block.Comment += tok.str
+			return block, nil
+		case TokenComment:
+			block.Comment += tok.str
+		default:
+			panic("internal error: inside a block comment, we should only see TokenComment and TokenEndBlockComment tokens")
+		}
+	}
+	return block, nil
+}
