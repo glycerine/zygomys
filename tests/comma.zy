@@ -1,5 +1,5 @@
-// commas act as white space and token delimiters;
-// the are can be replace with spaces, but might make things more readable.
+// commas are actual tokens, not just white space;
+// even though they currently act like spaces during parsing.
 (a,b,c = true,false,true)
 (assert a)
 (assert c)

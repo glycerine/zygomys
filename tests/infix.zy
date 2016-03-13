@@ -1,0 +1,3 @@
+// infix will be contained within {}
+(assert (== "list" (type? (macexpand {}))))
+(assert (== "{}" (str (infix))))

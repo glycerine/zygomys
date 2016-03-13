@@ -98,5 +98,27 @@ well, then what happens to (a:3 b:2)
 
 we could make := distict from; it already is.
 
+-------------
+
+querying data, including querying data defined in the language itself.
+
+constructing a timeseries.
+
+any up-spike resets the prediction, and invalidates it for at least K points.
+
+(K is what?)
+
+query for all of a particular type of event
+ - within a parituclar window of time
+   - with a specific game or customer_id
+
+data table like syntax?
+
+what are the operations:
+ read : select-where
+ read-for-update: update-where
+
+
+
 
 

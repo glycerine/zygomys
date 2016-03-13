@@ -221,6 +221,7 @@ type SexpArray struct {
 	Typ *RegisteredType
 
 	IsFuncDeclTypeArray bool
+	Infix               bool
 }
 
 func (r *SexpArray) Type() *RegisteredType {
@@ -237,11 +238,17 @@ func (r *SexpArray) Type() *RegisteredType {
 }
 
 func (arr *SexpArray) SexpString() string {
+	opn := "["
+	cls := "]"
+	if arr.Infix {
+		opn = "{"
+		cls = "}"
+	}
 	if len(arr.Val) == 0 {
-		return "[]"
+		return opn + cls
 	}
 	ta := arr.IsFuncDeclTypeArray
-	str := "["
+	str := opn
 	for i, sexp := range arr.Val {
 		str += sexp.SexpString()
 		if ta && i%2 == 0 {
@@ -251,7 +258,7 @@ func (arr *SexpArray) SexpString() string {
 		}
 	}
 	m := len(str)
-	str = str[:m-1] + "]"
+	str = str[:m-1] + cls
 	return str
 }
 

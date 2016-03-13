@@ -46,6 +46,7 @@ const (
 	TokenEndBlockComment
 	TokenSemicolon
 	TokenSymbolColon
+	TokenComma
 	TokenEnd
 )
 
@@ -521,7 +522,19 @@ top:
 			return nil
 
 		case ';':
+			err := lexer.dumpBuffer()
+			if err != nil {
+				return err
+			}
 			lexer.tokens = append(lexer.tokens, lexer.Token(TokenSemicolon, ";"))
+			return nil
+
+		case ',':
+			err := lexer.dumpBuffer()
+			if err != nil {
+				return err
+			}
+			lexer.tokens = append(lexer.tokens, lexer.Token(TokenComma, ","))
 			return nil
 
 		// colon terminates a keyword symbol, e.g. in `mykey: "myvalue"`;
@@ -535,11 +548,9 @@ top:
 
 		// likewise &
 		case '&':
-			if lexer.buffer.Len() > 0 {
-				err := lexer.dumpBuffer()
-				if err != nil {
-					return err
-				}
+			err := lexer.dumpBuffer()
+			if err != nil {
+				return err
 			}
 			lexer.tokens = append(lexer.tokens, lexer.Token(TokenSymbol, "&"))
 			return nil
@@ -587,9 +598,9 @@ top:
 		case '\n':
 			lexer.linenum++
 			fallthrough
-		case ',':
-			// comma, same as whitespace
-			fallthrough
+			//		case ',':
+			//			// comma, same as whitespace
+			//			fallthrough
 		case ' ':
 			fallthrough
 		case '\t':

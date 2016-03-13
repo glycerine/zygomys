@@ -27,6 +27,7 @@ import (
 // methods, and type aliases.
 //
 func (env *Glisp) ImportPackageBuilder() {
+	env.AddBuilder("infix", InfixBuilder)
 	env.AddBuilder(":", ColonAccessBuilder)
 	env.AddBuilder("sys", SystemBuilder)
 	env.AddBuilder("struct", StructBuilder)
@@ -751,4 +752,9 @@ func ColonAccessBuilder(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		return ArrayAccessFunction(env, name, swapped)
 	}
 	return SexpNull, fmt.Errorf("second argument to ':' function must be hash or array")
+}
+
+func InfixBuilder(env *Glisp, name string, args []Sexp) (Sexp, error) {
+	//P("InfixBuilder, args = %#v. currently no-op.", args)
+	return &SexpArray{Val: args, Infix: true}, nil
 }

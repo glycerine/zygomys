@@ -331,10 +331,11 @@ func (parser *Parser) ParseHash(depth int) (Sexp, error) {
 	}
 
 	var list SexpPair
-	list.Head = parser.env.MakeSymbol("hash")
+	list.Head = parser.env.MakeSymbol("infix")
 	list.Tail = MakeList(arr)
-
 	return &list, nil
+
+	//return &SexpArray{Val: arr, Infix: true}, nil
 }
 
 func (parser *Parser) ParseExpression(depth int) (res Sexp, err error) {
@@ -349,7 +350,7 @@ func (parser *Parser) ParseExpression(depth int) (res Sexp, err error) {
 	lexer := parser.lexer
 	env := parser.env
 
-	//getAnother:
+getAnother:
 	tok, err := lexer.GetNextToken()
 	if err != nil {
 		return SexpEnd, err
@@ -460,6 +461,8 @@ func (parser *Parser) ParseExpression(depth int) (res Sexp, err error) {
 		return parser.ParseBlockComment(&tok)
 		//parser.ParseBlockComment(&tok)
 		//goto getAnother
+	case TokenComma:
+		goto getAnother
 	}
 	return SexpNull, fmt.Errorf("Invalid syntax, don't know what to do with %v '%v'", tok.typ, tok)
 }
