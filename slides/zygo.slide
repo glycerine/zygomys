@@ -5,5 +5,141 @@ Jason E. Aten, Ph.D.
 Principal Engineer, Betable.com
 j.e.aten@gmail.com
 @jasonaten_ 
+https://github.com/glycerine/zygomys
 
-* first slide title
+* goals: learning and fun
+
+- programming languages are fun!
+- they don't have to be difficult
+
+- particularly great context to learn about Test-driven design
+
+- I'll give examples of the Go API, and how to extend your language with a new function.
+
+
+* non-goals
+
+- this is not a "product" that you consume
+- this is not a sales pitch for you to "use this product"
+- Too many language communities devolve and bifrucate into consumers versus owners, with consumers whining for their wish list.
+- here we are all developers.
+- you have the tools (YHTT); simply do it yourself (SDIY).
+- If you don't like something, change it on your fork.
+- One language to rule them all? Not a goal.
+
+* goals
+
+- Fun. Learning. Experimentation.
+- Its a playground for experimentation. Evolve a design
+- I'll show you the architecture; take it and explore, play, try new stuff.
+
+* overview
+- explain overall architecture
+- explain how to add a feature
+- explain debug tools
+
+* debug tools
+- `.dump`
+- `.debug`
+- `.undebug`
+- `.gls`
+- `.ls`
+- `(macexpand)`
+
+* overview of design
+- layers
+- a) lexer produces tokens
+- b) parser produces lists, arrays, and hashes
+- c) builders create and check types (macros run)
+- d) codegen produces s-expression byte-code
+- e) vm executes s-expression byte-code
+
+_past interpreter work really taught me the power of TDD / test-driven *design*._
+
+* philosophy
+- enable compile-down to go (if not implement it; in case someone does a JIT compiler for go... shouldn't be difficult now that the compiler is written in Go.)
+- blending Go and lisp
+- built for myself
+- languages engender strong feelings. It's likely we won't agree on everything. Build your own variations to your taste. This is a toolkit.
+
+* interesting about the zygo/repl code itself
+- using goroutines as coroutines to get pausable parsing
+- if you haven't discovered how to do conditional sends on a channel yet, here is how. (use of nil channels).
+   
+* the hard parts that are already done:
+- script calls to existing Go functions using existing Go structs. Using reflect is somewhat laborious; but its done for you now.
+- lexical scoping. => closures that capture variables outside a function based on where that function was originally defined, as opposed to where it is called from.
+- a repl-friendly linear time parser, avoiding the O(n*n) trap. (Uses go-routines as co-routines!)
+
+* hard parts already done for you, part 2
+- reflection based calls into Go code
+- data structure for dynamic structs
+- eval
+- rudiments of a type system tries to match Go's type system.
+- sandboxable / restrict outside access
+- goroutines/channels/regexp (not used alot; not polished)
+
+* use cases
+- as a query language
+- configuration language that can query itself.
+- multi-core friendly scripting. Leverage Go's multicore strength for exploratory data analysis and scripting.
+ 
+* the basic zygo->go function interface:
+
+.code first.go /START OMIT/,/END OMIT/
+
+* Generate call tree
+
+.code calltree.txt
+
+* why use an interpreter:
+- high personal productivity (examples: python, javascript, Matlab, R, Mathematica, lisp, scheme)
+- fast feedback
+- essential for exploratory data analysis 
+- script your game/application
+- become a language designer
+- DSL creation: model a complex/dynamic problem, configure a complex/dynamic solution
+- fun to write
+- experiment with design
+
+* argument: use JSON/YAML/other static data-only language
+- meh.
+- just avoids the scripting problem, moving it elsewhere.
+- no opportunity to compile-down
+- painful to type JSON interactively
+- doesn't support exploratory analysis
+- DSLs awkward
+- no language design
+- I hate having to put double quotes around everything
+- no support for complex number types, bignums, matrices, tensors, etc.
+
+* side-effects
+
+- test-driven design is incredibly powerful at bringing up cross-layer issues.
+- no where more apparent than in a very layered design like an interpretter (compiler). When you make a small language change in the lexer/parser, the test suite will tell what/if you've broken anything else. Powerful.
+
+* components:
+
+- s-expression: lexer and parser
+- infix: top-down operator precedence parser (Pratt parser; see Douglas Crockford's writings)
+- unification (for type-system and other); this is how parametric polymorphism could be implemented.
+- repl. Read-eval-print-loop. an interactive prompt.
+
+* origins:
+
+- I started with Howard Mao's Glisp project, on github.
+- Some of that architecture still remains.
+- Lots of changes, tests, and many extensions. (true lexical scope, sandboxing, etc).
+- Start with zygomys and extend in your own direction
+
+
+
+* maxims:
+
+- this is a toolbox (TIAT)
+- you have the tools (YHTT)
+- simply do it yourself (SDIY)
+- Write User's-code First (WUCF)
+- Client Before Server (CBS)
+- WUCF and CBS are ways of saying: TDD is the key to evolutionary extensions and sharing. The test suite tells you and others when you've broken earlier/others features; and when you've successfully integated a new feature.
+

@@ -1,0 +1,14 @@
+GenerateBegin
+ |
+ V
+Generate
+ |
+ V>
+GenerateAssignment  GenerateCall  GenerateArray
+ |                      |                    \-> GenerateAll -> Generate
+ V                      V>
+GenerateDef            GenerateCallBySymbol  GenerateDispatch  GenerateBuilder
+ |
+ V
+GetLHS  Generate
+
