@@ -283,6 +283,13 @@ func (h *SexpHash) TypeCheckField(key Sexp, val Sexp) error {
 func (hash *SexpHash) HashSet(key Sexp, val Sexp) error {
 	//P("in HashSet, key='%v' val='%v'", key.SexpString(), val.SexpString())
 
+	if _, isComment := key.(*SexpComment); isComment {
+		return fmt.Errorf("HashSet: key cannot be comment")
+	}
+	if _, isComment := val.(*SexpComment); isComment {
+		return fmt.Errorf("HashSet: val cannot be comment")
+	}
+
 	err := hash.TypeCheckField(key, val)
 	if err != nil {
 		if err != KeyNotSymbol {
@@ -787,13 +794,6 @@ func (hash *SexpHash) SexpString() string {
 	}
 	str := "{"
 	str += coreStringifyHash(hash)
-	/*	for _, arr := range hash.Map {
-			for _, pair := range arr {
-				str += pair.Head.SexpString() + " "
-				str += pair.Tail.SexpString() + " "
-			}
-		}
-	*/
 	if len(str) > 1 {
 		return str[:len(str)-1] + "}"
 	}

@@ -6,3 +6,19 @@
 */
 (def r (%a %b /*comment*/ 1 /*more*/)) // okay
 
+(defn f [] 1    /*one
+  */   )
+
+(/*1*/ def /*2*/ a /*3*/ 5 /*4*/)
+
+/*5*/
+
+(def h {/*hi there*/ a: /*comm*/ true /*yo*/})
+(assert (:a h))
+
+(defn factory []
+  (let* [a [1] // a is shared by f and g!
+        ] a))
+
+
+

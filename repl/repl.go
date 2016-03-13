@@ -144,8 +144,10 @@ func Repl(env *Glisp, cfg *GlispConfig) {
 	// and also change the line, err assignment
 	// just below.
 
-	// debug
-	// env.debugExec = true
+	if cfg.Trace {
+		// debug tracing
+		env.debugExec = true
+	}
 
 	if !cfg.Quiet {
 		if cfg.Sandboxed {

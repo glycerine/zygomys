@@ -340,9 +340,9 @@ func (parser *Parser) ParseHash(depth int) (Sexp, error) {
 func (parser *Parser) ParseExpression(depth int) (res Sexp, err error) {
 	defer func() {
 		if res != nil {
-			P("returning from ParseExpression at depth=%v with res='%s'\n", depth, res.SexpString())
+			//P("returning from ParseExpression at depth=%v with res='%s'\n", depth, res.SexpString())
 		} else {
-			P("returning from ParseExpression at depth=%v, res = nil", depth)
+			//P("returning from ParseExpression at depth=%v, res = nil", depth)
 		}
 	}()
 
@@ -451,7 +451,7 @@ func (parser *Parser) ParseExpression(depth int) (res Sexp, err error) {
 		sym.isDot = true
 		return sym, nil
 	case TokenComment:
-		P("parser making SexpComment from '%s'", tok.str)
+		//P("parser making SexpComment from '%s'", tok.str)
 		return &SexpComment{Comment: tok.str}, nil
 		// parser skips comments
 		//goto getAnother
@@ -490,8 +490,8 @@ var ErrShuttingDown error = fmt.Errorf("lexer shutting down")
 func (parser *Parser) ParseBlockComment(start *Token) (sx Sexp, err error) {
 	defer func() {
 		if sx != nil {
-			P("returning from ParseBlockComment with sx ='%v', err='%v'",
-				sx.SexpString(), err)
+			//P("returning from ParseBlockComment with sx ='%v', err='%v'",
+			//	sx.SexpString(), err)
 		}
 	}()
 	lexer := parser.lexer
@@ -521,11 +521,12 @@ func (parser *Parser) ParseBlockComment(start *Token) (sx Sexp, err error) {
 
 		// consume it
 
-		cons, err := lexer.GetNextToken()
+		//cons, err := lexer.GetNextToken()
+		_, err := lexer.GetNextToken()
 		if err != nil {
 			return nil, err
 		}
-		P("parse block comment is consuming '%v'", cons)
+		//P("parse block comment is consuming '%v'", cons)
 
 		switch tok.typ {
 		case TokenEndBlockComment:

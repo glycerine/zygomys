@@ -348,7 +348,7 @@ top:
 	switch lexer.state {
 
 	case LexerCommentBlock:
-		P("lexer.state = LexerCommentBlock")
+		//P("lexer.state = LexerCommentBlock")
 		if r == '\n' {
 			_, err := lexer.buffer.WriteRune('\n')
 			if err != nil {
@@ -363,7 +363,7 @@ top:
 			return nil
 		}
 	case LexerCommentBlockAsterisk:
-		P("lexer.state = LexerCommentBlockAsterisk")
+		//P("lexer.state = LexerCommentBlockAsterisk")
 		if r == '/' {
 			_, err := lexer.buffer.WriteString("*/")
 			if err != nil {
@@ -383,7 +383,7 @@ top:
 		goto writeRuneToBuffer
 
 	case LexerFirstFwdSlash:
-		P("lexer.state = LexerFirstFwdSlash")
+		//P("lexer.state = LexerFirstFwdSlash")
 		if r == '/' {
 			err := lexer.dumpBuffer()
 			if err != nil {
@@ -415,9 +415,9 @@ top:
 		goto top // process the unknown rune r in Normal mode
 
 	case LexerCommentLine:
-		P("lexer.state = LexerCommentLine")
+		//P("lexer.state = LexerCommentLine")
 		if r == '\n' {
-			P("lexer.state = LexerCommentLine sees end of line comment: '%s', going to LexerNormal", string(lexer.buffer.Bytes()))
+			//P("lexer.state = LexerCommentLine sees end of line comment: '%s', going to LexerNormal", string(lexer.buffer.Bytes()))
 			lexer.dumpComment()
 			lexer.state = LexerNormal
 			return nil

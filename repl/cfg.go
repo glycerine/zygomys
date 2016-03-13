@@ -15,6 +15,7 @@ type GlispConfig struct {
 	Command           string
 	Sandboxed         bool
 	Quiet             bool
+	Trace             bool
 }
 
 func NewGlispConfig(cmdname string) *GlispConfig {
@@ -32,6 +33,7 @@ func (c *GlispConfig) DefineFlags() {
 	c.Flags.StringVar(&c.Command, "c", "", "expressions to evaluate")
 	c.Flags.BoolVar(&c.Sandboxed, "sandbox", false, "run sandboxed; disallow system/external interaction functions")
 	c.Flags.BoolVar(&c.Quiet, "quiet", false, "start repl without printing the version/mode/help banner")
+	c.Flags.BoolVar(&c.Trace, "trace", false, "trace execution (warning: very verbose and slow)")
 }
 
 // call c.ValidateConfig() after myflags.Parse()

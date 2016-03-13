@@ -348,6 +348,8 @@ func (env *Glisp) CallUserFunction(
 }
 
 func (env *Glisp) LoadExpressions(expressions []Sexp) error {
+	expressions = env.FilterArray(expressions, RemoveCommentsFilter)
+
 	gen := NewGenerator(env)
 	if !env.ReachedEnd() {
 		gen.AddInstruction(PopInstr(0))
@@ -389,7 +391,6 @@ func (env *Glisp) LoadStream(stream io.RuneScanner) error {
 	if err != nil {
 		return fmt.Errorf("Error on line %d: %v\n", env.parser.lexer.Linenum(), err)
 	}
-
 	return env.LoadExpressions(expressions)
 }
 
