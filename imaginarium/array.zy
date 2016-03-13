@@ -14,7 +14,7 @@
 
 // and how about a scientific notation?
 
-3e9
+3.3e9+2.2e-1i
 
 // simple math expressions (3+3)*3 mod 4 would be great
 
@@ -64,8 +64,8 @@ can we have
 The goal with a: is to avoid having to deal with (quote a) everywhere, and to have it print back the same way as it was provided in the first place. Do we look up the key by querying for 'a' or for 'a:' then? by 'a'. So the 'a' must be what is entered into the hash table.
 
 But if we want the symbol to display as a: then it needs to be its own symbol.
-Because the suffix makes it lookup differently. problem: searching on 'a' name alone
-won't find 'a:' in the hash table.
+Because the suffix makes it lookup differently. problem: searching on 'a'
+ name alone won't find 'a:' in the hash table.
 
 if we leave off distinguishing characters ':' from what is hashed, then our hash
 table won't carry those attributes along, i.e. we'll lookup the same symbol

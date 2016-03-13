@@ -77,7 +77,7 @@ ptr2
 (deref-set sss "happy")
 (assert (== (* sss) "happy"))
 
-(def h {a:(& 1) b:2})
+(def h (hash a:(& 1) b:2))
 (deref-set (.h.a) 45)
 (assert (== (* (.h.a)) 45))
 

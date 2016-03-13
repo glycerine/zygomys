@@ -13,7 +13,7 @@
 (assert (== 7 (:(f) a)))
 
 // colon operator works like hget on hashes
-(def h {karin:9 heath:10})
+(def h (hash karin:9 heath:10))
 (assert (== (:karin h) 9))
 (assert (== (:heath h) 10))
 

@@ -789,15 +789,17 @@ func (hash *SexpHash) ShortName() string {
 
 func (hash *SexpHash) SexpString() string {
 	//P("top of SexpString, hash = '%#v'", hash)
-	if hash.TypeName != "hash" {
-		return NamedHashSexpString(hash)
-	}
-	str := "{"
-	str += coreStringifyHash(hash)
-	if len(str) > 1 {
-		return str[:len(str)-1] + "}"
-	}
-	return str + "}"
+	//if hash.TypeName != "hash" {
+	return NamedHashSexpString(hash)
+	//}
+	/*
+		str := "{"
+		str += coreStringifyHash(hash)
+		if len(str) > 1 {
+			return str[:len(str)-1] + "}"
+		}
+		return str + "}"
+	*/
 }
 
 func coreStringifyHash(hash *SexpHash) string {

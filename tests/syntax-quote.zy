@@ -1,3 +1,3 @@
 (def a 7)
-(def x ^[{g:({b:[~a]})}])
+(def x ^[(hash g:((hash b:[~a])))])
 (assert (== (str x) "[(hash g ((hash b [7])))]"))

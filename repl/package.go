@@ -18,6 +18,10 @@ import (
 // Like a function, a builder is called at
 // run/evaluation time, not at definition time.
 //
+// Since it receives an un-evaluated tree of
+// symbols, a builder must manually evaluate
+// any arguments it wishes to find bindings for.
+//
 // The primary use here is to be able to define
 // packages, structs, interfaces, functions,
 // methods, and type aliases.

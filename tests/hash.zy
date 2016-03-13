@@ -1,4 +1,4 @@
-(def h {%a 21 2 5 "c" 'c'})
+(def h (hash %a 21 2 5 "c" 'c'))
 
 // testing hget
 (assert (== 21 (hget h %a)))
@@ -28,7 +28,7 @@
 (assert (== 13 (hget h %b)))
 
 (assert (hash? h))
-(assert (empty? {}))
+(assert (empty? (hash)))
 (assert (not (empty? h)))
 
 // clojure like field access

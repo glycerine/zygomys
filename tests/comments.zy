@@ -15,7 +15,7 @@
 
 /*5*/
 
-(def h {/*hi there*/ a: /*comm*/ true /*yo*/})
+(def h (hash /*hi there*/ a: /*comm*/ true /*yo*/))
 (assert (:a h))
 
 (defn factory []
