@@ -1,0 +1,341 @@
+
+influenced by R: ease of experimentation with code and the fluid interaction between data and code.
+
++ R is the fastest development-wise language to write code, ever.
+
+lm(a~b) => is a linear model (regression) analysis (predict a from b), accomplished by typing 7 characters.
+
+need to be able to handle matrixes with ease
+
+-----
+
+I'm not trying to be in the business of supporting users.
+
+-----
+
+This is a tool to let you play with language, and a jumping off point to create your own.
+
+==> great power and 
+
+----
+
+you should fork it and modify it as you please.
+
+----
+syntax for matrices:
+
+([1 2] a)
+
+(a[1 2])
+
+okay if a is an object on whom methods can be called
+
+(a [i j] = 10)
+
+(b[i, j] = b[j, i]) ;; transpose
+
+can all objects be dot-symbols?
+
+essentially the regularity that we want is actually
+
+(subject verb object)
+
+as opposed to
+
+(verb object) which lisp does by default
+
+verb(object) is Go/C.
+
+= marks the differentiator, where the verb starts
+
+----
+give a tour of the code: to explain how it works, and how to modify it.
+
+ lexer
+ parser
+
+ builtin functions in Go - the prototype
+ sexp defined
+
+ generator
+
+ the type system
+
+ lexical scope
+
+ main thing for binding variables into a scope BindLexicalScope()
+ for reading a variable from the local scope: LookupSymbol()
+
+ the hash table implementation
+
+
+=====
+use cases:
+
+effectively: a query language for a database
+
+configuration and control.
+
++ nice: scipt up for interactivity, adjustment to data, then once converged,
+compile down to Go automatically.
+
+------------
+
+typescript: a typed javascript
+
+-----------
+
+programming languages are fun!
+
+particularly great area to learn about Test-driven design
+
+give examples of the GO API, and how to extend the language with a new function.
+
+goals: learning and fun
+
+-----
+
+type variables as a real type of a thing: real at runtime too.
+
+model checking as an application. TLA+ -> into Go, models of concurrency.
+models of games.
+
+a[2 3] matrix notation
+
+an infix form for math?
+
+handle a subset of Go and compile that down to zygo
+
+anko?
+
+------
+
+how to select and browse data:
+data.tables like syntax?
+
+It has a natural syntax:
+DT[where, select|update|do, by]
+
+These queries can be chained together just by adding another one on the end:
+DT[...][...].
+
+See data.table compared to dplyr on Stack Overflow and Quora.
+
+how about no separate character type, just length-one strings?
+
+then quoted expressions, how would we?
+
+~ perhaps?
+
+matlab like functionality
+@a[3 4; 5 6] matrix/multidem array operation
+
+changes
+--------
+done: % for quoting stuff
+done: // for comments 
+done: '\n' for runes/characters  (instead of quoting)
+
+# for type variables, or for matrixes
+part-done, not longer a comment: ; for matrix row separation (instead of comments)
+
+@ is already syntax-unquote or something related to macros.
+(#a[3 2 ; 4 3] as the matrix notation. # looks like a matrix.
+
+how do we quote? %
+%abc
+%(hi (there jason))
+
+~ => no evaluation
+
+discard the macro system?
+gets us ~ @ back
+ but: too much built in functionality uses it now.
+
+1. explain overall architecture
+2. explain how to add a feature
+
+explain debug tools
+.dump
+.debug
+.undebug
+.gls
+.ls
+(macexpand )
+
+overview of design
+ * layers
+ * a) lexer produces tokens
+ * b) parser produces lists, arrays, and hashes
+ * c) builders create and check types (macros run)
+ * d) codegen produces s-expression byte-code
+ * e) vm executes s-expression byte-code
+
+really taught me the power of test-driven design.
+
+philosophy:
+  enable compile-down to go (if not implement it; in case someone does a JIT compiler for go... shouldn't be difficult now that the compiler is written in Go.)
+  blending Go and lisp
+  built for myself, my aesthetics.
+  we won't agree on everything. build your own variations to your taste.
+
+interesting:
+ * using goroutines as coroutines to get
+   pausable parsing
+ * if you haven't discovered how to do conditional sends
+    on a channel yet, here is how.
+   => use of nil channels
+   
+the hard parts that are already done:
+ * script calls to existing Go functions using existing Go structs.
+    + reflect is somewhat painful to figure out;
+      but its done now.
+ * lexical scoping. => closures that capture variables
+     outside a function based on where that function
+     was originally defined, as opposed to where it
+     is called from.     
+ * a repl-friendly linear time parser, avoiding the O(n*n) trap
+    (Uses go-routines as co-routines).
+ * reflection based calls into Go code
+ * data structure for dynamic structs
+ * eval
+ * rudiments of a type system tries to match Go's type system.
+ * sandboxable / restrict outside access
+ * goroutines/channels/regexp (not used alot; not polished)
+
+ use cases:
+ * as a query language
+ * configuration language that can query itself.
+ * multi-core friendly scripting. Leverage Go's strengths for
+    exploratory data analysis and scripting.
+ 
+go over the basic lisp->go function interface:
+
+func FirstFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
+	if len(args) != 1 {
+		return SexpNull, WrongNargs
+	}
+	switch expr := args[0].(type) {
+	case *SexpPair:
+		return expr.Head, nil
+	case *SexpArray:
+		if len(expr.Val) > 0 {
+			return expr.Val[0], nil
+		}
+		return SexpNull, fmt.Errorf("first called on empty array")
+	}
+	return SexpNull, WrongType
+}
+
+GenerateBegin
+ |
+ V
+Generate
+ |
+ V>
+GenerateAssignment  GenerateCall  GenerateArray
+ |                      |                    \-> GenerateAll -> Generate
+ V                      V>
+GenerateDef            GenerateCallBySymbol  GenerateDispatch  GenerateBuilder
+ |
+ V
+GetLHS  Generate
+
+why use an interpreter:
+ * high personal productivity (examples: python, javascript, Matlab, R, Mathematica, lisp, scheme)
+ * fast feedback
+ * essential for exploratory data analysis 
+ * script your game/application
+ * become a language designer
+ * DSL creation: model a complex/dynamic problem, configure a complex/dynamic solution
+ * fun to write
+ * experiment with design
+
+argument: use JSON/YAML/other static data-only language
+ * meh.
+ * just avoids the scripting problem, moving it elsewhere.
+ * no opportunity to compile-down
+ * painful to type JSON interactively
+ * doesn't support exploratory analysis
+ * DSLs awkward
+ * no language design
+ * I hate having to put double quotes around everything
+ * no support for complex number types, bignums, matrices, tensors, etc.
+
+how to write queries?
+
+how to query the language itself?
+
+---------------
+todo list
+1. finish the type system
+2. write time series queries
+3. oo-stuff
+4. interface stuff
+5. compile down to Go
+6. pratt parser for sane (a[3 4] = 3.8e7 + 3i) syntax
+7. parametric type variables
+8. unification implementation / micro-kanran / mini-kanran
+
+--
+1. presentation with code architecture discussion
+2. query the language itself
+3. timeseries queries
+
+have {} represent infix-code (pratt parser) and parenthesization: priority of operations.
+
+because we already have (hash a:1 b:2) to take care of hash tables!
+
+non-goals
+
+* this is not a "product" that you consume
+* this is not a sales pitch for you to "use this product"
+* Too many language communities devolve into
+   consumers whining for their favorite features
+   from another language they got used.
+   You have the tools (YHTT); go do it yourself (DIY).
+* If you don't like something, change it on your fork.
+* One language to rule them all? Not a goal.
+
+goals:
+
+* Fun. Learning. Experimentation.
+* Its a playground for experimentation.
+   + experiments evolve design
+* I'll show you the architecture; take it and explore, play, try new stuff.
+
+
+side-effects:
+
+* test-driven design is incredibly powerful at bringing up cross-layer issues.
+* no where more apparent than in a very layered design like an interpretter (compiler). When you make a small language change in the lexer/parser, the test suite will tell what/if you've broken anything else. Powerful.
+
+components:
+
+ * s-expression: lexer and parser
+ * infix: top-down operator precedence parser (Pratt parser; see Douglas Crockford's writings)
+ * unification (for type-system and other); this is how parametric polymorphism is implemented.
+
+origins:
+
+ * I started with Howard Mao's Glisp project, on github.
+ * Some of that architecture still remains.
+ * Lots of changes, and many extensions. (true lexical scope, sandboxing, etc).
+ * Start with zygomys and extend in your own direction
+
+maxims:
+
+ * this is a toolbox (TIAT)
+ * you have the tools (YHTT)
+ * do it yourself (DIY)
+ * Write User's-code First (WUCF)
+ * Client Before Server (CBS)
+ * WUCF and CBS are ways of saying: TDD is the key
+    to evolutionary extensions and sharing.
+    The test suite tells you and others
+    when you've broken earlier/others features;
+    and when you've successfully integrated
+    features from another.
+
+architecture:
+

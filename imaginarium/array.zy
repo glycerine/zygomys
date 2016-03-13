@@ -117,6 +117,8 @@ data table like syntax?
 what are the operations:
  read : select-where
  read-for-update: update-where
+ filter by function
+ group by function
 
 
 
