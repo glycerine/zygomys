@@ -74,10 +74,13 @@ func (stack *Stack) GetTop() StackElem {
 func (stack *Stack) Size() int {
 	return stack.tos + 1
 }
+
+var StackUnderFlowErr = fmt.Errorf("invalid stack access: underflow")
+
 func (stack *Stack) Get(n int) (StackElem, error) {
 	if stack.tos-n < 0 {
-		err := fmt.Errorf("invalid stack access asked for %v, Top was %v", n, stack.tos)
-		panic(err)
+		err := StackUnderFlowErr
+		//panic(err)
 		return nil, err
 	}
 	return stack.elements[stack.tos-n], nil

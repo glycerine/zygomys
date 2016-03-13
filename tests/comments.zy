@@ -1,10 +1,12 @@
-// (assert false)
+
+/* (assert false) */
+
 (assert true) // comments after tokens on a line are okay.
 // allow block comments too... 
 /*
 (assert false) yo!
 */
-(def r (%a %b /*comment*/ 1 /*more*/)) // okay
+(def r %(a b /*comment*/ 1 /*more*/)) // okay
 
 (defn f [] 1    /*one
   */   )

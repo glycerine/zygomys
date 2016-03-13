@@ -562,6 +562,9 @@ func (env *Glisp) Run() (Sexp, error) {
 				env.curfunc.name)
 		}
 		err := instr.Execute(env)
+		if err == StackUnderFlowErr {
+			err = nil
+		}
 		if err != nil {
 			return SexpNull, err
 		}
