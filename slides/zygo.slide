@@ -67,11 +67,11 @@ _past interpreter work really taught me the power of TDD / test-driven *design*.
 - if you haven't discovered how to do conditional sends on a channel yet, here is how. (use of nil channels).
    
 * the hard parts that are already done:
-- script calls to existing Go functions using existing Go structs. Using reflect is somewhat laborious; but its done for you now.
+- script calls to existing Go functions using existing Go structs. Using reflect is somewhat laborious; but its done
 - lexical scoping. => closures that capture variables outside a function based on where that function was originally defined, as opposed to where it is called from.
 - a repl-friendly linear time parser, avoiding the O(n*n) trap. (Uses go-routines as co-routines!)
 
-* hard parts already done for you, part 2
+* hard parts already done, part 2
 - reflection based calls into Go code
 - data structure for dynamic structs
 - eval
@@ -143,3 +143,41 @@ _past interpreter work really taught me the power of TDD / test-driven *design*.
 - Client Before Server (CBS)
 - WUCF and CBS are ways of saying: TDD is the key to evolutionary extensions and sharing. The test suite tells you and others when you've broken earlier/others features; and when you've successfully integated a new feature.
 
+* major code files
+
+- repl.go
+- environment.go
+- lexer.go
+- parser.go
+- expression.go
+- generator.go
+- vm.go
+- package.go
+- gotypereg.go
+
+* auxilliary/helper files
+
+- typeutils.go
+- hashutils.go
+- listutils.go
+- strutils.go
+- scope.go
+- stack.go
+- rawutils.go
+- numerictower.go
+- vprint.go
+
+* custom types: extension example files
+
+- random.go (wraps math/rand.Float64() call)
+- regexp.go (define SexpRegexp as regexp.Regexp)
+- time.go (define SexpTime as time.Time)
+- jsonmsgp.go (conversions to/from json and msgpack)
+
+* internal Sexp type heirarchy
+
+- SexpSentinel (most important instance: SexpNull)
+- SexpSymbol
+- SexpPair
+- SexpArray
+- SexpHash
