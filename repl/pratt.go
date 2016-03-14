@@ -6,6 +6,7 @@ import (
 )
 
 // Pratt parsing. see http://javascript.crockford.com/tdop/tdop.html
+// Also nice writeup: http://journal.stuffwithstuff.com/2011/03/19/pratt-parsers-expression-parsing-made-easy/
 
 // precedence levels (smaller == lower priority,
 //    so smaller => goes towards top of tree)
