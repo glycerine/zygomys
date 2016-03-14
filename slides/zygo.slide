@@ -58,7 +58,7 @@ https://github.com/glycerine/zygomys
 - b) parser produces lists, arrays, and hashes
 - c) builders create and check types (macros run)
 - d) codegen produces s-expression byte-code
-- e) vm executes s-expression byte-code
+- e) vm executes s-expression byte-code (infix eval happens)
 
 interpreter work really taught me the power of test-driven *design*
 
