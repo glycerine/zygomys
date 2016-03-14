@@ -1,7 +1,7 @@
 // defmap is automatically invoked for each GostructRegistry 
-//(defmap event-demo)
-//(defmap person-demo)
-(def ev1 (event-demo id:456 user: (person-demo first:"jay" last:"son") flight:"A" pilot:["u" "2"]))
+//(defmap eventdemo)
+//(defmap persondemo)
+(def ev1 (eventdemo id:456 user: (persondemo first:"jay" last:"son") flight:"A" pilot:["u" "2"]))
 
 // togo has the side effect of decoding the Sexp into a predefined go Shadow
 // struct, waiting to be called.

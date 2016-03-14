@@ -203,3 +203,9 @@ symbols with a special prefix
 See the top of `github.com/glycerine/zygomys/repl/jsonmsgp.go` for a guide.
 
 .code msgp.txt
+
+* records
+
+- easy to type
+- define data with named fields
+- hash tables with a name and a key-order

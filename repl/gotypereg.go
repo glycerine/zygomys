@@ -303,10 +303,10 @@ func init() {
 	}}, true)
 
 	// demo and user defined structs
-	gsr.RegisterUserdef("event-demo", &RegisteredType{GenDefMap: true, Factory: func(env *Glisp) (interface{}, error) {
+	gsr.RegisterUserdef("eventdemo", &RegisteredType{GenDefMap: true, Factory: func(env *Glisp) (interface{}, error) {
 		return &Event{}, nil
 	}}, true)
-	gsr.RegisterUserdef("person-demo", &RegisteredType{GenDefMap: true, Factory: func(env *Glisp) (interface{}, error) {
+	gsr.RegisterUserdef("persondemo", &RegisteredType{GenDefMap: true, Factory: func(env *Glisp) (interface{}, error) {
 		return &Person{}, nil
 	}}, true)
 	gsr.RegisterUserdef("snoopy", &RegisteredType{GenDefMap: true, Factory: func(env *Glisp) (interface{}, error) {

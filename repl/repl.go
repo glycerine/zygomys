@@ -344,11 +344,11 @@ func (env *Glisp) StandardSetup() {
 	//	_, err = env.EvalString(colonOp)
 	//	panicOn(err)
 
-	rangeMacro := `(defmac range [key value my-hash & body]
-  ^(let [n (len ~my-hash)]
+	rangeMacro := `(defmac range [key value myhash & body]
+  ^(let [n (len ~myhash)]
       (for [(def i 0) (< i n) (def i (+ i 1))]
         (begin
-          (mdef (quote ~key) (quote ~value) (hpair ~my-hash i))
+          (mdef (quote ~key) (quote ~value) (hpair ~myhash i))
           ~@body))))`
 	_, err = env.EvalString(rangeMacro)
 	panicOn(err)

@@ -179,13 +179,14 @@ var (
 	// Nor, obviously, can symbols contain backticks, "`".
 	// Symbols cannot start with a number. DotSymbols cannot have a number
 	// as the first character after '.'
-	SymbolRegex = regexp.MustCompile(`^[#$?]?[^#$?':;\\~@\[\]{}\^|"()%0-9,&][^'#:;\\~@\[\]{}\^|"()%,&]*[:]?$`)
+	SymbolRegex = regexp.MustCompile(`^[#$?]?[^#$?':;\\~@\[\]{}\^|"()%0-9,&][^'#:;\\~@\[\]{}\^|"()%,&*\-]*[:]?$`)
 	// dot symbol examples: `.`, `.a`, `.a.b`, `.a.b.c`
 	// dot symbol non-examples: `.a.`, `..`
-	DotSymbolRegex = regexp.MustCompile(`^[.]$|^([.][^'#:;\\~@\[\]{}\^|"()%.0-9,][^'#:;\\~@\[\]{}\^|"()%.,]*)+$`)
+	DotSymbolRegex = regexp.MustCompile(`^[.]$|^([.][^'#:;\\~@\[\]{}\^|"()%.0-9,][^'#:;\\~@\[\]{}\^|"()%.,*+\-]*)+$`)
 	DotPartsRegex  = regexp.MustCompile(`[.][^'#:;\\~@\[\]{}\^|"()%.0-9,][^'#:;\\~@\[\]{}\^|"()%.,]*`)
 	CharRegex      = regexp.MustCompile("^'\\\\?.'$")
 	FloatRegex     = regexp.MustCompile("^-?([0-9]+\\.[0-9]*)|(\\.[0-9]+)|([0-9]+(\\.[0-9]*)?[eE](-?[0-9]+))$")
+	BuiltinOpRegex = regexp.MustCompile(`^\+\+|\-\-|\+=|\-=|=|==|:=|\+|\-|\*$`)
 )
 
 func StringToRunes(str string) []rune {
@@ -265,6 +266,9 @@ func (x *Lexer) DecodeAtom(atom string) (Token, error) {
 	}
 	if DotSymbolRegex.MatchString(atom) {
 		return x.Token(TokenDotSymbol, atom), nil
+	}
+	if BuiltinOpRegex.MatchString(atom) {
+		return x.Token(TokenSymbol, atom), nil
 	}
 	if atom == ":" {
 		return x.Token(TokenSymbol, atom), nil

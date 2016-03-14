@@ -28,7 +28,7 @@ type Event struct {
 }
 
  Event{}, and fill in its fields`, t, func() {
-		event := `(event-demo id:123 user: (person-demo first:"Liz" last:"C") flight:"AZD234"  pilot:["Roger" "Ernie"])`
+		event := `(eventdemo id:123 user: (persondemo first:"Liz" last:"C") flight:"AZD234"  pilot:["Roger" "Ernie"])`
 		env := NewGlisp()
 		defer env.parser.Stop()
 
@@ -37,10 +37,10 @@ type Event struct {
 		x, err := env.EvalString(event)
 		panicOn(err)
 
-		cv.So(x.SexpString(), cv.ShouldEqual, ` (event-demo id:123 user: (person-demo first:"Liz" last:"C") flight:"AZD234" pilot:["Roger" "Ernie"])`)
+		cv.So(x.SexpString(), cv.ShouldEqual, ` (eventdemo id:123 user: (persondemo first:"Liz" last:"C") flight:"AZD234" pilot:["Roger" "Ernie"])`)
 
 		jsonBy := SexpToJson(x)
-		cv.So(string(jsonBy), cv.ShouldEqual, `{"Atype":"event-demo", "id":123, "user":{"Atype":"person-demo", "first":"Liz", "last":"C", "zKeyOrder":["first", "last"]}, "flight":"AZD234", "pilot":["Roger", "Ernie"], "zKeyOrder":["id", "user", "flight", "pilot"]}`)
+		cv.So(string(jsonBy), cv.ShouldEqual, `{"Atype":"eventdemo", "id":123, "user":{"Atype":"persondemo", "first":"Liz", "last":"C", "zKeyOrder":["first", "last"]}, "flight":"AZD234", "pilot":["Roger", "Ernie"], "zKeyOrder":["id", "user", "flight", "pilot"]}`)
 		msgpack, goObj := SexpToMsgpack(x)
 		// msgpack field ordering is random, so can't expect a match the serialization byte-for-byte
 		//cv.So(msgpack, cv.ShouldResemble, expectedMsgpack)
@@ -63,7 +63,7 @@ type Event struct {
 		hhh := sexp.(*SexpHash)
 		hhh.KeyOrder = x.(*SexpHash).KeyOrder
 		sexpStr := sexp.SexpString()
-		expectedSexpr := ` (event-demo id:123 user: (person-demo first:"Liz" last:"C") flight:"AZD234" pilot:["Roger" "Ernie"])`
+		expectedSexpr := ` (eventdemo id:123 user: (persondemo first:"Liz" last:"C") flight:"AZD234" pilot:["Roger" "Ernie"])`
 		cv.So(sexpStr, cv.ShouldResemble, expectedSexpr)
 
 		fmt.Printf("\n Unmarshaling from msgpack into pre-defined go struct should succeed.\n")

@@ -16,12 +16,12 @@
 //
 // nested paths of dot-symbols work
 //
-(def s (snoopy asst: (hornet side-kick: (hellcat fname:"henry" lname:"johnson"))))
+(def s (snoopy asst: (hornet sidekick: (hellcat fname:"henry" lname:"johnson"))))
 
 // get
-(assert (== (.s.asst.side-kick.fname) "henry"))
+(assert (== (.s.asst.sidekick.fname) "henry"))
 
 // assign
-(.s.asst.side-kick.lname = "smith")
-(assert (== (.s.asst.side-kick.lname) "smith"))
+(.s.asst.sidekick.lname = "smith")
+(assert (== (.s.asst.sidekick.lname) "smith"))
 
