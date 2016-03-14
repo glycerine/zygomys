@@ -23,7 +23,7 @@
 
 // just playing below, before had detected mis-impl, now fixed.
 (def y 5)
-(defn h [y] (defn f [qrs] (let* [xyz 3 g (fn [b] (* xyz b qrs y))] g)) f)
+(defn h [y] (defn f [qrs] (letseq [xyz 3 g (fn [b] (* xyz b qrs y))] g)) f)
 
 
 (def r (h 2))
@@ -31,11 +31,11 @@
 (_closdump r) 
 (_closdump t)
 
-(defn f [] (let* [y 3 g (fn [] (+ y 1))] g))
+(defn f [] (letseq [y 3 g (fn [] (+ y 1))] g))
 (def a (f))
 
 (defn f []
-  (let* [b 5]
+  (letseq [b 5]
         (defn g [] b)
   g))
 

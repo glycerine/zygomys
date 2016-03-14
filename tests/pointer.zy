@@ -34,8 +34,8 @@ ptr2
 (assert (== s "hiya"))
 
 // cross type assignment doesn't type check
-(expect-error "Error calling 'deref-set': type mismatch: value of type 'int64' is not assignable to type 'string'" (deref-set sptr 3))
-(expect-error "Error calling 'deref-set': type mismatch: value of type 'string' is not assignable to 'int64'" (deref-set ptr "a-string"))
+(expectError "Error calling 'deref-set': type mismatch: value of type 'int64' is not assignable to type 'string'" (deref-set sptr 3))
+(expectError "Error calling 'deref-set': type mismatch: value of type 'string' is not assignable to 'int64'" (deref-set ptr "a-string"))
 
 
 // set a struct through a pointer
@@ -49,23 +49,23 @@ ptr2
 (deref-set pdog (Dog Name:"Benicia"))
 (assert (== (.d.Name) "Benicia"))
 
-(expect-error "Error calling 'deref-set': cannot assign type 'Dog' to type 'string'" (deref-set sptr d))
-(expect-error "Error calling 'deref-set': type mismatch: value of type 'string' is not assignable to 'Dog'" (deref-set pdog "hi"))
+(expectError "Error calling 'deref-set': cannot assign type 'Dog' to type 'string'" (deref-set sptr d))
+(expectError "Error calling 'deref-set': type mismatch: value of type 'string' is not assignable to 'Dog'" (deref-set pdog "hi"))
 (deref-set pdog (Dog Name:"Rov2"))
 
 (struct Cat [(field Name:string)])
 
-(expect-error "Error calling 'deref-set': cannot assign type 'Cat' to type 'Dog'"
+(expectError "Error calling 'deref-set': cannot assign type 'Cat' to type 'Dog'"
               (deref-set pdog (Cat Name:"meower")))
 
 (var pcat (* Cat))
-(expect-error "Error calling 'deref-set': cannot assign type 'Cat' to type '*Cat'"
+(expectError "Error calling 'deref-set': cannot assign type 'Cat' to type '*Cat'"
               (deref-set pcat (Cat Name:"James")))
 
 (pcat = (& (Cat Name:"Earl")))
 (assert (== (:Name (* pcat)) "Earl"))
 
-(expect-error "Error calling 'deref-set': cannot assign type 'Dog' to type 'Cat'"
+(expectError "Error calling 'deref-set': cannot assign type 'Dog' to type 'Cat'"
               (deref-set pcat (Dog Name:"barker")))
 
 
@@ -82,7 +82,7 @@ ptr2
 (assert (== (* (.h.a)) 45))
 
 (def cat (Cat Name:"Claude"))
-(expect-error "Error calling 'deref-set': deref-set only operates on pointers (*SexpPointer); we saw *zygo.SexpStr instead"
+(expectError "Error calling 'deref-set': deref-set only operates on pointers (*SexpPointer); we saw *zygo.SexpStr instead"
               (deref-set (:Name cat) "Jupiter"))
 
 (struct Kanga [(field roo: (* Cat))])

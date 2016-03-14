@@ -40,7 +40,7 @@
 
 // declare a pointer without binding it; it will default to nil (The zero type, as in Go).
 (var a (* Car))
-(expect-error "Error calling ':': Error calling '*': illegal to dereference nil pointer"  (assert (== (:Id (* a)) 0)))
+(expectError "Error calling ':': Error calling '*': illegal to dereference nil pointer"  (assert (== (:Id (* a)) 0)))
 
 (assert (== (type? a) "*Car"))
 (a = (& p)) // once assigned...
@@ -57,11 +57,11 @@
 (assert (== 3 (.hasSlice.SliceOfLife len)))
 
 // if we try to update a non-existant field (good for catching typos), we cannot:
-(expect-error `Error calling '.hasSlice.NewField': Car has no field 'NewField'`
+(expectError `Error calling '.hasSlice.NewField': Car has no field 'NewField'`
             (.hasSlice.NewField = "wacky"))
 
 // and the decalred types must be matched.
-(expect-error `Error calling '.hasSlice.SliceOfLife': field Car.SliceOfLife is ([]string), cannot assign ([]int64) '[1 2 3]'`
+(expectError `Error calling '.hasSlice.SliceOfLife': field Car.SliceOfLife is ([]string), cannot assign ([]int64) '[1 2 3]'`
               (.hasSlice.SliceOfLife = [1 2 3]))
 
 
@@ -87,8 +87,8 @@
 (def e (Dog))
 (.d.tag = 12)
 (.e.big = true)
-(expect-error `Error calling '.e.tag': Dog has no field 'tag'` (.e.tag = 445))
-(expect-error `Error calling '.d.big': Dog has no field 'big'` (.d.big = true))
+(expectError `Error calling '.e.tag': Dog has no field 'tag'` (.e.tag = 445))
+(expectError `Error calling '.d.big': Dog has no field 'big'` (.d.big = true))
 
 // not yet implemented stuff:
 

@@ -19,7 +19,7 @@
 (assert (:a h))
 
 (defn factory []
-  (let* [a [1] // a is shared by f and g!
+  (letseq [a [1] // a is shared by f and g!
         ] a))
 
 

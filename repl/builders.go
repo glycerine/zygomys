@@ -35,15 +35,15 @@ func (env *Glisp) ImportPackageBuilder() {
 	env.AddBuilder("interface", InterfaceBuilder)
 	env.AddBuilder("package", PackageBuilder)
 	env.AddBuilder("var", VarBuilder)
-	env.AddBuilder("expect-error", ExpectErrorBuilder)
+	env.AddBuilder("expectError", ExpectErrorBuilder)
 	//	env.AddBuilder("&", AddressOfBuilder)
 
-	env.AddFunction("slice-of", SliceOfFunction)
+	env.AddFunction("sliceOf", SliceOfFunction)
 	env.AddFunction("ptr", PointerToFunction)
 }
 
-var sxSliceOf *SexpFunction = MakeUserFunction("slice-of", SliceOfFunction)
-var sxArrayOf *SexpFunction = MakeUserFunction("array-of", ArrayOfFunction)
+var sxSliceOf *SexpFunction = MakeUserFunction("sliceOf", SliceOfFunction)
+var sxArrayOf *SexpFunction = MakeUserFunction("arrayOf", ArrayOfFunction)
 
 type SexpUserVarDefn struct {
 	Name string
@@ -431,7 +431,7 @@ func SliceOfFunction(env *Glisp, name string,
 			name, arg, arg.SexpString())
 	}
 
-	Q("slice-of arg = '%s' with type %T", args[0].SexpString(), args[0])
+	Q("sliceOf arg = '%s' with type %T", args[0].SexpString(), args[0])
 
 	sliceRt := GoStructRegistry.GetOrCreateSliceType(rt)
 	Q("in SliceOfFunction: returning sliceRt = '%#v'", sliceRt)
@@ -594,14 +594,14 @@ func ArrayOfFunction(env *Glisp, name string,
 			name, arg, arg.SexpString())
 	}
 
-	//Q("array-of arg = '%s' with type %T", args[0].SexpString(), args[0])
+	//Q("arrayOf arg = '%s' with type %T", args[0].SexpString(), args[0])
 
 	derivedType := reflect.ArrayOf(sz, rt.TypeCache)
 	arrayRt := NewRegisteredType(func(env *Glisp) (interface{}, error) {
 		return reflect.New(derivedType), nil
 	})
 	arrayRt.DisplayAs = fmt.Sprintf("(%s %s)", name, rt.DisplayAs)
-	arrayName := "array-of-" + rt.RegisteredName
+	arrayName := "arrayOf" + rt.RegisteredName
 	GoStructRegistry.RegisterUserdef(arrayName, arrayRt, false)
 	return arrayRt, nil
 }
@@ -702,7 +702,7 @@ func ExpectErrorBuilder(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	case *SexpStr:
 		expectedError = e
 	default:
-		return SexpNull, fmt.Errorf("first arg to expect-error must be the string of the error to expect")
+		return SexpNull, fmt.Errorf("first arg to expectError must be the string of the error to expect")
 	}
 	Q("expectedError = %v", expectedError)
 	ev, err := dup.EvalExpressions(args[1:2])
@@ -711,13 +711,13 @@ func ExpectErrorBuilder(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		if err.Error() == expectedError.S {
 			return SexpNull, nil
 		}
-		return SexpNull, fmt.Errorf("expect-error expected '%s' but saw '%s'", expectedError.S, err)
+		return SexpNull, fmt.Errorf("expectError expected '%s' but saw '%s'", expectedError.S, err)
 	}
 
 	if expectedError.S == "" {
 		return SexpNull, nil
 	}
-	return SexpNull, fmt.Errorf("expect-error expected '%s' but got no error", expectedError.S)
+	return SexpNull, fmt.Errorf("expectError expected '%s' but got no error", expectedError.S)
 }
 
 func ColonAccessBuilder(env *Glisp, name string, args []Sexp) (Sexp, error) {

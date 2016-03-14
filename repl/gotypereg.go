@@ -409,7 +409,7 @@ func (gsr *GoStructRegistryType) GetOrCreatePointerType(pointedToType *Registere
 }
 
 func (gsr *GoStructRegistryType) GetOrCreateSliceType(rt *RegisteredType) *RegisteredType {
-	//sliceName := "slice-of-" + rt.RegisteredName
+	//sliceName := "sliceOf" + rt.RegisteredName
 	sliceName := "[]" + rt.RegisteredName
 	sliceRt := gsr.Lookup(sliceName)
 	if sliceRt != nil {

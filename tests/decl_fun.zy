@@ -5,18 +5,18 @@
 
 //(assert (== 78 (trundle a:3 b:"hi")))
 
-(expect-error (concat "Error calling 'func': inputs array parsing error: "
+(expectError (concat "Error calling 'func': inputs array parsing error: "
                       "could not identify type Wrench: symbol `Wrench` not found")
               (func baddy [a:Wrench] [] ))
 
 /*
-(expect-error `Error calling 'trundle': cannot pass 'int64' to argument 'b' of type 'string'` (trundle a:3 b:5))
+(expectError `Error calling 'trundle': cannot pass 'int64' to argument 'b' of type 'string'` (trundle a:3 b:5))
 
 // anonymous function. 
 (func [][] (printf "anon called"))
 
 
-(expect-error `Error calling 'trundle': cannot pass 'int64' to argument 'b' of type 'string'` (trundle a:3 b:5))
+(expectError `Error calling 'trundle': cannot pass 'int64' to argument 'b' of type 'string'` (trundle a:3 b:5))
 
 // declare interfaces
  (interface Driveable [

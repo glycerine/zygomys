@@ -52,7 +52,7 @@ func ChanTxFunction(env *Glisp, name string,
 			fmt.Sprintf("argument 0 of %s must be channel", name))
 	}
 
-	if name == "send!" {
+	if name == "send" {
 		if len(args) != 2 {
 			return SexpNull, WrongNargs
 		}
@@ -64,7 +64,7 @@ func ChanTxFunction(env *Glisp, name string,
 }
 
 func (env *Glisp) ImportChannels() {
-	env.AddFunction("make-chan", MakeChanFunction)
-	env.AddFunction("send!", ChanTxFunction)
+	env.AddFunction("makeChan", MakeChanFunction)
+	env.AddFunction("send", ChanTxFunction)
 	env.AddFunction("<!", ChanTxFunction)
 }

@@ -166,5 +166,17 @@ func Test027BuiltinOperators(t *testing.T) {
 		// once in operator: allowed 2nd tokens: +, -, =, -, *
 		ans := BuiltinOpRegex.MatchString(`* `)
 		cv.So(ans, cv.ShouldEqual, false)
+		ans = BuiltinOpRegex.MatchString(`-1`)
+		cv.So(ans, cv.ShouldEqual, false)
+	})
+}
+
+func Test028FloatingPointRegex(t *testing.T) {
+
+	cv.Convey("our lexer should recognize negative floating point and negative integers", t, func() {
+		ans := DecimalRegex.MatchString(`-1`)
+		cv.So(ans, cv.ShouldEqual, true)
+		ans = FloatRegex.MatchString(`-1e-10`)
+		cv.So(ans, cv.ShouldEqual, true)
 	})
 }

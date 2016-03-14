@@ -21,7 +21,7 @@
         (number? x)
             (cond
                 (float? x) false
-                (== (bit-and x 1) 0))
+                (== (bitAnd x 1) 0))
             false
             ))
 

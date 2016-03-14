@@ -1,20 +1,20 @@
-// expect-error: squash errors and generate error if we don't get one we expected.
+// expectError: squash errors and generate error if we don't get one we expected.
 // used to check the type checking.
 
 // type-checking against variable of declared type
 (var a int64)
-(expect-error "cannot assign string to int64" (a = "hello"))
+(expectError "cannot assign string to int64" (a = "hello"))
 
 // type inference
 (b = "hello")
-(expect-error "cannot assign int64 to string" (b = 12))
+(expectError "cannot assign int64 to string" (b = 12))
 
-(expect-error "cannot assign float64 to int64" (a = 3.14))
+(expectError "cannot assign float64 to int64" (a = 3.14))
 
 (var s string)
 
 (var r rune)
 
 (ch = 'a')
-(expect-error "cannot assign int64 to int32" (ch = 3))
-(expect-error "cannot assign int32 to string" (s = ch))
+(expectError "cannot assign int64 to int32" (ch = 3))
+(expectError "cannot assign int32 to string" (s = ch))

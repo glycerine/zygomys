@@ -20,21 +20,21 @@
 (assert (== 6 (sum [1 2 3])))
 
 // testing tail recursion
-(defn fact-tc [n accum]
+(defn factTc [n accum]
   (cond (== n 0) accum
     (let [newn (- n 1)
           newaccum (* accum n)]
-      (fact-tc newn newaccum))))
+      (factTc newn newaccum))))
 
-(assert (== 120 (fact-tc 5 1)))
-(assert (== 3628800 (fact-tc 10 1)))
+(assert (== 120 (factTc 5 1)))
+(assert (== 3628800 (factTc 10 1)))
 
-(defn sum-tc [l a]
+(defn sumTc [l a]
   (cond (empty? l)
-    a (sum-tc (rest l) (+ a (first l)))))
+    a (sumTc (rest l) (+ a (first l)))))
 
-(assert (== 0 (sum-tc [] 0)))
-(assert (== 6 (sum-tc [1 2 3] 0)))
+(assert (== 0 (sumTc [] 0)))
+(assert (== 6 (sumTc [1 2 3] 0)))
 
 // testing anonymous dispatch
 ((fn [a] (assert (== a 0))) 0)

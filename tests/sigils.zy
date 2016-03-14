@@ -5,7 +5,7 @@
 // etc.
 
 (#symbol = "I'm a sigil-symbol")
-(expect-error "cannot assign int64 to string" (#symbol = 23))
+(expectError "cannot assign int64 to string" (#symbol = 23))
 ($symbol = "I'm a sigil-symbol")
 (?symbol = "I'm a sigil-symbol")
 

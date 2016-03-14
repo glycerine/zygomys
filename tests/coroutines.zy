@@ -1,11 +1,11 @@
-(def ch (make-chan))
+(def ch (makeChan))
 
 // test that channels and symbol translation are working
-(go (send! ch %foo))
+(go (send ch %foo))
 (assert (== %foo (<! ch)))
 
 // test that coroutines share the same global scope
 (def global "foo")
-(go (def global "bar") (send! ch %()))
+(go (def global "bar") (send ch %()))
 (<! ch)
 (assert (== global "bar"))

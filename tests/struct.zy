@@ -8,21 +8,21 @@
 
 (d = e)
 (assert (== (.d.Name) "Egbert"))
-(expect-error "cannot assign int64 to Dog" (e = 12))
+(expectError "cannot assign int64 to Dog" (e = 12))
 (f = 4)
-(expect-error "cannot assign Dog to int64" (f = d))
+(expectError "cannot assign Dog to int64" (f = d))
 
 (struct Cat [(field Nip:          string     e:0)])
 (c = (Cat Nip:"green"))
 
-(expect-error "cannot assign Cat to Dog" (d = c))
-(expect-error "cannot assign Dog to Cat" (c = d))
+(expectError "cannot assign Cat to Dog" (d = c))
+(expectError "cannot assign Dog to Cat" (c = d))
 
 (var cc Cat)
 (cc = c)
 
 // type checking the fields of a struct
-(expect-error "Error calling 'Dog': field Dog.Name is string, cannot assign int64 '12'" (Dog Name:12))
-(expect-error `Error calling 'Dog': field Dog.Number is int64, cannot assign string '"hello"'` (Dog Number:"hello"))
-(expect-error `Error calling 'Dog': Dog has no field 'NotHere'` (Dog NotHere:"hello"))
+(expectError "Error calling 'Dog': field Dog.Name is string, cannot assign int64 '12'" (Dog Name:12))
+(expectError `Error calling 'Dog': field Dog.Number is int64, cannot assign string '"hello"'` (Dog Number:"hello"))
+(expectError `Error calling 'Dog': Dog has no field 'NotHere'` (Dog NotHere:"hello"))
 

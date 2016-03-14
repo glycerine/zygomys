@@ -187,8 +187,8 @@ var (
 	DotSymbolRegex = regexp.MustCompile(`^[.]$|^([.][^'#:;\\~@\[\]{}\^|"()%.0-9,][^'#:;\\~@\[\]{}\^|"()%.,*+\-]*)+$`)
 	DotPartsRegex  = regexp.MustCompile(`[.][^'#:;\\~@\[\]{}\^|"()%.0-9,][^'#:;\\~@\[\]{}\^|"()%.,]*`)
 	CharRegex      = regexp.MustCompile("^'\\\\?.'$")
-	FloatRegex     = regexp.MustCompile("^-?([0-9]+\\.[0-9]*)|(\\.[0-9]+)|([0-9]+(\\.[0-9]*)?[eE](-?[0-9]+))$")
-	BuiltinOpRegex = regexp.MustCompile(`^(\+\+|\-\-|\+=|\-=|=|==|:=|\+|\-|\*|<|>|<=|>=|<-|->|\*=|/=|\*\*|!|!=)$`)
+	FloatRegex     = regexp.MustCompile("^-?([0-9]+\\.[0-9]*)|-?(\\.[0-9]+)|-?([0-9]+(\\.[0-9]*)?[eE](-?[0-9]+))$")
+	BuiltinOpRegex = regexp.MustCompile(`^(\+\+|\-\-|\+=|\-=|=|==|:=|\+|\-|\*|<|>|<=|>=|<-|->|\*=|/=|\*\*|!|!=|<!)$`)
 )
 
 func StringToRunes(str string) []rune {
@@ -275,10 +275,10 @@ func (x *Lexer) DecodeAtom(atom string) (Token, error) {
 	if atom == ":" {
 		return x.Token(TokenSymbol, atom), nil
 	} else if SymbolRegex.MatchString(atom) {
-		//P("matched symbol regex, atom='%v'", atom)
+		////P("matched symbol regex, atom='%v'", atom)
 		n := len(atom)
 		if atom[n-1] == ':' {
-			//P("matched symbol regex with colon, atom[:n-1]='%v'", atom[:n-1])
+			////P("matched symbol regex with colon, atom[:n-1]='%v'", atom[:n-1])
 			return x.Token(TokenSymbolColon, atom[:n-1]), nil
 		}
 		return x.Token(TokenSymbol, atom), nil
@@ -505,10 +505,26 @@ top:
 		}
 
 	case LexerBuiltinOperator:
+		//P("in LexerBuiltinOperator")
 		lexer.state = LexerNormal
-		// three cases: one rune operator, two rune operator, or garbage
+		// three cases: negative number, one rune operator, two rune operator
 		first := string(lexer.prevrune)
 		atom := fmt.Sprintf("%c%c", lexer.prevrune, r)
+		//P("in LexerBuiltinOperator, first='%s', atom='%s'", first, atom)
+		// are we a negative number -1 or -.1 rather than  ->, --, -= operator?
+		if lexer.prevrune == '-' {
+			if FloatRegex.MatchString(atom) || DecimalRegex.MatchString(atom) {
+				//P("'%s' is the beginning of a negative number", atom)
+				_, err := lexer.buffer.WriteString(atom)
+				if err != nil {
+					return err
+				}
+				return nil
+			} else {
+				//P("atom was not matched by FloatRegex: '%s'", atom)
+			}
+		}
+
 		if BuiltinOpRegex.MatchString(atom) {
 			//P("2 rune atom in builtin op '%s', first='%s'", atom, first)
 			// 2 rune op
