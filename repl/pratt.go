@@ -24,13 +24,16 @@ import (
 // 80  . [ (
 //
 
+// InfixOp lets us attach led (MunchLeft) and nud (MunchRight)
+// Pratt parsing methods, along with a binding power, to a symbol.
 type InfixOp struct {
 	Sym        *SexpSymbol
-	Bp         int
-	MunchRight RightMuncher
-	MunchLeft  LeftMuncher
+	Bp         int          // binding power, aka precedence level.
+	MunchRight RightMuncher // aka nud
+	MunchLeft  LeftMuncher  // aka led
 }
 
+// Infix creates a new infix operator
 func (env *Glisp) Infix(op string, bp int) *InfixOp {
 	oper := env.MakeSymbol(op)
 	iop := &InfixOp{
@@ -51,6 +54,8 @@ func (env *Glisp) Infix(op string, bp int) *InfixOp {
 	return iop
 }
 
+// Infix creates a new short-circuiting infix operator,
+// used for `and` and `or` in infix processing.
 func (env *Glisp) Infixr(op string, bp int) *InfixOp {
 	oper := env.MakeSymbol(op)
 	iop := &InfixOp{
@@ -71,6 +76,8 @@ func (env *Glisp) Infixr(op string, bp int) *InfixOp {
 	return iop
 }
 
+// Prefix creates a new prefix operator, like `not`, for
+// infix processing.
 func (env *Glisp) Prefix(op string, bp int) *InfixOp {
 	oper := env.MakeSymbol(op)
 	iop := &InfixOp{
@@ -91,6 +98,8 @@ func (env *Glisp) Prefix(op string, bp int) *InfixOp {
 	return iop
 }
 
+// Assignment creates a new assignment operator for infix
+// processing.
 func (env *Glisp) Assignment(op string) *InfixOp {
 	bp := 10
 	oper := env.MakeSymbol(op)
@@ -120,6 +129,8 @@ func (env *Glisp) Assignment(op string) *InfixOp {
 	return iop
 }
 
+// InitInfixOps establishes the env.infixOps definitions
+// required for infix parsing using the Pratt parser.
 func (env *Glisp) InitInfixOps() {
 	env.Infix("+", 50)
 	env.Infix("-", 50)
