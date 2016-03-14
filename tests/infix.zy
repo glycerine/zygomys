@@ -21,3 +21,7 @@
 (assert (== -1020  {4 - 2 ** {3 + (f)}}))
 
 (assert (== {true and not false} {not false and true and true}))
+
+// can put infix as arguments to sexp calls
+(defn add [a b] (+ a b))
+(assert (== (add {4 + 1} {6 - 1}) 10))
