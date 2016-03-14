@@ -209,3 +209,12 @@ See the top of `github.com/glycerine/zygomys/repl/jsonmsgp.go` for a guide.
 - easy to type
 - define data with named fields
 - hash tables with a name and a key-order
+
+* If you want to play with type systems
+
+- try out your parametric-polymorphism idea?
+- I don't know if its a good idea...
+- but the sigil-system is setup to let you explore this area
+- makes it easy to define type-variables, for instance
+
+- is there a unification implimentation?
