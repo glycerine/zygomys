@@ -17,16 +17,22 @@ func (env *Glisp) InitInfixOps() {
 	env.infixOps["+"] = &InfixOp{
 		Sym: plus,
 		Bp:  50,
-		MunchLeft: func(ths, left Sexp) Sexp {
-			return MakeList([]Sexp{
-				plus, ths, left,
+		MunchLeft: func(env *Glisp, pr *Pratt, left Sexp) (Sexp, error) {
+			right, err := pr.Expression(env, 50)
+			if err != nil {
+				return SexpNull, err
+			}
+			list := MakeList([]Sexp{
+				plus, left, right,
 			})
+			P("MunchLeft for +: MakeList returned list: '%v'", list.SexpString())
+			return list, nil
 		},
 	}
 }
 
-type RightMuncher func(ths Sexp) Sexp
-type LeftMuncher func(ths Sexp, left Sexp) Sexp
+type RightMuncher func(env *Glisp, pr *Pratt) (Sexp, error)
+type LeftMuncher func(env *Glisp, pr *Pratt, left Sexp) (Sexp, error)
 
 func InfixBuilder(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	if len(args) != 1 {
@@ -46,25 +52,40 @@ func InfixBuilder(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	}
 	pr := NewPratt(arr.Val)
 	x, err := pr.Expression(env, 0)
-	P("x = %v, err = %v", x, err)
-	return arr, nil
+	if x == nil {
+		P("x was nil")
+	} else {
+		P("x back is not nil and is of type %T/val = '%v', err = %v", x, x.SexpString(), err)
+	}
+	dup := env.Duplicate()
+	ev, err := dup.EvalExpressions([]Sexp{x})
+	if err != nil {
+		return SexpNull, err
+	}
+	return ev, nil
 }
 
 type Pratt struct {
 	NextToken  Sexp
 	CnodeStack []Sexp
 	AccumTree  Sexp
-	Cur        Sexp
+	//	Cur        Sexp
 
 	Pos    int
 	Stream []Sexp
 }
 
 func NewPratt(stream []Sexp) *Pratt {
-	return &Pratt{
+	p := &Pratt{
+		NextToken:  SexpNull,
+		AccumTree:  SexpNull,
 		CnodeStack: make([]Sexp, 0),
 		Stream:     stream,
 	}
+	if len(stream) > 0 {
+		p.NextToken = stream[0]
+	}
+	return p
 }
 
 // Expression():
@@ -136,13 +157,22 @@ func NewPratt(stream []Sexp) *Pratt {
 // at the top) in the resulting parse tree.
 //
 
-func (p *Pratt) Expression(env *Glisp, rbp int) (Sexp, error) {
+func (p *Pratt) Expression(env *Glisp, rbp int) (ret Sexp, err error) {
+	defer func() {
+		P("Expression is returning Sexp ret = '%v'", ret.SexpString())
+	}()
 	cnode := p.NextToken
-
+	if cnode != nil {
+		P("top of Expression, rbp = %v, cnode = '%v'", rbp, cnode.SexpString())
+	} else {
+		P("top of Expression, rbp = %v, cnode is nil", rbp)
+	}
 	if p.IsEOF() {
+		P("Expression sees IsEOF, returning cnode = %v", cnode.SexpString())
 		return cnode, nil
 	}
 	p.CnodeStack = append([]Sexp{p.NextToken}, p.CnodeStack...)
+	p.ShowCnodeStack()
 
 	p.Advance()
 	/*
@@ -168,11 +198,25 @@ func (p *Pratt) Expression(env *Glisp, rbp int) (Sexp, error) {
 	if curOp != nil && curOp.MunchRight != nil {
 		// munch_right() of atoms returns this/itself, in which
 		// case: p.AccumTree = t; is the result.
-		p.AccumTree = curOp.MunchRight(cnode)
+		P("about to MunchRight on cnode = %v", cnode.SexpString())
+		p.AccumTree, err = curOp.MunchRight(env, p)
+		if err != nil {
+			P("Expression(%v) MunchRight saw err = %v", rbp, err)
+			return SexpNull, err
+		}
+		P("after MunchRight on cnode = %v, p.AccumTree = '%v'",
+			cnode.SexpString(), p.AccumTree.SexpString())
+	} else {
+		// do this, or have the default MunchRight return itself.
+		p.AccumTree = cnode
 	}
 
-	for !p.IsEOF() && rbp < env.LeftBindingPower(p.NextToken) {
-		//assert(NextToken);
+	for !p.IsEOF() {
+		nextLbp := env.LeftBindingPower(p.NextToken)
+		P("nextLbp = %v", nextLbp)
+		if rbp >= nextLbp {
+			break
+		}
 
 		cnode = p.NextToken
 		curOp = nil
@@ -182,25 +226,40 @@ func (p *Pratt) Expression(env *Glisp, rbp int) (Sexp, error) {
 			if found {
 				curOp = op
 			}
+		default:
+			panic(fmt.Errorf("how to handle cnode type = %#v", cnode))
 		}
 
 		p.CnodeStack[0] = p.NextToken
 		//_cnode_stack.front() = NextToken;
 
+		P("in MunchLeft loop, before Advance, p.NextToken = %v",
+			p.NextToken.SexpString())
 		p.Advance()
 		if p.Pos < len(p.Stream) {
-			P("p.NextToken = %v", p.NextToken)
+			P("in MunchLeft loop, after Advance, p.NextToken = %v",
+				p.NextToken.SexpString())
 		}
 
 		// if cnode->munch_left() returns this/itself, then
 		// the net effect is: p.AccumTree = cnode;
 		if curOp != nil && curOp.MunchLeft != nil {
-			p.AccumTree = curOp.MunchLeft(cnode, p.AccumTree)
+			P("about to MunchLeft, cnode = %#v, p.AccumTree = %#v", cnode, p.AccumTree)
+			p.AccumTree, err = curOp.MunchLeft(env, p, p.AccumTree)
+			if err != nil {
+				P("curOp.MunchLeft saw err = %v", err)
+				return SexpNull, err
+			}
+		} else {
+			// do this, or have the default MunchLeft return itself.
+			p.AccumTree = cnode
 		}
+
 	}
 
 	p.CnodeStack = p.CnodeStack[1:]
 	//_cnode_stack.pop_front()
+	P("at end of Expression(%v), returning p.AccumTree=%v, err=nil", rbp, p.AccumTree.SexpString())
 	return p.AccumTree, nil
 }
 
@@ -211,6 +270,7 @@ func (p *Pratt) Advance() error {
 		return io.EOF
 	}
 	p.NextToken = p.Stream[p.Pos]
+	P("end of Advance, p.NextToken = '%v'", p.NextToken.SexpString())
 	return nil
 }
 
@@ -233,4 +293,15 @@ func (env *Glisp) LeftBindingPower(sx Sexp) int {
 		return 0
 	}
 	return 0
+}
+
+func (p *Pratt) ShowCnodeStack() {
+	if len(p.CnodeStack) == 0 {
+		P("CnodeStack is: empty")
+		return
+	}
+	P("CnodeStack is:")
+	for i := range p.CnodeStack {
+		P("CnodeStack[%v] = %v", i, p.CnodeStack[i].SexpString())
+	}
 }

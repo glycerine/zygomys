@@ -3,3 +3,5 @@
 (assert (== "nil" (str (infix))))
 
 (assert (== {3 + 4} 7))
+
+{3 + 4}
