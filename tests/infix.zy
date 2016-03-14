@@ -43,8 +43,9 @@
 // pow should be right associative
 (assert (== {2 ** 3 ** 3} 134217728))
 
-// lack of spacing between builtin operators should not matter 
-// (assert (== (add {4+1} {6-1}) 10))
+// lack of spacing between builtin operators should not matter,
+// expect that -1 is preferred over subtract 1 so 6-1 won't parse.
+(assert (== (add {4+1} {6- 1}) 10))
 
 // debug help: infixExpand shows the conversion from infix to s-expression
 (assert (== "(quote (set a 4))" (str (infixExpand { a = 4})) ))
