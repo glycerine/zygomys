@@ -116,13 +116,15 @@ const (
 	LexerFirstFwdSlash // could be start of // comment or /*
 	LexerCommentBlock
 	LexerCommentBlockAsterisk // could be end of block comment */
+	LexerBuiltinOperator
 )
 
 type Lexer struct {
-	parser *Parser
-	state  LexerState
-	tokens []Token
-	buffer *bytes.Buffer
+	parser   *Parser
+	state    LexerState
+	prevrune rune
+	tokens   []Token
+	buffer   *bytes.Buffer
 
 	stream  io.RuneScanner
 	next    []io.RuneScanner
@@ -186,7 +188,7 @@ var (
 	DotPartsRegex  = regexp.MustCompile(`[.][^'#:;\\~@\[\]{}\^|"()%.0-9,][^'#:;\\~@\[\]{}\^|"()%.,]*`)
 	CharRegex      = regexp.MustCompile("^'\\\\?.'$")
 	FloatRegex     = regexp.MustCompile("^-?([0-9]+\\.[0-9]*)|(\\.[0-9]+)|([0-9]+(\\.[0-9]*)?[eE](-?[0-9]+))$")
-	BuiltinOpRegex = regexp.MustCompile(`^\+\+|\-\-|\+=|\-=|=|==|:=|\+|\-|\*$`)
+	BuiltinOpRegex = regexp.MustCompile(`^(\+\+|\-\-|\+=|\-=|=|==|:=|\+|\-|\*|<|>|<=|>=|<-|->|\*=|/=|\*\*)$`)
 )
 
 func StringToRunes(str string) []rune {
@@ -412,12 +414,9 @@ top:
 				TokenBeginBlockComment, ""))
 			return nil
 		}
-		lexer.state = LexerNormal
-		_, err := lexer.buffer.WriteRune('/')
-		if err != nil {
-			return err
-		}
-		goto top // process the unknown rune r in Normal mode
+		lexer.state = LexerBuiltinOperator
+		lexer.prevrune = '/'
+		goto top // process the unknown rune r
 
 	case LexerCommentLine:
 		//P("lexer.state = LexerCommentLine")
@@ -505,8 +504,44 @@ top:
 			goto top // process the unknown rune r in Normal mode
 		}
 
+	case LexerBuiltinOperator:
+		lexer.state = LexerNormal
+		// three cases: one rune operator, two rune operator, or garbage
+		first := string(lexer.prevrune)
+		atom := fmt.Sprintf("%c%c", lexer.prevrune, r)
+		if BuiltinOpRegex.MatchString(atom) {
+			P("2 rune atom in builtin op '%s', first='%s'", atom, first)
+			// 2 rune op
+			lexer.tokens = append(lexer.tokens, lexer.Token(TokenSymbol, atom))
+			return nil
+		}
+		P("1 rune atom in builtin op '%s', first='%s'", atom, first)
+		lexer.tokens = append(lexer.tokens, lexer.Token(TokenSymbol, first))
+		goto top // still have to parse r in normal
+
 	case LexerNormal:
 		switch r {
+		case '*':
+			fallthrough
+		case '+':
+			fallthrough
+		case '-':
+			fallthrough
+		case '<':
+			fallthrough
+		case '>':
+			fallthrough
+		case '=':
+			fallthrough
+		case '!':
+			err := lexer.dumpBuffer()
+			if err != nil {
+				return err
+			}
+			lexer.state = LexerBuiltinOperator
+			lexer.prevrune = r
+			return nil
+
 		case '/':
 			lexer.state = LexerFirstFwdSlash
 			return nil

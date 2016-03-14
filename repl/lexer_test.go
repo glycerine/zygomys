@@ -159,6 +159,12 @@ func Test026RegexpSplittingOfDotSymbols(t *testing.T) {
 func Test027BuiltinOperators(t *testing.T) {
 
 	cv.Convey("our lexer should lex without needing space between builtin operators like `-` and `+`, so `a+b` should parse as three tokens", t, func() {
-		// +, -, ++, --, :=, =, ==, <=, >=, <, >, <-, ->,
+		// +, -, ++, --, :=, =, ==, <=, >=, <, >, <-, ->, *, **, `.`, /
+		//  but first fwd slash takes care of /
+		// recognizing 1st char: +, -, =, <, >, *, `.`  means shift to operator mode
+		// where we recognized 1 and 2 character builtin operators.
+		// once in operator: allowed 2nd tokens: +, -, =, -, *
+		ans := BuiltinOpRegex.MatchString(`* `)
+		cv.So(ans, cv.ShouldEqual, false)
 	})
 }

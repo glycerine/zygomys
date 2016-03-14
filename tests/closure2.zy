@@ -18,8 +18,8 @@
 
 (defn factory []
   (let* [a [1] // a is shared by f and g!
-        f (fn [addme] (aset! a 0 (+ (aget a 0) addme)) (aget a 0))
-        g (fn [addme] (aset! a 0 (+ (aget a 0) addme)) (aget a 0))]
+        f (fn [addme] (aset a 0 (+ (aget a 0) addme)) (aget a 0))
+        g (fn [addme] (aset a 0 (+ (aget a 0) addme)) (aget a 0))]
         (list f g)))
 
 (def pair (factory))

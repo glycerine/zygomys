@@ -32,7 +32,7 @@
 				(cond
 					(< (+ (aget idx 0) 1) (len items))
 						(begin
-							(aset! idx 0 (+ (aget idx 0) 1))
+							(aset idx 0 (+ (aget idx 0) 1))
 							(aget items (aget idx 0))
 						)
 					()))

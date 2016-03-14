@@ -72,11 +72,11 @@ func BitwiseFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 
 	var op IntegerOp
 	switch name {
-	case "bit-and":
+	case "bitAnd":
 		op = BitAnd
-	case "bit-or":
+	case "bitOr":
 		op = BitOr
-	case "bit-xor":
+	case "bitXor":
 		op = BitXor
 	}
 
@@ -104,7 +104,7 @@ func ComplementFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		return &SexpChar{Val: ^t.Val}, nil
 	}
 
-	return SexpNull, errors.New("Argument to bit-not should be integer")
+	return SexpNull, errors.New("Argument to bitNot should be integer")
 }
 
 func PointerOrNumericFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
@@ -262,7 +262,7 @@ func ArrayAccessFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 			return SexpNull, errors.New("Array index out of bounds")
 		}
 		return arr.Val[i], nil
-	case "aset!":
+	case "aset":
 		if len(args) != 3 {
 			return SexpNull, WrongNargs
 		}
@@ -316,13 +316,13 @@ func HashAccessFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 			return hash.HashGetDefault(env, args[1], args[2])
 		}
 		return hash.HashGet(env, args[1])
-	case "hset!":
+	case "hset":
 		if len(args) != 3 {
 			return SexpNull, WrongNargs
 		}
 		err := hash.HashSet(args[1], args[2])
 		return SexpNull, err
-	case "hdel!":
+	case "hdel":
 		if len(args) != 2 {
 			return SexpNull, WrongNargs
 		}
@@ -816,58 +816,58 @@ func AllBuiltinFunctions() map[string]GlispUserFunction {
 // CoreFunctions returns all of the core logic
 func CoreFunctions() map[string]GlispUserFunction {
 	return map[string]GlispUserFunction{
-		"<":          CompareFunction,
-		">":          CompareFunction,
-		"<=":         CompareFunction,
-		">=":         CompareFunction,
-		"==":         CompareFunction,
-		"not=":       CompareFunction,
-		"!=":         CompareFunction,
-		"sll":        BinaryIntFunction,
-		"sra":        BinaryIntFunction,
-		"srl":        BinaryIntFunction,
-		"mod":        BinaryIntFunction,
-		"+":          NumericFunction,
-		"-":          NumericFunction,
-		"*":          PointerOrNumericFunction,
-		"**":         NumericFunction,
-		"/":          NumericFunction,
-		"bit-and":    BitwiseFunction,
-		"bit-or":     BitwiseFunction,
-		"bit-xor":    BitwiseFunction,
-		"bit-not":    ComplementFunction,
-		"read":       ReadFunction,
-		"cons":       ConsFunction,
-		"first":      FirstFunction,
-		"second":     SecondFunction,
-		"rest":       RestFunction,
-		"car":        FirstFunction,
-		"cdr":        RestFunction,
-		"type?":      TypeQueryFunction,
-		"list?":      TypeQueryFunction,
-		"null?":      TypeQueryFunction,
-		"array?":     TypeQueryFunction,
-		"hash?":      TypeQueryFunction,
-		"number?":    TypeQueryFunction,
-		"int?":       TypeQueryFunction,
-		"float?":     TypeQueryFunction,
-		"char?":      TypeQueryFunction,
-		"symbol?":    TypeQueryFunction,
-		"string?":    TypeQueryFunction,
-		"zero?":      TypeQueryFunction,
-		"empty?":     TypeQueryFunction,
-		"func?":      TypeQueryFunction,
-		"not":        NotFunction,
-		"apply":      ApplyFunction,
-		"map":        MapFunction,
-		"make-array": MakeArrayFunction,
-		"aget":       ArrayAccessFunction,
-		"aset!":      ArrayAccessFunction,
-		"sget":       SgetFunction,
-		"hget":       GenericAccessFunction, // handles arrays or hashes
+		"<":         CompareFunction,
+		">":         CompareFunction,
+		"<=":        CompareFunction,
+		">=":        CompareFunction,
+		"==":        CompareFunction,
+		"not=":      CompareFunction,
+		"!=":        CompareFunction,
+		"sll":       BinaryIntFunction,
+		"sra":       BinaryIntFunction,
+		"srl":       BinaryIntFunction,
+		"mod":       BinaryIntFunction,
+		"+":         NumericFunction,
+		"-":         NumericFunction,
+		"*":         PointerOrNumericFunction,
+		"**":        NumericFunction,
+		"/":         NumericFunction,
+		"bitAnd":    BitwiseFunction,
+		"bitOr":     BitwiseFunction,
+		"bitXor":    BitwiseFunction,
+		"bitNot":    ComplementFunction,
+		"read":      ReadFunction,
+		"cons":      ConsFunction,
+		"first":     FirstFunction,
+		"second":    SecondFunction,
+		"rest":      RestFunction,
+		"car":       FirstFunction,
+		"cdr":       RestFunction,
+		"type?":     TypeQueryFunction,
+		"list?":     TypeQueryFunction,
+		"null?":     TypeQueryFunction,
+		"array?":    TypeQueryFunction,
+		"hash?":     TypeQueryFunction,
+		"number?":   TypeQueryFunction,
+		"int?":      TypeQueryFunction,
+		"float?":    TypeQueryFunction,
+		"char?":     TypeQueryFunction,
+		"symbol?":   TypeQueryFunction,
+		"string?":   TypeQueryFunction,
+		"zero?":     TypeQueryFunction,
+		"empty?":    TypeQueryFunction,
+		"func?":     TypeQueryFunction,
+		"not":       NotFunction,
+		"apply":     ApplyFunction,
+		"map":       MapFunction,
+		"makeArray": MakeArrayFunction,
+		"aget":      ArrayAccessFunction,
+		"aset":      ArrayAccessFunction,
+		"sget":      SgetFunction,
+		"hget":      GenericAccessFunction, // handles arrays or hashes
 		//":":          ColonAccessFunction,
-		"hset!":     HashAccessFunction,
-		"hdel!":     HashAccessFunction,
+		"hset":      HashAccessFunction,
+		"hdel":      HashAccessFunction,
 		"keys":      HashAccessFunction,
 		"hpair":     GenericHpairFunction,
 		"slice":     SliceFunction,
@@ -892,7 +892,7 @@ func CoreFunctions() map[string]GlispUserFunction {
 		"joinsym":   JoinSymFunction,
 		"GOOS":      GOOSFunction,
 		"&":         AddressOfFunction,
-		"deref-set": DerefFunction,
+		"derefSet":  DerefFunction,
 		"deref":     DerefFunction,
 	}
 }
@@ -1357,7 +1357,7 @@ func DerefFunction(env *Glisp, name string, args []Sexp) (result Sexp, err error
 		}
 		return ptr.Target, nil
 
-	case "deref-set":
+	case "derefSet":
 		if narg != 2 {
 			return SexpNull, WrongNargs
 		}
@@ -1382,7 +1382,7 @@ func DerefFunction(env *Glisp, name string, args []Sexp) (result Sexp, err error
 			}
 		}
 
-		//P("deref-set: arg0 is %T and arg1 is %T,   ptr.Target = %#v", args[0], args[1], ptr.Target)
+		//P("derefSet: arg0 is %T and arg1 is %T,   ptr.Target = %#v", args[0], args[1], ptr.Target)
 		//P("args[0] has ptr.ReflectTarget = '%#v'", ptr.ReflectTarget)
 		switch payload := args[1].(type) {
 		case *SexpInt:
@@ -1439,7 +1439,7 @@ func DerefFunction(env *Glisp, name string, args []Sexp) (result Sexp, err error
 			Q("got back iface = '%#v'", iface)
 			panic("not done yet with this implementation of args[1] of type *SexpReflect")
 		}
-		return SexpNull, fmt.Errorf("deref-set doesn't handle assignment of type %T at present", args[1])
+		return SexpNull, fmt.Errorf("derefSet doesn't handle assignment of type %T at present", args[1])
 
 	default:
 		return SexpNull, fmt.Errorf("unimplemented operation '%s' in DerefFunction", name)
