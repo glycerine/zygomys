@@ -13,3 +13,11 @@
 (assert (== {4 + 2 * 3}  10))
 
 (assert (== {4 - 4 / 2}  2))
+
+(assert (== {3 * 2 ** 3}  24))
+
+// and can mix in function calls to infix expressions
+(defn f [] 7)
+(assert (== -1020  {4 - 2 ** {3 + (f)}}))
+
+(assert (== {true and not false} {not false and true and true}))
