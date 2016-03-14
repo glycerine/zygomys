@@ -43,3 +43,5 @@
 // pow should be right associative
 (assert (== {2 ** 3 ** 3} 134217728))
 
+// spacing should not matter 
+// (assert (== (add {4+1} {6-1}) 10))

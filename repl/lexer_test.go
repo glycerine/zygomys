@@ -155,3 +155,10 @@ func Test026RegexpSplittingOfDotSymbols(t *testing.T) {
 		cv.So(path[2], cv.ShouldEqual, ".c")
 	})
 }
+
+func Test027BuiltinOperators(t *testing.T) {
+
+	cv.Convey("our lexer should lex without needing space between builtin operators like `-` and `+`, so `a+b` should parse as three tokens", t, func() {
+		// +, -, ++, --, :=, =, ==, <=, >=, <, >, <-, ->,
+	})
+}
