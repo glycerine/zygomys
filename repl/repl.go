@@ -357,22 +357,6 @@ func (env *Glisp) StandardSetup() {
 	_, err = env.EvalString(reqMacro)
 	panicOn(err)
 
-	slurpMacro := `(defmac slurp [a] ^(slurpf (sym2str (quote ~a))))`
-	_, err = env.EvalString(slurpMacro)
-	panicOn(err)
-
-	owriteMacro := `(defmac owrite [array filepath] ^(owritef ~array (sym2str (quote ~filepath))))`
-	_, err = env.EvalString(owriteMacro)
-	panicOn(err)
-
-	writeMacro := `(defmac write [array filepath] ^(writef ~array (sym2str (quote ~filepath))))`
-	_, err = env.EvalString(writeMacro)
-	panicOn(err)
-
-	//	systemMacro := `(defmac $ [ & body] ^(system (quote ~body)))`
-	//	_, err = env.EvalString(systemMacro)
-	//	panicOn(err)
-
 	incrMacro := `(defmac ++ [a] ^(set ~a (+ ~a 1)))`
 	_, err = env.EvalString(incrMacro)
 	panicOn(err)

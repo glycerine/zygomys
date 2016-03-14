@@ -1,6 +1,6 @@
 // owrite writes lines out to a file
-(def b (slurp tests/lines))
-(owrite b tests/lines2)
+(def b (slurpf "tests/lines"))
+(owritef b "tests/lines2")
 
 // diff not in the assummed location on windows.
 (cond (== (GOOS) "windows") ()

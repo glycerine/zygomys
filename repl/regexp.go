@@ -10,7 +10,7 @@ type SexpRegexp regexp.Regexp
 
 func (re *SexpRegexp) SexpString() string {
 	r := (*regexp.Regexp)(re)
-	return fmt.Sprintf(`(regexp-compile "%v")`, r.String())
+	return fmt.Sprintf(`(regexpCompile "%v")`, r.String())
 }
 
 func (r *SexpRegexp) Type() *RegisteredType {
@@ -54,12 +54,12 @@ func RegexpFind(env *Glisp, name string,
 	}
 
 	switch name {
-	case "regexp-find":
+	case "regexpFind":
 		str := needle.FindString(haystack)
 		return &SexpStr{S: str}, nil
-	case "regexp-find-index":
+	case "regexpFindIndex":
 		return regexpFindIndex(needle, haystack)
-	case "regexp-match":
+	case "regexpMatch":
 		matches := needle.MatchString(haystack)
 		return &SexpBool{Val: matches}, nil
 	}
@@ -79,22 +79,22 @@ func RegexpCompile(env *Glisp, name string,
 		re = t.S
 	default:
 		return SexpNull,
-			errors.New("argument of regexp-compile should be a string")
+			errors.New("argument of regexpCompile should be a string")
 	}
 
 	r, err := regexp.Compile(re)
 
 	if err != nil {
 		return SexpNull, errors.New(
-			fmt.Sprintf("error during regexp-compile: '%v'", err))
+			fmt.Sprintf("error during regexpCompile: '%v'", err))
 	}
 
 	return Sexp((*SexpRegexp)(r)), nil
 }
 
 func (env *Glisp) ImportRegex() {
-	env.AddFunction("regexp-compile", RegexpCompile)
-	env.AddFunction("regexp-find-index", RegexpFind)
-	env.AddFunction("regexp-find", RegexpFind)
-	env.AddFunction("regexp-match", RegexpFind)
+	env.AddFunction("regexpCompile", RegexpCompile)
+	env.AddFunction("regexpFindIndex", RegexpFind)
+	env.AddFunction("regexpFind", RegexpFind)
+	env.AddFunction("regexpMatch", RegexpFind)
 }

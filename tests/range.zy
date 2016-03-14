@@ -18,11 +18,11 @@
 (assert (== (second (hpair h 2)) 27))
 (assert (== (second (hpair h 3)) -4))
 
-(defmac range [key value my-hash & body]
-  ^(let [n (len ~my-hash)]
+(defmac range [key value myHash & body]
+  ^(let [n (len ~myHash)]
       (for [(def i 0) (< i n) (def i (+ i 1))]
         (begin
-          (mdef (quote ~key) (quote ~value) (hpair ~my-hash i))
+          (mdef (quote ~key) (quote ~value) (hpair ~myHash i))
           ~@body))))
 
 

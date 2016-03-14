@@ -8,11 +8,11 @@
     (assert (== a 6)))
   (assert (== a 5)))
 
-(new-scope
+(newScope
   (def b 12)
-  (new-scope
+  (newScope
     (def b 99)
-    (new-scope
+    (newScope
       (def b 7)
       (assert (== b 7)))
     (assert (== b 99)))

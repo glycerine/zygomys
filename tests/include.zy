@@ -26,6 +26,6 @@
 // but uses a macro so you don't have to put double quotes around
 // the path.
 (def a 10)
-(req tests/incr.g)
-(req tests/incr.g)
+(source "tests/incr.g")
+(source "tests/incr.g")
 (assert (== a 12))

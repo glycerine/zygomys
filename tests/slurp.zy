@@ -1,5 +1,5 @@
 // slurp reads lines from a file. It ignores the newlines.
-(def b (slurp tests/lines))
+(def b (slurpf "tests/lines"))
 (assert (== 3 (len b)))
 (def sum 0)
 (for [(def i 0) (< i (len b)) (def i (+ i 1))]
