@@ -167,24 +167,43 @@ func (env *Glisp) InitInfixOps() {
 	env.Assignment("-=", 10)
 	env.PostfixAssign("++", 10)
 	env.PostfixAssign("--", 10)
+
+	// == != < > <= >=
 }
 
 type RightMuncher func(env *Glisp, pr *Pratt) (Sexp, error)
 type LeftMuncher func(env *Glisp, pr *Pratt, left Sexp) (Sexp, error)
 
 func InfixBuilder(env *Glisp, name string, args []Sexp) (Sexp, error) {
-	if len(args) != 1 {
+	//Q("InfixBuilder top, name='%s', len(args)==%v ", name, len(args))
+	if name != "infixExpand" && len(args) != 1 {
 		// let {} mean nil
 		return SexpNull, nil
 	}
 	var arr *SexpArray
+	//Q("InfixBuilder after top, args[0] has type ='%T' ", args[0])
 	switch v := args[0].(type) {
 	case *SexpArray:
 		arr = v
+	case *SexpPair:
+		if name == "infixExpand" {
+			pair, isPair := v.Tail.(*SexpPair)
+			if !isPair {
+				return SexpNull, fmt.Errorf("infixExpand expects (infix []) as its argument; instead we saw '%T'", v.Tail)
+			}
+			switch ar2 := pair.Head.(type) {
+			case *SexpArray:
+				//Q("infixExpand, doing recursive call to InfixBuilder, ar2 = '%v'", ar2.SexpString())
+				return InfixBuilder(env, name, []Sexp{ar2})
+			default:
+				return SexpNull, fmt.Errorf("infixExpand expects (infix []) as its argument; instead we saw '%T'", v.Tail)
+			}
+		}
+		return SexpNull, fmt.Errorf("InfixBuilder must receive an SexpArray")
 	default:
 		return SexpNull, fmt.Errorf("InfixBuilder must receive an SexpArray")
 	}
-	Q("InfixBuilder, arr = ")
+	//Q("InfixBuilder, name='%s', arr = ", name)
 	for i := range arr.Val {
 		Q("arr[%v] = %v of type %T", i, arr.Val[i].SexpString(), arr.Val[i])
 	}
@@ -194,6 +213,11 @@ func InfixBuilder(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		Q("x was nil")
 	} else {
 		Q("x back is not nil and is of type %T/val = '%v', err = %v", x, x.SexpString(), err)
+	}
+	if name == "infixExpand" {
+		ret := MakeList([]Sexp{env.MakeSymbol("quote"), x})
+		//Q("infixExpand: returning ret = '%v'", ret.SexpString())
+		return ret, nil
 	}
 	dup := env.Duplicate()
 	ev, err := dup.EvalExpressions([]Sexp{x})

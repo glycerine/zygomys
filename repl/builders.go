@@ -27,6 +27,7 @@ import (
 // methods, and type aliases.
 //
 func (env *Glisp) ImportPackageBuilder() {
+	env.AddBuilder("infixExpand", InfixBuilder)
 	env.AddBuilder("infix", InfixBuilder)
 	env.AddBuilder(":", ColonAccessBuilder)
 	env.AddBuilder("sys", SystemBuilder)
