@@ -38,10 +38,10 @@ for the whole project when speaking aloud. In writing, the full
 $ go get github.com/glycerine/zygomys/cmd/zygo
 ~~~
 
-### not your average parentheses... features in zygomys 3.0.3 include
+### not your average parentheses... features in zygomys 4.1 include
 
- * [x] New in 3.0: struct defintion and type checking. [See `tests/declare.zy` for examples.](https://github.com/glycerine/zygomys/blob/master/tests/declare.zy)
- * [x] Since 2.0: dot-symbols! dot-symbols such as `.plane` or `.plane.wing` give OO-flavor and compact, expressive notation. [See the wiki](https://github.com/glycerine/zygomys/wiki#differences-from-traditional-lisp-syntax) for discussion
+ * [x] struct defintion and type checking. [See `tests/declare.zy` for examples.](https://github.com/glycerine/zygomys/blob/master/tests/declare.zy)
+ * [x] dot-symbols such as `.plane` or `.plane.wing` give OO-flavor and compact, expressive notation. [See the wiki](https://github.com/glycerine/zygomys/wiki#differences-from-traditional-lisp-syntax) for discussion
  * [x] dot-symbols avoid the need for macros in many cases
  * [x] Readable assignment: `(.a = 10)` assigns value 10 to symbol `a`  (NB use `==` for equality checks)
  * [x] Readable nested method calls: `(.a.b.c Fly)` calls method `Fly` on object `c` that lives within objects `a` and `b`.
@@ -59,6 +59,7 @@ $ go get github.com/glycerine/zygomys/cmd/zygo
  * [x] Easy to extend. See the `repl/random.go`, `repl/regexp.go`, and `repl/time.go` files for examples.
  * [x] Clojure-like threading `(-> hash field1: field2:)` and `(:field hash)` selection. 
  * [x] Lisp-style macros for your DSL.
+ * [x] optional infix notation within `{}` curly braces.
 
 ### obligatory XKCD
 
@@ -67,6 +68,7 @@ $ go get github.com/glycerine/zygomys/cmd/zygo
 
 ### additional features
 
+ * [x] Go-style comments, both /*block*/ and //through end-of-line.
  * [x] zygomys is a small Go library, easy to integrate and use/extend.
  * [x] Float (float64), Int (int64), Char, String, Symbol, List, Array, and Hash datatypes builtin.
  * [x] Arithmetic (`+`, `-`, `*`, `/`, `mod`, `**`)
