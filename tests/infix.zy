@@ -25,3 +25,7 @@
 // can put infix as arguments to sexp calls
 (defn add [a b] (+ a b))
 (assert (== (add {4 + 1} {6 - 1}) 10))
+
+//(def a [3 4 5])
+//(assert (== "4" (str {a[1]})))
+//(assert {a[1] == 4})

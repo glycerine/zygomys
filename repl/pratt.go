@@ -31,136 +31,102 @@ type InfixOp struct {
 	MunchLeft  LeftMuncher
 }
 
-func (env *Glisp) InitInfixOps() {
-	plus := env.MakeSymbol("+")
-	env.infixOps["+"] = &InfixOp{
-		Sym: plus,
-		Bp:  50,
+func (env *Glisp) Infix(op string, bp int) *InfixOp {
+	oper := env.MakeSymbol(op)
+	iop := &InfixOp{
+		Sym: oper,
+		Bp:  bp,
 		MunchLeft: func(env *Glisp, pr *Pratt, left Sexp) (Sexp, error) {
-			right, err := pr.Expression(env, 50)
+			right, err := pr.Expression(env, bp)
 			if err != nil {
 				return SexpNull, err
 			}
 			list := MakeList([]Sexp{
-				plus, left, right,
+				oper, left, right,
 			})
 			return list, nil
 		},
 	}
+	env.infixOps[op] = iop
+	return iop
+}
 
-	sub := env.MakeSymbol("-")
-	env.infixOps["-"] = &InfixOp{
-		Sym: sub,
-		Bp:  50,
+func (env *Glisp) Infixr(op string, bp int) *InfixOp {
+	oper := env.MakeSymbol(op)
+	iop := &InfixOp{
+		Sym: oper,
+		Bp:  bp,
 		MunchLeft: func(env *Glisp, pr *Pratt, left Sexp) (Sexp, error) {
-			right, err := pr.Expression(env, 50)
+			right, err := pr.Expression(env, bp-1)
 			if err != nil {
 				return SexpNull, err
 			}
 			list := MakeList([]Sexp{
-				sub, left, right,
+				oper, left, right,
 			})
 			return list, nil
 		},
 	}
+	env.infixOps[op] = iop
+	return iop
+}
 
-	mult := env.MakeSymbol("*")
-	env.infixOps["*"] = &InfixOp{
-		Sym: mult,
-		Bp:  60,
-		MunchLeft: func(env *Glisp, pr *Pratt, left Sexp) (Sexp, error) {
-			right, err := pr.Expression(env, 60)
-			if err != nil {
-				return SexpNull, err
-			}
-			list := MakeList([]Sexp{
-				mult, left, right,
-			})
-			return list, nil
-		},
-	}
-
-	div := env.MakeSymbol("/")
-	env.infixOps["/"] = &InfixOp{
-		Sym: div,
-		Bp:  60,
-		MunchLeft: func(env *Glisp, pr *Pratt, left Sexp) (Sexp, error) {
-			right, err := pr.Expression(env, 60)
-			if err != nil {
-				return SexpNull, err
-			}
-			list := MakeList([]Sexp{
-				div, left, right,
-			})
-			return list, nil
-		},
-	}
-
-	pow := env.MakeSymbol("**")
-	env.infixOps["**"] = &InfixOp{
-		Sym: pow,
-		Bp:  65,
-		MunchLeft: func(env *Glisp, pr *Pratt, left Sexp) (Sexp, error) {
-			right, err := pr.Expression(env, 65)
-			if err != nil {
-				return SexpNull, err
-			}
-			list := MakeList([]Sexp{
-				pow, left, right,
-			})
-			return list, nil
-		},
-	}
-
-	and := env.MakeSymbol("and")
-	env.infixOps["and"] = &InfixOp{
-		Sym: and,
-		Bp:  30,
-		MunchLeft: func(env *Glisp, pr *Pratt, left Sexp) (Sexp, error) {
-			right, err := pr.Expression(env, 29)
-			if err != nil {
-				return SexpNull, err
-			}
-			list := MakeList([]Sexp{
-				and, left, right,
-			})
-			return list, nil
-		},
-	}
-
-	or := env.MakeSymbol("or")
-	env.infixOps["or"] = &InfixOp{
-		Sym: or,
-		Bp:  30,
-		MunchLeft: func(env *Glisp, pr *Pratt, left Sexp) (Sexp, error) {
-			right, err := pr.Expression(env, 29)
-			if err != nil {
-				return SexpNull, err
-			}
-			list := MakeList([]Sexp{
-				or, left, right,
-			})
-			return list, nil
-		},
-	}
-
-	// really a prefix-op
-	not := env.MakeSymbol("not")
-	env.infixOps["not"] = &InfixOp{
-		Sym: not,
-		Bp:  70,
+func (env *Glisp) Prefix(op string, bp int) *InfixOp {
+	oper := env.MakeSymbol(op)
+	iop := &InfixOp{
+		Sym: oper,
+		Bp:  bp,
 		MunchRight: func(env *Glisp, pr *Pratt) (Sexp, error) {
-			right, err := pr.Expression(env, 70)
+			right, err := pr.Expression(env, bp)
 			if err != nil {
 				return SexpNull, err
 			}
 			list := MakeList([]Sexp{
-				not, right,
+				oper, right,
 			})
 			return list, nil
 		},
 	}
+	env.infixOps[op] = iop
+	return iop
+}
 
+func (env *Glisp) Assignment(op string) *InfixOp {
+	bp := 10
+	oper := env.MakeSymbol(op)
+	iop := &InfixOp{
+		Sym: oper,
+		Bp:  bp,
+		MunchLeft: func(env *Glisp, pr *Pratt, left Sexp) (Sexp, error) {
+			// TODO: check that left is okay as an LVALUE
+
+			right, err := pr.Expression(env, bp-1)
+			if err != nil {
+				return SexpNull, err
+			}
+			list := MakeList([]Sexp{
+				oper, left, right,
+			})
+			return list, nil
+		},
+	}
+	env.infixOps[op] = iop
+	return iop
+}
+
+func (env *Glisp) InitInfixOps() {
+	env.Infix("+", 50)
+	env.Infix("-", 50)
+	env.Infix("*", 60)
+	env.Infix("/", 60)
+	env.Infix("**", 65)
+	env.Infixr("and", 30)
+	env.Infixr("or", 30)
+	env.Prefix("not", 70)
+	env.Assignment("=")
+	env.Assignment(":=")
+	env.Assignment("+=")
+	env.Assignment("-=")
 }
 
 type RightMuncher func(env *Glisp, pr *Pratt) (Sexp, error)
