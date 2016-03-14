@@ -1,0 +1,10 @@
+
+zygo> {2 * 3 / 4 - 5} 
+-3.5
+zygo> (infixExpand {2 * 3 / 4 - 5} )
+(quote (- (/ (* 2 3) 4) 5))
+zygo> {2 * 3 / {4 - 5}}
+-6
+zygo> (infixExpand {2 * 3 /{4 - 5}} )
+(quote (/ (* 2 3) (infix [4 - 5])))
+zygo>

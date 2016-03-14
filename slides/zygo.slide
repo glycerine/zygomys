@@ -72,9 +72,9 @@ interpreter work really taught me the power of test-driven *design*
 - interactive, but also enable compile-down to Go
 - blending Go and lisp
 - built for myself
-- languages engender strong feelings. It's likely we won't agree on everything.
-- build your own variations to your taste
-- this is a toolkit.
+- this is a toolkit[1].
+
+`[1] build variations to your taste`
 
 * interesting about the zygo/repl code itself
 - using goroutines as coroutines to get pausable parsing
@@ -91,7 +91,7 @@ interpreter work really taught me the power of test-driven *design*
 - eval
 - rudiments of a type system tries to match Go's type system.
 - sandboxable / restrict outside access
-- goroutines/channels/regexp (not used alot; not polished)
+- goroutines/channels/regexp (untouched since Glisp; not polished)
 
 * use cases
 - as a query language
@@ -116,16 +116,6 @@ interpreter work really taught me the power of test-driven *design*
 - fun to write
 - experiment with design
 
-* argument: use JSON/YAML/other static data-only language
-- meh.
-- just avoids the scripting problem, moving it elsewhere.
-- no opportunity to compile-down
-- painful to type JSON interactively
-- doesn't support exploratory analysis
-- DSLs awkward
-- no language design
-- I hate having to put double quotes around everything
-- no support for complex number types, bignums, matrices, tensors, etc.
 
 * side-effects
 
@@ -139,49 +129,53 @@ interpreter work really taught me the power of test-driven *design*
 - unification (for type-system and other); this is how parametric polymorphism could be implemented.
 - repl. Read-eval-print-loop. an interactive prompt.
 
+* infix and (infixExpand)
+
+.code infix.txt
 
 
 * maxims
 
 - this is a toolbox (TIAT)
 - you have the tools (YHTT)
-- simply do it yourself (SDIY)
-- Write User's-code First (WUCF)
 - Client Before Server (CBS)
-- WUCF and CBS are ways of saying: TDD is the key to evolutionary extensions and sharing. The test suite tells you and others when you've broken earlier/others features; and when you've successfully integated a new feature.
+- write tests first (a tiny language fragment counts)
+- CBS are ways of saying: TDD is the key to evolutionary extensions and sharing. The test suite tells you and others when you've broken earlier/others features; and when you've successfully integated a new feature.
 
 * major files of `github.com/glycerine/zygomys/repl/`
 
-- repl.go
-- environment.go
-- lexer.go
-- parser.go
-- expression.go
-- generator.go
-- vm.go
-- package.go
-- gotypereg.go
+- repl.go        ...ReplMain() lives here, toplevel loop
+- expression.go  ...the core Sexp s-expression definitions
+- environment.go ...lexical scope, symbol table lookup
+- lexer.go       ...hand written lexer
+- parser.go      ...recursive parsing of symbols into lists and arrays
+- generator.go   ...code-gen: generate Sexp byte code
+- vm.go          ...virtual machine that executes the byte code
+- builders.go    ...declarations and type checking
+- gotypereg.go   ...the type registry for Go/zygo type correspondence
 
 * auxilliary/helper files; also in `github.com/glycerine/zygomys/repl/`
 
-- typeutils.go
-- hashutils.go
-- listutils.go
-- strutils.go
-- scope.go
-- stack.go
-- rawutils.go
-- numerictower.go
-- vprint.go
+- typeutils.go  ...runtime type inspection from zygo
+- hashutils.go  ...records (a.k.a hash tables)
+- listutils.go  ...linked list (*SexpPair) utilities
+- strutils.go   ...string utilities
+- scope.go      ...stack of symbol tables
+- stack.go      ...used by scopes
+- rawutils.go   ...raw []byte handling
+- numerictower.go  numbers/conversions
+- vprint.go     ...debug print stuff for development
 
 * custom types: extension example files
 
-- random.go (wraps math/rand.Float64() call)
-- regexp.go (define SexpRegexp as regexp.Regexp)
-- time.go (define SexpTime as time.Time)
+- random.go   (wrap math/rand.Float64() call)
+- regexp.go   (wrap regexp.Regexp)
+- time.go     (wrap time.Time)
 - jsonmsgp.go (conversions to/from json and msgpack)
 
 * internal Sexp types
+
+.code exp.txt
 
 - SexpNull (actually a value; an instance of the SexpSentinel type)
 - SexpSymbol (symbol table entries)
@@ -233,3 +227,14 @@ See the top of `github.com/glycerine/zygomys/repl/jsonmsgp.go` for a guide.
 - makes it easy to define type-variables, for instance
 
 - is there a unification implimentation?
+
+* argument: use JSON/YAML/other static data-only language
+- meh.
+- just avoids the scripting problem, moving it elsewhere.
+- no opportunity to compile-down
+- painful to type JSON interactively
+- doesn't support exploratory analysis
+- DSLs awkward
+- no language design
+- I hate having to put double quotes around everything
+- no support for complex number types, bignums, matrices, tensors, etc.

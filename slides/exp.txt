@@ -1,0 +1,4 @@
+type Sexp interface {
+	SexpString() string
+	Type() *RegisteredType
+}
