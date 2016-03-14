@@ -36,8 +36,6 @@ func CompareFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		cond = res >= 0
 	case "==":
 		cond = res == 0
-	case "not=":
-		cond = res != 0
 	case "!=":
 		cond = res != 0
 	}
@@ -821,7 +819,6 @@ func CoreFunctions() map[string]GlispUserFunction {
 		"<=":        CompareFunction,
 		">=":        CompareFunction,
 		"==":        CompareFunction,
-		"not=":      CompareFunction,
 		"!=":        CompareFunction,
 		"sll":       BinaryIntFunction,
 		"sra":       BinaryIntFunction,

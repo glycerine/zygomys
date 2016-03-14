@@ -1,10 +1,10 @@
 // indendent invocations of same closure
 // should each get their own scope for that instantiation
-(defn new-closure [sym] (let* [a 1
+(defn newClosure [sym] (letseq [a 1
                            f (fn [addme] (set a (+ a addme)) (printf "a is now %v\n" a) a)] f))
-(def g (new-closure %hello_g))
+(def g (newClosure %hello_g))
 (_closdump g)
-(def h (new-closure %hello_h))
+(def h (newClosure %hello_h))
 (_closdump h)
 (_closdump g) // showing hello_h arg!!!
 (assert (== (g 1) 2))

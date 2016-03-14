@@ -188,7 +188,7 @@ var (
 	DotPartsRegex  = regexp.MustCompile(`[.][^'#:;\\~@\[\]{}\^|"()%.0-9,][^'#:;\\~@\[\]{}\^|"()%.,]*`)
 	CharRegex      = regexp.MustCompile("^'\\\\?.'$")
 	FloatRegex     = regexp.MustCompile("^-?([0-9]+\\.[0-9]*)|(\\.[0-9]+)|([0-9]+(\\.[0-9]*)?[eE](-?[0-9]+))$")
-	BuiltinOpRegex = regexp.MustCompile(`^(\+\+|\-\-|\+=|\-=|=|==|:=|\+|\-|\*|<|>|<=|>=|<-|->|\*=|/=|\*\*)$`)
+	BuiltinOpRegex = regexp.MustCompile(`^(\+\+|\-\-|\+=|\-=|=|==|:=|\+|\-|\*|<|>|<=|>=|<-|->|\*=|/=|\*\*|!|!=)$`)
 )
 
 func StringToRunes(str string) []rune {
@@ -510,12 +510,12 @@ top:
 		first := string(lexer.prevrune)
 		atom := fmt.Sprintf("%c%c", lexer.prevrune, r)
 		if BuiltinOpRegex.MatchString(atom) {
-			P("2 rune atom in builtin op '%s', first='%s'", atom, first)
+			//P("2 rune atom in builtin op '%s', first='%s'", atom, first)
 			// 2 rune op
 			lexer.tokens = append(lexer.tokens, lexer.Token(TokenSymbol, atom))
 			return nil
 		}
-		P("1 rune atom in builtin op '%s', first='%s'", atom, first)
+		//P("1 rune atom in builtin op '%s', first='%s'", atom, first)
 		lexer.tokens = append(lexer.tokens, lexer.Token(TokenSymbol, first))
 		goto top // still have to parse r in normal
 

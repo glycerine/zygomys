@@ -439,7 +439,7 @@ func (gen *Generator) GenerateLet(name string, args []Sexp) error {
 	gen.AddInstruction(AddScopeInstr{Name: "runtime " + name})
 	gen.scopes++
 
-	if name == "let*" {
+	if name == "letseq" {
 		for i, rs := range rstatements {
 			err := gen.Generate(rs)
 			if err != nil {
@@ -562,8 +562,8 @@ func (gen *Generator) GenerateCallBySymbol(sym *SexpSymbol, args []Sexp, orig Se
 		return gen.GenerateBegin(args)
 	case "let":
 		return gen.GenerateLet("let", args)
-	case "let*":
-		return gen.GenerateLet("let*", args)
+	case "letseq":
+		return gen.GenerateLet("letseq", args)
 	case "assert":
 		return gen.GenerateAssert(args)
 	case "defmac":
@@ -582,7 +582,7 @@ func (gen *Generator) GenerateCallBySymbol(sym *SexpSymbol, args []Sexp, orig Se
 		return gen.GenerateBreak(args)
 	case "continue":
 		return gen.GenerateContinue(args)
-	case "new-scope":
+	case "newScope":
 		return gen.GenerateNewScope(args)
 	case "return":
 		return gen.GenerateReturn(args)
@@ -1361,7 +1361,7 @@ func (gen *Generator) GenerateNewScope(expressions []Sexp) error {
 		//return NoExpressionsFound
 	}
 
-	gen.AddInstruction(AddScopeInstr{Name: "new-scope"})
+	gen.AddInstruction(AddScopeInstr{Name: "newScope"})
 	for _, expr := range expressions[:size-1] {
 		err := gen.Generate(expr)
 		if err != nil {

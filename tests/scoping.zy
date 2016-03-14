@@ -1,4 +1,4 @@
-(let* [a 0
+(letseq [a 0
        b a]
   (assert (== b 0)))
 

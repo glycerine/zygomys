@@ -13,7 +13,7 @@
             [])
 )
 
-(defn g-map [fun lst]
+(defn gmap [fun lst]
 	(foldl lst (fn [x l] (fun x)) []))
 
 (defn even? [x]
@@ -26,7 +26,7 @@
             ))
 
 (defn newStore [items]
-	(let* [
+	(letseq [
 		idx [-1]
 		fun (fn []
 				(cond
@@ -47,7 +47,7 @@
 )
 
 (def s (newStore [10 9 8 7 6 5 4 3 2 1]))
-(g-map (fn [x] (assert (== x (s)))) [10 9 8 7 6 5 4 3 2 1])
+(gmap (fn [x] (assert (== x (s)))) [10 9 8 7 6 5 4 3 2 1])
 (def s (newStore [10 9 8 7 6 5 4 3 2 1]))
 (map (fn [x] (assert (== x (s)))) [10 9 8 7 6 5 4 3 2 1])
 
