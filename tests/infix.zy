@@ -50,3 +50,5 @@
 // debug help: infixExpand shows the conversion from infix to s-expression
 (assert (== "(quote (set a 4))" (str (infixExpand { a = 4})) ))
 
+(assert (== {4/10} 0.4))
+

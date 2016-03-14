@@ -416,6 +416,10 @@ top:
 		}
 		lexer.state = LexerBuiltinOperator
 		lexer.prevrune = '/'
+		err := lexer.dumpBuffer() // don't mix with token before the /
+		if err != nil {
+			return err
+		}
 		goto top // process the unknown rune r
 
 	case LexerCommentLine:
