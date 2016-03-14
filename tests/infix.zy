@@ -39,3 +39,7 @@
 (assert (== newvar 4))
 {newvar --}
 (assert (== newvar 3))
+
+// pow should be right associative
+(assert (== {2 ** 3 ** 3} 134217728))
+

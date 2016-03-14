@@ -55,8 +55,8 @@ func (env *Glisp) Infix(op string, bp int) *InfixOp {
 	return iop
 }
 
-// Infix creates a new short-circuiting infix operator,
-// used for `and` and `or` in infix processing.
+// Infix creates a new (right-associative) short-circuiting
+// infix operator, used for `and` and `or` in infix processing.
 func (env *Glisp) Infixr(op string, bp int) *InfixOp {
 	oper := env.MakeSymbol(op)
 	iop := &InfixOp{
@@ -157,7 +157,7 @@ func (env *Glisp) InitInfixOps() {
 	env.Infix("*", 60)
 	env.Infix("/", 60)
 	env.Infix("mod", 60)
-	env.Infix("**", 65)
+	env.Infixr("**", 65)
 	env.Infixr("and", 30)
 	env.Infixr("or", 30)
 	env.Prefix("not", 70)
