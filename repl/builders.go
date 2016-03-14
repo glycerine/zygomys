@@ -753,8 +753,3 @@ func ColonAccessBuilder(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	}
 	return SexpNull, fmt.Errorf("second argument to ':' function must be hash or array")
 }
-
-func InfixBuilder(env *Glisp, name string, args []Sexp) (Sexp, error) {
-	P("InfixBuilder, args = %#v. currently no-op.", args)
-	return &SexpArray{Val: args, Infix: true}, nil
-}

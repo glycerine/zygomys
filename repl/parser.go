@@ -289,58 +289,6 @@ func (parser *Parser) ParseArray(depth int) (Sexp, error) {
 	return &SexpArray{Val: arr}, nil
 }
 
-func (parser *Parser) ParseInfix(depth int) (Sexp, error) {
-	lexer := parser.lexer
-	arr := make([]Sexp, 0, SliceDefaultCap)
-	var err error
-	var tok Token
-	for {
-	getTok:
-		for {
-			tok, err = lexer.PeekNextToken()
-			if err != nil {
-				return SexpEnd, err
-			}
-
-			if tok.typ != TokenEnd {
-				break getTok
-			} else {
-				//instead of return SexpEnd, UnexpectedEnd
-				// we ask for more, and then loop
-				err = parser.GetMoreInput(nil, ErrMoreInputNeeded)
-				switch err {
-				case ParserHaltRequested:
-					return SexpNull, err
-				case ResetRequested:
-					return SexpEnd, err
-				}
-			}
-		}
-
-		if tok.typ == TokenRCurly {
-			// pop off the }
-			_, _ = lexer.GetNextToken()
-			break
-		}
-
-		expr, err := parser.ParseExpression(depth + 1)
-		if err != nil {
-			return SexpNull, err
-		}
-		arr = append(arr, expr)
-	}
-
-	var list SexpPair
-	list.Head = parser.env.MakeSymbol("infix")
-	list.Tail = SexpNull
-	if len(arr) > 0 {
-		list.Tail = Cons(&SexpArray{Val: arr, Infix: true}, SexpNull)
-	}
-	return &list, nil
-
-	//return &SexpArray{Val: arr, Infix: true}, nil
-}
-
 func (parser *Parser) ParseExpression(depth int) (res Sexp, err error) {
 	defer func() {
 		if res != nil {
@@ -545,4 +493,56 @@ func (parser *Parser) ParseBlockComment(start *Token) (sx Sexp, err error) {
 		}
 	}
 	return block, nil
+}
+
+func (parser *Parser) ParseInfix(depth int) (Sexp, error) {
+	lexer := parser.lexer
+	arr := make([]Sexp, 0, SliceDefaultCap)
+	var err error
+	var tok Token
+	for {
+	getTok:
+		for {
+			tok, err = lexer.PeekNextToken()
+			if err != nil {
+				return SexpEnd, err
+			}
+
+			if tok.typ != TokenEnd {
+				break getTok
+			} else {
+				//instead of return SexpEnd, UnexpectedEnd
+				// we ask for more, and then loop
+				err = parser.GetMoreInput(nil, ErrMoreInputNeeded)
+				switch err {
+				case ParserHaltRequested:
+					return SexpNull, err
+				case ResetRequested:
+					return SexpEnd, err
+				}
+			}
+		}
+
+		if tok.typ == TokenRCurly {
+			// pop off the }
+			_, _ = lexer.GetNextToken()
+			break
+		}
+
+		expr, err := parser.ParseExpression(depth + 1)
+		if err != nil {
+			return SexpNull, err
+		}
+		arr = append(arr, expr)
+	}
+
+	var list SexpPair
+	list.Head = parser.env.MakeSymbol("infix")
+	list.Tail = SexpNull
+	if len(arr) > 0 {
+		list.Tail = Cons(&SexpArray{Val: arr, Infix: true}, SexpNull)
+	}
+	return &list, nil
+
+	//return &SexpArray{Val: arr, Infix: true}, nil
 }

@@ -1,12 +1,70 @@
 package zygo
 
+import (
+	"fmt"
+	"io"
+)
+
+type InfixOp struct {
+	Sym        *SexpSymbol
+	Bp         int
+	MunchRight RightMuncher
+	MunchLeft  LeftMuncher
+}
+
+func (env *Glisp) InitInfixOps() {
+	plus := env.MakeSymbol("+")
+	env.infixOps["+"] = &InfixOp{
+		Sym: plus,
+		Bp:  50,
+		MunchLeft: func(ths, left Sexp) Sexp {
+			return MakeList([]Sexp{
+				plus, ths, left,
+			})
+		},
+	}
+}
+
+type RightMuncher func(ths Sexp) Sexp
+type LeftMuncher func(ths Sexp, left Sexp) Sexp
+
+func InfixBuilder(env *Glisp, name string, args []Sexp) (Sexp, error) {
+	if len(args) != 1 {
+		// let {} mean nil
+		return SexpNull, nil
+	}
+	var arr *SexpArray
+	switch v := args[0].(type) {
+	case *SexpArray:
+		arr = v
+	default:
+		return SexpNull, fmt.Errorf("InfixBuilder must receive an SexpArray")
+	}
+	P("InfixBuilder, arr = ")
+	for i := range arr.Val {
+		P("arr[%v] = %v of type %T", i, arr.Val[i].SexpString(), arr.Val[i])
+	}
+	pr := NewPratt(arr.Val)
+	x, err := pr.Expression(env, 0)
+	P("x = %v, err = %v", x, err)
+	return arr, nil
+}
+
 type Pratt struct {
-	// vars for pratt parsing inside {}
-	NextToken  Token
+	NextToken  Sexp
 	CnodeStack []Sexp
 	AccumTree  Sexp
-	Cur        Token
-	Next       Token
+	Cur        Sexp
+
+	Pos    int
+	Stream []Sexp
+}
+
+func NewPratt(stream []Sexp) *Pratt {
+	return &Pratt{
+		CnodeStack: make([]Sexp, 0),
+		Stream:     stream,
+	}
 }
 
 // Expression():
@@ -77,93 +135,102 @@ type Pratt struct {
 // guarantee the precenence-hill-climbing property (small precedence
 // at the top) in the resulting parse tree.
 //
-/*
-func (p *Pratt) Expression(rbp int, depth int) (Sexp, error) {
-	lexer := parser.lexer
-	var err error
-	var tok Token
 
-//		if tok.typ == TokenRCurly {
-//			// pop off the }
-//			_, _ = lexer.GetNextToken()
-//			break
-//		}
+func (p *Pratt) Expression(env *Glisp, rbp int) (Sexp, error) {
+	cnode := p.NextToken
 
+	if p.IsEOF() {
+		return cnode, nil
+	}
+	p.CnodeStack = append([]Sexp{p.NextToken}, p.CnodeStack...)
 
-		cnode := p.NextToken
-
-		//	if p.IsEOF() {
-		//		return cnode
-		//	}
-		p.CnodeStack = append(p.NextToken, p.CnodeStack...)
-
-		sx, err := p.Advance()
-		if sx == SexpEnd || err != nil {
-			// reset requested
-			return p.AccumTree, err
-		}
-
-		if cnode.typ != TokenEnd {
-
-			// munch_right() of atoms returns this/itself, in which
-			// case: p.AccumTree = t; is the result.
-			p.AccumTree = cnode.MunchRight(cnode)
-			// DV(p.AccumTree->print("p.AccumTree: "));
-		}
-
-		for !p.IsEOF() && rbp < p.NextToken.Lbp {
-			//assert(NextToken);
-
-			cnode = p.NextToken
-			p.CnodeStack[0] = p.NextToken
-			//_cnode_stack.front() = NextToken;
-
-			//DV(cnode->print("cnode:  "));
-
-			p.Advance(0)
-			if p.NextToken != nil {
-				//p("NextToken = %v", NextToken)
+	p.Advance()
+	/*
+		err := p.Advance()
+			switch err {
+			case io.EOF:
+				return p.AccumTree, nil
+			default:
+				return p.AccumTree, err
+			case nil:
 			}
+	*/
 
-			// if cnode->munch_left() returns this/itself, then the net effect is: p.AccumTree = cnode;
-			p.AccumTree = cnode.MunchLeft(cnode, p.AccumTree)
+	var curOp *InfixOp
+	switch x := cnode.(type) {
+	case *SexpSymbol:
+		op, found := env.infixOps[x.name]
+		if found {
+			curOp = op
+		}
+	}
 
+	if curOp != nil && curOp.MunchRight != nil {
+		// munch_right() of atoms returns this/itself, in which
+		// case: p.AccumTree = t; is the result.
+		p.AccumTree = curOp.MunchRight(cnode)
+	}
+
+	for !p.IsEOF() && rbp < env.LeftBindingPower(p.NextToken) {
+		//assert(NextToken);
+
+		cnode = p.NextToken
+		curOp = nil
+		switch x := cnode.(type) {
+		case *SexpSymbol:
+			op, found := env.infixOps[x.name]
+			if found {
+				curOp = op
+			}
 		}
 
-		p.CnodeStack = p.CnodeStack[1:]
-		//_cnode_stack.pop_front()
-		return p.AccumTree
-	return SexpNull, nil
-}
+		p.CnodeStack[0] = p.NextToken
+		//_cnode_stack.front() = NextToken;
 
+		p.Advance()
+		if p.Pos < len(p.Stream) {
+			P("p.NextToken = %v", p.NextToken)
+		}
+
+		// if cnode->munch_left() returns this/itself, then
+		// the net effect is: p.AccumTree = cnode;
+		if curOp != nil && curOp.MunchLeft != nil {
+			p.AccumTree = curOp.MunchLeft(cnode, p.AccumTree)
+		}
+	}
+
+	p.CnodeStack = p.CnodeStack[1:]
+	//_cnode_stack.pop_front()
+	return p.AccumTree, nil
+}
 
 // Advance sets p.NextToken
-func (p *Parser) Advance() (Sexp, error) {
-	lexer := p.lexer
-	var err error
-	var tok Token
-getTok:
-	for {
-		tok, err = lexer.PeekNextToken()
-		if err != nil {
-			return SexpNull, err
-		}
-
-		if tok.typ != TokenEnd {
-			break getTok
-		} else {
-			//instead of return SexpEnd, UnexpectedEnd
-			// we ask for more, and then loop
-			err = parser.GetMoreInput(nil, ErrMoreInputNeeded)
-			switch err {
-			case ParserHaltRequested:
-				return SexpNull, err
-			case ResetRequested:
-				return SexpEnd, err
-			}
-		}
-	} // end for
-	p.NextToken = tok
-	return SexpNull, nil
+func (p *Pratt) Advance() error {
+	p.Pos++
+	if p.Pos >= len(p.Stream) {
+		return io.EOF
+	}
+	p.NextToken = p.Stream[p.Pos]
+	return nil
 }
-*/
+
+func (p *Pratt) IsEOF() bool {
+	if p.Pos >= len(p.Stream) {
+		return true
+	}
+	return false
+}
+
+func (env *Glisp) LeftBindingPower(sx Sexp) int {
+	switch x := sx.(type) {
+	case *SexpInt:
+		return 0
+	case *SexpSymbol:
+		op, found := env.infixOps[x.name]
+		if found {
+			return op.Bp
+		}
+		return 0
+	}
+	return 0
+}

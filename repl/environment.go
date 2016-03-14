@@ -42,6 +42,8 @@ type Glisp struct {
 
 	showGlobalScope bool
 	baseTypeCtor    *SexpFunction
+
+	infixOps map[string]*InfixOp
 }
 
 const CallStackSize = 25
@@ -84,7 +86,7 @@ func NewGlispWithFuncs(funcs map[string]GlispUserFunction) *Glisp {
 	env.nextsymbol = 1
 	env.before = []PreHook{}
 	env.after = []PostHook{}
-
+	env.infixOps = make(map[string]*InfixOp)
 	env.AddGlobal("null", SexpNull)
 	env.AddGlobal("nil", SexpNull)
 
@@ -106,6 +108,7 @@ func NewGlispWithFuncs(funcs map[string]GlispUserFunction) *Glisp {
 	env.debugSymbolNotFound = false
 	//env.debugSymbolNotFound = true
 	//env.debugExec = true
+	env.InitInfixOps()
 
 	return env
 
@@ -126,7 +129,7 @@ func (env *Glisp) Clone() *Glisp {
 	dupenv.nextsymbol = env.nextsymbol
 	dupenv.before = env.before
 	dupenv.after = env.after
-
+	dupenv.infixOps = env.infixOps
 	dupenv.linearstack.Push(env.linearstack.elements[0])
 
 	dupenv.mainfunc = env.MakeFunction("__main", 0, false,
@@ -153,6 +156,7 @@ func (env *Glisp) Duplicate() *Glisp {
 	dupenv.nextsymbol = env.nextsymbol
 	dupenv.before = env.before
 	dupenv.after = env.after
+	dupenv.infixOps = env.infixOps
 
 	dupenv.linearstack.Push(env.linearstack.elements[0])
 
