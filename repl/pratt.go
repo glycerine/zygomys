@@ -29,6 +29,23 @@ func (env *Glisp) InitInfixOps() {
 			return list, nil
 		},
 	}
+
+	sub := env.MakeSymbol("-")
+	env.infixOps["-"] = &InfixOp{
+		Sym: sub,
+		Bp:  50,
+		MunchLeft: func(env *Glisp, pr *Pratt, left Sexp) (Sexp, error) {
+			right, err := pr.Expression(env, 50)
+			if err != nil {
+				return SexpNull, err
+			}
+			list := MakeList([]Sexp{
+				sub, left, right,
+			})
+			P("MunchLeft for -: MakeList returned list: '%v'", list.SexpString())
+			return list, nil
+		},
+	}
 }
 
 type RightMuncher func(env *Glisp, pr *Pratt) (Sexp, error)
