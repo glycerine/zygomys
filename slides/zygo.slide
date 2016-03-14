@@ -7,6 +7,21 @@ j.e.aten@gmail.com
 @jasonaten_ 
 https://github.com/glycerine/zygomys
 
+* zygomys -- what's in a name?
+
+- zygo means union (yoke in Greek; the zygote was the first cell that was you).
+- mys means mouse (Greek view of the bicep)
+- this is a little mouse of a language
+- this is the union of lisp and Go
+- bonus: there is a "pocket gopher" known as Zygogeomys. Great mascot!
+- His nickname is Ziggy.
+- Ziggy is a high-altitude gopher. We aim to be a high-level control language.
+
+- `zygomys` is the name for the language, `zygo` is the repl commanad.
+- I'll just say `zygo` alot to refer to the language aloud. Its easier to say.
+- I write out the full 'zygomys' when I want Google-able/search-ability.
+
+
 * goals: learning and fun
 
 - programming languages are fun!
@@ -16,41 +31,32 @@ https://github.com/glycerine/zygomys
 
 - I'll give examples of the Go API, and how to extend your language with a new function.
 
+- Great for learning about interpreters, compilers, langauge structure.
+- The whole project is a playground for experimentation. Evolve a design.
+- I'll show you the architecture; take it and explore, try new stuff.
+
+
 * origins
 
 - I started with Howard Mao's Glisp project, on github.
 - Some of that architecture still remains.
-- Lots of changes, tests, and many extensions. (true lexical scope, sandboxing, etc).
-- Start with zygomys and extend in your own direction
+- Lots of changes and many new features. (true lexical scope, sandboxing, etc).
+- Very different feel and aims meant a whole new name.
+- I encourage you: start with zygomys and extend in your own direction.
 
 * non-goals
 
 - this is not a "product" that you consume
 - this is not a sales pitch for you to "use this product"
-- Too many language communities devolve and bifrucate into consumers versus owners, with consumers feeling helpless to fix stuff.
 - we are all developers
-- you have the tools (YHTT); simply do it yourself (SDIY)
-- If you don't like something, change it on your fork
 - One language to rule them all? Not a goal.
 
-* goals
-
-- Fun. Learning.
-- Its a playground for experimentation. Evolve a design
-- I'll show you the architecture; take it and explore, try new stuff.
 
 * overview
 - explain overall architecture
 - explain how to add a feature
 - explain debug tools
 
-* debug tools
-- `.dump`
-- `.debug`
-- `.undebug`
-- `.gls`
-- `.ls`
-- `(macexpand)`
 
 * overview of design
 - layers
@@ -184,6 +190,15 @@ interpreter work really taught me the power of test-driven *design*
 - SexpHash   (hash table; keys and values are any Sexp, key ordering preserved)
 `...`
 
+* debug tools
+- `.dump`
+- `.debug`
+- `.undebug`
+- `.gls`
+- `.ls`
+- `(macexpand)`
+- `(infixExpand {})`
+
 * sigil system
 
 symbols with a special prefix
@@ -213,8 +228,8 @@ See the top of `github.com/glycerine/zygomys/repl/jsonmsgp.go` for a guide.
 * If you want to play with type systems
 
 - try out your parametric-polymorphism idea?
-- I don't know if its a good idea...
-- but the sigil-system is setup to let you explore this area
+- I don't know if its a good idea but...
+- the sigil-system is setup to let you explore this area
 - makes it easy to define type-variables, for instance
 
 - is there a unification implimentation?
