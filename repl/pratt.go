@@ -136,6 +136,7 @@ func (env *Glisp) InitInfixOps() {
 	env.Infix("-", 50)
 	env.Infix("*", 60)
 	env.Infix("/", 60)
+	env.Infix("mod", 60)
 	env.Infix("**", 65)
 	env.Infixr("and", 30)
 	env.Infixr("or", 30)

@@ -32,3 +32,5 @@
 
 { newvar = 3}
 (assert (== newvar 3))
+
+(assert (== {5 mod 3} 2))
