@@ -196,7 +196,7 @@ symbols with a special prefix
 
 
 - sigil prefixed-symbols evaluate to themselves by default.
-- useful for gramars, symbolic reasoning.
+- useful for grammars, symbolic reasoning.
 
 * json / msgpack support
 
