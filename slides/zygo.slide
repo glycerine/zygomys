@@ -66,7 +66,7 @@ _past interpreter work really taught me the power of TDD / test-driven *design*.
 - using goroutines as coroutines to get pausable parsing
 - if you haven't discovered how to do conditional sends on a channel yet, here is how. (use of nil channels).
    
-* the hard parts that are already done:
+* the hard parts that are already done
 - script calls to existing Go functions using existing Go structs. Using reflect is somewhat laborious; but its done
 - lexical scoping. => closures that capture variables outside a function based on where that function was originally defined, as opposed to where it is called from.
 - a repl-friendly linear time parser, avoiding the O(n*n) trap. (Uses go-routines as co-routines!)
@@ -84,7 +84,7 @@ _past interpreter work really taught me the power of TDD / test-driven *design*.
 - configuration language that can query itself.
 - multi-core friendly scripting. Leverage Go's multicore strength for exploratory data analysis and scripting.
  
-* the basic zygo->go function interface:
+* the basic zygo->go function interface
 
 .code first.go /START OMIT/,/END OMIT/
 
@@ -92,7 +92,7 @@ _past interpreter work really taught me the power of TDD / test-driven *design*.
 
 .code calltree.txt
 
-* why use an interpreter:
+* why use an interpreter
 - high personal productivity (examples: python, javascript, Matlab, R, Mathematica, lisp, scheme)
 - fast feedback
 - essential for exploratory data analysis 
@@ -118,14 +118,14 @@ _past interpreter work really taught me the power of TDD / test-driven *design*.
 - test-driven design is incredibly powerful at bringing up cross-layer issues.
 - no where more apparent than in a very layered design like an interpretter (compiler). When you make a small language change in the lexer/parser, the test suite will tell what/if you've broken anything else. Powerful.
 
-* components:
+* components
 
 - s-expression: lexer and parser
 - infix: top-down operator precedence parser (Pratt parser; see Douglas Crockford's writings)
 - unification (for type-system and other); this is how parametric polymorphism could be implemented.
 - repl. Read-eval-print-loop. an interactive prompt.
 
-* origins:
+* origins
 
 - I started with Howard Mao's Glisp project, on github.
 - Some of that architecture still remains.
@@ -134,7 +134,7 @@ _past interpreter work really taught me the power of TDD / test-driven *design*.
 
 
 
-* maxims:
+* maxims
 
 - this is a toolbox (TIAT)
 - you have the tools (YHTT)
@@ -143,7 +143,7 @@ _past interpreter work really taught me the power of TDD / test-driven *design*.
 - Client Before Server (CBS)
 - WUCF and CBS are ways of saying: TDD is the key to evolutionary extensions and sharing. The test suite tells you and others when you've broken earlier/others features; and when you've successfully integated a new feature.
 
-* major code files
+* major files of `github.com/glycerine/zygomys/repl/`
 
 - repl.go
 - environment.go
@@ -155,7 +155,7 @@ _past interpreter work really taught me the power of TDD / test-driven *design*.
 - package.go
 - gotypereg.go
 
-* auxilliary/helper files
+* auxilliary/helper files; also in `github.com/glycerine/zygomys/repl/`
 
 - typeutils.go
 - hashutils.go
@@ -174,10 +174,31 @@ _past interpreter work really taught me the power of TDD / test-driven *design*.
 - time.go (define SexpTime as time.Time)
 - jsonmsgp.go (conversions to/from json and msgpack)
 
-* internal Sexp type heirarchy
+* internal Sexp types
 
-- SexpSentinel (most important instance: SexpNull)
-- SexpSymbol
-- SexpPair
-- SexpArray
-- SexpHash
+- SexpNull (actually a value; an instance of the SexpSentinel type)
+- SexpSymbol (symbol table entries)
+- SexpPair   (linked lists)
+- SexpArray  (slices)
+- SexpHash   (hash table; keys and values are any Sexp, key ordering preserved)
+`...`
+
+* sigil system
+
+symbols with a special prefix
+
+- `mysym` is a regular symbol
+- `$mysym` is a sigil symbol, with sigil '$'. It is distinct from `mysym`.
+- `#mysym` is a sigil symbol, with sigil '#'. It is distinct from `$mysym` and `mysym`.
+- `?mysym` is a sigil symbol, with sigil '?'. It is distinct from the above.
+
+
+
+- sigil prefixed-symbols evaluate to themselves by default.
+- useful for gramars, symbolic reasoning.
+
+* json / msgpack support
+
+See the top of `github.com/glycerine/zygomys/repl/jsonmsgp.go` for a guide.
+
+.code msgp.txt
