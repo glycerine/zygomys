@@ -29,3 +29,6 @@
 //(def a [3 4 5])
 //(assert (== "4" (str {a[1]})))
 //(assert {a[1] == 4})
+
+{ newvar = 3}
+(assert (== newvar 3))

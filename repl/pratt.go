@@ -94,6 +94,7 @@ func (env *Glisp) Prefix(op string, bp int) *InfixOp {
 func (env *Glisp) Assignment(op string) *InfixOp {
 	bp := 10
 	oper := env.MakeSymbol(op)
+	operSet := env.MakeSymbol("set")
 	iop := &InfixOp{
 		Sym: oper,
 		Bp:  bp,
@@ -104,9 +105,14 @@ func (env *Glisp) Assignment(op string) *InfixOp {
 			if err != nil {
 				return SexpNull, err
 			}
+			if op == "=" || op == ":=" {
+				oper = operSet
+			}
+
 			list := MakeList([]Sexp{
 				oper, left, right,
 			})
+			Q("assignment returning list: '%v'", list.SexpString())
 			return list, nil
 		},
 	}
@@ -378,18 +384,22 @@ func (env *Glisp) LeftBindingPower(sx Sexp) int {
 		if found {
 			return op.Bp
 		}
+		Q("LeftBindingPower: not entry in env.infixOps for operation '%s'",
+			x.name)
 		return 0
+	default:
+		panic(fmt.Errorf("LeftBindingPower: unhandled sx :%#v", sx))
 	}
 	return 0
 }
 
 func (p *Pratt) ShowCnodeStack() {
 	if len(p.CnodeStack) == 0 {
-		P("CnodeStack is: empty")
+		fmt.Println("CnodeStack is: empty")
 		return
 	}
-	P("CnodeStack is:")
+	fmt.Println("CnodeStack is:")
 	for i := range p.CnodeStack {
-		P("CnodeStack[%v] = %v", i, p.CnodeStack[i].SexpString())
+		fmt.Printf("CnodeStack[%v] = %v\n", i, p.CnodeStack[i].SexpString())
 	}
 }
