@@ -25,7 +25,6 @@ func (env *Glisp) InitInfixOps() {
 			list := MakeList([]Sexp{
 				plus, left, right,
 			})
-			P("MunchLeft for +: MakeList returned list: '%v'", list.SexpString())
 			return list, nil
 		},
 	}
@@ -42,10 +41,42 @@ func (env *Glisp) InitInfixOps() {
 			list := MakeList([]Sexp{
 				sub, left, right,
 			})
-			P("MunchLeft for -: MakeList returned list: '%v'", list.SexpString())
 			return list, nil
 		},
 	}
+
+	mult := env.MakeSymbol("*")
+	env.infixOps["*"] = &InfixOp{
+		Sym: mult,
+		Bp:  60,
+		MunchLeft: func(env *Glisp, pr *Pratt, left Sexp) (Sexp, error) {
+			right, err := pr.Expression(env, 60)
+			if err != nil {
+				return SexpNull, err
+			}
+			list := MakeList([]Sexp{
+				mult, left, right,
+			})
+			return list, nil
+		},
+	}
+
+	div := env.MakeSymbol("/")
+	env.infixOps["/"] = &InfixOp{
+		Sym: div,
+		Bp:  60,
+		MunchLeft: func(env *Glisp, pr *Pratt, left Sexp) (Sexp, error) {
+			right, err := pr.Expression(env, 60)
+			if err != nil {
+				return SexpNull, err
+			}
+			list := MakeList([]Sexp{
+				div, left, right,
+			})
+			return list, nil
+		},
+	}
+
 }
 
 type RightMuncher func(env *Glisp, pr *Pratt) (Sexp, error)
