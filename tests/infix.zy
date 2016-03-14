@@ -34,3 +34,8 @@
 (assert (== newvar 3))
 
 (assert (== {5 mod 3} 2))
+
+{newvar ++}
+(assert (== newvar 4))
+{newvar --}
+(assert (== newvar 3))

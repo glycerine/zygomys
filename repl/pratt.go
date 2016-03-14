@@ -100,8 +100,7 @@ func (env *Glisp) Prefix(op string, bp int) *InfixOp {
 
 // Assignment creates a new assignment operator for infix
 // processing.
-func (env *Glisp) Assignment(op string) *InfixOp {
-	bp := 10
+func (env *Glisp) Assignment(op string, bp int) *InfixOp {
 	oper := env.MakeSymbol(op)
 	operSet := env.MakeSymbol("set")
 	iop := &InfixOp{
@@ -129,6 +128,26 @@ func (env *Glisp) Assignment(op string) *InfixOp {
 	return iop
 }
 
+// PostfixAssign creates a new postfix assignment operator for infix
+// processing.
+func (env *Glisp) PostfixAssign(op string, bp int) *InfixOp {
+	oper := env.MakeSymbol(op)
+	iop := &InfixOp{
+		Sym: oper,
+		Bp:  bp,
+		MunchLeft: func(env *Glisp, pr *Pratt, left Sexp) (Sexp, error) {
+			// TODO: check that left is okay as an LVALUE
+			list := MakeList([]Sexp{
+				oper, left,
+			})
+			Q("postfix assignment returning list: '%v'", list.SexpString())
+			return list, nil
+		},
+	}
+	env.infixOps[op] = iop
+	return iop
+}
+
 // InitInfixOps establishes the env.infixOps definitions
 // required for infix parsing using the Pratt parser.
 func (env *Glisp) InitInfixOps() {
@@ -141,10 +160,12 @@ func (env *Glisp) InitInfixOps() {
 	env.Infixr("and", 30)
 	env.Infixr("or", 30)
 	env.Prefix("not", 70)
-	env.Assignment("=")
-	env.Assignment(":=")
-	env.Assignment("+=")
-	env.Assignment("-=")
+	env.Assignment("=", 10)
+	env.Assignment(":=", 10)
+	env.Assignment("+=", 10)
+	env.Assignment("-=", 10)
+	env.PostfixAssign("++", 10)
+	env.PostfixAssign("--", 10)
 }
 
 type RightMuncher func(env *Glisp, pr *Pratt) (Sexp, error)
