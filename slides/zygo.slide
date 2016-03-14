@@ -60,10 +60,10 @@ https://github.com/glycerine/zygomys
 - d) codegen produces s-expression byte-code
 - e) vm executes s-expression byte-code
 
-_past interpreter work really taught me the power of TDD / test-driven *design*._
+interpreter work really taught me the power of test-driven *design*
 
 * philosophy
-- enable compile-down to go (if not implement it; in case someone does a JIT compiler for go... shouldn't be difficult now that the compiler is written in Go.)
+- interactive, but also enable compile-down to Go
 - blending Go and lisp
 - built for myself
 - languages engender strong feelings. It's likely we won't agree on everything.
