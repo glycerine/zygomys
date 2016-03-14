@@ -289,7 +289,7 @@ func (parser *Parser) ParseArray(depth int) (Sexp, error) {
 	return &SexpArray{Val: arr}, nil
 }
 
-func (parser *Parser) ParseHash(depth int) (Sexp, error) {
+func (parser *Parser) ParseInfix(depth int) (Sexp, error) {
 	lexer := parser.lexer
 	arr := make([]Sexp, 0, SliceDefaultCap)
 	var err error
@@ -332,7 +332,10 @@ func (parser *Parser) ParseHash(depth int) (Sexp, error) {
 
 	var list SexpPair
 	list.Head = parser.env.MakeSymbol("infix")
-	list.Tail = MakeList(arr)
+	list.Tail = SexpNull
+	if len(arr) > 0 {
+		list.Tail = Cons(&SexpArray{Val: arr, Infix: true}, SexpNull)
+	}
 	return &list, nil
 
 	//return &SexpArray{Val: arr, Infix: true}, nil
@@ -364,7 +367,7 @@ getAnother:
 		exp, err := parser.ParseArray(depth + 1)
 		return exp, err
 	case TokenLCurly:
-		exp, err := parser.ParseHash(depth + 1)
+		exp, err := parser.ParseInfix(depth + 1)
 		return exp, err
 	case TokenQuote:
 		expr, err := parser.ParseExpression(depth + 1)
