@@ -153,7 +153,6 @@ In zygo we run through the hashmap like this:
 
 .code infix.txt
 
-
 * Top-down Operator Precedence (Pratt parsing)
 
 - Like quicksort, Pratt's is a short, sharp algorithm; not particularly easy to understand on the first pass. It builds a parse tree so that precedence is decreasing as you go up to the root. Higher precedence means stronger binding, which means being lower in the parse tree.
@@ -170,6 +169,13 @@ example in python: [[http://effbot.org/zone/simple-top-down-parsing.htm]]
 
 blog with discussion: [[http://journal.stuffwithstuff.com/2011/03/19/pratt-parsers-expression-parsing-made-easy/]]
 
+* parse tree
+
+.image parseTree.jpg
+
+- hill-climbing: the precedence gets smaller as you go up.
+- + addition has precedence 50.
+- * multiplication has precedence 60, and so binds more tightly.
 
 * zygo use cases
 

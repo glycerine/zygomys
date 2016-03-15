@@ -12,6 +12,7 @@ import (
 
 func main() {
 	// configure it
+	// See library configuration convention: https://github.com/glycerine/configs-in-golang
 	cfg := zygo.NewGlispConfig("zygo")
 
 	// register your Go data types
