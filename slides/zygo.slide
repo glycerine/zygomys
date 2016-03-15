@@ -100,7 +100,7 @@ See [[https://github.com/glycerine/zygomys/blob/master/cmd/zygo/main.go]]. Just 
 
 * records
 
-- records are hash tables with a name and a key-order
+- records are hash tables with a name and a key-order. Getters: 'hget', ':', '->', and .dot.symbol.paths
 
 .code harry.record
 
