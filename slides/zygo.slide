@@ -1,4 +1,4 @@
-Zygomys: Embedded scripting toolkit for Go
+zygomys: Embedded scripting toolkit for Go
 16 March 2016
 
 Jason E. Aten, Ph.D.
@@ -163,11 +163,11 @@ In zygo we run through the hashmap like this:
 
 [[https://github.com/glycerine/PrattParserInC/blob/master/Vaughan.Pratt.TDOP.pdf]] original
 
-[[http://javascript.crockford.com/tdop/tdop.html]] Douglas Crockford's article 
+[[http://javascript.crockford.com/tdop/tdop.html]] Douglas Crockford's article, javascript
 
 example in python: [[http://effbot.org/zone/simple-top-down-parsing.htm]]
 
-blog with discussion: [[http://journal.stuffwithstuff.com/2011/03/19/pratt-parsers-expression-parsing-made-easy/]]
+blog with discussion/Java: [[http://journal.stuffwithstuff.com/2011/03/19/pratt-parsers-expression-parsing-made-easy/]]
 
 * parse tree
 
