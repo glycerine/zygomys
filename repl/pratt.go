@@ -168,7 +168,12 @@ func (env *Glisp) InitInfixOps() {
 	env.PostfixAssign("++", 10)
 	env.PostfixAssign("--", 10)
 
-	// == != < > <= >=
+	env.Infix("==", 40)
+	env.Infix("!=", 40)
+	env.Infix(">", 40)
+	env.Infix(">=", 40)
+	env.Infix("<", 40)
+	env.Infix("<=", 40)
 }
 
 type RightMuncher func(env *Glisp, pr *Pratt) (Sexp, error)

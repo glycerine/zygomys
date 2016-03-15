@@ -52,3 +52,14 @@
 
 (assert (== {4/10} 0.4))
 
+// comparisons
+(assert (== true { 2 < 3}))
+(assert (== true { 4 > 2}))
+
+(assert (== true { 2 <= 2}))
+(assert (== false { 3 <= 2}))
+(assert (== true { 2 >= 2}))
+(assert (== false { 1 >= 2}))
+
+(assert (== true { 1 == 1}))
+(assert (== true { 1 != 0}))

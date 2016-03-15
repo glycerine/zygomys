@@ -13,13 +13,16 @@ https://github.com/glycerine/zygomys
 - mys means mouse (Greek view of the bicep)
 - this is a little mouse of a language
 - this is the union of lisp and Go
-- bonus: there is a "pocket gopher" known as Zygogeomys. Great mascot!
-- His nickname is Ziggy.
+- bonus: there is a "pocket gopher" known as Zygogeomys. A mascot!
+
+* lexicon
+
+- The mascot's name is Ziggy.
 - Ziggy is a high-altitude gopher. We aim to be a high-level control language.
 
 - `zygomys` is the name for the language, `zygo` is the repl commanad.
-- I'll just say `zygo` alot to refer to the language aloud. Its easier to say.
-- I write out the full 'zygomys' when I want Google-able/search-ability.
+- I'll just say `zygo` alot to refer to the language in general. Its easier to say.
+- I write out the full 'zygomys' in text because I want Google-able/search-ability.
 
 
 * goals: learning and fun
@@ -30,6 +33,8 @@ https://github.com/glycerine/zygomys
 - particularly great context to learn about Test-driven design
 
 - I'll give examples of the Go API, and how to extend your language with a new function.
+
+* fun
 
 - Great for learning about interpreters, compilers, langauge structure.
 - The whole project is a playground for experimentation. Evolve a design.
@@ -46,7 +51,7 @@ https://github.com/glycerine/zygomys
 
 * non-goals
 
-- this is not a "product" that you consume
+- this is not a product that you consume
 - this is not a sales pitch for you to "use this product"
 - we are all developers
 - One language to rule them all? Not a goal.
@@ -66,7 +71,8 @@ https://github.com/glycerine/zygomys
 - d) codegen produces s-expression byte-code
 - e) vm executes s-expression byte-code (infix eval happens)
 
-interpreter work really taught me the power of test-driven *design*
+- interpreter work really taught me the power of TDD
+- its not a test technique, its a *design* technique
 
 * philosophy
 - interactive, but also enable compile-down to Go
@@ -238,3 +244,8 @@ See the top of `github.com/glycerine/zygomys/repl/jsonmsgp.go` for a guide.
 - no language design
 - I hate having to put double quotes around everything
 - no support for complex number types, bignums, matrices, tensors, etc.
+
+* hash maps
+
+- (def h (hash key1:"val1" key2:222))
+- (hget h key1:)
