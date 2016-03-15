@@ -84,7 +84,8 @@ $ go get github.com/glycerine/zygomys/cmd/zygo
  * [x] Go API
  * [x] Macro System with macexpand `(macexpand (your-macro))` makes writing/debugging macros easier.
  * [x] Syntax quoting -- with caret `^()` instead of backtick.
- * [x] Lisp-expression quoting uses `%` (not `'`; which delimites runes as in Go).
+ * [x] Backticks used for raw multiline strings, as in Go.
+ * [x] Lisp-expression quoting uses `%` (not `'`; which delimits runes as in Go).
  * [x] Channel and goroutine support
  * [x] Full closures with lexical scope.
 
