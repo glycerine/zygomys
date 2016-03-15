@@ -21,11 +21,4 @@
      (a) SexpToMsgpack() and SexpToJson()
      (b) MsgpackToSexp(); uses (4) = (2) + (1)
 (5) The SexpToGoStructs() and ToGoFunction() in this
-    file provide the capability of marshaling an
-    s-expression to a Go-struct that has been
-    registered to be associated with a named
-    hash map using (defmap). See repl/gotypereg.go
-    to add your Go-struct constructor. From
-    the prompt, the (togo) function instantiates
-    a 'shadow' Go-struct whose data matches
-    that configured in the record.
+    file.
