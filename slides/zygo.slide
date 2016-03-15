@@ -293,7 +293,7 @@ symbols with a special prefix
 - useful for grammars, symbolic reasoning.
 
 
-* still todo 2
+* todo
 
 - dataframe
 - matrix / tensor types
