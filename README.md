@@ -68,7 +68,7 @@ $ go get github.com/glycerine/zygomys/cmd/zygo
 
 ### additional features
 
- * [x] Go-style comments, both /*block*/ and //through end-of-line.
+ * [x] Go-style comments, both `/*block*/` and `//through end-of-line.`
  * [x] zygomys is a small Go library, easy to integrate and use/extend.
  * [x] Float (float64), Int (int64), Char, String, Symbol, List, Array, and Hash datatypes builtin.
  * [x] Arithmetic (`+`, `-`, `*`, `/`, `mod`, `**`)
