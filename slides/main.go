@@ -24,7 +24,6 @@ func main() {
 	if err == flag.ErrHelp {
 		usage(cfg.Flags)
 	}
-
 	if err != nil {
 		panic(err)
 	}

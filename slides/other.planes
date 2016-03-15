@@ -1,0 +1,21 @@
+
+type Hornet struct {
+	Plane    `json:"plane" msg:"plane"`
+	Mass     float64
+	Nickname string
+}
+
+type Hellcat struct {
+	Plane `json:"plane" msg:"plane"`
+}
+
+
+func (b *Hornet) Fly(ev *Weather) (s string, err error) {
+	fmt.Printf("Hornet sees weather %v", ev)
+	return
+}
+
+func (b *Hellcat) Fly(ev *Weather) (s string, err error) {
+	fmt.Printf("Hellcat sees weather %v", ev)
+	return
+}

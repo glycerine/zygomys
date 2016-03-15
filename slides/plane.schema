@@ -1,0 +1,41 @@
+// fragment from `github.com/glycerine/zygomys/repl/demo_go_structs.go`
+
+type Snoopy struct {
+	Plane            `json:"plane" msg:"plane"`
+	Cry      string  `json:"cry" msg:"cry"`
+	Pack     []int   `json:"pack"`
+	Carrying []Flyer `json:"carrying"`
+}
+
+type Hornet struct {
+	Plane    `json:"plane" msg:"plane"`
+	Mass     float64
+	Nickname string
+}
+
+type Hellcat struct {
+	Plane `json:"plane" msg:"plane"`
+}
+
+func (p *Snoopy) Fly(ev *Weather) (s string, err error) {
+	s = fmt.Sprintf("Snoopy sees weather '%s', cries '%s'", ev.Type, p.Cry)
+	fmt.Println(s)
+	return
+}
+
+func (p *Snoopy) GetCry() string {
+	return p.Cry
+}
+
+func (p *Snoopy) EchoWeather(w *Weather) *Weather {
+	return w
+}
+
+func (p *Snoopy) Sideeffect() {
+	fmt.Printf("Sideeffect() called! p = %p\n", p)
+}
+
+
+
+(def he (hellcat speed:567))
+(def snoop (snoopy chld:he))

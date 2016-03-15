@@ -1,0 +1,22 @@
+(def he (hellcat speed:567))
+(def ho (hornet))
+(def snoop (snoopy chld:he))
+
+(def snoop (snoopy pack:[8 9 4]))
+
+(def he (hellcat speed:567))
+(def ho (hornet SpanCm:12))
+(def snoop (snoopy carrying:[he ho]))
+
+(def he (hellcat speed:567))
+(def ho (hornet SpanCm:12))
+(def snoop (snoopy friends:[he ho]))
+
+(def he (hellcat speed:567))
+(def ho (hornet SpanCm:12))
+(def snoop (snoopy friends:[he ho] cry:"yowza"))
+
+ (_method snoop GetCry: )
+
+			   (_method snoop Fly: (weather time:(now) size:12 ` +
+			`type:"sunny" details:(raw "123")))

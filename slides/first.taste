@@ -1,0 +1,51 @@
+/*
+// given a simple Go struct
+type Person struct {
+	First string `json:"first" msg:"first"`
+	Last  string `json:"last" msg:"last"`
+}
+*/
+
+// we've registerd that type in zygo's type registry,
+// under "persondemo"
+
+(def person (persondemo))
+
+(defmap ranch)
+(def lazy8 (ranch cowboy:"Jim" cowgirl:"Jane" cows:["Zelda" "Montgommery" "Bartholomew"]))
+(assert (== (:cowboy lazy8) "Jim"))
+
+// serialize
+(def j (json lazy8))
+
+// unserialize
+(def l9 (unjson j))
+(assert (== (:cowboy l9) "Jim"))
+(assert (== (:cowgirl l9) "Jane"))
+l9
+
+// serialize msgpack
+(def m (msgpack lazy8))
+
+// unserialize msgpack
+(def l10 (unmsgpack m))
+(assert (== (:cowboy l10) "Jim"))
+(assert (== (:cowgirl l10) "Jane"))
+
+// symbols become strings
+(defmap castle) (unjson (json (castle cats:%loveit)))
+
+
+// calls into Go produce expected results
+(def callres (_method (snoopy cry:"yeah!") Fly: (weather type:"awesomesauce")))
+(assert (== callres
+            ["Snoopy sees weather 'awesomesauce', cries 'yeah!'" ()]))
+
+// structs coming back into zygo from Go
+(def w (weather type:"delightful" size:888))
+(def c2 (_method (snoopy cry:"yeah!") EchoWeather: w))
+(assert (== (str c2) `[ (weather time:nil size:888 type:"delightful" details:[]byte(nil))]`))
+
+// passing in []byte to a method
+(def w (weather))
+(assert (== (len (_method w MarshalMsg: (raw))) 2))

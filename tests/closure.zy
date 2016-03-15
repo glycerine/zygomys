@@ -1,9 +1,17 @@
+// left-fold produces output list that is reversed from the lst input
 (defn foldl [lst fun acc]
     (cond
         (empty? lst) acc
         (foldl (cdr lst) fun (fun (car lst) acc))
 		))
-        
+
+// right-fold preserves order of the lst in the acc output
+(defn foldr [lst fun acc]
+    (cond
+        (empty? lst) acc
+        (fun (car lst) (foldr (cdr lst) fun acc))
+             ))
+
 (defn filter [lst fun]
     (foldl lst
             (fn [x l]

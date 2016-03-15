@@ -7,6 +7,36 @@ j.e.aten@gmail.com
 @jasonaten_ 
 https://github.com/glycerine/zygomys
 
+* scenario
+
+* Snoopy's areonautic adventures
+
+.image snoopy_ace.png
+
+* Curse you, Red Baron!
+
+.image curse_you_red_baron.png
+
+- imagine Snoopy comes back with friends...
+
+* data model for a plane formation, a Go struct
+
+.code snoopy1
+
+- has an nested/embedded element, Plane
+
+* Methods defined on the Snoopy struct
+
+.code snoopy2
+
+- anything that can Fly satifies the Flyer interface
+
+* Flyer friends, can be listed in the Snoopy.Carrying slice
+
+.code other.planes
+
+* with the data model in mind, lets interact with it using zygo...
+
 * zygomys -- what's in a name?
 
 - zygo means union (yoke in Greek; the zygote was the first cell that was you).
@@ -18,10 +48,10 @@ https://github.com/glycerine/zygomys
 * lexicon
 
 - The mascot's name is Ziggy.
-- Ziggy is a high-altitude pocket gopher. We aim to be a high-level control language.
-- `zygomys` is the name for the language, `zygo` is the repl command.
-- I'll just say `zygo` alot to refer to the language in general. Its easier to say.
-- I write out 'zygomys' for maximum search-ability (a unique search term).
+- Ziggy is a high-altitude pocket gopher. zygo aims to be a high-level control language.
+- `zygomys` is the name for the language, `zygo` is the repl that implements the language.
+- Let's agree to use the shorthand `zygo` when speaking to refer to the language and project. Its easier to say.
+- I write out 'zygomys' for maximum search-ability (a unique search term). Moreover 'zygomys' is not trademarked.
 
 
 * goals: learning and fun
@@ -29,7 +59,7 @@ https://github.com/glycerine/zygomys
 - programming languages are fun!
 - Lisp shows us: they don't have to be difficult to write
 - particularly great context to learn about Test-driven design
-- why? writing tests is trivial: write little language fragments
+- writing tests is trivial: write little language fragments
 
 * fun
 
@@ -37,20 +67,13 @@ https://github.com/glycerine/zygomys
 - The whole project is a playground for experimentation. Evolve a design.
 - I'll show you the architecture; take it and explore, try new stuff.
 
+* Getting started How to embed the REPL in your code
 
-* origins
+See [[https://github.com/glycerine/zygomys/blob/master/cmd/zygo/main.go]]
 
-- I started with Howard Mao's Glisp project.
-- Nicely segmented design, good foundation.
-- Some of that architecture remains (e.g. name of the env class is *Glisp).
-- Many new features (very different syntax and identifiers, Go style comments, true lexical scope, sandboxing, reflection, json/msgpack, record types, etc).
-- Very different feel and aims meant a whole new name.
-- I encourage you: start with zygomys, make something of your own. 2-clause BSD license.
+.code main.go  /START OMIT/,/END OMIT/
 
-* non-goals
-
-- this is not a sales pitch for you to "use this product"
-- One language to rule them all? Not a goal
+that's it.
 
 
 * overview
@@ -123,7 +146,7 @@ https://github.com/glycerine/zygomys
 
 * side-effects
 
-** perspective on TDD
+* perspective on TDD
 
 - test-driven design is incredibly powerful at bringing up cross-layer issues.
 - no where more apparent than in a very layered design like an interpreter/compiler. When you make a small language change in the lexer/parser, the test suite will tell what/if you've broken anything else.
@@ -270,9 +293,9 @@ symbols with a special prefix
 
 * Pratt parsing : theory of operation for Top-down Operator Precedence parsing
 
-- not particularly easy to understand
+- Like quicksort. A short, sharp algorithm. Not particularly easy to understand on the first pass.
 
-- but works like magic. Very easy to extend your language with new infix operations, once the core Expression routine is implemented.
+- works like magic. Very easy to extend your language with new infix operations, once the core Expression routine is implemented. This is how zygo processes infix syntax.
 
 - links for learning:
 
@@ -287,20 +310,15 @@ symbols with a special prefix
 .link http://journal.stuffwithstuff.com/2011/03/19/pratt-parsers-expression-parsing-made-easy/ example in Java 
 
 
-* builders
+* building zygo's static type system
 
-- A builder is a special kind of function; a hybrdid between a function and a macro.
+- A builder is a special kind of function; a hybrdid between a function and a macro. I chose the term `builder` to reflect their ability to build structs (i.e. new types), packages, type aliases.
 
 - Like a macro, a builder receives the un-evaluated parse-tree of symbols from its caller. A builder can therefore be used to build new types and declarations new functions/methods.
 
 - Like a function, a builder is called at run/evaluation time, not at definition time. (Macros are run at code-gen, which is definition time).
 
-- Since it receives an un-evaluated tree of symbols, a builder must manually evaluate any arguments it wishes to find bindings for.
+- Since it receives an un-evaluated tree of symbols, a builder must manually evaluate any arguments it wishes to find bindings for in scope.
 
-- Used in zygo to define structs. Planned use: define interfaces, functions, methods, and type aliases. See `github.com/glycerine/zygomys/repl/builders.go` for examples.
+- Used in zygo to define structs. Next planned use: define interfaces, functions, methods, and type aliases. See [[https://github.com/glycerine/zygomys/blob/master/repl/builders.go]] for examples.
 
-* Embedding the REPL in your code
-
-See github.com/glycerine/zygomys/cmd/zygo/main.go
-
-.code main.go

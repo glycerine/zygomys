@@ -9,3 +9,52 @@
 - Client Before Server (CBS)
 - write tests first (a tiny language fragment counts)
 - CBS are ways of saying: TDD is the key to evolutionary extensions and sharing. The test suite tells you and others when you've broken earlier/others features; and when you've successfully integated a new feature.
+
+* origins
+
+- I started with Howard Mao's Glisp project.
+- Nicely segmented design, good foundation.
+- Some of that architecture remains (e.g. name of the env class is *Glisp).
+- Many new features (very different syntax and identifiers, Go style comments, true lexical scope, sandboxing, reflection, json/msgpack, record types, etc).
+- Very different feel and aims meant a whole new name.
+- I encourage you: start with zygomys, make something of your own. 2-clause BSD license.
+
+* non-goals
+
+- this is not a sales pitch for you to "use this product"
+- One language to rule them all? Not a goal
+
+// fold: left fold is a classic higher order function
+//
+//  lst: pair list, the input
+//  fun: processes one element in the list
+//  acc: the accumulated result, the output
+//
+(defn foldl [lst fun acc]
+    (cond                  // cond is zygo's if-then-else.
+        (empty? lst) acc   // return acc if input done.
+            (foldl         // else call ourselves recursively.
+               (cdr lst)   // cdr extracts the 2nd node from lst.
+               fun
+               (fun (car lst) acc))  // car extracts the head element
+    )
+)
+
+Taken verbatim from [[https://github.com/glycerine/zygomys/blob/master/tests/closure.zy][ zygo's closure tests]].
+
+[[https://en.wikipedia.org/wiki/Fold_(higher-order_function)]]
+
+// fold: right fold is a classic higher order function
+//
+//  lst: pair list, the input
+//  fun: processes one element in the list
+//  acc: the accumulated result, the output
+//
+(defn foldr [lst fun acc]
+    (cond                  // cond is zygo's if-then-else.
+        (empty? lst) acc   // return acculated output if no more input.
+            (fun           // else call fun on the head of lst
+            (car lst)      
+            (foldr (cdr lst) fun acc)) // recursive call on the tail of the input
+    )
+)
