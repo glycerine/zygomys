@@ -1,0 +1,13 @@
+
+(def w (weather type:"stormy"))
+w
+(fieldls w)
+(methodls w)
+(type? w)
+(str weather)
+(def he (hellcat speed:567))
+(def ho (hornet SpanCm:12))
+(def snoopdog (snoopy friends:[he ho] cry:"Curse you, Red Baron!"))
+(def ans (_method snoopdog EchoWeather: w))
+ans
+(_method snoopdog Fly: w)

@@ -23,7 +23,7 @@ https://github.com/glycerine/zygomys
 
 .code snoopy1
 
-- has Plane as embedded element (we handle these)
+- note slice of interface / embedded elements (we handle these)
 
 * Methods defined on the Snoopy struct
 
@@ -49,7 +49,7 @@ https://github.com/glycerine/zygomys
 
 - in three lines we've instantiated and configured 3 Go structs in a tree
 
-- call a Go methods on a Go struct... Snoopy goes Fly()-ing
+- call a Go method on a Go struct... Snoopy goes Fly()-ing
 
 .code plane.interact
 
@@ -75,11 +75,9 @@ The Michoacan pocket gopher is a small animal with short, dense, black, lustrous
 
 * Getting started How to embed the REPL in your code
 
-See [[https://github.com/glycerine/zygomys/blob/master/cmd/zygo/main.go]]
+See [[https://github.com/glycerine/zygomys/blob/master/cmd/zygo/main.go]]. Just three steps.
 
 .code main.go  /START OMIT/,/END OMIT/
-
-that's it.
 
 
 * overview of design
@@ -183,6 +181,7 @@ that's it.
 
 .code first.go /START OMIT/,/END OMIT/
 
+.code use.first
 
 * tour of the insides: major files of `github.com/glycerine/zygomys/repl/`
 
@@ -198,7 +197,7 @@ that's it.
 
 * auxilliary/helper files; also in `github.com/glycerine/zygomys/repl/`
 
-- typeutils.go    ..........runtime type inspection from zygo
+- typeutils.go    ..........runtime type inspection from zygo (type? var)
 - hashutils.go    ..........records (a.k.a hash tables)
 - listutils.go    ..........linked list (*SexpPair) utilities
 - strutils.go     ..........string utilities
@@ -305,5 +304,7 @@ symbols with a special prefix
 - port TLA+ model checker to Go, with zygomys interface
 - unification engine for type system experiments
 
+* final thoughts
 
-
+- interpreters teach the value of a test-driven approach
+- tests are simply language fragments

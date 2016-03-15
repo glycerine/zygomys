@@ -1,12 +1,12 @@
+// Go:
 
 type Flyer interface {
 	Fly(ev *Weather) (s string, err error)
 }
 
 func (p *Snoopy) Fly(ev *Weather) (s string, err error) {
+        ev.Type = "VERY " + ev.Type // side effect!
 	s = fmt.Sprintf("Snoopy sees weather '%s', cries '%s'", ev.Type, p.Cry)
 	fmt.Println(s)
 	return
 }
-
-

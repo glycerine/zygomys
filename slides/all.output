@@ -1,0 +1,26 @@
+zygo> (def w (weather type:"stormy"))
+ (weather type:"stormy")
+zygo> w
+ (weather type:"stormy")
+zygo> (fieldls w)
+["Time time.Time" "Size int64" "Type string" "Details []uint8"]
+zygo> (methodls w)
+["DecodeMsg func(*zygo.Weather, *msgp.Reader) error" "EncodeMsg func(*zygo.Weather, *msgp.Writer) error" "MarshalMsg func(*zygo.Weather, []uint8) ([]uint8, error)" "Msgsize func(*zygo.Weather) int" "UnmarshalMsg func(*zygo.Weather, []uint8) ([]uint8, error)"]
+zygo> (type? w)
+"weather"
+zygo> (str weather)
+"zygo.Weather"
+zygo> (def he (hellcat speed:567))
+ (hellcat speed:567)
+zygo> (def ho (hornet SpanCm:12))
+ (hornet SpanCm:12)
+zygo> (def snoopdog (snoopy friends:[he ho] cry:"Curse you, Red Baron!"))
+ (snoopy friends:[ (hellcat speed:567)  (hornet SpanCm:12)] cry:"Curse you, Red Baron!")
+zygo> (def ans (_method snoopdog EchoWeather: w))
+[ (weather time:nil size:0 type:"stormy" details:[]byte(nil))]
+zygo> ans
+[ (weather time:nil size:0 type:"stormy" details:[]byte(nil))]
+zygo> (_method snoopdog Fly: w)
+Snoopy sees weather 'VERY stormy', cries 'Curse you, Red Baron!'
+["Snoopy sees weather 'VERY stormy', cries 'Curse you, Red Baron!'" nil]
+zygo>

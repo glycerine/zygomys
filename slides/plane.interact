@@ -1,9 +1,5 @@
 zygo> 
-zygo> (def ans (_method snoopdog EchoWeather: w))
-zygo> ans
-[ (weather time:nil size:0 type:"stormy" details:[]byte(nil))]
-zygo>
 zygo> (_method snoopdog Fly: w)
-Snoopy sees weather 'stormy', cries 'Curse you, Red Baron!'
-["Snoopy sees weather 'stormy', cries 'Curse you, Red Baron!'" nil]
-zygo> 
+Snoopy sees weather 'VERY stormy', cries 'Curse you, Red Baron!'
+["Snoopy sees weather 'VERY stormy', cries 'Curse you, Red Baron!'" nil]
+zygo>

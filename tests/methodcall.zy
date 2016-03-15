@@ -1,7 +1,7 @@
 // calls into Go produce expected results
 (def callres (_method (snoopy cry:"yeah!") Fly: (weather type:"awesomesauce")))
 (assert (== callres
-            ["Snoopy sees weather 'awesomesauce', cries 'yeah!'" ()]))
+            ["Snoopy sees weather 'VERY awesomesauce', cries 'yeah!'" ()]))
 
 // structs coming back into zygo from Go
 (def w (weather type:"delightful" size:888))

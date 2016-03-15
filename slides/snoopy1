@@ -1,19 +1,10 @@
+// Go:
+type Plane struct {
+	Speed   int    
+	Friends []Flyer
+}
 
 type Snoopy struct {
-	Plane            `json:"plane" msg:"plane"`
-	Cry      string  `json:"cry" msg:"cry"`
-	Pack     []int   `json:"pack"`
-	Carrying []Flyer `json:"carrying"`
+	Plane
+	Cry   string
 }
-
-type Wings struct {
-	SpanCm int
-}
-
-type Plane struct {
-	Wings
-	Speed   int     `json:"speed" msg:"speed"`
-	Chld    Flyer   `json:"chld" msg:"chld"`
-	Friends []Flyer `json:"friends"`
-}
-

@@ -304,7 +304,7 @@ func Test017ReflectCallOnGoMethodsOneArg(t *testing.T) {
 		case *SexpArray:
 			// arr[0] should be string
 			cv.So(arr.Val[0].(*SexpStr).S, cv.ShouldEqual,
-				`Snoopy sees weather 'sunny', cries 'yowza'`)
+				`Snoopy sees weather 'VERY sunny', cries 'yowza'`)
 		default:
 			VPrintf("got %T/val=%#v\n", arr, arr)
 			panic("expected array back from _method")

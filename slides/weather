@@ -1,8 +1,6 @@
+// Go:
 type Weather struct {
-	Time    time.Time `json:"time" msg:"time"`
-	Size    int64     `json:"size" msg:"size"`
-	Type    string    `json:"type" msg:"type"`
-	Details []byte    `json:"details" msg:"details"`
+	Type    string
 }
 
 func (p *Snoopy) EchoWeather(w *Weather) *Weather {
