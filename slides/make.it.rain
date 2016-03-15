@@ -1,0 +1,23 @@
+
+zygo> (def w (weather type:"stormy"))
+ (weather type:"stormy")
+zygo> w
+ (weather type:"stormy")
+zygo>
+zygo> (fieldls w)
+["Time time.Time" "Size int64" "Type string" "Details []uint8"]
+
+zygo> (methodls w)
+["DecodeMsg func(*zygo.Weather, *msgp.Reader) error"
+ "EncodeMsg func(*zygo.Weather, *msgp.Writer) error"
+ "MarshalMsg func(*zygo.Weather, []uint8) ([]uint8, error)"
+ "Msgsize func(*zygo.Weather) int"
+ "UnmarshalMsg func(*zygo.Weather, []uint8) ([]uint8, error)"]
+zygo>
+
+zygo> (type? w)
+"weather"
+zygo>
+zygo> (str weather)
+"zygo.Weather"
+zygo>

@@ -1,0 +1,14 @@
+// fold: right fold is a classic higher order function
+//
+//  lst: pair list, the input
+//  fun: processes one element in the list
+//  acc: the accumulated result, the output
+//
+(defn foldr [lst fun acc]
+    (cond                  // cond is zygo's if-then-else.
+        (empty? lst) acc   // return acculated output if no more input.
+            (fun           // else call fun on the head of lst
+            (car lst)      
+            (foldr (cdr lst) fun acc)) // recursive call on the tail of the input
+    )
+)

@@ -1,0 +1,12 @@
+
+// define a hashmap with four key-value pairs:
+(def h (hash a:44 b:55 c:77 d:99))
+
+// define a string to concat stuff to
+(def s "")
+
+// iterate over the hashmap h, adding to s
+(range k v h (set s (concat s " " (str k) "-maps->" (str v) "\n")))
+
+// inspect the output in s
+s

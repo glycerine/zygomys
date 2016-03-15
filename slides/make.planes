@@ -1,0 +1,7 @@
+zygo> (def he (hellcat speed:567))
+ (hellcat speed:567)
+zygo> (def ho (hornet SpanCm:12))
+ (hornet SpanCm:12)
+zygo> (def snoopdog (snoopy friends:[he ho] cry:"Curse you, Red Baron!"))
+ (snoopy friends:[ (hellcat speed:567)  (hornet SpanCm:12)] cry:"Curse you, Red Baron!")
+zygo> 

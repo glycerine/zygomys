@@ -58,3 +58,64 @@ Taken verbatim from [[https://github.com/glycerine/zygomys/blob/master/tests/clo
             (foldr (cdr lst) fun acc)) // recursive call on the tail of the input
     )
 )
+
+
+* why use an interpreter
+- high personal productivity (examples: python, javascript, Matlab, R, Mathematica, lisp, scheme)
+- fast feedback
+- essential for exploratory data analysis 
+- script your game/application
+- become a language designer
+- DSL creation: model a complex/dynamic problem, configure a complex/dynamic solution
+- fun to write
+- experiment with design
+
+
+* side-effects
+
+* perspective on TDD
+
+- test-driven design is incredibly powerful at bringing up cross-layer issues.
+- no where more apparent than in a very layered design like an interpreter/compiler. When you make a small language change in the lexer/parser, the test suite will tell what/if you've broken anything else.
+- easily one of the most important techniques I've ever learned
+- feel like you have super powers
+
+- interpreter work really taught me the power of TDD
+- TDD is not a test technique, its an design technique
+
+- "To specify the server, write the client before the server."
+
+* components
+
+- s-expression: lexer and parser
+- unification (for type-system and other); this is how parametric polymorphism could be implemented.
+- repl. Read-eval-print-loop. an interactive prompt.
+
+
+
+
+* goals: learning and fun
+
+- programming languages are fun!
+- Lisp shows us: they don't have to be difficult to write
+- particularly great context to learn about Test-driven design
+- writing tests is trivial: write little language fragments
+
+* fun
+
+- Great for learning about interpreters, compilers, langauge structure.
+- The whole project is a playground for experimentation. Evolve a design.
+- I'll show you the architecture; take it and explore, try new stuff.
+
+* overview
+
+- explain overall architecture
+- explain how to add a feature
+- explain debug tools
+- how to see what is happening
+
+* if time
+
+- I'll show the Go API/interface
+- how to extend your language with a new function.
+- lots of examples on github; the `github.com/gycerine/zygomys/repl/` directory is the central place.

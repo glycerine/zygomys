@@ -1,0 +1,10 @@
+zygo> (def ar [4 5 6 7])
+[4 5 6 7]
+zygo> (aget ar 0)
+4
+zygo> (aget ar 1)
+5
+zygo> (aset ar 1 999)
+zygo> ar
+[4 999 6 7]
+zygo>

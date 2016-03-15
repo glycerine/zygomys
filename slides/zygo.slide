@@ -9,11 +9,11 @@ https://github.com/glycerine/zygomys
 
 * scenario
 
-* Snoopy's areonautic adventures
+* Snoopy versus the Red Baron
 
 .image snoopy_ace.png
 
-* Curse you, Red Baron!
+* What is his cry?
 
 .image curse_you_red_baron.png
 
@@ -29,13 +29,35 @@ https://github.com/glycerine/zygomys
 
 .code snoopy2
 
-- anything that can Fly satifies the Flyer interface
+- anything that can Fly satifies the Flyer interface. Weather, informs the Fly event:
 
-* Flyer friends, can be listed in the Snoopy.Carrying slice
+.code weather
+
+* Flyer friends, can be listed in the Friends slice in Plane
 
 .code other.planes
 
 * with the data model in mind, lets interact with it using zygo...
+
+* Make it rain
+
+.code make.it.rain
+
+* Bring in some planes, in formation
+
+.code make.planes
+
+- in three lines we've instantiated and configured 3 Go structs in a tree
+
+- call a Go methods on a Go struct... Snoopy goes Fly()-ing
+
+.code plane.interact
+
+* we've just been interacting/scripting Go data and methods...
+
+* yeah, reflection is pretty cool
+
+* zygomys - a scripting toolkit for Go
 
 * zygomys -- what's in a name?
 
@@ -45,27 +67,15 @@ https://github.com/glycerine/zygomys
 - bonus: there is a "pocket gopher" known as Zygogeomys trichopus. Our mascot.
 - this is the union of lisp and Go. In a small cute package. 
 
+
+The Michoacan pocket gopher is a small animal with short, dense, black, lustrous fur... It is docile when caught, making no attempt to bite as do other pocket gophers.
+ -- [[https://en.wikipedia.org/wiki/Michoacan_pocket_gopher]]
+
+.image pocket_gopher2.jpeg
+
 * lexicon
 
-- The mascot's name is Ziggy.
-- Ziggy is a high-altitude pocket gopher. zygo aims to be a high-level control language.
-- `zygomys` is the name for the language, `zygo` is the repl that implements the language.
-- Let's agree to use the shorthand `zygo` when speaking to refer to the language and project. Its easier to say.
-- I write out 'zygomys' for maximum search-ability (a unique search term). Moreover 'zygomys' is not trademarked.
-
-
-* goals: learning and fun
-
-- programming languages are fun!
-- Lisp shows us: they don't have to be difficult to write
-- particularly great context to learn about Test-driven design
-- writing tests is trivial: write little language fragments
-
-* fun
-
-- Great for learning about interpreters, compilers, langauge structure.
-- The whole project is a playground for experimentation. Evolve a design.
-- I'll show you the architecture; take it and explore, try new stuff.
+- Let's agree to use the shorthand `zygo` when speaking. 
 
 * Getting started How to embed the REPL in your code
 
@@ -76,35 +86,51 @@ See [[https://github.com/glycerine/zygomys/blob/master/cmd/zygo/main.go]]
 that's it.
 
 
-* overview
-
-- explain overall architecture
-- explain how to add a feature
-- explain debug tools
-- how to see what is happening
-
-* if time
-
-- I'll show the Go API/interface
-- how to extend your language with a new function.
-- lots of examples on github; the `github.com/gycerine/zygomys/repl/` directory is the central place.
-
 * overview of design
-- layers
+
 - a) lexer produces tokens
 - b) parser produces lists and arrays of symbols
 - c) macros run at definition type
 - d) codegen produces s-expression byte-code
 - e) builders create and check types at `run` time. (Builders are a hybrid between a function and a macro.)
-- f) vm executes s-expression byte-code
+- f) vm executes s-expression byte-code. User's functions run.
+
+.image pocket_gopher3.jpeg
+
+
+* Let's see some code
+
+- hashmaps can define arbitrary records; with or without attached Go shadow structs
+
+.code sample.run
+
+* records
+
+- records are hash tables with a name and a key-order
+
+.code harry.record
+
+* plain hash maps, without a record TypeName
+
+.code hash.demo
+
+* arrays/slices
+
+.code slice.demo
+
+* arrays (slices)
+
+.code arrays.run
+
 
 
 * philosophy
-- interactive, but also enable compile-down to Go (eventual aim)
+- interactive, but also aim to eventually compile-down to Go
 - blending Go and lisp
 - I built it for myself
 
 * interesting about the zygo/repl code itself
+
 - using goroutines as coroutines to get pausable parsing
 - if you haven't discovered how to do conditional sends on a channel yet, examples inside `github.com/glycerine/zygomys/repl/parser.go`.
    
@@ -116,62 +142,55 @@ that's it.
 
 * hard parts already done, part 2
 
-- reflection based calls into Go code
-- data structure for dynamic structs
 - eval
-- rudiments of a type system tries to match Go's type system.
 - sandboxable / restrict outside access
-- goroutines/channels/regexp (untouched since Glisp; not polished)
+- it can feel very lispy...
 
-* use cases
+.code hof.foldr
 
-- as a query language
-- configuration language that can query itself.
-- multi-core friendly scripting. Leverage Go's multicore strength for exploratory configuration, data analysis and scripting.
- 
-* the basic zygo->go function interface
+* but there is also an infix interface
 
-.code first.go /START OMIT/,/END OMIT/
+- anything inside curly braces is infix parsed
 
-* why use an interpreter
-- high personal productivity (examples: python, javascript, Matlab, R, Mathematica, lisp, scheme)
-- fast feedback
-- essential for exploratory data analysis 
-- script your game/application
-- become a language designer
-- DSL creation: model a complex/dynamic problem, configure a complex/dynamic solution
-- fun to write
-- experiment with design
+.code infix.session
 
-
-* side-effects
-
-* perspective on TDD
-
-- test-driven design is incredibly powerful at bringing up cross-layer issues.
-- no where more apparent than in a very layered design like an interpreter/compiler. When you make a small language change in the lexer/parser, the test suite will tell what/if you've broken anything else.
-- easily one of the most important techniques I've ever learned
-- feel like you have super powers
-
-- interpreter work really taught me the power of TDD
-- TDD is not a test technique, its an design technique
-
-- "To specify the server, write the client before the server."
-
-* components
-
-- s-expression: lexer and parser
-- unification (for type-system and other); this is how parametric polymorphism could be implemented.
-- repl. Read-eval-print-loop. an interactive prompt.
-
-* infix and (infixExpand)
-
-- infix: top-down operator precedence parser (Pratt parser; see Douglas Crockford's writings)
+- uses a top-down operator precedence parser (Pratt parser)
 
 .code infix.txt
 
 
-* major files of `github.com/glycerine/zygomys/repl/`
+* Top-down Operator Precedence (Pratt parsing)
+
+- Like quicksort. A short, sharp algorithm. Not particularly easy to understand on the first pass. It builds a parse tree so that precendence is decreasing as you go up to the root. Higher precedence means stronger binding, which means being lower in the parse tree.
+
+- works like magic. Very easy to extend your language with new infix operations, once the core Expression routine is implemented. This is how zygo processes infix syntax.
+
+- links for learning:
+
+.link https://github.com/glycerine/zygomys/blob/master/repl/pratt.go Already written into zygo.
+
+.link https://github.com/glycerine/PrattParserInC/blob/master/Vaughan.Pratt.TDOP.pdf original paper by Vaughan Pratt
+
+.link http://javascript.crockford.com/tdop/tdop.html Douglas Crockford's article 
+
+.link http://effbot.org/zone/simple-top-down-parsing.htm example in python 
+
+.link http://journal.stuffwithstuff.com/2011/03/19/pratt-parsers-expression-parsing-made-easy/ example in Java 
+
+
+* zygo use cases
+
+- as a query language
+- configuration language that can query itself.
+- Eventually... multi-core friendly scripting.
+- Eventually... leverage Go's multicore strength for exploratory configuration, data analysis and scripting.
+ 
+* the basic Go API: add a zygo method in Go
+
+.code first.go /START OMIT/,/END OMIT/
+
+
+* tour of the insides: major files of `github.com/glycerine/zygomys/repl/`
 
 - repl.go        ...ReplMain() lives here, toplevel loop
 - expression.go  ...the core Sexp s-expression definitions
@@ -202,7 +221,7 @@ that's it.
 - time.go     (wrap time.Time)
 - jsonmsgp.go (conversions to/from json and msgpack)
 
-* internal Sexp types
+* the fundamental Sexp types
 
 .code exp.txt
 
@@ -228,44 +247,27 @@ See the top of `github.com/glycerine/zygomys/repl/jsonmsgp.go` for a guide.
 
 .code msgp.txt
 
-* records
 
-- easy to type
-- define data with named fields
-- hash tables with a name and a key-order
+* type system
 
-
-* hash maps
-
-.code hash.demo
-
-* arrays/slices
-
-.code slice.demo
-
-* arrays/slices
-
-.code slice2.demo
-
-* still todo
+* type system. still todo...
 
 - optional static type system is half implemented
-- struct declarations done, function type declarations with (func) not yet done.
-- the static typing aims for compability with Go types (to enable dompile-down)
 - see commented out sections of `github.com/glycerine/zygomys/tests/decl_fun.zy`
+- struct declarations done, function type declarations with (func) not yet done.
+- the static typing aims for compability with Go types (to enable compile-down)
 
-* still todo 2
+* intro to the mechanism of zygo's static type system: Builders
 
-- dataframe
-- matrix / tensor types
-- complex number support
+- A builder is a special kind of function; a hybrdid between a function and a macro. I chose the term `builder` to reflect their ability to build structs (i.e. new types), packages, type aliases.
 
-* dreams
+- Like a macro, a builder receives the un-evaluated parse-tree of symbols from its caller. A builder can therefore be used to build new types and declarations new functions/methods.
 
-- model checking syntax and checker (OBDD based)
-- port TLA+ model checker to Go, with zygomys interface
-- unification engine for parametric polymorphism experiments
-- inteface to Vowpow-Wabbit for psuedo online-SVD
+- Like a function, a builder is called at run/evaluation time, not at definition time. (Macros are run at code-gen, which is definition time).
+
+- Since it receives an un-evaluated tree of symbols, a builder must manually evaluate any arguments it wishes to find bindings for in scope.
+
+- Used in zygo to define structs. Next planned use: define interfaces, functions, methods, and type aliases. See [[https://github.com/glycerine/zygomys/blob/master/repl/builders.go]] for examples.
 
 
 * If you want to play with type systems
@@ -291,34 +293,18 @@ symbols with a special prefix
 - sigil prefixed-symbols evaluate to themselves by default.
 - useful for grammars, symbolic reasoning.
 
-* Pratt parsing : theory of operation for Top-down Operator Precedence parsing
 
-- Like quicksort. A short, sharp algorithm. Not particularly easy to understand on the first pass.
+* still todo 2
 
-- works like magic. Very easy to extend your language with new infix operations, once the core Expression routine is implemented. This is how zygo processes infix syntax.
+- dataframe
+- matrix / tensor types
+- complex number support
 
-- links for learning:
+* dreams
 
-.link https://github.com/glycerine/zygomys/blob/master/repl/pratt.go Already written into zygo.
-
-.link https://github.com/glycerine/PrattParserInC/blob/master/Vaughan.Pratt.TDOP.pdf original paper
-
-.link http://javascript.crockford.com/tdop/tdop.html Douglas Crockford's article 
-
-.link http://effbot.org/zone/simple-top-down-parsing.htm example in python 
-
-.link http://journal.stuffwithstuff.com/2011/03/19/pratt-parsers-expression-parsing-made-easy/ example in Java 
+- model checking syntax and checker (OBDD based)
+- port TLA+ model checker to Go, with zygomys interface
+- unification engine for typing experiments
 
 
-* building zygo's static type system
-
-- A builder is a special kind of function; a hybrdid between a function and a macro. I chose the term `builder` to reflect their ability to build structs (i.e. new types), packages, type aliases.
-
-- Like a macro, a builder receives the un-evaluated parse-tree of symbols from its caller. A builder can therefore be used to build new types and declarations new functions/methods.
-
-- Like a function, a builder is called at run/evaluation time, not at definition time. (Macros are run at code-gen, which is definition time).
-
-- Since it receives an un-evaluated tree of symbols, a builder must manually evaluate any arguments it wishes to find bindings for in scope.
-
-- Used in zygo to define structs. Next planned use: define interfaces, functions, methods, and type aliases. See [[https://github.com/glycerine/zygomys/blob/master/repl/builders.go]] for examples.
 

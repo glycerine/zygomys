@@ -1,0 +1,9 @@
+zygo> { a = 10 }
+10
+zygo> { b = 12 }
+12
+zygo> { a + b * 2 }
+34
+zygo> { a + b * 2 / .5}
+58
+zygo> 
