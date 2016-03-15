@@ -12,17 +12,16 @@ https://github.com/glycerine/zygomys
 - zygo means union (yoke in Greek; the zygote was the first cell that was you).
 - mys means mouse (Greek view of the bicep)
 - this is a little mouse of a language
-- this is the union of lisp and Go
-- bonus: there is a "pocket gopher" known as Zygogeomys. A mascot!
+- bonus: there is a "pocket gopher" known as Zygogeomys trichopus. Our mascot.
+- this is the union of lisp and Go. In a small cute package. 
 
 * lexicon
 
 - The mascot's name is Ziggy.
-- Ziggy is a high-altitude gopher. We aim to be a high-level control language.
-
+- Ziggy is a high-altitude pocket gopher. We aim to be a high-level control language.
 - `zygomys` is the name for the language, `zygo` is the repl commanad.
 - I'll just say `zygo` alot to refer to the language in general. Its easier to say.
-- I write out 'zygomys' for maximum search-ability (its a unique search term).
+- I write out 'zygomys' for maximum search-ability (a unique search term).
 
 
 * goals: learning and fun
@@ -33,7 +32,7 @@ https://github.com/glycerine/zygomys
 - writing tests is trivial: write language fragments
 - I'll show the Go API/interface
 - how to extend your language with a new function.
-- lots of examples in the github repo
+- lots of examples on github; the `repl` subdir is the central place.
 
 * fun
 
@@ -44,21 +43,21 @@ https://github.com/glycerine/zygomys
 
 * origins
 
-- I started with Howard Mao's Glisp project, on github.
-- Some of that architecture remains.
+- I started with Howard Mao's Glisp project.
+- Nicely segmented design, good foundation.
+- Some of that architecture remains (e.g. name of the env class is *Glisp).
 - Many new features (Go compatable identifiers, true lexical scope, sandboxing, reflection, json/msgpack, infix, dot-symbols, record types, etc).
 - Very different feel and aims meant a whole new name.
-- I encourage you: start with zygomys, explore.
+- I encourage you: start with zygomys, make something of your own.
 
 * non-goals
 
-- this is not a product that you consume
 - this is not a sales pitch for you to "use this product"
-- we are all developers
 - One language to rule them all? Not a goal
 
 
 * overview
+
 - explain overall architecture
 - explain how to add a feature
 - explain debug tools
@@ -79,10 +78,7 @@ https://github.com/glycerine/zygomys
 * philosophy
 - interactive, but also enable compile-down to Go (eventual aim)
 - blending Go and lisp
-- built for myself
-- this is a toolkit[1].
-
-`[1] build variations to your taste`
+- I built it for myself
 
 * interesting about the zygo/repl code itself
 - using goroutines as coroutines to get pausable parsing
