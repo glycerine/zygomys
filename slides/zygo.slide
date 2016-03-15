@@ -298,11 +298,11 @@ symbols with a special prefix
 - matrix / tensor types
 - complex number support
 
-* dreams
+* it's the future ... dream big
 
 - model checking syntax and checker (OBDD based)
 - port TLA+ model checker to Go, with zygomys interface
-- unification engine for typing experiments
+- unification engine for type system experiments
 
 
 
