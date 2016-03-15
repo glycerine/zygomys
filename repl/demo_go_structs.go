@@ -57,10 +57,13 @@ type Hellcat struct {
 	Plane `json:"plane" msg:"plane"`
 }
 
-func (p *Snoopy) Fly(ev *Weather) (s string, err error) {
-	ev.Type = "VERY " + ev.Type
-	s = fmt.Sprintf("Snoopy sees weather '%s', cries '%s'", ev.Type, p.Cry)
+func (p *Snoopy) Fly(w *Weather) (s string, err error) {
+	w.Type = "VERY " + w.Type // side-effect, for demo purposes
+	s = fmt.Sprintf("Snoopy sees weather '%s', cries '%s'", w.Type, p.Cry)
 	fmt.Println(s)
+	for _, flyer := range p.Friends {
+		flyer.Fly(w)
+	}
 	return
 }
 
@@ -76,18 +79,18 @@ func (p *Snoopy) Sideeffect() {
 	fmt.Printf("Sideeffect() called! p = %p\n", p)
 }
 
-func (b *Hornet) Fly(ev *Weather) (s string, err error) {
-	fmt.Printf("Hornet sees weather %v", ev)
+func (b *Hornet) Fly(w *Weather) (s string, err error) {
+	fmt.Printf("Hornet.Fly() called. I see weather %v\n", w.Type)
 	return
 }
 
-func (b *Hellcat) Fly(ev *Weather) (s string, err error) {
-	fmt.Printf("Hellcat sees weather %v", ev)
+func (b *Hellcat) Fly(w *Weather) (s string, err error) {
+	fmt.Printf("Hellcat.Fly() called. I see weather %v\n", w.Type)
 	return
 }
 
 type Flyer interface {
-	Fly(ev *Weather) (s string, err error)
+	Fly(w *Weather) (s string, err error)
 }
 
 type Weather struct {

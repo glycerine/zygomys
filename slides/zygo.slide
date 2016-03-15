@@ -62,7 +62,7 @@ https://github.com/glycerine/zygomys
 * zygomys -- what's in a name?
 
 - zygo means union (yoke in Greek; the zygote was the first cell that was you).
-- mys means mouse (Greek view of the bicep)
+- mys means mouse
 - this is a little mouse of a language
 - bonus: a "pocket gopher" known as Zygogeomys trichopus. Our mascot, "Ziggy".
 - this is the union of lisp and Go. In a small cute package. 
@@ -180,7 +180,7 @@ In zygo we run through the hashmap like this:
 - Eventually... multi-core friendly scripting. (Channels now, but no select yet).
 - Eventually... leverage Go's multicore strength for exploratory configuration, data analysis and scripting. (I love R for productivity, Go for production).
  
-* the basic Go API: add a zygo method in Go
+* the basic Go API: adding compiled functions to zygo
 
 .code first.go /START OMIT/,/END OMIT/
 
@@ -262,11 +262,11 @@ See the top of `github.com/glycerine/zygomys/repl/jsonmsgp.go` for a guide.
 
 - A builder is a special kind of function; a hybrdid between a function and a macro. I chose the term `builder` to reflect their ability to build structs (i.e. new types), packages, type aliases.
 
-- Like a macro, a builder receives the un-evaluated parse-tree of symbols from its caller. A builder can therefore be used to build new types and declarations new functions/methods.
+- Like a macro, a builder receives the un-evaluated parse-tree of symbols from its caller. A builder can therefore be used to build new types and declare new functions/methods.
 
 - Like a function, a builder is called at run/evaluation time, not at definition time. (Macros are run at code-gen, which is definition time).
 
-- Since it receives an un-evaluated tree of symbols, a builder must manually evaluate any arguments it wishes to find bindings for in scope.
+- Since it receives an un-evaluated tree of symbols, a builder must manually eval arguments it wants to find bindings for.
 
 - Used in zygo to define structs. Next planned use: define interfaces, functions, methods, and type aliases. See [[https://github.com/glycerine/zygomys/blob/master/repl/builders.go]] for examples.
 

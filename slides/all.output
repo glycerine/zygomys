@@ -1,5 +1,4 @@
 zygo> (def w (weather type:"stormy"))
- (weather type:"stormy")
 zygo> w
  (weather type:"stormy")
 zygo> (fieldls w)
@@ -22,5 +21,7 @@ zygo> ans
 [ (weather time:nil size:0 type:"stormy" details:[]byte(nil))]
 zygo> (_method snoopdog Fly: w)
 Snoopy sees weather 'VERY stormy', cries 'Curse you, Red Baron!'
+Hellcat.Fly() called. I sees weather VERY stormy
+Hornet.Fly() called. I see weather VERY stormy
 ["Snoopy sees weather 'VERY stormy', cries 'Curse you, Red Baron!'" nil]
 zygo>

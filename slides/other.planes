@@ -11,12 +11,12 @@ type Hellcat struct {
 	Plane
 }
 
-func (b *Hornet) Fly(ev *Weather) (s string, err error) {
-	fmt.Printf("Hornet sees weather %v", ev)
+func (b *Hornet) Fly(w *Weather) (s string, err error) {
+	fmt.Printf("Hornet.Fly() called. I see weather %v\n", w.Type)
 	return
 }
 
-func (b *Hellcat) Fly(ev *Weather) (s string, err error) {
-	fmt.Printf("Hellcat sees weather %v", ev)
+func (b *Hellcat) Fly(w *Weather) (s string, err error) {
+	fmt.Printf("Hellcat.Fly() called. I see weather %v\n", w.Type)
 	return
 }

@@ -1,5 +1,7 @@
-zygo> 
+zygo>
 zygo> (_method snoopdog Fly: w)
 Snoopy sees weather 'VERY stormy', cries 'Curse you, Red Baron!'
+Hellcat.Fly() called. I see weather VERY stormy
+Hornet.Fly() called. I see weather VERY stormy
 ["Snoopy sees weather 'VERY stormy', cries 'Curse you, Red Baron!'" nil]
 zygo>

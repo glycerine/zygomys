@@ -2,7 +2,3 @@
 type Weather struct {
 	Type    string
 }
-
-func (p *Snoopy) EchoWeather(w *Weather) *Weather {
-	return w
-}
