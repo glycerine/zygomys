@@ -80,7 +80,7 @@ See [[https://github.com/glycerine/zygomys/blob/master/cmd/zygo/main.go]]. Just 
 .code main.go  /START OMIT/,/END OMIT/
 
 
-* overview of design
+* architecture / overview of design
 
 .image pocket_gopher3.jpeg
 
@@ -311,3 +311,10 @@ symbols with a special prefix
 
 - interpreters teach the value of a test-driven approach
 - tests are simply language fragments
+
+* credits
+
+The ancestor dialect of zygomys, [[https://github.com/zhemao/glisp]] Glisp, was designed and implemented by Howard Mao [[https://zhehaomao.com/]].
+
+Thanks Howard!
+

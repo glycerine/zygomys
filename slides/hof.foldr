@@ -1,4 +1,4 @@
-// fold: right fold is a classic higher order function
+// foldr: right fold is a classic higher order function
 //       It runs a function over each element in a list.
 //
 //  lst: pair list, the input

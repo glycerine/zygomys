@@ -1,5 +1,5 @@
 // struct type definition
-// Note the `e` numbers for evolution (like protobufs); the deprecated notation borrowed from flatbuffers.
+// Note the `e` numbers for evolution (like protobufs); + the deprecated notation 
 (struct Car [
  (field              Id: int64        e:0       gotags:`json:"id",name:"id"` )
  (field            Name: string       e:1       gotags:`json:"name"`         )
