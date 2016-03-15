@@ -1,14 +1,14 @@
-
+// https://en.wikipedia.org/wiki/McDonnell_Douglas_F/A-18_Hornet
 type Hornet struct {
 	Plane    `json:"plane" msg:"plane"`
 	Mass     float64
 	Nickname string
 }
 
+// https://en.wikipedia.org/wiki/Grumman_F6F_Hellcat
 type Hellcat struct {
 	Plane `json:"plane" msg:"plane"`
 }
-
 
 func (b *Hornet) Fly(ev *Weather) (s string, err error) {
 	fmt.Printf("Hornet sees weather %v", ev)
