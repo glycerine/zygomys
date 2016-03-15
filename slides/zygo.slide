@@ -96,7 +96,10 @@ See [[https://github.com/glycerine/zygomys/blob/master/cmd/zygo/main.go]]. Just 
 
 - hashmaps can define arbitrary records; with or without attached Go shadow structs
 
-.code sample.run
+.code sample.run1
+In zygo we run through the hashmap like this:
+.code sample.run3
+
 
 * records
 

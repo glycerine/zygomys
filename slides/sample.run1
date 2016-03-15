@@ -1,0 +1,6 @@
+zygo> // define a hashmap with four key-value pairs:
+zygo> (def h (hash a:44 b:55 c:77 d:99))
+ (hash a:44 b:55 c:77 d:99)
+zygo> // define a string to concat stuff to
+zygo> (def s "")
+""
