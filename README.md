@@ -74,18 +74,19 @@ $ go get github.com/glycerine/zygomys/cmd/zygo
  * [x] Arithmetic (`+`, `-`, `*`, `/`, `mod`, `**`)
  * [x] Shift Operators (`sll`, `srl`, `sra`)
  * [x] Bitwise operations (`bit-and`, `bit-or`, `bit-xor`)
- * [x] Comparison operations (`<`, `>`, `<=`, `>=`, `==`, `!=`, and `not=`)
+ * [x] Comparison operations (`<`, `>`, `<=`, `>=`, `==`, `!=`)
  * [x] Short-circuit boolean operators (`and` and `or`)
  * [x] Conditionals (`cond`)
  * [x] Lambdas (`fn`)
- * [x] Bindings (`def`, `defn`, and `let`)
+ * [x] Bindings (`def`, `defn`, `let`, `letseq`)
  * [x] Standalone and embedable REPL.
  * [x] Tail-call optimization
  * [x] Go API
  * [x] Macro System with macexpand `(macexpand (your-macro))` makes writing/debugging macros easy. 
  * [x] Syntax quoting -- with caret `^()` instead of backtick.
+ * [x] Lisp-expression quoting uses `%` (not `'`; which delimites runes as in Go).
  * [x] Channel and goroutine support
- * [x] Lexical scope.
+ * [x] Full closures with lexical scope.
 
 [See the wiki for lots of details and a full description of the zygomys language.](https://github.com/glycerine/zygomys/wiki).
 
