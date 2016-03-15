@@ -1,12 +1,20 @@
 zygo> (defmap ranch)
 zygo> (def hogwild (ranch cowboy:"Harry" cowgirl:"Hermonie"))
  (ranch cowboy:"Harry" cowgirl:"Hermonie")
+zygo> 
+zygo> // records can be nested:
 zygo> (defmap bunkhouse)
 zygo> (hset hogwild bunk1:(bunkhouse bed1:"Luciuos" bed2: "Dumbledore"))
+zygo> 
+zygo> // and nested again
 zygo> (defmap closet)
 zygo> (hset (:bunk1 hogwild) closet1:(closet broom:"Nimbuz2"))
-zygo> (assert (== (-> hogwild bunk1: closet1: broom:) "Nimbuz2"))
-zygo> (assert (== (-> hogwild bunk1:closet1:broom:) "Nimbuz2"))
+zygo> 
+zygo> // and then threaded:
+zygo> (-> hogwild bunk1: closet1: broom:) "Nimbuz2")
+"Nimbuz2"
+zygo> (.hogwild.bunk1.closet1.broom) // alternative syntax
+"Nimbuz2"
 zygo> hogwild
  (ranch cowboy:"Harry" cowgirl:"Hermonie" bunk1: (bunkhouse bed1:"Luciuos" bed2:"Dumbledore" closet1: (closet broom:"Nimbuz2")))
 zygo> 

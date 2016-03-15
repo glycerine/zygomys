@@ -66,16 +66,12 @@ https://github.com/glycerine/zygomys
 - this is a little mouse of a language
 - bonus: there is a "pocket gopher" known as Zygogeomys trichopus. Our mascot.
 - this is the union of lisp and Go. In a small cute package. 
-
+- Let's agree to use the shorthand `zygo` for the language when speaking.
 
 The Michoacan pocket gopher is a small animal with short, dense, black, lustrous fur... It is docile when caught, making no attempt to bite as do other pocket gophers.
  -- [[https://en.wikipedia.org/wiki/Michoacan_pocket_gopher]]
 
 .image pocket_gopher2.jpeg
-
-* lexicon
-
-- Let's agree to use the shorthand `zygo` when speaking. 
 
 * Getting started How to embed the REPL in your code
 
@@ -161,7 +157,7 @@ that's it.
 
 * Top-down Operator Precedence (Pratt parsing)
 
-- Like quicksort. A short, sharp algorithm. Not particularly easy to understand on the first pass. It builds a parse tree so that precendence is decreasing as you go up to the root. Higher precedence means stronger binding, which means being lower in the parse tree.
+- Like quicksort, Pratt's is a short, sharp algorithm; not particularly easy to understand on the first pass. It builds a parse tree so that precendence is decreasing as you go up to the root. Higher precedence means stronger binding, which means being lower in the parse tree.
 
 - works like magic. Very easy to extend your language with new infix operations, once the core Expression routine is implemented. This is how zygo processes infix syntax.
 
@@ -192,34 +188,34 @@ that's it.
 
 * tour of the insides: major files of `github.com/glycerine/zygomys/repl/`
 
-- repl.go        ...ReplMain() lives here, toplevel loop
-- expression.go  ...the core Sexp s-expression definitions
-- environment.go ...lexical scope, symbol table lookup
-- lexer.go       ...hand written lexer
-- parser.go      ...recursive parsing of symbols into lists and arrays
-- generator.go   ...code-gen: generate Sexp byte code
-- vm.go          ...virtual machine that executes the byte code
-- builders.go    ...declarations and type checking
-- gotypereg.go   ...the type registry for Go/zygo type correspondence
+- repl.go        ..........ReplMain() lives here, toplevel loop
+- expression.go  ..........the core Sexp s-expression definitions
+- environment.go ..........lexical scope, symbol table lookup
+- lexer.go       ..........hand written lexer
+- parser.go      ..........recursive parsing of symbols into lists and arrays
+- generator.go   ..........code-gen: generate Sexp byte code
+- vm.go          ..........virtual machine that executes the byte code
+- builders.go    ..........declarations and type checking
+- gotypereg.go   ..........the type registry for Go/zygo type correspondence
 
 * auxilliary/helper files; also in `github.com/glycerine/zygomys/repl/`
 
-- typeutils.go    ...runtime type inspection from zygo
-- hashutils.go    ...records (a.k.a hash tables)
-- listutils.go    ...linked list (*SexpPair) utilities
-- strutils.go     ...string utilities
-- scope.go        ...stack of symbol tables
-- stack.go        ...used by scopes
-- rawutils.go     ...raw []byte handling
-- numerictower.go    number conversions
-- vprint.go       ...debug print stuff for development
+- typeutils.go    ..........runtime type inspection from zygo
+- hashutils.go    ..........records (a.k.a hash tables)
+- listutils.go    ..........linked list (*SexpPair) utilities
+- strutils.go     ..........string utilities
+- scope.go        ..........stack of symbol tables
+- stack.go        ..........used by scopes
+- rawutils.go     ..........raw []byte handling
+- numerictower.go  ..........number conversions
+- vprint.go       ..........debug print stuff for development
 
 * custom types: extension example files
 
-- random.go   (wrap math/rand.Float64() call)
-- regexp.go   (wrap regexp.Regexp)
-- time.go     (wrap time.Time)
-- jsonmsgp.go (conversions to/from json and msgpack)
+- random.go  ..........  (wrap math/rand.Float64() call)
+- regexp.go  ..........  (wrap regexp.Regexp)
+- time.go    ..........  (wrap time.Time)
+- jsonmsgp.go .......... (conversions to/from json and msgpack)
 
 * the fundamental Sexp types
 
@@ -230,7 +226,7 @@ that's it.
 - SexpPair   (linked lists)
 - SexpArray  (slices)
 - SexpHash   (hash table; keys and values are any Sexp, key ordering preserved)
-`...`
+
 
 * debug tools, at the zygo repl
 - `.dump`  .......... shows the data stack
@@ -304,7 +300,7 @@ symbols with a special prefix
 
 * it's the future ... dream big
 
-- model checking syntax and checker (OBDD based)
+- model checking syntax and checker (Ordered-Binary-Decision-Diagram based)
 - port TLA+ model checker to Go, with zygomys interface
 - unification engine for type system experiments
 
