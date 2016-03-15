@@ -239,6 +239,8 @@ that's it.
 - `(macexpand)`   ..........   show what a macro expands to
 - `(infixExpand {})`   ..........   show the s-expression expansion of an infix expression
 
+- the wiki has alot of documentation. [[https://github.com/glycerine/zygomys/wiki]]
+
 * json / msgpack support
 
 See the top of `github.com/glycerine/zygomys/repl/jsonmsgp.go` for a guide.
