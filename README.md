@@ -73,7 +73,7 @@ $ go get github.com/glycerine/zygomys/cmd/zygo
  * [x] Float (float64), Int (int64), Char, String, Symbol, List, Array, and Hash datatypes builtin.
  * [x] Arithmetic (`+`, `-`, `*`, `/`, `mod`, `**`)
  * [x] Shift Operators (`sll`, `srl`, `sra`)
- * [x] Bitwise operations (`bit-and`, `bit-or`, `bit-xor`)
+ * [x] Bitwise operations (`bitAnd`, `bitOr`, `bitXor`)
  * [x] Comparison operations (`<`, `>`, `<=`, `>=`, `==`, `!=`)
  * [x] Short-circuit boolean operators (`and` and `or`)
  * [x] Conditionals (`cond`)
