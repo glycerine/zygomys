@@ -494,7 +494,7 @@ func (parser *Parser) ParseBlockComment(start *Token) (sx Sexp, err error) {
 			panic("internal error: inside a block comment, we should only see TokenComment and TokenEndBlockComment tokens")
 		}
 	}
-	return block, nil
+	//return block, nil
 }
 
 func (parser *Parser) ParseInfix(depth int) (Sexp, error) {

@@ -157,20 +157,18 @@ In zygo we run through the hashmap like this:
 * Top-down Operator Precedence (Pratt parsing)
 
 - Like quicksort, Pratt's is a short, sharp algorithm; not particularly easy to understand on the first pass. It builds a parse tree so that precedence is decreasing as you go up to the root. Higher precedence means stronger binding, which means being lower in the parse tree.
-
 - works like magic. Very easy to extend your language with new infix operations, once the core Expression routine is implemented. This is how zygo processes infix syntax.
-
 - links for learning:
 
-.link [[https://github.com/glycerine/zygomys/blob/master/repl/pratt.go]] Already written into zygo.
+[[https://github.com/glycerine/zygomys/blob/master/repl/pratt.go]] Already written into zygo.
 
-.link [[https://github.com/glycerine/PrattParserInC/blob/master/Vaughan.Pratt.TDOP.pdf]] original paper by Vaughan Pratt
+[[https://github.com/glycerine/PrattParserInC/blob/master/Vaughan.Pratt.TDOP.pdf]] original
 
-.link [[http://javascript.crockford.com/tdop/tdop.html]] Douglas Crockford's article 
+[[http://javascript.crockford.com/tdop/tdop.html]] Douglas Crockford's article 
 
-.link [[http://effbot.org/zone/simple-top-down-parsing.htm]] example in python 
+example in python: [[http://effbot.org/zone/simple-top-down-parsing.htm]]
 
-.link [[http://journal.stuffwithstuff.com/2011/03/19/pratt-parsers-expression-parsing-made-easy/]] example in Java 
+blog with discussion: [[http://journal.stuffwithstuff.com/2011/03/19/pratt-parsers-expression-parsing-made-easy/]]
 
 
 * zygo use cases

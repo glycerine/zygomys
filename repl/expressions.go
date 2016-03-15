@@ -56,7 +56,7 @@ func NewSexpPointer(pointedTo Sexp) *SexpPointer {
 }
 
 func (p *SexpPointer) SexpString() string {
-	return fmt.Sprintf("%p", p.Target)
+	return fmt.Sprintf("%p", &p.Target)
 	//return fmt.Sprintf("(* %v) %p", p.PointedToType.RegisteredName, p.Target)
 }
 

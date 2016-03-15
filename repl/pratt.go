@@ -453,7 +453,7 @@ func (env *Glisp) LeftBindingPower(sx Sexp) int {
 	default:
 		panic(fmt.Errorf("LeftBindingPower: unhandled sx :%#v", sx))
 	}
-	return 0
+	//return 0
 }
 
 func (p *Pratt) ShowCnodeStack() {
