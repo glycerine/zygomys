@@ -199,20 +199,6 @@ https://github.com/glycerine/zygomys
 - `(macexpand)`
 - `(infixExpand {})`
 
-* sigil system
-
-symbols with a special prefix
-
-- `mysym` is a regular symbol
-- `$mysym` is a sigil symbol, with sigil '$'. It is distinct from `mysym`.
-- `#mysym` is a sigil symbol, with sigil '#'. It is distinct from `$mysym` and `mysym`.
-- `?mysym` is a sigil symbol, with sigil '?'. It is distinct from the above.
-
-
-
-- sigil prefixed-symbols evaluate to themselves by default.
-- useful for grammars, symbolic reasoning.
-
 * json / msgpack support
 
 See the top of `github.com/glycerine/zygomys/repl/jsonmsgp.go` for a guide.
@@ -225,27 +211,60 @@ See the top of `github.com/glycerine/zygomys/repl/jsonmsgp.go` for a guide.
 - define data with named fields
 - hash tables with a name and a key-order
 
+
+* hash maps
+
+.code hash.demo
+
+* arrays/slices
+
+.code slice.demo
+
+* arrays/slices
+
+.code slice2.demo
+
+* still todo
+
+- optional static type system is half implemented
+- struct declarations done, function type declarations with (func) not yet done.
+- the static typing aims for compability with Go types (to enable dompile-down)
+- see commented out sections of `github.com/glycerine/zygomys/tests/decl_fun.zy`
+
+* still todo 2
+
+- dataframe
+- matrix / tensor types
+- complex number support
+
+* dreams
+
+- model checking syntax and checker (OBDD based)
+- port TLA+ model checker to Go, with zygomys interface
+- unification engine for parametric polymorphism experiments
+- inteface to Vowpow-Wabbit for psuedo online-SVD
+
+
 * If you want to play with type systems
 
 - try out your parametric-polymorphism idea?
 - I don't know if its a good idea but...
 - the sigil-system is setup to let you explore this area
-- makes it easy to define type-variables, for instance
+- sigil prefixed symbols start with `$`, `#`, or `?`
+- makes it easy to define type-variables, for example.
 
-- is there a unification implimentation?
 
-* argument: use JSON/YAML/other static data-only language
-- meh.
-- just avoids the scripting problem, moving it elsewhere.
-- no opportunity to compile-down
-- painful to type JSON interactively
-- doesn't support exploratory analysis
-- DSLs awkward
-- no language design
-- I hate having to put double quotes around everything
-- no support for complex number types, bignums, matrices, tensors, etc.
+* sigil system
 
-* hash maps
+symbols with a special prefix
 
-- (def h (hash key1:"val1" key2:222))
-- (hget h key1:)
+- `mysym` is a regular symbol
+- `$mysym` is a sigil symbol, with sigil '$'. It is distinct from `mysym`.
+- `#mysym` is a sigil symbol, with sigil '#'. It is distinct from `$mysym` and `mysym`.
+- `?mysym` is a sigil symbol, with sigil '?'. It is distinct from the above.
+
+* sigils part 2
+
+- sigil prefixed-symbols evaluate to themselves by default.
+- useful for grammars, symbolic reasoning.
+

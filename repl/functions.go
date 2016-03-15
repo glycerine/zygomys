@@ -264,6 +264,9 @@ func ArrayAccessFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		if len(args) != 3 {
 			return SexpNull, WrongNargs
 		}
+		if i < 0 || i >= len(arr.Val) {
+			return SexpNull, errors.New("Array index out of bounds")
+		}
 		arr.Val[i] = args[2]
 	}
 	return SexpNull, nil

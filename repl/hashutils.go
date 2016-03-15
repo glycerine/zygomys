@@ -817,7 +817,8 @@ func coreStringifyHash(hash *SexpHash) string {
 			}
 			str += val.SexpString() + " "
 		} else {
-			panic(err)
+			// ignore deleted keys
+			// don't panic(err)
 		}
 	}
 	return str

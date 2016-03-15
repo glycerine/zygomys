@@ -1,0 +1,10 @@
+zygo> (def a [8 4 1 7])
+[8 4 1 7]
+zygo> (hget a 1)
+4
+zygo> //
+zygo> (:3 1)
+error in ::-1: Error calling ':': second argument to ':' function must be hash or array
+in __main:19
+zygo> (:3 a)
+7

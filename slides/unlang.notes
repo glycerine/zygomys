@@ -1,0 +1,11 @@
+
+* argument: use JSON/YAML/other static data-only language
+- meh.
+- just avoids the scripting problem, moving it elsewhere.
+- no opportunity to compile-down
+- painful to type JSON interactively
+- doesn't support exploratory analysis
+- DSLs awkward
+- no language design
+- I hate having to put double quotes around everything
+- will never support interaction with complex number types, bignums, matrices, tensors, etc.

@@ -1,0 +1,15 @@
+zygo>  (hash key1:"val1" key2:222)
+zygo> (hget h key1:)
+"val1"
+zygo> (hset h key3:(list 5 6 7))
+zygo> (hget h key3:)
+(5 6 7)
+zygo> h
+ (hash key1:"val1" key2:222 key3:(5 6 7))
+zygo> (hdel h key2:)
+zygo> 
+zygo> h
+ (hash key1:"val1" key3:(5 6 7))
+zygo> (:key3 h) // shorthand for hget
+(5 6 7)
+zygo>

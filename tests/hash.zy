@@ -51,3 +51,12 @@
 (assert (== (-> lazy8 bunk1: closet1: broom:) "Nimbuz2"))
 (assert (== (-> lazy8 bunk1:closet1:broom:) "Nimbuz2"))
 
+// delete and print should be okay
+(def h (hash key1:"val1" key2:222))
+(hget h key1:)
+(hset h key3:(list 5 6 7))
+(hget h key3:)
+h
+(hdel h key2:)
+h
+

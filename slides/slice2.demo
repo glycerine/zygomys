@@ -1,0 +1,13 @@
+zygo> a
+[8 4 1 7]
+zygo> (aset a 0 12)
+zygo> a
+[12 4 1 7]
+zygo> (assert (== %default (:99 a %default)))
+zygo> (:99 a %default) // get %default back if 99 is out-of-bounds
+default
+zygo> (append a [77 88])
+[12 4 1 7 [77 88]]   // todo: needs append with ...
+zygo> a
+[12 4 1 7]
+zygo>
