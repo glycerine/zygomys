@@ -57,8 +57,6 @@ https://github.com/glycerine/zygomys
 
 * yeah, reflection is pretty cool
 
-* and interactive reflection, data at your fingertips...
-
 * zygomys - a scripting toolkit for Go
 
 * zygomys -- what's in a name?
@@ -94,7 +92,7 @@ that's it.
 - b) parser produces lists and arrays of symbols
 - c) macros run at definition type
 - d) codegen produces s-expression byte-code
-- e) builders create and check types at `run` time. (Builders are a hybrid between a function and a macro.)
+- e) (work in progress) builders create and check types at `run` time. (Builders are a hybrid between a function and a macro.)
 - f) a simple virtual machine executes s-expression byte-code. User's functions run.
 
 .image pocket_gopher3.jpeg
@@ -137,7 +135,7 @@ that's it.
 
 - script calls to existing Go functions using existing Go structs. Using reflect is somewhat laborious; but its done
 - lexical scoping => closures that capture variables outside a function based on where that function was originally defined, as opposed to where it is called from.
-- a repl-friendly linear time parser, avoiding the O(n*n) trap. (Uses go-routines as co-routines. inversion of receive loop)
+- a repl-friendly linear time parser, avoiding the O(n*n) trap. (Uses go-routines as co-routines. inversion of select loop -- exit when you've got another line of input tokens)
 
 * hard parts already done, part 2
 
