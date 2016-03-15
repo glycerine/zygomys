@@ -73,7 +73,7 @@ The Michoacan pocket gopher is a small animal with short, dense, black, lustrous
 
 .image pocket_gopher2.jpeg
 
-* Getting started How to embed the REPL in your code
+* Getting started: How to embed the REPL in your code
 
 See [[https://github.com/glycerine/zygomys/blob/master/cmd/zygo/main.go]]. Just three steps.
 
@@ -156,21 +156,21 @@ In zygo we run through the hashmap like this:
 
 * Top-down Operator Precedence (Pratt parsing)
 
-- Like quicksort, Pratt's is a short, sharp algorithm; not particularly easy to understand on the first pass. It builds a parse tree so that precendence is decreasing as you go up to the root. Higher precedence means stronger binding, which means being lower in the parse tree.
+- Like quicksort, Pratt's is a short, sharp algorithm; not particularly easy to understand on the first pass. It builds a parse tree so that precedence is decreasing as you go up to the root. Higher precedence means stronger binding, which means being lower in the parse tree.
 
 - works like magic. Very easy to extend your language with new infix operations, once the core Expression routine is implemented. This is how zygo processes infix syntax.
 
 - links for learning:
 
-.link https://github.com/glycerine/zygomys/blob/master/repl/pratt.go Already written into zygo.
+.link [[https://github.com/glycerine/zygomys/blob/master/repl/pratt.go]] Already written into zygo.
 
-.link https://github.com/glycerine/PrattParserInC/blob/master/Vaughan.Pratt.TDOP.pdf original paper by Vaughan Pratt
+.link [[https://github.com/glycerine/PrattParserInC/blob/master/Vaughan.Pratt.TDOP.pdf]] original paper by Vaughan Pratt
 
-.link http://javascript.crockford.com/tdop/tdop.html Douglas Crockford's article 
+.link [[http://javascript.crockford.com/tdop/tdop.html]] Douglas Crockford's article 
 
-.link http://effbot.org/zone/simple-top-down-parsing.htm example in python 
+.link [[http://effbot.org/zone/simple-top-down-parsing.htm]] example in python 
 
-.link http://journal.stuffwithstuff.com/2011/03/19/pratt-parsers-expression-parsing-made-easy/ example in Java 
+.link [[http://journal.stuffwithstuff.com/2011/03/19/pratt-parsers-expression-parsing-made-easy/]] example in Java 
 
 
 * zygo use cases
@@ -198,7 +198,7 @@ In zygo we run through the hashmap like this:
 - builders.go    ..........declarations and type checking
 - gotypereg.go   ..........the type registry for Go/zygo type correspondence
 
-* auxilliary/helper files; also in `github.com/glycerine/zygomys/repl/`
+* auxiliary/helper files; also in `github.com/glycerine/zygomys/repl/`
 
 - typeutils.go    ..........runtime type inspection from zygo (type? var)
 - hashutils.go    ..........records (a.k.a hash tables)
@@ -237,7 +237,7 @@ In zygo we run through the hashmap like this:
 - `(macexpand)`   ..........   show what a macro expands to
 - `(infixExpand {})`   ..........   show the s-expression expansion of an infix expression
 
-- the wiki has alot of documentation. [[https://github.com/glycerine/zygomys/wiki]]
+- the wiki has a lot of documentation. [[https://github.com/glycerine/zygomys/wiki]]
 
 * json / msgpack support
 
@@ -251,16 +251,16 @@ See the top of `github.com/glycerine/zygomys/repl/jsonmsgp.go` for a guide.
 * type system. work in progress...
 
 - always manifestly typed: a variable points to a value that knows its own type.
-- addon: optional static type system -- enforced at definition time -- is half implemented
+- add-on: optional static type system -- enforced at definition time -- is half implemented
 - to follow status, `github.com/glycerine/zygomys/tests/decl_fun.zy`
 - struct declarations done, function type declarations with (func) not yet done.
-- the static typing aims for compability with Go types (to enable compile-down)
+- the static typing aims for compatibility with Go types (to enable compile-down)
 
 .code declare.struct
 
 * intro to the mechanism of zygo's static type system: Builders
 
-- A builder is a special kind of function; a hybrdid between a function and a macro. I chose the term `builder` to reflect their ability to build structs (i.e. new types), packages, type aliases.
+- A builder is a special kind of function; a hybrid between a function and a macro. I chose the term `builder` to reflect their ability to build structs (i.e. new types), packages, type aliases.
 
 - Like a macro, a builder receives the un-evaluated parse-tree of symbols from its caller. A builder can therefore be used to build new types and declare new functions/methods.
 
