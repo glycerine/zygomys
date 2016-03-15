@@ -2,3 +2,10 @@
 
 .code calltree.txt
 
+* maxims
+
+- this is a toolbox (TIAT)
+- you have the tools (YHTT)
+- Client Before Server (CBS)
+- write tests first (a tiny language fragment counts)
+- CBS are ways of saying: TDD is the key to evolutionary extensions and sharing. The test suite tells you and others when you've broken earlier/others features; and when you've successfully integated a new feature.
