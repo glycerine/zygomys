@@ -35,9 +35,9 @@
 
 (assert (== {5 mod 3} 2))
 
-{newvar ++}
+{newvar++}
 (assert (== newvar 4))
-{newvar --}
+{newvar--}
 (assert (== newvar 3))
 
 // pow should be right associative
@@ -45,7 +45,7 @@
 
 // lack of spacing between builtin operators should not matter,
 // expect that -1 is preferred over subtract 1 so 6-1 won't parse.
-(assert (== (add {4+1} {6- 1}) 10))
+(assert (== (add {4+1} {6 - 1}) 10))
 
 // debug help: infixExpand shows the conversion from infix to s-expression
 (assert (== "(quote (set a 4))" (str (infixExpand { a = 4})) ))
@@ -63,3 +63,8 @@
 
 (assert (== true { 1 == 1}))
 (assert (== true { 1 != 0}))
+
+(assert (== "(quote (<= 2 3))" (str (infixExpand {2<=3})) ))
+(assert {2 < 3})
+
+
