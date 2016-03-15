@@ -19,7 +19,7 @@ https://github.com/glycerine/zygomys
 
 - imagine Snoopy comes back with friends...
 
-* data model for a plane formation, a Go struct
+* data model for a plane formation, Go structs
 
 .code snoopy1
 
