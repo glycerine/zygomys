@@ -22,17 +22,18 @@ https://github.com/glycerine/zygomys
 
 - `zygomys` is the name for the language, `zygo` is the repl commanad.
 - I'll just say `zygo` alot to refer to the language in general. Its easier to say.
-- I write out the full 'zygomys' in text because I want Google-able/search-ability.
+- I write out 'zygomys' for maximum search-ability (its a unique search term).
 
 
 * goals: learning and fun
 
 - programming languages are fun!
 - they don't have to be difficult
-
 - particularly great context to learn about Test-driven design
-
-- I'll give examples of the Go API, and how to extend your language with a new function.
+- writing tests is trivial: write language fragments
+- I'll show the Go API/interface
+- how to extend your language with a new function.
+- lots of examples in the github repo
 
 * fun
 
@@ -44,24 +45,24 @@ https://github.com/glycerine/zygomys
 * origins
 
 - I started with Howard Mao's Glisp project, on github.
-- Some of that architecture still remains.
-- Lots of changes and many new features. (true lexical scope, sandboxing, etc).
+- Some of that architecture remains.
+- Many new features (Go compatable identifiers, true lexical scope, sandboxing, reflection, json/msgpack, infix, dot-symbols, record types, etc).
 - Very different feel and aims meant a whole new name.
-- I encourage you: start with zygomys and extend in your own direction.
+- I encourage you: start with zygomys, explore.
 
 * non-goals
 
 - this is not a product that you consume
 - this is not a sales pitch for you to "use this product"
 - we are all developers
-- One language to rule them all? Not a goal.
+- One language to rule them all? Not a goal
 
 
 * overview
 - explain overall architecture
 - explain how to add a feature
 - explain debug tools
-
+- how to see what is happening
 
 * overview of design
 - layers
@@ -72,10 +73,11 @@ https://github.com/glycerine/zygomys
 - e) vm executes s-expression byte-code (infix eval happens)
 
 - interpreter work really taught me the power of TDD
-- its not a test technique, its a *design* technique
+- TDD is not a test technique, its an design technique
+
 
 * philosophy
-- interactive, but also enable compile-down to Go
+- interactive, but also enable compile-down to Go (eventual aim)
 - blending Go and lisp
 - built for myself
 - this is a toolkit[1].
@@ -84,14 +86,16 @@ https://github.com/glycerine/zygomys
 
 * interesting about the zygo/repl code itself
 - using goroutines as coroutines to get pausable parsing
-- if you haven't discovered how to do conditional sends on a channel yet, examples inside.
+- if you haven't discovered how to do conditional sends on a channel yet, examples inside `github.com/glycerine/zygomys/repl/parser.go`.
    
 * the hard parts that are already done
+
 - script calls to existing Go functions using existing Go structs. Using reflect is somewhat laborious; but its done
 - lexical scoping => closures that capture variables outside a function based on where that function was originally defined, as opposed to where it is called from.
-- a repl-friendly linear time parser, avoiding the O(n*n) trap. (Uses go-routines as co-routines!)
+- a repl-friendly linear time parser, avoiding the O(n*n) trap. (Uses go-routines as co-routines. inversion of receive loop)
 
 * hard parts already done, part 2
+
 - reflection based calls into Go code
 - data structure for dynamic structs
 - eval
@@ -100,6 +104,7 @@ https://github.com/glycerine/zygomys
 - goroutines/channels/regexp (untouched since Glisp; not polished)
 
 * use cases
+
 - as a query language
 - configuration language that can query itself.
 - multi-core friendly scripting. Leverage Go's multicore strength for exploratory data analysis and scripting.
@@ -107,10 +112,6 @@ https://github.com/glycerine/zygomys
 * the basic zygo->go function interface
 
 .code first.go /START OMIT/,/END OMIT/
-
-* Generate call tree
-
-.code calltree.txt
 
 * why use an interpreter
 - high personal productivity (examples: python, javascript, Matlab, R, Mathematica, lisp, scheme)
