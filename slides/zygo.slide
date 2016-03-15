@@ -137,6 +137,8 @@ that's it.
 - lexical scoping => closures that capture variables outside a function based on where that function was originally defined, as opposed to where it is called from.
 - a repl-friendly linear time parser, avoiding the O(n*n) trap. (Uses go-routines as co-routines. inversion of select loop -- exit when you've got another line of input tokens)
 
+- Go-style for loops, nestable, with break to label and continue to label.
+
 * hard parts already done, part 2
 
 - eval
