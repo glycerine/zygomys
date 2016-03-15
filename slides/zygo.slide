@@ -93,7 +93,7 @@ that's it.
 - c) macros run at definition type
 - d) codegen produces s-expression byte-code
 - e) builders create and check types at `run` time. (Builders are a hybrid between a function and a macro.)
-- f) vm executes s-expression byte-code. User's functions run.
+- f) a simple virtual machine executes s-expression byte-code. User's functions run.
 
 .image pocket_gopher3.jpeg
 
