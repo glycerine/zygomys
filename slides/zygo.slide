@@ -114,9 +114,6 @@ that's it.
 
 .code hash.demo
 
-* arrays/slices
-
-.code slice.demo
 
 * arrays (slices)
 
@@ -143,14 +140,15 @@ that's it.
 * hard parts already done, part 2
 
 - eval
-- sandboxable / restrict outside access
-- it can feel very lispy...
+- sandboxable / restrict filesystem access
+- full closures with lexical scope
+- higher order functions. it can feel very lispy...
 
 .code hof.foldr
 
 * but there is also an infix interface
 
-- anything inside curly braces is infix parsed
+- anything inside curly braces is infix parsed. Can mix in function calls.
 
 .code infix.session
 

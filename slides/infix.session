@@ -6,4 +6,15 @@ zygo> { a + b * 2 }
 34
 zygo> { a + b * 2 / .5}
 58
-zygo> 
+zygo> (defn cube [x] (* x x x)) // or (defn cube [x] {x*x*x})
+zygo> a
+10
+zygo> b
+12
+zygo> cube
+(defn cube [x] (* x x x))
+zygo> (cube b)
+1728
+zygo> { a + (cube b) ** 2}  // L ** R means raise L to the power R.
+2985994
+zygo>  
