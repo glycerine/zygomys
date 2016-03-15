@@ -224,20 +224,20 @@ that's it.
 .code exp.txt
 
 - SexpNull (actually a value; an instance of the SexpSentinel type)
-- SexpSymbol (symbol table entries)
+- SexpSymbol (variable and function names; symbol table entries)
 - SexpPair   (linked lists)
 - SexpArray  (slices)
 - SexpHash   (hash table; keys and values are any Sexp, key ordering preserved)
 `...`
 
-* debug tools
-- `.dump`
-- `.debug`
-- `.undebug`
-- `.gls`
-- `.ls`
-- `(macexpand)`
-- `(infixExpand {})`
+* debug tools, at the zygo repl
+- `.dump`  .......... shows the data stack
+- `.debug`   ..........  traces the PC (program counter) through the byte code
+- `.undebug`    .......... turns off traces
+- `.gls`       ..........  global list of all symbols
+- `.ls`        ..........  list of local symbols
+- `(macexpand)`   ..........   show what a macro expands to
+- `(infixExpand {})`   ..........   show the s-expression expansion of an infix expression
 
 * json / msgpack support
 
@@ -248,7 +248,7 @@ See the top of `github.com/glycerine/zygomys/repl/jsonmsgp.go` for a guide.
 
 * type system
 
-* type system. still todo...
+* type system. half still todo...
 
 - optional static type system is half implemented
 - see commented out sections of `github.com/glycerine/zygomys/tests/decl_fun.zy`
