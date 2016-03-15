@@ -1,11 +1,14 @@
-zygomys: Embedded scripting toolkit for Go
+zygomys: embedded scripting toolkit for Go
 16 March 2016
 
 Jason E. Aten, Ph.D.
 Principal Engineer, Betable.com
 j.e.aten@gmail.com
-@jasonaten_ 
+@jasonaten_
+
 https://github.com/glycerine/zygomys
+
+[[https://github.com/glycerine/zygomys/wiki.]] The wiki has details and examples.
 
 * scenario
 
@@ -315,6 +318,7 @@ symbols with a special prefix
 
 - interpreters teach the value of a test-driven approach
 - tests are simply language fragments
+
 
 * credits
 
