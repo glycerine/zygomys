@@ -1,0 +1,10 @@
+// struct type definition
+// Note the `e` numbers for evolution (like protobufs); the deprecated notation borrowed from flatbuffers.
+(struct Car [
+ (field              Id: int64        e:0       gotags:`json:"id",name:"id"` )
+ (field            Name: string       e:1       gotags:`json:"name"`         )
+ (field        BadApple: string       e:2       deprecated:true                  )
+ (field     SliceOfLife: ([]string)   e:3 )     // slice of string, matching Go's syntax.
+ (field  PointerSisters: (* int64)    e:4 )     // pointer to an int64
+ (field        OtherCar: (* Car)      e:5 )     // pointer to a Car struct
+ ])
