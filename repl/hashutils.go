@@ -788,22 +788,8 @@ func (hash *SexpHash) ShortName() string {
 }
 
 func (hash *SexpHash) SexpString() string {
-	//P("top of SexpString, hash = '%#v'", hash)
-	//if hash.TypeName != "hash" {
-	return NamedHashSexpString(hash)
-	//}
-	/*
-		str := "{"
-		str += coreStringifyHash(hash)
-		if len(str) > 1 {
-			return str[:len(str)-1] + "}"
-		}
-		return str + "}"
-	*/
-}
 
-func coreStringifyHash(hash *SexpHash) string {
-	str := ""
+	str := " (" + hash.TypeName + " "
 	for _, key := range hash.KeyOrder {
 		val, err := hash.HashGet(nil, key)
 		if err == nil {
@@ -821,12 +807,6 @@ func coreStringifyHash(hash *SexpHash) string {
 			// don't panic(err)
 		}
 	}
-	return str
-}
-
-func NamedHashSexpString(hash *SexpHash) string {
-	str := " (" + hash.TypeName + " "
-	str += coreStringifyHash(hash)
 	if len(hash.Map) > 0 {
 		return str[:len(str)-1] + ")"
 	}
