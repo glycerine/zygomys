@@ -1,0 +1,26 @@
+(defmap ranch)
+(def hogwild (ranch cowboy:"Harry" cowgirl:"Hermonie"))
+
+// records can be nested:
+(defmap bunkhouse)
+(hset hogwild bunk1:(bunkhouse bed1:"Luciuos" bed2: "Dumbledore"))
+
+// and nested again
+(defmap closet)
+(hset (:bunk1 hogwild) closet1:(closet broom:"Nimbuz2")) // add
+
+// and then threaded:
+(-> hogwild bunk1: closet1: broom:)
+"Nimbuz2"
+(.hogwild.bunk1.closet1.broom)
+
+ (hogwild
+    (ranch 
+       cowboy:"Harry" 
+       cowgirl:"Hermonie"       
+       bunk1: (bunkhouse 
+           bed1:"Luciuos" 
+           bed2:"Dumbledore"
+           closet1: (closet 
+               broom:"Nimbuz2" ) ) ) )
+   

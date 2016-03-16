@@ -106,11 +106,11 @@ In zygo we run through the hashmap like this:
 
 * records
 
-- records are hash tables with a name and a key-order. Getters: 'hget', ':', '->', and .dot.symbol.paths
+- records are hash tables with a name and a key-order. Getters: 'hget', ':', '->', and .dot.symbol.paths.  Records are declared with `(defmap recordName)`.
 
 .code harry.record
 
-* plain hash maps, without a record TypeName
+* plain hash maps, without a distinct record TypeName
 
 .code hash.demo
 

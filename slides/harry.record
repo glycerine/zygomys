@@ -1,20 +1,21 @@
+// let's build up this nested set of records, then query it.
+zygo> (ranch 
+       cowboy:"Harry" 
+       cowgirl:"Hermonie"       
+       bunk1: (bunkhouse 
+           bed1:"Lucius" 
+           bed2:"Dumbledore"
+           closet1: (closet 
+               broom:"Nimbus2k" ) ) ) )
+// built it
 zygo> (defmap ranch)
 zygo> (def hogwild (ranch cowboy:"Harry" cowgirl:"Hermonie"))
- (ranch cowboy:"Harry" cowgirl:"Hermonie")
-zygo> 
-zygo> // records can be nested:
 zygo> (defmap bunkhouse)
-zygo> (hset hogwild bunk1:(bunkhouse bed1:"Luciuos" bed2: "Dumbledore"))
-zygo> 
-zygo> // and nested again
+zygo> (hset hogwild bunk1:(bunkhouse bed1:"Lucius" bed2: "Dumbledore"))
 zygo> (defmap closet)
-zygo> (hset (:bunk1 hogwild) closet1:(closet broom:"Nimbuz2")) // add
-zygo> 
-zygo> // and then threaded:
-zygo> (-> hogwild bunk1: closet1: broom:)
-"Nimbuz2"
+zygo> (hset (:bunk1 hogwild) closet1:(closet broom:"Nimbus2k"))
+
+zygo> (-> hogwild bunk1: closet1: broom:) // query ala clojure
+"Nimbus2k"
 zygo> (.hogwild.bunk1.closet1.broom) // alternative syntax
-"Nimbuz2"
-zygo> hogwild
- (ranch cowboy:"Harry" cowgirl:"Hermonie" bunk1: (bunkhouse bed1:"Luciuos" bed2:"Dumbledore" closet1: (closet broom:"Nimbuz2")))
-zygo> 
+"Nimbus2k"
