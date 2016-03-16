@@ -54,7 +54,7 @@ $ go get github.com/glycerine/zygomys/cmd/zygo
  * [x] `(for [(initializer) (test) (advance)] (body))` for-loops match those in C and Go. Both `(break)` and `(continue)` are available for additional loop control, and can be labeled to break out of nested loops.
  * [x] Raw bytes type `(raw string)` lets you do zero-copy `[]byte` manipulation.
  * [x] Record definitions `(defmap)` make configuration a breeze.
- * [x] Files can be recursively sourced with `(req path)` or `(source "path-string")`.
+ * [x] Files can be recursively sourced with `(source "path-string")`.
  * [x] Go style raw string literals, using `` `backticks` ``, can contain newlines and `"` double quotes directly. Easy templating.
  * [x] Easy to extend. See the `repl/random.go`, `repl/regexp.go`, and `repl/time.go` files for examples.
  * [x] Clojure-like threading `(-> hash field1: field2:)` and `(:field hash)` selection. 
