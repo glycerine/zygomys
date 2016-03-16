@@ -9,8 +9,16 @@ import (
 // all Sexp are typed, and have a zero value corresponding to
 // the type of the Sexp.
 
+// Sexp is the central interface for all
+// S-expressions (Symbol expressions ala lisp).
 type Sexp interface {
+	// SexpString: produce a string from our value.
+	// Single-line strings can ignore indent.
+	// Only multiline strings should follow every
+	// newline with at least indent worth of spaces.
 	SexpString(indent int) string
+
+	// Type returns the type of the value.
 	Type() *RegisteredType
 }
 
