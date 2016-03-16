@@ -20,7 +20,7 @@ https://github.com/glycerine/zygomys
 
 .code snoopy1
 
-- somewhat contrived in order demonstrate slice of interface and embedded struct handling (challenging under reflect)
+- somewhat contrived. slice of interface, embedded struct handling
 
 * Imagine Snoopy has Friends who Fly
 
@@ -175,15 +175,16 @@ See the top of `github.com/glycerine/zygomys/repl/jsonmsgp.go` for a guide.
 
 .code declare.struct
 
-* zygo use cases
+* zygo uses
 
-- as a query language
-- configuration language that can query itself.
+- scripting, pause and interact with data
+- configuration language
 - Eventually... multi-core friendly scripting. (Channels now, but no select yet).
 - Eventually... leverage Go's multicore strength for exploratory configuration, data analysis and scripting. (I love R for productivity, Go for production).
 
 * it's the future ... dream big
 
+- constraint/logic programming syntax (use sigils)
 - model checking syntax and checker (Ordered-Binary-Decision-Diagram based)
 - port TLA+ model checker to Go, with zygomys interface
 - unification engine for type system experiments

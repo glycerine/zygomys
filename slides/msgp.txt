@@ -1,4 +1,4 @@
- Conversion map
+ Conversion map:
 
  Go map[string]interface{}  <--(1)--> lisp
    ^                                  ^ |
@@ -20,5 +20,4 @@
 (4) see herein
      (a) SexpToMsgpack() and SexpToJson()
      (b) MsgpackToSexp(); uses (4) = (2) + (1)
-(5) The SexpToGoStructs() and ToGoFunction() in this
-    file.
+(5) The SexpToGoStructs() and ToGoFunction() in this file.
