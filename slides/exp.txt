@@ -1,4 +1,4 @@
 type Sexp interface {
-	SexpString() string
+	SexpString(indent int) string
 	Type() *RegisteredType
 }
