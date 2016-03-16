@@ -1,7 +1,8 @@
-zygo> // iterate over the hashmap h, adding to s
-zygo> (range k v h (set s (concat s " " (str k) "-maps->" (str v) "\n")))
-zygo> 
-zygo> // inspect the output in s
+zygo> // iterate over the hashmap hsh, adding to s
+zygo> (range  k  v  hsh
+...        /*body of loop starts -- here the body is this set call*/
+...        (set s (concat s " " (str k) "-maps->" (str v) "\n")))
+zygo>
 zygo> s
 " a-maps->44\n b-maps->55\n c-maps->77\n d-maps->99\n"
 zygo> 

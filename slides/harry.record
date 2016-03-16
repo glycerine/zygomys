@@ -7,7 +7,7 @@ zygo> (ranch
            bed2:"Dumbledore"
            closet1: (closet 
                broom:"Nimbus2k" ) ) ) )
-// built it
+// build it
 zygo> (defmap ranch)
 zygo> (def hogwild (ranch cowboy:"Harry" cowgirl:"Hermonie"))
 zygo> (defmap bunkhouse)
@@ -15,7 +15,7 @@ zygo> (hset hogwild bunk1:(bunkhouse bed1:"Lucius" bed2: "Dumbledore"))
 zygo> (defmap closet)
 zygo> (hset (:bunk1 hogwild) closet1:(closet broom:"Nimbus2k"))
 
-zygo> (-> hogwild bunk1: closet1: broom:) // query ala clojure
+zygo> (hget (hget (hget hogwild bunk1:) closet1:) broom:)  // step by step query
 "Nimbus2k"
-zygo> (.hogwild.bunk1.closet1.broom) // alternative syntax
+zygo> (-> hogwild bunk1: closet1: broom:)  // clojure style threading
 "Nimbus2k"

@@ -100,13 +100,13 @@ See [[https://github.com/glycerine/zygomys/blob/master/cmd/zygo/main.go]]. Just 
 - hashmaps can define arbitrary records; with or without attached Go shadow structs
 
 .code sample.run1
-In zygo we run through the hashmap like this:
+we range through the hashmap, `hsh`, like this:
 .code sample.run3
 
 
 * records
 
-- records are hash tables with a name and a key-order. Getters: 'hget', ':', '->', and .dot.symbol.paths.  Records are declared with `(defmap recordName)`.
+- records are hash tables with a name and a key-order.
 
 .code harry.record
 
