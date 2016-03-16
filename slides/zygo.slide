@@ -106,7 +106,7 @@ we range through the hashmap, `hsh`, like this:
 
 * records
 
-- records are hash tables with a name and a key-order.
+- records are hash tables with a name. All hash tables preserve key-order.
 
 .code harry.record
 

@@ -1,8 +1,10 @@
 zygo> (def w (weather type:"stormy"))
- (weather type:"stormy")
+zygo>
+
 zygo> w
  (weather type:"stormy")
 zygo>
+
 zygo> (fieldls w)
 ["Time time.Time" "Size int64" "Type string" "Details []uint8"]
 
@@ -13,7 +15,6 @@ zygo> (methodls w)
  "Msgsize func(*zygo.Weather) int"
  "UnmarshalMsg func(*zygo.Weather, []uint8) ([]uint8, error)"]
 zygo>
-
 zygo> (type? w)
 "weather"
 zygo>
