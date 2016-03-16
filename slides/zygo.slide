@@ -148,11 +148,11 @@ In zygo we run through the hashmap like this:
 
 * there is also an infix interface
 
-- anything inside curly braces is infix parsed. Can mix in function calls. Math becomes more readable.
+- anything inside curly braces is infix parsed. Can mix in function calls. Math becomes more readable. Uses a Pratt parser.
 
 .code infix.session
 
-- uses a top-down operator precedence parser (Pratt parser)
+* inspect the transformation
 
 .code infix.txt
 
