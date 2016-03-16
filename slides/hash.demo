@@ -1,18 +1,23 @@
 zygo> (def h (hash key1:"val1" key2:222))
 zygo> (hget h key1:)
 "val1"
-zygo> (hset h key3:(list 5 6 7))
+
+// keys and values can be any s-expression (Sexp) type
+zygo> (hset h key3:(list 5 6 7)) // create and store a list under the symbol key3
 zygo> (hget h key3:)
 (5 6 7)
+
 zygo> h
  (hash key1:"val1" key2:222 key3:(5 6 7))
-zygo> (hdel h key2:)
+ 
+zygo> (hdel h key2:)               // delete from the hashmap
 zygo> 
 zygo> h
  (hash key1:"val1" key3:(5 6 7))
+ 
 zygo> (:key3 h) // shorthand for hget
 (5 6 7)
 zygo>
-zygo> (.h.key3) // dot-symbols work now; but to be replaced shortly with '.' infix op and sigils
-(5 6 7)
+zygo> (hget h 43 %notFound) // specify arbitrary 3rd arg, here %notFound, as missing indicator
+notFound
 zygo> 

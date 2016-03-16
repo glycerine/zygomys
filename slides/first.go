@@ -1,6 +1,8 @@
 package zygo
 
 // START OMIT
+// Go: see https://github.com/glycerine/zygomys/blob/master/repl/functions.go
+//
 func FirstFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	if len(args) != 1 {
 		return SexpNull, WrongNargs
