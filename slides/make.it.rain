@@ -1,23 +1,19 @@
 zygo> (def w (weather type:"stormy"))
-zygo>
 
 zygo> w
  (weather type:"stormy")
-zygo>
 
 zygo> (fieldls w)
-["Time time.Time" "Size int64" "Type string" "Details []uint8"]
+["Type string"]
 
 zygo> (methodls w)
-["DecodeMsg func(*zygo.Weather, *msgp.Reader) error"
- "EncodeMsg func(*zygo.Weather, *msgp.Writer) error"
- "MarshalMsg func(*zygo.Weather, []uint8) ([]uint8, error)"
- "Msgsize func(*zygo.Weather) int"
- "UnmarshalMsg func(*zygo.Weather, []uint8) ([]uint8, error)"]
+["IsSunny func(*zygo.Weather) bool"]
+
 zygo>
-zygo> (type? w)
+zygo> (type? w)   //  run-time type query
 "weather"
-zygo>
-zygo> (str weather)
+
+zygo> (str weather)  // stringification, shows the Go (shadow struct) type with package prefix
 "zygo.Weather"
+
 zygo>

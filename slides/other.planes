@@ -1,22 +1,22 @@
 // Go:
-
-// https://en.wikipedia.org/wiki/McDonnell_Douglas_F/A-18_Hornet
+// https://en.wikipedia.org/wiki/McDonnell_Douglas_F/A-18_Hornet (1978 - present)
 type Hornet struct {
 	Plane
 	Mass     float64
 }
-
-// https://en.wikipedia.org/wiki/Grumman_F6F_Hellcat
+// https://en.wikipedia.org/wiki/Grumman_F6F_Hellcat (1943 - 1960)
 type Hellcat struct {
 	Plane
 }
-
 func (b *Hornet) Fly(w *Weather) (s string, err error) {
 	fmt.Printf("Hornet.Fly() called. I see weather %v\n", w.Type)
 	return
 }
-
 func (b *Hellcat) Fly(w *Weather) (s string, err error) {
 	fmt.Printf("Hellcat.Fly() called. I see weather %v\n", w.Type)
 	return
+}
+// give Weather a method to list
+func(w *Weather) IsSunny() bool {
+       return w.Type == "sunny"
 }

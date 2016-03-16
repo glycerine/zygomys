@@ -99,3 +99,7 @@ type Weather struct {
 	Type    string    `json:"type" msg:"type"`
 	Details []byte    `json:"details" msg:"details"`
 }
+
+func (w *Weather) IsSunny() bool {
+	return w.Type == "sunny"
+}

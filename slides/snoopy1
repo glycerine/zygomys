@@ -3,8 +3,20 @@ type Plane struct {
 	Speed   int    
 	Friends []Flyer
 }
-
+type Weather struct {
+	Type    string // "sunny", "stormy", ...
+}
+type Flyer interface {
+	Fly(w *Weather) (string, error) // flight is informed by the current Weather
+}
 type Snoopy struct {
 	Plane
 	Cry   string
+}
+func (p *Snoopy) Fly(w *Weather) (string, error) {
+	w.Type = "VERY " + w.Type // side-effect, for demo purposes
+	s := fmt.Sprintf("Snoopy sees weather '%s', cries '%s'", w.Type, p.Cry)
+	fmt.Println(s)
+	for _, flyer := range p.Friends { flyer.Fly(w) }
+	return s, nil
 }
