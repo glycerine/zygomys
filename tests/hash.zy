@@ -23,14 +23,14 @@
 (hdel h %a)
 // %a should be gone
 (assert (== 0 (hget h %a 0)))
-(assert (== (str h)
-`(hash
-    2:5
-    c:'c'
-    'a':3
-    b:13
-    222:42
-)`))
+(pretty true)
+(assert (== (str h)            
+` (hash 
+    2:5 
+    c:'c' 
+    'a':3 
+    b:13 
+    223:42 )`))
 (hdel h (symnum %b))
 // b should still be in there
 (assert (== 13 (hget h %b)))

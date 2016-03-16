@@ -316,7 +316,6 @@ type SexpHash struct {
 	ZMain      SexpFunction
 	ZMethods   map[string]*SexpFunction
 	env        *Glisp
-	Pretty     bool
 }
 
 var MethodNotFound = fmt.Errorf("method not found")

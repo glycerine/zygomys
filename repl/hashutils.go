@@ -788,14 +788,14 @@ func (hash *SexpHash) ShortName() string {
 	return hash.TypeName
 }
 
-func (hash *SexpHash) PrettyPrint(pretty bool) {
-	hash.Pretty = pretty
-}
-
 func (hash *SexpHash) SexpString(indent int) string {
-	ind := strings.Repeat(" ", indent)
-	str := ind + " (" + hash.TypeName + " "
-	if hash.Pretty {
+	indInner := ""
+	inner := indent + 4
+	if hash.env.Pretty {
+		indInner = strings.Repeat(" ", inner)
+	}
+	str := " (" + hash.TypeName + " "
+	if hash.env.Pretty {
 		str += "\n"
 	}
 	for _, key := range hash.KeyOrder {
@@ -803,13 +803,16 @@ func (hash *SexpHash) SexpString(indent int) string {
 		if err == nil {
 			switch s := key.(type) {
 			case *SexpStr:
-				str += s.S + ":"
+				str += indInner + s.S + ":"
 			case *SexpSymbol:
-				str += s.name + ":"
+				str += indInner + s.name + ":"
 			default:
-				str += key.SexpString(0) + ":"
+				str += indInner + key.SexpString(inner) + ":"
 			}
-			str += val.SexpString(0) + " "
+			str += val.SexpString(inner) + " "
+			if hash.env.Pretty {
+				str += "\n"
+			}
 		} else {
 			// ignore deleted keys
 			// don't panic(err)
@@ -885,4 +888,18 @@ func (p *SexpHash) CloneFrom(src *SexpHash) {
 		p.ZMethods[k] = v
 	}
 	p.env = src.env
+}
+
+func SetPrettyPrintFlag(env *Glisp, name string, args []Sexp) (Sexp, error) {
+	narg := len(args)
+	if narg != 1 {
+		return SexpNull, WrongNargs
+	}
+	b, isBool := args[0].(*SexpBool)
+	if !isBool {
+		return SexpNull, fmt.Errorf("argument to pretty must be a bool")
+	}
+
+	env.Pretty = b.Val
+	return SexpNull, nil
 }

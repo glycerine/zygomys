@@ -44,6 +44,7 @@ type Glisp struct {
 	baseTypeCtor    *SexpFunction
 
 	infixOps map[string]*InfixOp
+	Pretty   bool
 }
 
 const CallStackSize = 25

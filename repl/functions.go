@@ -817,6 +817,7 @@ func AllBuiltinFunctions() map[string]GlispUserFunction {
 // CoreFunctions returns all of the core logic
 func CoreFunctions() map[string]GlispUserFunction {
 	return map[string]GlispUserFunction{
+		"pretty":    SetPrettyPrintFlag,
 		"<":         CompareFunction,
 		">":         CompareFunction,
 		"<=":        CompareFunction,
