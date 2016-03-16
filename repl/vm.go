@@ -78,7 +78,7 @@ type PushInstr struct {
 }
 
 func (p PushInstr) InstrString() string {
-	return "push " + p.expr.SexpString()
+	return "push " + p.expr.SexpString(0)
 }
 
 func (p PushInstr) Execute(env *Glisp) error {
@@ -130,7 +130,7 @@ func (g EnvToStackInstr) Execute(env *Glisp) error {
 	macxpr, isMacro := env.macros[g.sym.number]
 	if isMacro {
 		if macxpr.orig != nil {
-			return fmt.Errorf("'%s' is a macro, with definition: %s\n", g.sym.name, macxpr.orig.SexpString())
+			return fmt.Errorf("'%s' is a macro, with definition: %s\n", g.sym.name, macxpr.orig.SexpString(0))
 		}
 		return fmt.Errorf("'%s' is a builtin macro.\n", g.sym.name)
 	}
@@ -227,7 +227,7 @@ func (c CallInstr) Execute(env *Glisp) error {
 	if err != nil {
 		return err
 	}
-	//Q("\n in CallInstr, after looking up c.sym='%s', got funcobj='%v'. datastack is:\n", c.sym.name, funcobj.SexpString())
+	//Q("\n in CallInstr, after looking up c.sym='%s', got funcobj='%v'. datastack is:\n", c.sym.name, funcobj.SexpString(0))
 	//env.datastack.PrintStack()
 	switch f := funcobj.(type) {
 	case *SexpSymbol:
@@ -265,7 +265,7 @@ func (c CallInstr) Execute(env *Glisp) error {
 						//Q("\n in CallInstr, with user func, passing dot-symbol in directly so assignment will work.\n")
 						env.datastack.PushExpr(c.sym)
 					} else {
-						//Q("\n in CallInstr, with sexp func, dereferencing dot-symbol '%s' -> '%s'\n", c.sym.name, dotSymRef.SexpString())
+						//Q("\n in CallInstr, with sexp func, dereferencing dot-symbol '%s' -> '%s'\n", c.sym.name, dotSymRef.SexpString(0))
 						if dotLookupErr != nil {
 							return dotLookupErr
 						}
@@ -280,7 +280,7 @@ func (c CallInstr) Execute(env *Glisp) error {
 
 				default:
 					return fmt.Errorf("dot-symbol '%s' was followed by non-function '%s'.",
-						c.sym.name, ftop.SexpString())
+						c.sym.name, ftop.SexpString(0))
 				}
 			}
 		} else {
@@ -358,13 +358,13 @@ func (d DispatchInstr) Execute(env *Glisp) error {
 	switch arr := funcobj.(type) {
 	case *SexpArray:
 		if len(arr.Val) == 0 {
-			_, err := env.CallUserFunction(sxSliceOf, funcobj.SexpString(), d.nargs)
+			_, err := env.CallUserFunction(sxSliceOf, funcobj.SexpString(0), d.nargs)
 			return err
 		}
 		// call along with the array as an argument so we know the size of the
 		// array / matrix / tensor to make. The 2nd argument will be the dimension array.
 		env.datastack.PushExpr(arr)
-		_, err := env.CallUserFunction(sxArrayOf, funcobj.SexpString(), d.nargs+1)
+		_, err := env.CallUserFunction(sxArrayOf, funcobj.SexpString(0), d.nargs+1)
 		return err
 	}
 	return fmt.Errorf("not a function on top of datastack: '%T/%#v'", funcobj, funcobj)
@@ -735,7 +735,7 @@ func (g DebugInstr) InstrString() string {
 
 func (g DebugInstr) Execute(env *Glisp) error {
 	switch g.diagnostic {
-	case "show-scopes":
+	case "showScopes":
 		err := env.ShowStackStackAndScopeStack()
 		if err != nil {
 			return err
@@ -753,7 +753,7 @@ type CreateClosureInstr struct {
 }
 
 func (a CreateClosureInstr) InstrString() string {
-	return "create closure " + a.sfun.SexpString()
+	return "create closure " + a.sfun.SexpString(0)
 }
 
 func (a CreateClosureInstr) Execute(env *Glisp) error {
@@ -768,7 +768,7 @@ func (a CreateClosureInstr) Execute(env *Glisp) error {
 		return err
 	}
 	VPrintf("+++ CreateClosure: assign to '%s' the stack:\n\n%s\n\n",
-		myInvok.SexpString(), shown)
+		myInvok.SexpString(0), shown)
 	top := cls.TopScope()
 	VPrintf("222 CreateClosure: top of NewClosing Scope has addr %p and is\n",
 		top)

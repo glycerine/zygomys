@@ -571,7 +571,7 @@ func PrintFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	case *SexpStr:
 		str = expr.S
 	default:
-		str = expr.SexpString()
+		str = expr.SexpString(0)
 	}
 
 	switch name {
@@ -704,7 +704,7 @@ func ConstructorFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 			return SexpNull, err
 		}
 		fld := (*SexpField)(h)
-		Q("hash for field is: '%v'", fld.SexpString())
+		Q("hash for field is: '%v'", fld.SexpString(0))
 		return fld, nil
 	case "struct":
 		return MakeHash(args, "struct", env)
@@ -974,14 +974,14 @@ func threadingHelper(env *Glisp, hash *SexpHash, args []Sexp) (Sexp, error) {
 	field, err := hash.HashGet(env, args[0])
 	if err != nil {
 		return SexpNull, fmt.Errorf("-> error: field '%s' not found",
-			args[0].SexpString())
+			args[0].SexpString(0))
 	}
 	if len(args) > 1 {
 		h, isHash := field.(*SexpHash)
 		if !isHash {
 			return SexpNull, fmt.Errorf("request for field '%s' was "+
 				"not on a hash or defmap; instead type %T with value '%#v'",
-				args[1].SexpString(), field, field)
+				args[1].SexpString(0), field, field)
 		}
 		return threadingHelper(env, h, args[1:])
 	}
@@ -993,7 +993,7 @@ func StringifyFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		return SexpNull, WrongNargs
 	}
 
-	return &SexpStr{S: args[0].SexpString()}, nil
+	return &SexpStr{S: args[0].SexpString(0)}, nil
 }
 
 func Sym2StrFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
@@ -1085,7 +1085,7 @@ func StopFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 // the assignment function, =
 func AssignmentFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	Q("\n AssignmentFunction called with name ='%s'. args='%s'\n", name,
-		(&SexpArray{Val: args}).SexpString())
+		(&SexpArray{Val: args}).SexpString(0))
 
 	narg := len(args)
 	if narg != 2 {
@@ -1103,7 +1103,7 @@ func AssignmentFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 
 	if !sym.isDot {
 		Q("assignment sees LHS symbol but is not dot, binding '%s' to '%s'\n",
-			sym.name, args[1].SexpString())
+			sym.name, args[1].SexpString(0))
 		err := env.LexicalBindSymbol(sym, args[1])
 		if err != nil {
 			return SexpNull, err
@@ -1146,7 +1146,7 @@ func JoinSymFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 			}
 			j += s
 		default:
-			return SexpNull, fmt.Errorf("error cannot joinsym type '%T' / val = '%s'", a, a.SexpString())
+			return SexpNull, fmt.Errorf("error cannot joinsym type '%T' / val = '%s'", a, a.SexpString(0))
 		}
 	}
 
@@ -1162,7 +1162,7 @@ func joinSymHelper(arr []Sexp) (string, error) {
 
 		default:
 			return "", fmt.Errorf("not a symbol: '%s'",
-				arr[i].SexpString())
+				arr[i].SexpString(0))
 		}
 	}
 	return j, nil
@@ -1269,7 +1269,7 @@ func RemoveSymFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 
 	sym, ok := args[0].(*SexpSymbol)
 	if !ok {
-		return SexpNull, fmt.Errorf("symbol required, but saw %T/%v", args[0], args[0].SexpString())
+		return SexpNull, fmt.Errorf("symbol required, but saw %T/%v", args[0], args[0].SexpString(0))
 	}
 
 	err := env.linearstack.DeleteSymbolFromTopOfStackScope(sym)

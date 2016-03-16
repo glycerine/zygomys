@@ -113,7 +113,7 @@ func (pr *Prompter) getExpressionWithLiner(env *Glisp) (readin string, xs []Sexp
 		switch err {
 		case nil:
 			line += "\n" + nextline
-			Q("no problem parsing line '%s' into '%s', proceeding...\n", line, (&SexpArray{Val: x}).SexpString())
+			Q("no problem parsing line '%s' into '%s', proceeding...\n", line, (&SexpArray{Val: x}).SexpString(0))
 			return line, xs, nil
 		case ResetRequested:
 			continue
@@ -286,7 +286,7 @@ func Repl(env *Glisp, cfg *GlispConfig) {
 					fmt.Printf("%s\n", strconv.Quote(e.S))
 				}
 			default:
-				fmt.Println(expr.SexpString())
+				fmt.Println(expr.SexpString(0))
 			}
 		}
 	}

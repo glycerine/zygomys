@@ -22,7 +22,7 @@ func Test001LexerPositionRecordingWorks(t *testing.T) {
 		expressions, err := env.parser.ParseTokens()
 		panicOn(err)
 		//goon.Dump(expressions[0])
-		cv.So(expressions[0].SexpString(), cv.ShouldEqual, `(defn hello [] "greetings!")`)
+		cv.So(expressions[0].SexpString(0), cv.ShouldEqual, `(defn hello [] "greetings!")`)
 	})
 }
 
@@ -39,7 +39,7 @@ func Test006LexerAndParsingOfDotInvocations(t *testing.T) {
 		expressions, err := env.parser.ParseTokens()
 		panicOn(err)
 		//goon.Dump(expressions[0])
-		cv.So(expressions[0].SexpString(), cv.ShouldEqual, `(. subject method)`)
+		cv.So(expressions[0].SexpString(0), cv.ShouldEqual, `(. subject method)`)
 	})
 }
 
@@ -124,7 +124,7 @@ func Test030LexingPauseAndResume(t *testing.T) {
 
 		P("\n In lexer_test, after parsing with incomplete input, we should get 0 expressions back.\n")
 		cv.So(len(ex), cv.ShouldEqual, 0)
-		P("\n In lexer_test, after ParseTokens on incomplete fragment, expressions = '%v' and err = '%v'\n", (&SexpArray{Val: ex}).SexpString(), err)
+		P("\n In lexer_test, after ParseTokens on incomplete fragment, expressions = '%v' and err = '%v'\n", (&SexpArray{Val: ex}).SexpString(0), err)
 
 		P("\n In lexer_test: calling parser.NewInput() to provide str2='%s'\n", str2)
 		env.parser.NewInput(bytes.NewBuffer([]byte(str2)))
@@ -134,7 +134,7 @@ func Test030LexingPauseAndResume(t *testing.T) {
  in lexer test: After providing the 2nd half of the input, we returned from env.parser.ParseTokens()
  with expressions = %v
  with err = %v
-`, (&SexpArray{Val: ex}).SexpString(), err)
+`, (&SexpArray{Val: ex}).SexpString(0), err)
 
 		cv.So(len(ex), cv.ShouldEqual, 1)
 		panicOn(err)

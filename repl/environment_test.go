@@ -30,7 +30,7 @@ func Test400SandboxFunctions(t *testing.T) {
 				res, err := env.EvalString(fmt.Sprintf("(defined? %%%s)", name))
 				switch y := res.(type) {
 				case *SexpSentinel:
-					P("'%s' wasn't defined but should be; defined? returned '%s'", name, y.SexpString())
+					P("'%s' wasn't defined but should be; defined? returned '%s'", name, y.SexpString(0))
 				case *SexpBool:
 					cv.So(res, cv.ShouldResemble, &SexpBool{Val: true})
 				}

@@ -8,7 +8,7 @@ import (
 
 type SexpRegexp regexp.Regexp
 
-func (re *SexpRegexp) SexpString() string {
+func (re *SexpRegexp) SexpString(indent int) string {
 	r := (*regexp.Regexp)(re)
 	return fmt.Sprintf(`(regexpCompile "%v")`, r.String())
 }

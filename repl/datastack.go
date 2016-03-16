@@ -55,7 +55,7 @@ func (stack *Stack) GetExpr(n int) (Sexp, error) {
 func (stack *Stack) PrintStack() {
 	for i := 0; i <= stack.tos; i++ {
 		expr := stack.elements[i].(DataStackElem).expr
-		fmt.Println("\t" + expr.SexpString())
+		fmt.Println("\t" + expr.SexpString(0))
 	}
 }
 

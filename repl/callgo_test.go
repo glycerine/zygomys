@@ -25,7 +25,7 @@ func Test007ParentChildRecordsTranslateToGo(t *testing.T) {
 `)
 		panicOn(err)
 
-		cv.So(x.SexpString(), cv.ShouldEqual, ` (snoopy chld: (hellcat speed:567))`)
+		cv.So(x.SexpString(0), cv.ShouldEqual, ` (snoopy chld: (hellcat speed:567))`)
 
 		var sn Snoopy
 		_, err = SexpToGoStructs(x, &sn, env)
@@ -51,7 +51,7 @@ func Test008CallByReflectionWorksWithoutNesting(t *testing.T) {
 `)
 		panicOn(err)
 
-		cv.So(x.SexpString(), cv.ShouldEqual,
+		cv.So(x.SexpString(0), cv.ShouldEqual,
 			` (hornet speed:567 nickname:"Bob" mass:4.2 SpanCm:8877)`)
 
 		ho := &Hornet{}
@@ -81,7 +81,7 @@ func Test009CallByReflectionWorksWithoutNestingWithoutEmbeds(t *testing.T) {
 `)
 		panicOn(err)
 
-		cv.So(x.SexpString(), cv.ShouldEqual,
+		cv.So(x.SexpString(0), cv.ShouldEqual,
 			` (hornet nickname:"Bob" mass:4.2)`)
 
 		ho := &Hornet{}
@@ -110,7 +110,7 @@ func Test010WriteIntoSingleInterfaceValueWorks(t *testing.T) {
 `)
 		panicOn(err)
 
-		cv.So(x.SexpString(), cv.ShouldEqual, ` (snoopy chld: (hellcat speed:567))`)
+		cv.So(x.SexpString(0), cv.ShouldEqual, ` (snoopy chld: (hellcat speed:567))`)
 
 		var sn Snoopy
 		_, err = SexpToGoStructs(x, &sn, env)
@@ -137,7 +137,7 @@ func Test011TranslationOfArraysWorks(t *testing.T) {
 `)
 		panicOn(err)
 
-		cv.So(x.SexpString(), cv.ShouldEqual, ` (snoopy pack:[8 9 4])`)
+		cv.So(x.SexpString(0), cv.ShouldEqual, ` (snoopy pack:[8 9 4])`)
 
 		var sn Snoopy
 		_, err = SexpToGoStructs(x, &sn, env)
@@ -164,7 +164,7 @@ func Test012TranslationOfArraysOfInterfacesWorks(t *testing.T) {
 (def snoop (snoopy carrying:[he ho]))
 `)
 			panicOn(err)
-			cv.So(x.SexpString(), cv.ShouldEqual,
+			cv.So(x.SexpString(0), cv.ShouldEqual,
 				` (snoopy carrying:[ (hellcat speed:567)  (hornet SpanCm:12)])`)
 
 			var sn Snoopy
@@ -202,7 +202,7 @@ func Test014TranslationOfArraysOfInterfacesEmbeddedWorks(t *testing.T) {
 (def snoop (snoopy friends:[he ho]))
 `)
 		panicOn(err)
-		cv.So(x.SexpString(), cv.ShouldEqual, ` (snoopy friends:`+
+		cv.So(x.SexpString(0), cv.ShouldEqual, ` (snoopy friends:`+
 			`[ (hellcat speed:567)  (hornet SpanCm:12)])`)
 
 		var sn Snoopy
@@ -242,7 +242,7 @@ func Test016ReflectCallOnGoMethodsZeroArgs(t *testing.T) {
 (def snoop (snoopy friends:[he ho] cry:"yowza"))
 `)
 		panicOn(err)
-		cv.So(x.SexpString(), cv.ShouldEqual, ` (snoopy friends:`+
+		cv.So(x.SexpString(0), cv.ShouldEqual, ` (snoopy friends:`+
 			`[ (hellcat speed:567)  (hornet SpanCm:12)] cry:"yowza")`)
 
 		var sn Snoopy
@@ -284,7 +284,7 @@ func Test017ReflectCallOnGoMethodsOneArg(t *testing.T) {
 (def snoop (snoopy friends:[he ho] cry:"yowza"))
 `)
 		panicOn(err)
-		cv.So(x.SexpString(), cv.ShouldEqual,
+		cv.So(x.SexpString(0), cv.ShouldEqual,
 			` (snoopy friends:[ (hellcat speed:567)`+
 				`  (hornet SpanCm:12)] cry:"yowza")`)
 
@@ -330,7 +330,7 @@ func Test018ReflectCallOnGoMethodsComplexReturnType(t *testing.T) {
 (def snoop (snoopy friends:[he ho] cry:"yowza"))
 `)
 			panicOn(err)
-			cv.So(x.SexpString(), cv.ShouldEqual, ` (snoopy friends:`+
+			cv.So(x.SexpString(0), cv.ShouldEqual, ` (snoopy friends:`+
 				`[ (hellcat speed:567)  (hornet SpanCm:12)] cry:"yowza")`)
 
 			var sn Snoopy
@@ -343,8 +343,8 @@ func Test018ReflectCallOnGoMethodsComplexReturnType(t *testing.T) {
 				`type:"sunny" details:(raw "123")))
 			   `)
 			panicOn(err)
-			VPrintf("got invoke = '%s'\n", invok.SexpString())
-			cv.So(invok.SexpString(), cv.ShouldEqual, `[ (weather time:nil`+
+			VPrintf("got invoke = '%s'\n", invok.SexpString(0))
+			cv.So(invok.SexpString(0), cv.ShouldEqual, `[ (weather time:nil`+
 				` size:12 type:"sunny" details:[]byte{0x31, 0x32, 0x33})]`)
 		})
 }

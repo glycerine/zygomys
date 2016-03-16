@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"hash/fnv"
 	"reflect"
+	"strings"
 )
 
 var NoAttachedGoStruct = fmt.Errorf("hash has no attach Go struct")
@@ -29,12 +30,12 @@ func HashExpression(env *Glisp, expr Sexp) (int, error) {
 		// 2nd try
 		hashcode2, isList2, err := hashHelper(res)
 		if err != nil {
-			return 0, fmt.Errorf("evaluated key function to '%s' but could not hash type %T: %s", res.SexpString(), res, err)
+			return 0, fmt.Errorf("evaluated key function to '%s' but could not hash type %T: %s", res.SexpString(0), res, err)
 		}
 		if !isList2 {
 			return hashcode2, nil
 		}
-		return 0, fmt.Errorf("list '%s' found where hash key needed", res.SexpString())
+		return 0, fmt.Errorf("list '%s' found where hash key needed", res.SexpString(0))
 	}
 	return 0, fmt.Errorf("cannot hash type %T", expr)
 }
@@ -168,7 +169,7 @@ func (hash *SexpHash) HashGet(env *Glisp, key Sexp) (Sexp, error) {
 	}
 
 	if val == SexpEnd {
-		msg := fmt.Sprintf("key %s not found", key.SexpString())
+		msg := fmt.Sprintf("key %s not found", key.SexpString(0))
 		return SexpNull, errors.New(msg)
 	}
 	return val, nil
@@ -197,7 +198,7 @@ func (hash *SexpHash) HashGetDefault(env *Glisp, key Sexp, defaultval Sexp) (Sex
 var KeyNotSymbol = fmt.Errorf("key is not a symbol")
 
 func (h *SexpHash) TypeCheckField(key Sexp, val Sexp) error {
-	Q("in TypeCheckField, key='%v' val='%v'", key.SexpString(), val.SexpString())
+	Q("in TypeCheckField, key='%v' val='%v'", key.SexpString(0), val.SexpString(0))
 
 	var keySym *SexpSymbol
 	wasSym := false
@@ -262,7 +263,7 @@ func (h *SexpHash) TypeCheckField(key Sexp, val Sexp) error {
 			case *SexpSentinel:
 				return nil // okay
 			default:
-				return fmt.Errorf("%v has nil Type", val.SexpString())
+				return fmt.Errorf("%v has nil Type", val.SexpString(0))
 			}
 		}
 
@@ -272,9 +273,9 @@ func (h *SexpHash) TypeCheckField(key Sexp, val Sexp) error {
 			return fmt.Errorf("field %v.%v is %v, cannot assign %v '%v'",
 				p.UserStructDefn.Name,
 				k,
-				declaredTyp.SexpString(),
-				obsTyp.SexpString(),
-				val.SexpString())
+				declaredTyp.SexpString(0),
+				obsTyp.SexpString(0),
+				val.SexpString(0))
 		}
 	}
 	return nil
@@ -601,7 +602,7 @@ func (h *SexpHash) FillHashFromShadow(env *Glisp, src interface{}) error {
 		key := env.MakeSymbol(det.FieldJsonTag)
 		err = h.HashSet(key, val)
 		if err != nil {
-			return fmt.Errorf("error on HashSet for key '%s': '%s'", key.SexpString(), err)
+			return fmt.Errorf("error on HashSet for key '%s': '%s'", key.SexpString(0), err)
 		}
 	}
 	return nil
@@ -757,7 +758,7 @@ func (h *SexpHash) nestedPathGetSet(env *Glisp, dotpaths []string, setVal *Sexp)
 		}
 		ret, err = askh.HashGet(env, env.MakeSymbol(dotpaths[i][1:]))
 		Q("\n i=%v in nestedPathGet, dotpaths[i][1:]='%v' call to "+
-			"HashGet returned '%s'\n", i, dotpaths[i][1:], ret.SexpString())
+			"HashGet returned '%s'\n", i, dotpaths[i][1:], ret.SexpString(0))
 		if err != nil {
 			return SexpNull, err
 		}
@@ -787,9 +788,16 @@ func (hash *SexpHash) ShortName() string {
 	return hash.TypeName
 }
 
-func (hash *SexpHash) SexpString() string {
+func (hash *SexpHash) PrettyPrint(pretty bool) {
+	hash.Pretty = pretty
+}
 
-	str := " (" + hash.TypeName + " "
+func (hash *SexpHash) SexpString(indent int) string {
+	ind := strings.Repeat(" ", indent)
+	str := ind + " (" + hash.TypeName + " "
+	if hash.Pretty {
+		str += "\n"
+	}
 	for _, key := range hash.KeyOrder {
 		val, err := hash.HashGet(nil, key)
 		if err == nil {
@@ -799,9 +807,9 @@ func (hash *SexpHash) SexpString() string {
 			case *SexpSymbol:
 				str += s.name + ":"
 			default:
-				str += key.SexpString() + ":"
+				str += key.SexpString(0) + ":"
 			}
-			str += val.SexpString() + " "
+			str += val.SexpString(0) + " "
 		} else {
 			// ignore deleted keys
 			// don't panic(err)

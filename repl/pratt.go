@@ -121,7 +121,7 @@ func (env *Glisp) Assignment(op string, bp int) *InfixOp {
 			list := MakeList([]Sexp{
 				oper, left, right,
 			})
-			Q("assignment returning list: '%v'", list.SexpString())
+			Q("assignment returning list: '%v'", list.SexpString(0))
 			return list, nil
 		},
 	}
@@ -141,7 +141,7 @@ func (env *Glisp) PostfixAssign(op string, bp int) *InfixOp {
 			list := MakeList([]Sexp{
 				oper, left,
 			})
-			Q("postfix assignment returning list: '%v'", list.SexpString())
+			Q("postfix assignment returning list: '%v'", list.SexpString(0))
 			return list, nil
 		},
 	}
@@ -210,18 +210,18 @@ func InfixBuilder(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	}
 	//Q("InfixBuilder, name='%s', arr = ", name)
 	for i := range arr.Val {
-		Q("arr[%v] = %v of type %T", i, arr.Val[i].SexpString(), arr.Val[i])
+		Q("arr[%v] = %v of type %T", i, arr.Val[i].SexpString(0), arr.Val[i])
 	}
 	pr := NewPratt(arr.Val)
 	x, err := pr.Expression(env, 0)
 	if x == nil {
 		Q("x was nil")
 	} else {
-		Q("x back is not nil and is of type %T/val = '%v', err = %v", x, x.SexpString(), err)
+		Q("x back is not nil and is of type %T/val = '%v', err = %v", x, x.SexpString(0), err)
 	}
 	if name == "infixExpand" {
 		ret := MakeList([]Sexp{env.MakeSymbol("quote"), x})
-		//Q("infixExpand: returning ret = '%v'", ret.SexpString())
+		//Q("infixExpand: returning ret = '%v'", ret.SexpString(0))
 		return ret, nil
 	}
 	dup := env.Duplicate()
@@ -326,16 +326,16 @@ func NewPratt(stream []Sexp) *Pratt {
 
 func (p *Pratt) Expression(env *Glisp, rbp int) (ret Sexp, err error) {
 	defer func() {
-		Q("Expression is returning Sexp ret = '%v'", ret.SexpString())
+		Q("Expression is returning Sexp ret = '%v'", ret.SexpString(0))
 	}()
 	cnode := p.NextToken
 	if cnode != nil {
-		Q("top of Expression, rbp = %v, cnode = '%v'", rbp, cnode.SexpString())
+		Q("top of Expression, rbp = %v, cnode = '%v'", rbp, cnode.SexpString(0))
 	} else {
 		Q("top of Expression, rbp = %v, cnode is nil", rbp)
 	}
 	if p.IsEOF() {
-		Q("Expression sees IsEOF, returning cnode = %v", cnode.SexpString())
+		Q("Expression sees IsEOF, returning cnode = %v", cnode.SexpString(0))
 		return cnode, nil
 	}
 	p.CnodeStack = append([]Sexp{p.NextToken}, p.CnodeStack...)
@@ -355,14 +355,14 @@ func (p *Pratt) Expression(env *Glisp, rbp int) (ret Sexp, err error) {
 	if curOp != nil && curOp.MunchRight != nil {
 		// munch_right() of atoms returns this/itself, in which
 		// case: p.AccumTree = t; is the result.
-		Q("about to MunchRight on cnode = %v", cnode.SexpString())
+		Q("about to MunchRight on cnode = %v", cnode.SexpString(0))
 		p.AccumTree, err = curOp.MunchRight(env, p)
 		if err != nil {
 			Q("Expression(%v) MunchRight saw err = %v", rbp, err)
 			return SexpNull, err
 		}
 		Q("after MunchRight on cnode = %v, p.AccumTree = '%v'",
-			cnode.SexpString(), p.AccumTree.SexpString())
+			cnode.SexpString(0), p.AccumTree.SexpString(0))
 	} else {
 		// do this, or have the default MunchRight return itself.
 		p.AccumTree = cnode
@@ -391,11 +391,11 @@ func (p *Pratt) Expression(env *Glisp, rbp int) (ret Sexp, err error) {
 		//_cnode_stack.front() = NextToken;
 
 		Q("in MunchLeft loop, before Advance, p.NextToken = %v",
-			p.NextToken.SexpString())
+			p.NextToken.SexpString(0))
 		p.Advance()
 		if p.Pos < len(p.Stream) {
 			Q("in MunchLeft loop, after Advance, p.NextToken = %v",
-				p.NextToken.SexpString())
+				p.NextToken.SexpString(0))
 		}
 
 		// if cnode->munch_left() returns this/itself, then
@@ -416,7 +416,7 @@ func (p *Pratt) Expression(env *Glisp, rbp int) (ret Sexp, err error) {
 
 	p.CnodeStack = p.CnodeStack[1:]
 	//_cnode_stack.pop_front()
-	Q("at end of Expression(%v), returning p.AccumTree=%v, err=nil", rbp, p.AccumTree.SexpString())
+	Q("at end of Expression(%v), returning p.AccumTree=%v, err=nil", rbp, p.AccumTree.SexpString(0))
 	return p.AccumTree, nil
 }
 
@@ -427,7 +427,7 @@ func (p *Pratt) Advance() error {
 		return io.EOF
 	}
 	p.NextToken = p.Stream[p.Pos]
-	Q("end of Advance, p.NextToken = '%v'", p.NextToken.SexpString())
+	Q("end of Advance, p.NextToken = '%v'", p.NextToken.SexpString(0))
 	return nil
 }
 
@@ -463,6 +463,6 @@ func (p *Pratt) ShowCnodeStack() {
 	}
 	fmt.Println("CnodeStack is:")
 	for i := range p.CnodeStack {
-		fmt.Printf("CnodeStack[%v] = %v\n", i, p.CnodeStack[i].SexpString())
+		fmt.Printf("CnodeStack[%v] = %v\n", i, p.CnodeStack[i].SexpString(0))
 	}
 }

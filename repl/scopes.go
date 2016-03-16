@@ -130,7 +130,7 @@ func (stack *Stack) BindSymbol(sym *SexpSymbol, expr Sexp) error {
 	}
 	cur, already := stack.elements[stack.tos].(*Scope).Map[sym.number]
 	if already {
-		Q("BindSymbol already sees symbol %v, currently bound to '%v'", sym.name, cur.SexpString())
+		Q("BindSymbol already sees symbol %v, currently bound to '%v'", sym.name, cur.SexpString(0))
 
 		lhsTy := cur.Type()
 		rhsTy := expr.Type()
@@ -146,7 +146,7 @@ func (stack *Stack) BindSymbol(sym *SexpSymbol, expr Sexp) error {
 		}
 
 		// both sides have type
-		Q("BindSymbol: both sides have type. rhs=%v, lhs=%v", rhsTy.SexpString(), lhsTy.SexpString())
+		Q("BindSymbol: both sides have type. rhs=%v, lhs=%v", rhsTy.SexpString(0), lhsTy.SexpString(0))
 
 		if lhsTy == rhsTy {
 			Q("BindSymbol: YES types match exactly. Good.")
@@ -242,7 +242,7 @@ func (scop Scope) Show(env *Glisp, indent int, label string) (s string, err erro
 	sortme := []*SymtabE{}
 	for symbolNumber, val := range scop.Map {
 		symbolName := env.revsymtable[symbolNumber]
-		sortme = append(sortme, &SymtabE{Key: symbolName, Val: val.SexpString()})
+		sortme = append(sortme, &SymtabE{Key: symbolName, Val: val.SexpString(0)})
 	}
 	sort.Sort(SymtabSorter(sortme))
 	for i := range sortme {

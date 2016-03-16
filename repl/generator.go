@@ -263,7 +263,7 @@ func (gen *Generator) GenerateDefmac(args []Sexp, orig Sexp) error {
 	xpr, err, _ := gen.env.LexicalLookupSymbol(sym, false)
 	if err == nil {
 		return fmt.Errorf("'%s' is already bound to '%s', refusing to define conflicting macro",
-			sym.name, xpr.SexpString())
+			sym.name, xpr.SexpString(0))
 	}
 
 	sfun, err := buildSexpFun(gen.env, sym.name, funcargs, args[2:], orig)
@@ -478,7 +478,7 @@ func (gen *Generator) GenerateAssert(args []Sexp) error {
 	}
 
 	reterrmsg := fmt.Sprintf("Assertion failed: %s\n",
-		args[0].SexpString())
+		args[0].SexpString(0))
 	gen.AddInstruction(BranchInstr{true, 2})
 	gen.AddInstruction(ReturnInstr{fmt.Errorf(reterrmsg)})
 	gen.AddInstruction(PushInstr{SexpNull})
@@ -587,7 +587,7 @@ func (gen *Generator) GenerateCallBySymbol(sym *SexpSymbol, args []Sexp, orig Se
 	case "return":
 		return gen.GenerateReturn(args)
 	case "_ls":
-		return gen.GenerateDebug("show-scopes")
+		return gen.GenerateDebug("showScopes")
 	}
 
 	// this is where macros are run
@@ -658,7 +658,7 @@ func (gen *Generator) GenerateAssignment(expr *SexpPair, assignPos int) error {
 
 	if len(lhs) != len(rhs) {
 		return fmt.Errorf("assignment imbalance: left-hand-side had %v, while right-hand-side had %v; in expression '%s'",
-			len(lhs), len(rhs), expr.SexpString())
+			len(lhs), len(rhs), expr.SexpString(0))
 	}
 	// TODO: once functions have typed number of return values, check that we have balance
 	// of return value flow, rather than exact lhs to rhs count equality.
@@ -723,14 +723,14 @@ func (gen *Generator) Generate(expr Sexp) error {
 				err := gen.GenerateAssignment(e, pos)
 				if err != nil {
 					return fmt.Errorf("Error generating %s:\n%v",
-						expr.SexpString(), err)
+						expr.SexpString(0), err)
 				}
 				return nil
 			}
 			err := gen.GenerateCall(e)
 			if err != nil {
 				return fmt.Errorf("Error generating %s:\n%v",
-					expr.SexpString(), err)
+					expr.SexpString(0), err)
 			}
 			return nil
 		} else {
@@ -1032,7 +1032,7 @@ func (gen *Generator) GenerateMultiDef(args []Sexp) error {
 				syms[i] = unquotedSymbol.(*SexpSymbol)
 			}
 		default:
-			return fmt.Errorf("All mdef targets must be symbols, but %d-th was not, instead of type %T: '%s'", i+1, sym, sym.SexpString())
+			return fmt.Errorf("All mdef targets must be symbols, but %d-th was not, instead of type %T: '%s'", i+1, sym, sym.SexpString(0))
 		}
 	}
 

@@ -88,24 +88,24 @@ func FuncBuilder(env *Glisp, name string,
 
 	P("in func builder, args = ")
 	for i := range args {
-		P("args[%v] = '%s'", i, args[i].SexpString())
+		P("args[%v] = '%s'", i, args[i].SexpString(0))
 	}
 	P("in func builder, isAnon = %v", isAnon)
-	P("in func builder, inputs = %v", inputs.SexpString())
-	P("in func builder, returns = %v", returns.SexpString())
-	P("in func builder, body = %v", (&SexpArray{Val: body}).SexpString())
+	P("in func builder, inputs = %v", inputs.SexpString(0))
+	P("in func builder, returns = %v", returns.SexpString(0))
+	P("in func builder, body = %v", (&SexpArray{Val: body}).SexpString(0))
 
 	inHash, err := GetFuncArgArray(inputs, env, "inputs")
 	if err != nil {
 		return SexpNull, fmt.Errorf("inputs array parsing error: %v", err)
 	}
-	P("inHash = '%v'", inHash.SexpString())
+	P("inHash = '%v'", inHash.SexpString(0))
 
 	retHash, err := GetFuncArgArray(returns, env, "returns")
 	if err != nil {
 		return SexpNull, fmt.Errorf("returns array parsing error: %v", err)
 	}
-	P("retHash = '%v'", retHash.SexpString())
+	P("retHash = '%v'", retHash.SexpString(0))
 
 	env.datastack.PushExpr(SexpNull)
 
@@ -220,7 +220,7 @@ func GetFuncArgArray(arr *SexpArray, env *Glisp, where string) (*SexpHash, error
 				symN = sy.(*SexpSymbol)
 			} else {
 				return nil, fmt.Errorf("bad formal parameter name: symbol required in %s array, not a symbol: '%s'",
-					where, b.SexpString())
+					where, b.SexpString(0))
 			}
 		}
 
@@ -234,23 +234,23 @@ func GetFuncArgArray(arr *SexpArray, env *Glisp, where string) (*SexpHash, error
 				symTyp = sy.(*SexpSymbol)
 			} else {
 				return nil, fmt.Errorf("bad formal parameter type: type required in %s array, but found '%s'",
-					where, b.SexpString())
+					where, b.SexpString(0))
 			}
 		}
 
-		P("symN   = '%s'", symN.SexpString())
-		P("symTyp = '%s'", symTyp.SexpString())
+		P("symN   = '%s'", symN.SexpString(0))
+		P("symTyp = '%s'", symTyp.SexpString(0))
 
 		r, err, _ := env.LexicalLookupSymbol(symTyp, false)
 		if err != nil {
-			return nil, fmt.Errorf("could not identify type %s: %v", symTyp.SexpString(), err)
+			return nil, fmt.Errorf("could not identify type %s: %v", symTyp.SexpString(0), err)
 		}
 		switch rt := r.(type) {
 		case *RegisteredType:
 			// good, store it
 			hash.HashSet(symN, rt)
 		default:
-			return nil, fmt.Errorf("'%s' is not a known type", symTyp.SexpString())
+			return nil, fmt.Errorf("'%s' is not a known type", symTyp.SexpString(0))
 		}
 	}
 

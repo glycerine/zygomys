@@ -37,7 +37,7 @@ type Event struct {
 		x, err := env.EvalString(event)
 		panicOn(err)
 
-		cv.So(x.SexpString(), cv.ShouldEqual, ` (eventdemo id:123 user: (persondemo first:"Liz" last:"C") flight:"AZD234" pilot:["Roger" "Ernie"])`)
+		cv.So(x.SexpString(0), cv.ShouldEqual, ` (eventdemo id:123 user: (persondemo first:"Liz" last:"C") flight:"AZD234" pilot:["Roger" "Ernie"])`)
 
 		jsonBy := SexpToJson(x)
 		cv.So(string(jsonBy), cv.ShouldEqual, `{"Atype":"eventdemo", "id":123, "user":{"Atype":"persondemo", "first":"Liz", "last":"C", "zKeyOrder":["first", "last"]}, "flight":"AZD234", "pilot":["Roger", "Ernie"], "zKeyOrder":["id", "user", "flight", "pilot"]}`)
@@ -62,7 +62,7 @@ type Event struct {
 		// must get into same order to have sane comparison, so borrow the KeyOrder to be sure.
 		hhh := sexp.(*SexpHash)
 		hhh.KeyOrder = x.(*SexpHash).KeyOrder
-		sexpStr := sexp.SexpString()
+		sexpStr := sexp.SexpString(0)
 		expectedSexpr := ` (eventdemo id:123 user: (persondemo first:"Liz" last:"C") flight:"AZD234" pilot:["Roger" "Ernie"])`
 		cv.So(sexpStr, cv.ShouldResemble, expectedSexpr)
 
@@ -94,8 +94,8 @@ type Event struct {
 
 		fmt.Printf("\n And directly from Go to S-expression via GoToSexp() should work.\n")
 		sexp2, err := GoToSexp(goObj2, env)
-		cv.So(sexp2.SexpString(), cv.ShouldEqual, expectedSexpr)
-		fmt.Printf("\n Result: directly from Go map[string]interface{} -> sexpr via GoMapToSexp() produced: '%s'\n", sexp2.SexpString())
+		cv.So(sexp2.SexpString(0), cv.ShouldEqual, expectedSexpr)
+		fmt.Printf("\n Result: directly from Go map[string]interface{} -> sexpr via GoMapToSexp() produced: '%s'\n", sexp2.SexpString(0))
 
 		fmt.Printf("\n And the reverse direction, from S-expression to go map[string]interface{} should work.\n")
 		goMap3 := SexpToGo(sexp2, env).(map[string]interface{})
