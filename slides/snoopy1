@@ -1,6 +1,6 @@
 // Go:
 type Plane struct {
-	Speed   int    
+	Number   int    
 	Friends []Flyer
 }
 type Weather struct {

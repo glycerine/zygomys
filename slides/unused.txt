@@ -119,3 +119,9 @@ Taken verbatim from [[https://github.com/glycerine/zygomys/blob/master/tests/clo
 - I'll show the Go API/interface
 - how to extend your language with a new function.
 - lots of examples on github; the `github.com/gycerine/zygomys/repl/` directory is the central place.
+
+
+* plain (hash), a hashmap constructor, is available without a prior (defmap recordName) call
+
+.code hash.demo
+

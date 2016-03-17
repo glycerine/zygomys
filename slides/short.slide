@@ -96,10 +96,6 @@ we range through the hashmap, `hsh`, like this:
 
 .code harry.record
 
-* plain (hash), a hashmap constructor, is available without a prior (defmap recordName) call
-
-.code hash.demo
-
 
 * arrays (slices) - can hold any Sexp
 
