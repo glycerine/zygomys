@@ -81,7 +81,7 @@ See [[https://github.com/glycerine/zygomys/blob/master/cmd/zygo/main.go]]. Just 
 - e) a simple virtual machine executes s-expression byte-code. User's functions run.
 
 
-* Let's see some zygo code
+* Let's see more zygo code
 
 - hashmaps can define arbitrary records; with or without attached Go shadow structs
 
