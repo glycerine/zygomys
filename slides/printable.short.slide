@@ -1,0 +1,199 @@
+zygomys: embedded scripting toolkit for Go
+16 March 2016
+
+Jason E. Aten, Ph.D.
+Principal Engineer, Betable.com
+j.e.aten@gmail.com
+@jasonaten_
+
+https://github.com/glycerine/zygomys
+
+[[https://github.com/glycerine/zygomys/wiki.]] The wiki has details, examples, and discussion.
+
+* Snoopy versus the Red Baron
+
+.image curse_you_red_baron.png
+
+- imagine Snoopy comes back with friends...
+
+* data model for a plane formation, in Go
+
+.code snoopy1
+
+- somewhat contrived. slice of interface, embedded struct handling
+
+* Imagine Snoopy has Friends who Fly
+
+.code other.planes
+
+* with the data model in mind, lets interact with it using zygo...
+
+* Make it rain
+
+.code make.it.rain
+
+* Bring in some planes, in formation
+
+.code make.planes
+
+- in three lines we've instantiated and configured 3 Go structs in a tree
+
+- with one more line, call a Go method on that Go struct, from zygo. When Snoopy Fly()s, so do his friends.
+.code plane.interact
+- (_method) is special -- hence the underscore -- as it crosses system boundaries, calling into compiled Go code.
+- can be sandboxed
+
+* we've just been interacting/scripting Go data and methods...
+
+* yeah, reflection is pretty cool
+
+* zygomys - a scripting toolkit for Go
+
+* zygomys -- what's in a name?
+
+- zygo means union (yoke in Greek; the zygote was the first cell that was you).
+- mys means mouse
+- this is a little mouse of a language
+- bonus: a "pocket gopher" known as Zygogeomys trichopus. Our mascot, "Ziggy".
+- this is the union of lisp and Go. In a small cute package. 
+- let's use the shorter `"zygo"` for the language, when speaking aloud.
+
+"The Michoacan pocket gopher is a small animal with short, dense, black, lustrous fur... It is docile when caught, making no attempt to bite as do other pocket gophers."
+ -- [[https://en.wikipedia.org/wiki/Michoacan_pocket_gopher]]
+
+
+
+* Getting started: How to embed the REPL in your code
+
+See [[https://github.com/glycerine/zygomys/blob/master/cmd/zygo/main.go]]. Just three steps.
+
+.code main.go  /START OMIT/,/END OMIT/
+
+
+* architecture / overview of design
+
+
+
+- a) lexer produces tokens
+- b) parser produces lists and arrays of symbols
+- c) macros run at definition type
+- d) codegen produces s-expression byte-code
+- e) a simple virtual machine executes s-expression byte-code. User's functions run.
+
+
+* Let's see more zygo code
+
+- hashmaps can define arbitrary records; with or without attached Go shadow structs
+
+.code sample.run1
+we range through the hashmap, `hsh`, like this:
+.code sample.run3
+
+
+* records
+
+- records are hash tables with a name. All hash tables preserve key-order.
+
+.code harry.record
+
+
+* arrays (slices) - can hold any Sexp
+
+.code arrays.run
+
+
+
+* aims
+- interactive, but also aim to eventually compile-down to Go
+- blending Go and lisp
+- I built it for myself
+
+- technically interesting about the zygo implementation:
+- using goroutines as coroutines to get pause-able parsing. avoids the O(n^2) trap when reading multi-line user-typed input. Call for more input from many points; inversion of select loop -- exit when you've got another line of input tokens. See repl/parser.go.
+- if you haven't discovered how to do conditional sends on a channel yet, examples inside `github.com/glycerine/zygomys/repl/parser.go`.
+   
+* status: hard parts that are already done
+
+- script calls to existing Go functions using existing Go structs. Uses reflection.
+- Go-style for-loops. Nest-able. With break to label, and continue to label.
+- eval
+- sandbox / restrict filesystem access
+- full closures with lexical scope
+- adjust lisp syntax to be Go compatible: % for quoting, 'a' for characters.
+- higher order functions.
+
+* classic lisp style - list processing
+
+.code hof.foldr
+
+- see the closure tests in [[https://github.com/glycerine/zygomys/blob/master/tests/closure.zy]]
+
+* there is also an infix interface
+
+- anything inside curly braces is infix parsed. Can mix in function calls. Math becomes more readable. Uses a Pratt parser.
+
+.code infix.session
+
+
+ 
+* the basic Go API: adding compiled functions to zygo
+
+.code first.go /START OMIT/,/END OMIT/
+
+.code use.first
+
+
+* json / msgpack support
+
+See the top of `github.com/glycerine/zygomys/repl/jsonmsgp.go` for a guide.
+
+.code msgp.txt
+
+
+* the fundamental Sexp types
+
+.code exp.txt
+
+- SexpNull (actually a value; an instance of the SexpSentinel type)
+- SexpSymbol (variable and function names; symbol table entries)
+- SexpPair   (linked lists)
+- SexpArray  (slices)
+- SexpHash   (hash table; keys and values are any Sexp, key ordering preserved)
+
+
+* type system: work in progress...
+
+- always manifestly typed: a variable points to a value that knows its own type.
+- add-on: optional static type system -- enforced at definition time -- is half implemented
+- to follow status, `github.com/glycerine/zygomys/tests/decl_fun.zy`
+- struct declarations done, function type declarations with (func) not yet done.
+- the static typing aims for compatibility with Go types (to enable compile-down)
+
+.code declare.struct
+
+* zygo uses
+
+- scripting, pause and interact with data
+- configuration language
+- Eventually... multi-core friendly scripting. (Channels now, but no select yet).
+- Eventually... leverage Go's multicore strength for exploratory configuration, data analysis and scripting. (I love R for productivity, Go for production).
+
+* it's the future ... dream big
+
+- constraint/logic programming syntax (use sigils)
+- model checking syntax and checker (Ordered-Binary-Decision-Diagram based)
+- port TLA+ model checker to Go, with zygomys interface
+- unification engine for type system experiments
+
+* final thoughts
+
+- interpreters taught me the incredible power of a test-driven approach
+- tests are simply language fragments
+- fork it and experiment!
+
+* credits
+
+The ancestor dialect of zygomys, [[https://github.com/zhemao/glisp]] Glisp, was designed and implemented by Howard Mao [[https://zhehaomao.com/]].
+
+Thanks Howard!
+
