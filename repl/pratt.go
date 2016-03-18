@@ -153,6 +153,20 @@ func (env *Glisp) PostfixAssign(op string, bp int) *InfixOp {
 	return iop
 }
 
+func arrayOpMunchLeft(env *Glisp, pr *Pratt, left Sexp) (Sexp, error) {
+	oper := env.MakeSymbol("arrayidx")
+	right, err := pr.Expression(env, 0)
+	if err != nil {
+		return SexpNull, err
+	}
+	list := MakeList([]Sexp{
+		oper, left, right,
+	})
+	return list, nil
+}
+
+var arrayOp *InfixOp
+
 // InitInfixOps establishes the env.infixOps definitions
 // required for infix parsing using the Pratt parser.
 func (env *Glisp) InitInfixOps() {
@@ -178,6 +192,11 @@ func (env *Glisp) InitInfixOps() {
 	env.Infix(">=", 40)
 	env.Infix("<", 40)
 	env.Infix("<=", 40)
+
+	arrayOp = &InfixOp{
+		Bp:        80,
+		MunchLeft: arrayOpMunchLeft,
+	}
 
 	dotOp := env.Infix(".", 80)
 	dotOp.MunchLeft =
@@ -375,6 +394,8 @@ func (p *Pratt) Expression(env *Glisp, rbp int) (ret Sexp, err error) {
 		if found {
 			curOp = op
 		}
+	case *SexpArray:
+		P("in pratt parsing, got array x = '%v'", x.SexpString(0))
 	}
 
 	if curOp != nil && curOp.MunchRight != nil {
@@ -408,6 +429,9 @@ func (p *Pratt) Expression(env *Glisp, rbp int) (ret Sexp, err error) {
 			if found {
 				curOp = op
 			}
+		case *SexpArray:
+			P("assigning curOp to arrayOp")
+			curOp = arrayOp
 		default:
 			panic(fmt.Errorf("how to handle cnode type = %#v", cnode))
 		}
@@ -475,6 +499,8 @@ func (env *Glisp) LeftBindingPower(sx Sexp) int {
 		Q("LeftBindingPower: not entry in env.infixOps for operation '%s'",
 			x.name)
 		return 0
+	case *SexpArray:
+		return 80
 	default:
 		panic(fmt.Errorf("LeftBindingPower: unhandled sx :%#v", sx))
 	}

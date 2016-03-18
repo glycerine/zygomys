@@ -67,4 +67,6 @@
 (assert (== "(quote (<= 2 3))" (str (infixExpand {2<=3})) ))
 (assert {2 < 3})
 
-
+(def h (hash a:(hash b:[12 4 6])))
+(assert (== {h.a.b[0]} 12))
+// (quote (arrayidx h.a.b [0]))
