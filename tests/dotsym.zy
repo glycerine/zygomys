@@ -1,0 +1,30 @@
+// dotsymbols always evaluate to themselves
+
+// (def) on a dot-symbol is illegal
+(def a 9)
+//(def .a 3)
+(assert (== .a %.a))
+(assert (== a 9))
+
+
+// (set) on dot symbols is an error - can't test this under script yet, since no wait to try-catch.
+//(set a 3)
+//(set .a 5)
+//(assert (== a 3))
+
+
+//
+// nested paths of dot-symbols work
+//
+(def s (snoopy asst: (hornet sidekick: (hellcat fname:"henry" lname:"johnson"))))
+
+// get
+(assert (== (.s.asst.sidekick.fname) "henry"))
+
+// assign
+(.s.asst.sidekick.lname = "smith")
+(assert (== (.s.asst.sidekick.lname) "smith"))
+
+// without leading .
+(def h (hash a:10))
+(assert (== (h.a) 10))

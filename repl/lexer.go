@@ -185,7 +185,7 @@ var (
 	// dot symbol examples: `.`, `.a`, `.a.b`, `.a.b.c`
 	// dot symbol non-examples: `.a.`, `..`
 	DotSymbolRegex = regexp.MustCompile(`^[.]$|^([.][^'#:;\\~@\[\]{}\^|"()%.0-9,][^'#:;\\~@\[\]{}\^|"()%.,*+\-]*)+$|^[^'#:;\\~@\[\]{}\^|"()%.0-9,][^'#:;\\~@\[\]{}\^|"()%.,*+\-]*([.][^'#:;\\~@\[\]{}\^|"()%.0-9,][^'#:;\\~@\[\]{}\^|"()%.,*+\-]*)+$`)
-	DotPartsRegex  = regexp.MustCompile(`[.][^'#:;\\~@\[\]{}\^|"()%.0-9,][^'#:;\\~@\[\]{}\^|"()%.,]*`)
+	DotPartsRegex  = regexp.MustCompile(`[.]?[^'#:;\\~@\[\]{}\^|"()%.0-9,][^'#:;\\~@\[\]{}\^|"()%.,]*`)
 	CharRegex      = regexp.MustCompile("^'\\\\?.'$")
 	FloatRegex     = regexp.MustCompile("^-?([0-9]+\\.[0-9]*)|-?(\\.[0-9]+)|-?([0-9]+(\\.[0-9]*)?[eE](-?[0-9]+))$")
 	BuiltinOpRegex = regexp.MustCompile(`^(\+\+|\-\-|\+=|\-=|=|==|:=|\+|\-|\*|<|>|<=|>=|<-|->|\*=|/=|\*\*|!|!=|<!)$`)
@@ -267,7 +267,7 @@ func (x *Lexer) DecodeAtom(atom string) (Token, error) {
 		return x.Token(TokenFloat, atom), nil
 	}
 	if DotSymbolRegex.MatchString(atom) {
-		P("matched DotSymbolRegex '%v'", atom)
+		//P("matched DotSymbolRegex '%v'", atom)
 		return x.Token(TokenDotSymbol, atom), nil
 	}
 	if BuiltinOpRegex.MatchString(atom) {
@@ -305,10 +305,27 @@ func (lexer *Lexer) dumpBuffer() error {
 	if err != nil {
 		return err
 	}
+	/*
+		if tok.typ == TokenDotSymbol {
 
+			path := DotPartsRegex.FindAllString(name, -1)
+			lenpath := len(path)
+			if lenpath > 1 && tok.str[0] != '.' {
+				P("in lexer dumpBuffer(), path = '%#v'\n", path)
+				lexer.buffer.Reset()
+				lexer.tokens = append(lexer.tokens, x.Token(TokenSymbol, path[0]))
+				for i := 1; i < lenpath; i++ {
+					lexer.tokens = append(lexer.tokens, x.Token(TokenDot, "."))
+					lexer.tokens = append(lexer.tokens, x.Token(TokenSymbol, path[i]))
+				}
+				return nil
+			}
+		}
+	*/
 	lexer.buffer.Reset()
 	lexer.tokens = append(lexer.tokens, tok)
 	return nil
+
 }
 
 // with block comments, we've got to tell

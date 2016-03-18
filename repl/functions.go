@@ -1211,7 +1211,7 @@ func dotGetSetHelper(env *Glisp, name string, setVal *Sexp) (Sexp, error) {
 
 	if lenpath == 1 && setVal != nil {
 		// single path element set, bind it now.
-		a := path[0][1:] // strip off the dot
+		a := stripAnyDotPrefix(path[0])
 		asym := env.MakeSymbol(a)
 
 		// check conflict
@@ -1231,11 +1231,11 @@ func dotGetSetHelper(env *Glisp, name string, setVal *Sexp) (Sexp, error) {
 	// handle multiple paths that index into hashes after the
 	// the first
 
-	key := path[0][1:] // strip off the dot
+	key := stripAnyDotPrefix(path[0])
 	//Q("\n in dotGetSetHelper(), looking up '%s'\n", key)
 	ret, err, _ = env.LexicalLookupSymbol(env.MakeSymbol(key), false)
 	if err != nil {
-		Q("\n in dotGetSetHelper(), '%s' not found\n", key)
+		//Q("\n in dotGetSetHelper(), '%s' not found\n", key)
 		return SexpNull, err
 	}
 	if lenpath == 1 {
@@ -1251,7 +1251,7 @@ func dotGetSetHelper(env *Glisp, name string, setVal *Sexp) (Sexp, error) {
 	if !isHash {
 		return SexpNull, fmt.Errorf("not a record: cannot get "+
 			"field '%s' in non-record (instead of type %T)",
-			path[1][1:], ret)
+			stripAnyDotPrefix(path[1]), ret)
 	}
 	// have hash: rest of path handled in hashutils.go in nestedPathGet()
 	//Q("\n in dotGetSetHelper(), about to call nestedPathGetSet() with"+
@@ -1494,4 +1494,11 @@ func DotFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		}
 		return ret, err
 	*/
+}
+
+func stripAnyDotPrefix(s string) string {
+	if len(s) > 0 && s[0] == '.' {
+		return s[1:]
+	}
+	return s
 }
