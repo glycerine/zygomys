@@ -55,6 +55,10 @@ func (env *Glisp) Infix(op string, bp int) *InfixOp {
 	return iop
 }
 
+func (env *Glisp) InfixF(op string, bp int, f func(env *Glisp, op string, bp int) *InfixOp) *InfixOp {
+	return f(env, op, bp)
+}
+
 // Infix creates a new (right-associative) short-circuiting
 // infix operator, used for `and` and `or` in infix processing.
 func (env *Glisp) Infixr(op string, bp int) *InfixOp {
@@ -174,6 +178,27 @@ func (env *Glisp) InitInfixOps() {
 	env.Infix(">=", 40)
 	env.Infix("<", 40)
 	env.Infix("<=", 40)
+
+	dotOp := env.Infix(".", 80)
+	dotOp.MunchLeft =
+		func(env *Glisp, pr *Pratt, left Sexp) (Sexp, error) {
+			token := pr.NextToken
+			//var h *SexpHash
+			//switch x := token.(type) {
+			switch token.(type) {
+			case *SexpHash:
+				// okay
+				//h = x
+			default:
+				return SexpNull, fmt.Errorf("dot (.) must be " +
+					"applied to a hash or record")
+			}
+			list := MakeList([]Sexp{
+				dotOp.Sym, left, token,
+			})
+			pr.Advance()
+			return list, nil
+		}
 }
 
 type RightMuncher func(env *Glisp, pr *Pratt) (Sexp, error)

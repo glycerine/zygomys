@@ -329,7 +329,7 @@ getAnother:
 		if err != nil {
 			return SexpNull, err
 		}
-		return MakeList([]Sexp{env.MakeSymbol("syntax-quote"), expr}), nil
+		return MakeList([]Sexp{env.MakeSymbol("syntaxQuote"), expr}), nil
 	case TokenTilde:
 		expr, err := parser.ParseExpression(depth + 1)
 		if err != nil {

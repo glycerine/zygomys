@@ -570,7 +570,7 @@ func (gen *Generator) GenerateCallBySymbol(sym *SexpSymbol, args []Sexp, orig Se
 		return gen.GenerateDefmac(args, orig)
 	case "macexpand":
 		return gen.GenerateMacexpand(args)
-	case "syntax-quote":
+	case "syntaxQuote":
 		return gen.GenerateSyntaxQuote(args)
 	case "include":
 		return gen.GenerateInclude(args)
@@ -1078,7 +1078,7 @@ func (gen *Generator) GenerateSyntaxQuote(args []Sexp) error {
 	//P("GenerateSyntaxQuote() called with args[0]='%#v'", args[0])
 
 	if len(args) != 1 {
-		return fmt.Errorf("syntax-quote takes exactly one argument")
+		return fmt.Errorf("syntaxQuote takes exactly one argument")
 	}
 	arg := args[0]
 

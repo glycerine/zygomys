@@ -78,9 +78,10 @@ func Test025LexingOfStringAtomsAndSymbols(t *testing.T) {
 				`:`, `^`, `\`, `|`, `%`, `"`, `;`, `.9`, `.a.`, `.a.b.`, `..`, `...`, `,`}
 
 			//okay := []string{`..`, `a.b`, `-`, `a-b`, `*a-b*`, `$`, `&`, `.`, `.method`}
-			dotSymbolOkay := []string{`.`, `.h`, `.method`, `.a.b`, `.a.b.c`}
+			dotSymbolOkay := []string{`.`, `.h`, `.method`, `.a.b`, `.a.b.c`, `a.b`}
 
 			CheckRegex(dotSymbolNotOkay, dotSymbolOkay, DotSymbolRegex) // test DotSymbolRegex from lexer.go
+
 		}
 	})
 }
@@ -100,12 +101,12 @@ func CheckRegex(notokay []string, okay []string, x *regexp.Regexp) {
 	fmt.Printf("\nscanning okay list =================\n")
 	for _, a := range okay {
 		ans := x.MatchString(a)
-		cv.So(ans, cv.ShouldEqual, true)
 		if ans {
 			fmt.Printf("good, '%s' matches as expected       '%s'\n", a, x)
 		} else {
 			fmt.Printf("bad,  '%s' does not match but should '%s'\n", a, x)
 		}
+		cv.So(ans, cv.ShouldEqual, true)
 	}
 }
 

@@ -878,6 +878,121 @@ output is passed to the filter `inferior-zygo-output-digest'."
   (comint-send-input)
 )
 
+(defun skip-zygo-comment-lines ()
+  "skip over lines that start with // before they have another non-whitespace character"
+  (interactive)
+  (let* ((done-skipping)
+	 (startp (point))
+	 (nextcomment)
+	 (eol)
+	 (nextword)
+	 )
+    ;; 
+    ;; if nextcomment < eol and ( nextword > nextcomment or nextword is nil ) then skip to next line
+
+    ;; conversely, if nextword < eol and (nextcomment is nil or nextword < nextcomment) then stop skipping lines
+    (while (not done-skipping)
+      (setq startp        (point))
+      (setq nextcomment   (nil-to-point-max (search-forward *inferior-zygo-comment-char* nil 0 1)))
+      (setq eol           (progn (goto-char startp) (nil-to-point-max (search-forward "\n" nil 0 1))))
+      (setq nextword      (progn (goto-char startp) (+ (point) (skip-chars-forward "\t ;\n"))))
+      
+      ;; either stop at the word, or go to the end of line
+      (if (< nextword eol)
+	  (if (or (< nextword nextcomment)
+		  (= (point-max) nextcomment))
+	      
+	      (progn
+		(setq done-skipping t)
+		(goto-char nextword)
+		)
+
+	    (goto-char eol))
+	(progn
+	  (when (= nextword eol)
+	      (setq done-skipping t) ;; stop if nextword == eol
+	      )
+	  (goto-char eol)
+	  )
+	)
+      )
+    )
+  )
+
+
+(defun skip-zygo-comment-lines-backwards ()
+  "Going backwards, skip over lines that start with semi-colons before they have another non-whitespace character.
+The main side-effect is to reposition point. The function returns the new position of point, 
+which is just following the next form back."
+
+  (interactive)
+  (DEBUG message "***************** starting: (skip-zygo-comment-lines-backwards)")
+  (block block-skip-zygo-comment-lines-backwards
+    (DEBUG message "--> point is starting at %s" (point))
+    (let* ((startp (point))
+	   (next-word-back)
+	   (bol)
+	   (nextcomment)
+	   (eol)
+	   (start-backwards-search)
+	   (starting-line (line-number-at-pos))
+	   (cur-line      starting-line)
+	   )
+      
+      ;; back up until we find a line with something like a lisp form on it (and the whole line is not commented out)
+      (beginning-of-line)
+
+      ;; handle the case of starting at the beginning of a non-comment line, by backing up one line before we search...
+      (when (and (= (point) startp)
+		 (> startp  (point-min)))
+	;; we started at the beginning of a line, and it's not the first line, so back up past the newline to prev line.
+	(goto-char (- startp 1))
+	(beginning-of-line))
+      
+      ;; main backup while loop
+      (while (and (line-is-comment-or-whitespace)
+		  (> (point) (point-min)))
+	(forward-line -1)
+	)
+
+      ;; if we have moved lines, reset to our new starting place...
+      (setq cur-line (line-number-at-pos))
+      (if (= cur-line starting-line)
+	  (goto-char startp)
+	(progn
+	  (end-of-line)
+	  (setq startp (point))))
+      (DEBUG message "--> After revision of backing up past comments, point is at %s" (point))
+
+
+      ;; INVAR: we are on a line with some content, or we are at the beginning of the buffer
+      (when (line-is-comment-or-whitespace)
+	;; beginning of buffer, just get to the start.
+	(goto-char (point-min)) 
+	(return-from block-skip-zygo-comment-lines-backwards (point-min)))
+	  
+      (DEBUG message "--> INVAR: we are on a line with some content")
+    
+      (setq bol           (progn (goto-char startp)                         (nil-to-point-min (search-backward "\n" 0 0 1))))
+      (setq nextcomment   (progn (goto-char bol)                            (nil-to-point-max (search-forward *inferior-zygo-comment-char* nil 0 1))))
+      (setq eol           (progn (goto-char startp)                         (nil-to-point-max (search-forward "\n" nil 0 1))))
+
+      ;; start from eol, or from nextcomment if nextcomment is < eol
+      (setq start-backwards-search eol)
+      (when (< nextcomment eol)
+	(setq start-backwards-search nextcomment))
+
+      (setq next-word-back 
+	    (progn 
+	      (goto-char start-backwards-search)    
+	      (+ 
+	       (point) 
+	       (skip-chars-backward "\t ;\n"))))
+
+      (goto-char next-word-back)
+)))
+
+
 ;;; provide ourself
 
 

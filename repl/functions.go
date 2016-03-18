@@ -895,6 +895,7 @@ func CoreFunctions() map[string]GlispUserFunction {
 		"&":         AddressOfFunction,
 		"derefSet":  DerefFunction,
 		"deref":     DerefFunction,
+		".":         DotFunction,
 	}
 }
 
@@ -1445,4 +1446,52 @@ func DerefFunction(env *Glisp, name string, args []Sexp) (result Sexp, err error
 	default:
 		return SexpNull, fmt.Errorf("unimplemented operation '%s' in DerefFunction", name)
 	}
+}
+
+// "." dot operator
+func DotFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
+	if len(args) != 2 {
+		return SexpNull, WrongNargs
+	}
+	P("in DotFunction(), name='%v', args[0] = '%v', args[1]= '%v'",
+		name,
+		args[0].SexpString(0),
+		args[1].SexpString(0))
+	return SexpNull, nil
+	/*
+		var ret Sexp = SexpNull
+		var err error
+		lenpath := len(path)
+
+		if lenpath == 1 && setVal != nil {
+			// single path element set, bind it now.
+			a := path[0][1:] // strip off the dot
+			asym := env.MakeSymbol(a)
+
+			// check conflict
+			//Q("asym = %#v\n", asym)
+			builtin, typ := env.IsBuiltinSym(asym)
+			if builtin {
+				return SexpNull, fmt.Errorf("'%s' is a %s, cannot assign to it with dot-symbol", asym.name, typ)
+			}
+
+			err := env.LexicalBindSymbol(asym, *setVal)
+			if err != nil {
+				return SexpNull, err
+			}
+			return *setVal, nil
+		}
+
+		// handle multiple paths that index into hashes after the
+		// the first
+
+		key := path[0][1:] // strip off the dot
+		//Q("\n in dotGetSetHelper(), looking up '%s'\n", key)
+		ret, err, _ = env.LexicalLookupSymbol(env.MakeSymbol(key), false)
+		if err != nil {
+			Q("\n in dotGetSetHelper(), '%s' not found\n", key)
+			return SexpNull, err
+		}
+		return ret, err
+	*/
 }
