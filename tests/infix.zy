@@ -70,3 +70,7 @@
 (def h (hash a:(hash b:[12 4 6])))
 (assert (== {h.a.b[0]} 12))
 // (quote (arrayidx h.a.b [0]))
+
+(infixExpand {h.a.b[2] = 99})
+{h.a.b[2] = 99}
+(assert == {h.a.b[2]} 99)

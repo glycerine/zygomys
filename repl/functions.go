@@ -896,6 +896,7 @@ func CoreFunctions() map[string]GlispUserFunction {
 		"derefSet":  DerefFunction,
 		"deref":     DerefFunction,
 		".":         DotFunction,
+		"arrayidx":  ArrayIndexFunction,
 	}
 }
 
