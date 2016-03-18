@@ -949,7 +949,31 @@ func (gen *Generator) GenerateSet(args []Sexp) error {
 	if narg != 2 {
 		return fmt.Errorf("malformed set statement, need 2 arguments")
 	}
-
+	/*
+		var lhs *SexpSymbol
+		switch expr := arg.(type) {
+		case *SexpPair:
+			// gracefully handle the quoted symbols we get from macros
+			unquotedSymbol, isQuo := isQuotedSymbol(expr)
+			switch {
+			case isQuo:
+				// auto-unquoting first argument to def
+				lhs = unquotedSymbol.(*SexpSymbol)
+			default:
+				switch sy := expr.Head.(type) {
+				case *SexpSymbol:
+					if sy.name == "arrayidx" {
+						lhs = expr
+					}
+				default:
+					return fmt.Errorf("set: left-hand-side must be a symbol -- "+
+						"but we have %T/val=%v", expr, expr.SexpString(0))
+				}
+			}
+		default:
+			return nil, fmt.Errorf("set: left-hand-side must be a symbol; we have %T", arg)
+		}
+	*/
 	plhs, err := gen.GetLHS(args[0], "set")
 	if err != nil {
 		return err
@@ -981,14 +1005,16 @@ func (gen *Generator) GetLHS(arg Sexp, opname string) (*SexpSymbol, error) {
 	case *SexpPair:
 		// gracefully handle the quoted symbols we get from macros
 		unquotedSymbol, isQuo := isQuotedSymbol(expr)
-		if isQuo {
+		switch {
+		case isQuo:
 			// auto-unquoting first argument to def
 			lhs = unquotedSymbol.(*SexpSymbol)
-		} else {
-			return nil, fmt.Errorf("%s: left-hand-side must be a symbol", opname)
+		default:
+			return nil, fmt.Errorf("%s: left-hand-side must be a symbol,"+
+				" but we have %T/val=%v", opname, expr, expr.SexpString(0))
 		}
 	default:
-		return nil, fmt.Errorf("%s: left-hand-side must be a symbol", opname)
+		return nil, fmt.Errorf("%s: left-hand-side must be a symbol; we have %T", opname, arg)
 	}
 
 	builtin, typ := gen.env.IsBuiltinSym(lhs)
