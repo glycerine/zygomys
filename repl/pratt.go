@@ -156,13 +156,14 @@ func (env *Glisp) PostfixAssign(op string, bp int) *InfixOp {
 func arrayOpMunchLeft(env *Glisp, pr *Pratt, left Sexp) (Sexp, error) {
 	oper := env.MakeSymbol("arrayidx")
 	P("pr.NextToken = '%v', left = %#v", pr.NextToken.SexpString(0), left)
-	right, err := pr.Expression(env, 0)
-	P("right = %#v", right)
-	if err != nil {
-		return SexpNull, err
+	if len(pr.CnodeStack) > 0 {
+		P("pr.CnodeStack[0] = '%v'", pr.CnodeStack[0])
 	}
+	//right, err := pr.Expression(env, 0)
+	right := pr.NextToken
+	P("right = %#v", right)
 	list := MakeList([]Sexp{
-		oper, left, right,
+		oper, left, pr.CnodeStack[0],
 	})
 	return list, nil
 }
@@ -432,7 +433,7 @@ func (p *Pratt) Expression(env *Glisp, rbp int) (ret Sexp, err error) {
 				curOp = op
 			}
 		case *SexpArray:
-			//P("assigning curOp to arrayOp")
+			P("assigning curOp to arrayOp")
 			curOp = arrayOp
 		default:
 			panic(fmt.Errorf("how to handle cnode type = %#v", cnode))
@@ -452,7 +453,7 @@ func (p *Pratt) Expression(env *Glisp, rbp int) (ret Sexp, err error) {
 		// if cnode->munch_left() returns this/itself, then
 		// the net effect is: p.AccumTree = cnode;
 		if curOp != nil && curOp.MunchLeft != nil {
-			P("about to MunchLeft, cnode = %#v, p.AccumTree = %#v", cnode, p.AccumTree)
+			P("about to MunchLeft, cnode = %v, p.AccumTree = %v", cnode.SexpString(0), p.AccumTree.SexpString(0))
 			p.AccumTree, err = curOp.MunchLeft(env, p, p.AccumTree)
 			if err != nil {
 				P("curOp.MunchLeft saw err = %v", err)
