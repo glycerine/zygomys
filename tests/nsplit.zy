@@ -1,2 +1,2 @@
-(assert (== "arrays.zy" (first (nsplit (sys "ls tests/")))))
+(assert (== "append.zy" (first (nsplit (sys "ls tests/")))))
 

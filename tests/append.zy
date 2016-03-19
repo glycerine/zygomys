@@ -1,0 +1,8 @@
+(def a [2,3,4])
+(append a 5)
+
+// appendslice is like using ... as in Go's append(x, xslice...) to
+// avoid getting [2, 3, 4, [5, 6]] when we want [2, 3, 4, 5, 6]
+//
+(def b (appendslice a [5,6]))
+(assert (== b [2,3,4,5,6]))

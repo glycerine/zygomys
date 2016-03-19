@@ -2,14 +2,13 @@ package zygo
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"os"
 	"reflect"
 	"runtime"
 )
 
-var WrongNargs error = errors.New("wrong number of arguments")
+var WrongNargs error = fmt.Errorf("wrong number of arguments")
 
 type GlispFunction []Instruction
 type GlispUserFunction func(*Glisp, string, []Sexp) (Sexp, error)
@@ -102,7 +101,7 @@ func ComplementFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		return &SexpChar{Val: ^t.Val}, nil
 	}
 
-	return SexpNull, errors.New("Argument to bitNot should be integer")
+	return SexpNull, fmt.Errorf("Argument to bitNot should be integer")
 }
 
 func PointerOrNumericFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
@@ -228,7 +227,7 @@ func ArrayAccessFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	case *SexpArray:
 		arr = t
 	default:
-		return SexpNull, errors.New("First argument of aget must be array")
+		return SexpNull, fmt.Errorf("First argument of aget must be array")
 	}
 
 	var i int
@@ -248,7 +247,7 @@ func ArrayAccessFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		case *SexpInt:
 			i = int(j.Val)
 		default:
-			return SexpNull, errors.New("Second argument of aget could not be evaluated to integer")
+			return SexpNull, fmt.Errorf("Second argument of aget could not be evaluated to integer")
 		}
 	}
 
@@ -261,7 +260,7 @@ func ArrayAccessFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 			if narg == 3 {
 				return args[2], nil
 			}
-			return SexpNull, errors.New("Array index out of bounds")
+			return SexpNull, fmt.Errorf("Array index out of bounds")
 		}
 		return arr.Val[i], nil
 	case "aset":
@@ -269,7 +268,7 @@ func ArrayAccessFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 			return SexpNull, WrongNargs
 		}
 		if i < 0 || i >= len(arr.Val) {
-			return SexpNull, errors.New("Array index out of bounds")
+			return SexpNull, fmt.Errorf("Array index out of bounds")
 		}
 		arr.Val[i] = args[2]
 	}
@@ -286,7 +285,7 @@ func SgetFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	case *SexpStr:
 		str = t
 	default:
-		return SexpNull, errors.New("First argument of sget must be string")
+		return SexpNull, fmt.Errorf("First argument of sget must be string")
 	}
 
 	var i int
@@ -296,7 +295,7 @@ func SgetFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	case *SexpChar:
 		i = int(t.Val)
 	default:
-		return SexpNull, errors.New("Second argument of sget must be integer")
+		return SexpNull, fmt.Errorf("Second argument of sget must be integer")
 	}
 
 	return &SexpChar{Val: rune(str.S[i])}, nil
@@ -322,7 +321,7 @@ func HashAccessFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	case *SexpHash:
 		hash = e
 	default:
-		return SexpNull, errors.New("first argument to h* function must be hash")
+		return SexpNull, fmt.Errorf("first argument to h* function must be hash")
 	}
 
 	switch name {
@@ -382,7 +381,7 @@ func HashColonFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	case *SexpHash:
 		hash = e
 	default:
-		return SexpNull, errors.New("second argument of (:field hash) must be a hash")
+		return SexpNull, fmt.Errorf("second argument of (:field hash) must be a hash")
 	}
 
 	if len(args) == 3 {
@@ -404,7 +403,7 @@ func SliceFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	case *SexpChar:
 		start = int(t.Val)
 	default:
-		return SexpNull, errors.New("Second argument of slice must be integer")
+		return SexpNull, fmt.Errorf("Second argument of slice must be integer")
 	}
 
 	switch t := args[2].(type) {
@@ -413,7 +412,7 @@ func SliceFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	case *SexpChar:
 		end = int(t.Val)
 	default:
-		return SexpNull, errors.New("Third argument of slice must be integer")
+		return SexpNull, fmt.Errorf("Third argument of slice must be integer")
 	}
 
 	switch t := args[0].(type) {
@@ -423,7 +422,7 @@ func SliceFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		return &SexpStr{S: t.S[start:end]}, nil
 	}
 
-	return SexpNull, errors.New("First argument of slice must be array or string")
+	return SexpNull, fmt.Errorf("First argument of slice must be array or string")
 }
 
 func LenFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
@@ -455,7 +454,7 @@ func LenFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	default:
 		P("in LenFunction with args[0] of type %T", t)
 	}
-	return &SexpInt{}, errors.New("argument must be string, list, hash, or array")
+	return &SexpInt{}, fmt.Errorf("argument must be string, list, hash, or array")
 }
 
 func AppendFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
@@ -465,12 +464,24 @@ func AppendFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 
 	switch t := args[0].(type) {
 	case *SexpArray:
-		return &SexpArray{Val: append(t.Val, args[1])}, nil
+		switch name {
+		case "append":
+			return &SexpArray{Val: append(t.Val, args[1])}, nil
+		case "appendslice":
+			switch sl := args[1].(type) {
+			case *SexpArray:
+				return &SexpArray{Val: append(t.Val, sl.Val...)}, nil
+			default:
+				return SexpNull, fmt.Errorf("Second argument of appendslice must be slice")
+			}
+		default:
+			return SexpNull, fmt.Errorf("unrecognized append variant: '%s'", name)
+		}
 	case *SexpStr:
 		return AppendStr(t, args[1])
 	}
 
-	return SexpNull, errors.New("First argument of append must be array or string")
+	return SexpNull, fmt.Errorf("First argument of append must be array or string")
 }
 
 func ConcatFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
@@ -501,7 +512,7 @@ func ConcatFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		}
 	}
 
-	return SexpNull, errors.New("expected strings, lists or arrays")
+	return SexpNull, fmt.Errorf("expected strings, lists or arrays")
 }
 
 func ReadFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
@@ -527,7 +538,7 @@ func EvalFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	newenv := env.Duplicate()
 	err := newenv.LoadExpressions(args)
 	if err != nil {
-		return SexpNull, errors.New("failed to compile expression")
+		return SexpNull, fmt.Errorf("failed to compile expression")
 	}
 	newenv.pc = 0
 	return newenv.Run()
@@ -628,7 +639,7 @@ func ApplyFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	case *SexpFunction:
 		fun = e
 	default:
-		return SexpNull, errors.New("first argument must be function")
+		return SexpNull, fmt.Errorf("first argument must be function")
 	}
 
 	switch e := args[1].(type) {
@@ -641,7 +652,7 @@ func ApplyFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 			return SexpNull, err
 		}
 	default:
-		return SexpNull, errors.New("second argument must be array or list")
+		return SexpNull, fmt.Errorf("second argument must be array or list")
 	}
 
 	return env.Apply(fun, funargs)
@@ -683,7 +694,7 @@ func MakeArrayFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	case *SexpInt:
 		size = int(e.Val)
 	default:
-		return SexpNull, errors.New("first argument must be integer")
+		return SexpNull, fmt.Errorf("first argument must be integer")
 	}
 
 	var fill Sexp
@@ -748,7 +759,7 @@ func ConstructorFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 			}
 		}
 	}
-	return SexpNull, errors.New("invalid constructor")
+	return SexpNull, fmt.Errorf("invalid constructor")
 }
 
 func SymnumFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
@@ -760,7 +771,7 @@ func SymnumFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	case *SexpSymbol:
 		return &SexpInt{Val: int64(t.number)}, nil
 	}
-	return SexpNull, errors.New("argument must be symbol")
+	return SexpNull, fmt.Errorf("argument must be symbol")
 }
 
 var MissingFunction = &SexpFunction{name: "__missing", user: true}
@@ -881,36 +892,37 @@ func CoreFunctions() map[string]GlispUserFunction {
 		"sget":      SgetFunction,
 		"hget":      GenericAccessFunction, // handles arrays or hashes
 		//":":          ColonAccessFunction,
-		"hset":      HashAccessFunction,
-		"hdel":      HashAccessFunction,
-		"keys":      HashAccessFunction,
-		"hpair":     GenericHpairFunction,
-		"slice":     SliceFunction,
-		"len":       LenFunction,
-		"append":    AppendFunction,
-		"concat":    ConcatFunction,
-		"field":     ConstructorFunction,
-		"struct":    ConstructorFunction,
-		"array":     ConstructorFunction,
-		"list":      ConstructorFunction,
-		"hash":      ConstructorFunction,
-		"raw":       ConstructorFunction,
-		"str":       StringifyFunction,
-		"->":        ThreadMapFunction,
-		"flatten":   FlattenToWordsFunction,
-		"quotelist": QuoteListFunction,
-		"=":         AssignmentFunction,
-		":=":        AssignmentFunction,
-		"fieldls":   GoFieldListFunction,
-		"defined?":  DefinedFunction,
-		"stop":      StopFunction,
-		"joinsym":   JoinSymFunction,
-		"GOOS":      GOOSFunction,
-		"&":         AddressOfFunction,
-		"derefSet":  DerefFunction,
-		"deref":     DerefFunction,
-		".":         DotFunction,
-		"arrayidx":  ArrayIndexFunction,
+		"hset":        HashAccessFunction,
+		"hdel":        HashAccessFunction,
+		"keys":        HashAccessFunction,
+		"hpair":       GenericHpairFunction,
+		"slice":       SliceFunction,
+		"len":         LenFunction,
+		"append":      AppendFunction,
+		"appendslice": AppendFunction,
+		"concat":      ConcatFunction,
+		"field":       ConstructorFunction,
+		"struct":      ConstructorFunction,
+		"array":       ConstructorFunction,
+		"list":        ConstructorFunction,
+		"hash":        ConstructorFunction,
+		"raw":         ConstructorFunction,
+		"str":         StringifyFunction,
+		"->":          ThreadMapFunction,
+		"flatten":     FlattenToWordsFunction,
+		"quotelist":   QuoteListFunction,
+		"=":           AssignmentFunction,
+		":=":          AssignmentFunction,
+		"fieldls":     GoFieldListFunction,
+		"defined?":    DefinedFunction,
+		"stop":        StopFunction,
+		"joinsym":     JoinSymFunction,
+		"GOOS":        GOOSFunction,
+		"&":           AddressOfFunction,
+		"derefSet":    DerefFunction,
+		"deref":       DerefFunction,
+		".":           DotFunction,
+		"arrayidx":    ArrayIndexFunction,
 	}
 }
 
@@ -1023,7 +1035,7 @@ func Sym2StrFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		r := &SexpStr{S: t.name}
 		return r, nil
 	}
-	return SexpNull, errors.New("argument must be symbol")
+	return SexpNull, fmt.Errorf("argument must be symbol")
 }
 
 func Str2SymFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
@@ -1035,7 +1047,7 @@ func Str2SymFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	case *SexpStr:
 		return env.MakeSymbol(t.S), nil
 	}
-	return SexpNull, errors.New("argument must be string")
+	return SexpNull, fmt.Errorf("argument must be string")
 }
 
 func GensymFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
@@ -1048,7 +1060,7 @@ func GensymFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		case *SexpStr:
 			return env.GenSymbol(t.S), nil
 		}
-		return SexpNull, errors.New("argument must be string")
+		return SexpNull, fmt.Errorf("argument must be string")
 	default:
 		return SexpNull, WrongNargs
 	}
@@ -1062,7 +1074,7 @@ func ExitFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	case *SexpInt:
 		os.Exit(int(e.Val))
 	}
-	return SexpNull, errors.New("argument must be int (the exit code)")
+	return SexpNull, fmt.Errorf("argument must be int (the exit code)")
 }
 
 // handles arrays or hashes
@@ -1087,7 +1099,7 @@ func GenericAccessFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	case *SexpArray:
 		return ArrayAccessFunction(env, name, args)
 	}
-	return SexpNull, errors.New("first argument to hget function must be hash or array")
+	return SexpNull, fmt.Errorf("first argument to hget function must be hash or array")
 }
 
 var stopErr error = fmt.Errorf("stop")
