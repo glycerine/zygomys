@@ -62,7 +62,7 @@ func hashHelper(expr Sexp) (hashcode int, isList bool, err error) {
 }
 
 func MakeHash(args []Sexp, typename string, env *Glisp) (*SexpHash, error) {
-	//P("MakeHash called")
+	//Q("MakeHash called")
 	if len(args)%2 != 0 {
 		return &SexpHash{},
 			errors.New("hash requires even number of arguments")
@@ -93,7 +93,7 @@ func MakeHash(args []Sexp, typename string, env *Glisp) (*SexpHash, error) {
 	var superClass *SexpHash
 	var defnEnv *SexpHash
 
-	//P("generating SexpHash with typename: '%s'", typename)
+	//Q("generating SexpHash with typename: '%s'", typename)
 	hash := SexpHash{
 		TypeName:         typename,
 		Map:              make(map[int][]*SexpPair),
@@ -127,14 +127,14 @@ func MakeHash(args []Sexp, typename string, env *Glisp) (*SexpHash, error) {
 		k++
 	}
 
-	Q("doing factory, foundRecordType := GoStructRegistry.Registry[typename]")
+	//Q("doing factory, foundRecordType := GoStructRegistry.Registry[typename]")
 	factoryShad, foundRecordType := GoStructRegistry.Registry[typename]
 	if foundRecordType {
-		Q("factoryShad = %#v\n", factoryShad)
+		//Q("factoryShad = %#v\n", factoryShad)
 		if factoryShad.hasShadowStruct {
-			Q("\n in MakeHash: found struct associated with '%s'\n", typename)
+			//Q("\n in MakeHash: found struct associated with '%s'\n", typename)
 			hash.SetGoStructFactory(factoryShad)
-			Q("\n in MakeHash: after SetGoStructFactory for typename '%s'\n", typename)
+			//Q("\n in MakeHash: after SetGoStructFactory for typename '%s'\n", typename)
 			err := hash.SetMethodList(env)
 			if err != nil {
 				return &SexpHash{}, fmt.Errorf("unexpected error "+
@@ -147,7 +147,7 @@ func MakeHash(args []Sexp, typename string, env *Glisp) (*SexpHash, error) {
 			}
 		}
 	} else {
-		Q("\n in MakeHash: did not find Go struct with typename = '%s'\n", typename)
+		//Q("\n in MakeHash: did not find Go struct with typename = '%s'\n", typename)
 		factory.initDone = true
 		factory.ReflectName = typename
 		factory.DisplayAs = typename
@@ -158,7 +158,32 @@ func MakeHash(args []Sexp, typename string, env *Glisp) (*SexpHash, error) {
 	return &hash, nil
 }
 
+func (h *SexpHash) DotPathHashGet(env *Glisp, sym *SexpSymbol) (Sexp, error) {
+	path := DotPartsRegex.FindAllString(sym.name, -1)
+	//Q("in DotPathHashGet(), path = '%#v'", path)
+	if len(path) == 0 {
+		return SexpNull, fmt.Errorf("internal error: DotPathHashGet" +
+			" path had zero length")
+	}
+
+	//Q("\n in DotPathHashGet(), about to call nestedPathGetSet() with"+
+	//	"path='%#v\n", path)
+	exp, err := h.nestedPathGetSet(env, path, nil)
+	if err != nil {
+		return SexpNull, err
+	}
+	return exp, nil
+}
+
 func (hash *SexpHash) HashGet(env *Glisp, key Sexp) (Sexp, error) {
+	switch sym := key.(type) {
+	case *SexpSymbol:
+		//Q("HashGet, sym = '%v'", sym.SexpString(0))
+		if sym.isDot {
+			return hash.DotPathHashGet(env, sym)
+		}
+	}
+
 	// this is kind of a hack
 	// SexpEnd can't be created by user
 	// so there is no way it would actually show up in the map
@@ -169,7 +194,7 @@ func (hash *SexpHash) HashGet(env *Glisp, key Sexp) (Sexp, error) {
 	}
 
 	if val == SexpEnd {
-		msg := fmt.Sprintf("key %s not found", key.SexpString(0))
+		msg := fmt.Sprintf("HashGet: key %s not found", key.SexpString(0))
 		return SexpNull, errors.New(msg)
 	}
 	return val, nil
@@ -198,7 +223,7 @@ func (hash *SexpHash) HashGetDefault(env *Glisp, key Sexp, defaultval Sexp) (Sex
 var KeyNotSymbol = fmt.Errorf("key is not a symbol")
 
 func (h *SexpHash) TypeCheckField(key Sexp, val Sexp) error {
-	Q("in TypeCheckField, key='%v' val='%v'", key.SexpString(0), val.SexpString(0))
+	//Q("in TypeCheckField, key='%v' val='%v'", key.SexpString(0), val.SexpString(0))
 
 	var keySym *SexpSymbol
 	wasSym := false
@@ -211,14 +236,14 @@ func (h *SexpHash) TypeCheckField(key Sexp, val Sexp) error {
 	}
 	p := h.GoStructFactory
 	if p == nil {
-		Q("SexpHash.TypeCheckField() sees nil GoStructFactory, bailing out.")
+		//Q("SexpHash.TypeCheckField() sees nil GoStructFactory, bailing out.")
 		return nil
 	} else {
-		Q("SexpHash.TypeCheckField() sees h.GoStructFactory = '%#v'", h.GoStructFactory)
+		//Q("SexpHash.TypeCheckField() sees h.GoStructFactory = '%#v'", h.GoStructFactory)
 	}
 
 	if p.UserStructDefn == nil {
-		Q("SexpHash.TypeCheckField() sees nil has.GoStructFactory.UserStructDefn, bailing out.")
+		//Q("SexpHash.TypeCheckField() sees nil has.GoStructFactory.UserStructDefn, bailing out.")
 
 		// check in the registry for this type!
 		rt := GoStructRegistry.Lookup(h.TypeName)
@@ -282,7 +307,7 @@ func (h *SexpHash) TypeCheckField(key Sexp, val Sexp) error {
 }
 
 func (hash *SexpHash) HashSet(key Sexp, val Sexp) error {
-	//P("in HashSet, key='%v' val='%v'", key.SexpString(), val.SexpString())
+	//Q("in HashSet, key='%v' val='%v'", key.SexpString(), val.SexpString())
 
 	if _, isComment := key.(*SexpComment); isComment {
 		return fmt.Errorf("HashSet: key cannot be comment")
@@ -308,7 +333,7 @@ func (hash *SexpHash) HashSet(key Sexp, val Sexp) error {
 		hash.Map[hashval] = []*SexpPair{Cons(key, val)}
 		hash.KeyOrder = append(hash.KeyOrder, key)
 		hash.NumKeys++
-		//P("in HashSet, added key to KeyOrder: '%v'", key)
+		//Q("in HashSet, added key to KeyOrder: '%v'", key)
 		return nil
 	}
 

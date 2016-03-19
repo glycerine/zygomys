@@ -121,7 +121,11 @@ type SexpSelector struct {
 }
 
 func (si *SexpSelector) SexpString(indent int) string {
-	return fmt.Sprintf("(arraySelector %v %v)", si.Container.SexpString(indent), si.Select.SexpString(indent))
+	rhs, err := si.RHS()
+	if err != nil {
+		return fmt.Sprintf("(arraySelector %v %v)", si.Container.SexpString(indent), si.Select.SexpString(indent))
+	}
+	return fmt.Sprintf("%v /*(arraySelector %v %v)*/", rhs.SexpString(indent), si.Container.SexpString(indent), si.Select.SexpString(indent))
 }
 
 // Type returns the type of the value.
