@@ -86,5 +86,6 @@
 (def h (hash a:(hash b:[3 4] d:9)))
 (assert (== (hget h .a.b) [3 4]))
 
-(assert (== {h.a.b} 9))
-
+(assert (== (* h.a.d) 9))
+(assert (== {* h.a.d} 9))
+//(infixExpand {h.a.b})

@@ -466,6 +466,17 @@ func PointerToFunction(env *Glisp, name string,
 		Q("dereference operation on SexpReflect detected")
 		// TODO what goes here?
 		return SexpNull, fmt.Errorf("illegal to dereference nil pointer")
+	case *SexpSymbol:
+		if arg.isDot {
+			// (* h.a) dereferencing a dot symbol
+			resolved, err := dotGetSetHelper(env, arg.name, nil)
+			if err != nil {
+				return nil, err
+			}
+			return resolved, nil
+		} else {
+			panic("TODO: what goes here, for (* sym) where sym is a regular symbol")
+		}
 	default:
 		return SexpNull, fmt.Errorf("argument x in (%s x) was not regtype or SexpPointer, "+
 			"instead type %T displaying as '%v' ",
