@@ -415,7 +415,7 @@ getAnother:
 	case TokenComma:
 		goto getAnother
 	case TokenSemicolon:
-		goto getAnother // not the right thing, still TODO to figure out what is.
+		return &SexpSemicolon{}, nil
 	}
 	return SexpNull, fmt.Errorf("Invalid syntax, don't know what to do with %v '%v'", tok.typ, tok)
 }

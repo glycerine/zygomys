@@ -4,3 +4,7 @@
 (set (arrayidx ar [i]) 99)
 (assert {ar[i] == 99})
 (= {ar[i]} 1010101)
+
+// series of infix ;-separated expressions should all be evaluated
+{ b = 2; d = 4 }
+(assert {b+2 == d})
