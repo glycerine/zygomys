@@ -155,10 +155,19 @@ func (x *SexpSelector) RHS() (Sexp, error) {
 	return x.Container.Val[i], nil
 }
 
-// PointerLike structs have an RHS (right-hand-side)
+// HasRHS structs have a RHS (right-hand-side)
 // method that can be used to dereference the pointer-
 // like object, yielding a value suitable for the
 // right-hand-side of an assignment statement.
-type PointerLike interface {
+type HasRHS interface {
 	RHS() (Sexp, error)
+}
+
+func (x *SexpSelector) AssignToSelection(rhs Sexp) error {
+	_, err := x.RHS() // check for errors
+	if err != nil {
+		return err
+	}
+	x.Container.Val[x.Select.Val[0].(*SexpInt).Val] = rhs
+	return nil
 }

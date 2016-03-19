@@ -193,13 +193,13 @@ func comparePointers(a *SexpPointer, bs Sexp) (int, error) {
 func Compare(a Sexp, b Sexp) (int, error) {
 
 	var err error
-	if ptr, isPtrLike := a.(PointerLike); isPtrLike {
+	if ptr, isPtrLike := a.(HasRHS); isPtrLike {
 		a, err = ptr.RHS()
 		if err != nil {
 			return 0, err
 		}
 	}
-	if ptr, isPtrLike := b.(PointerLike); isPtrLike {
+	if ptr, isPtrLike := b.(HasRHS); isPtrLike {
 		b, err = ptr.RHS()
 		if err != nil {
 			return 0, err

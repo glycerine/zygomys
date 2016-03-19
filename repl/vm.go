@@ -799,12 +799,8 @@ func (a AssignInstr) Execute(env *Glisp) error {
 	case *SexpSymbol:
 		return env.LexicalBindSymbol(x, rhs)
 	case *SexpSelector:
-		_, err := x.RHS() // check for errors
-		if err != nil {
-			return err
-		}
-		x.Container.Val[x.Select.Val[0].(*SexpInt).Val] = rhs
-		return nil
+		err := x.AssignToSelection(rhs)
+		return err
 	}
 	return fmt.Errorf("AssignInstr: don't know how to assign to %T", lhs)
 }

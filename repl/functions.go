@@ -1099,6 +1099,10 @@ func AssignmentFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	switch s := args[0].(type) {
 	case *SexpSymbol:
 		sym = s
+	case *SexpSelector:
+		err := s.AssignToSelection(args[1])
+		return args[1], err
+
 	default:
 		return SexpNull, fmt.Errorf("assignment needs left-hand-side"+
 			" argument to be a symbol; we got %T", s)

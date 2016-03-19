@@ -3,3 +3,4 @@
 (def i 2)
 (set (arrayidx ar [i]) 99)
 (assert {ar[i] == 99})
+(= {ar[i]} 1010101)
