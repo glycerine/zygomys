@@ -84,8 +84,14 @@
 
 // simpler: using dot symbols as the key an hget call
 (def h (hash a:(hash b:[3 4] d:9)))
+h.a.b[0]
 (assert (== (hget h .a.b) [3 4]))
 
 (assert (== (* h.a.d) 9))
 (assert (== {* h.a.d} 9))
 //(infixExpand {h.a.b})
+
+(assert (== {h.a.b[0] + 5} 8))
+{j=1}
+(assert (== {h.a.b[j] + 5} 9))
+(assert (== {h.a.b[j] * 5} 20))

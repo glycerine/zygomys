@@ -119,8 +119,12 @@ func NumericFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	if len(args) < 1 {
 		return SexpNull, WrongNargs
 	}
-
 	var err error
+	args, err = env.SubstituteRHS(args)
+	if err != nil {
+		return SexpNull, err
+	}
+
 	accum := args[0]
 	var op NumericOp
 	switch name {
@@ -1526,4 +1530,21 @@ func stripAnyDotPrefix(s string) string {
 		return s[1:]
 	}
 	return s
+}
+
+// SubstituteRHS locates any SexpSelector(s) (HasRHS implementers, really)
+// and substitutes
+// the value of x.RHS() for each x in args.
+func (env *Glisp) SubstituteRHS(args []Sexp) ([]Sexp, error) {
+	for i := range args {
+		obj, hasRhs := args[i].(HasRHS)
+		if hasRhs {
+			sx, err := obj.RHS()
+			if err != nil {
+				return args, err
+			}
+			args[i] = sx
+		}
+	}
+	return args, nil
 }

@@ -159,11 +159,12 @@ func Repl(env *Glisp, cfg *GlispConfig) {
 	}
 	pr := NewPrompter()
 	defer pr.Close()
+	infixSym := env.MakeSymbol("infix")
 
 	for {
 		//line, err := pr.getExpressionOrig(reader)
 		line, exprsInput, err := pr.getExpressionWithLiner(env)
-		//Q("\n exprsInput(%d) = '%v'\n line = '%s'\n", len(exprsInput), SexpArray(exprsInput).SexpString(), line)
+		//Q("\n exprsInput(len=%d) = '%v'\n line = '%s'\n", len(exprsInput), (&SexpArray{Val: exprsInput}).SexpString(0), line)
 		if err != nil {
 			fmt.Println(err)
 			if err == io.EOF {
@@ -259,10 +260,26 @@ func Repl(env *Glisp, cfg *GlispConfig) {
 		}
 
 		var expr Sexp
-		if len(exprsInput) > 0 {
-			// already parsed, so avoid parsing again if we can.
-			expr, err = env.EvalExpressions(exprsInput)
+		n := len(exprsInput)
+		if n > 0 {
+			P("repl: len(exprsInput)==%v", n)
+			for i := range exprsInput {
+				P("repl: exprsInput[%v] = '%v'", i, exprsInput[i].SexpString(0))
+			}
+
+			firstStr := exprsInput[0].SexpString(0)
+			if len(firstStr) > 0 && firstStr[0] != '(' {
+				// treat as infix
+				infixWrappedSexp := MakeList([]Sexp{infixSym, &SexpArray{Val: exprsInput}})
+				expr, err = env.EvalExpressions([]Sexp{infixWrappedSexp})
+			} else {
+				// no infix assumption
+
+				// already parsed, so avoid parsing again if we can.
+				expr, err = env.EvalExpressions(exprsInput)
+			}
 		} else {
+			line = env.ReplLineInfixWrap(line)
 			expr, err = env.EvalString(line + " ") // print standalone variables
 		}
 		switch err {
@@ -286,6 +303,33 @@ func Repl(env *Glisp, cfg *GlispConfig) {
 					fmt.Printf("%s\n", strconv.Quote(e.S))
 				}
 			default:
+				// experiment with showing dot-symbol dereference automatically
+				// at the repl
+				switch sym := expr.(type) {
+				case *SexpSelector:
+					P("repl calling RHS() on SexpSelector")
+					rhs, err := sym.RHS()
+					if err != nil {
+						P("repl problem in call to RHS() on SexpSelector: '%v'", err)
+						fmt.Print(env.GetStackTrace(err))
+						env.Clear()
+						continue
+					} else {
+						fmt.Println(rhs.SexpString(0))
+						continue
+					}
+				case *SexpSymbol:
+					if sym.isDot {
+						resolved, err := dotGetSetHelper(env, sym.name, nil)
+						if err != nil {
+							fmt.Print(env.GetStackTrace(err))
+							env.Clear()
+							continue
+						}
+						fmt.Println(resolved.SexpString(0))
+						continue
+					}
+				}
 				fmt.Println(expr.SexpString(0))
 			}
 		}
@@ -444,4 +488,15 @@ func ReplMain(cfg *GlispConfig) {
 			os.Exit(-1)
 		}
 	}
+}
+
+func (env *Glisp) ReplLineInfixWrap(line string) string {
+	P("ReplLineInfixWrap called on '%v' ", line)
+	s := strings.TrimSpace(line)
+	if len(s) > 0 && s[0] != '(' && s[0] != '{' {
+		r := "{" + s + "}"
+		P("ReplLineInfixWrap '%v' -> '%v'", line, r)
+		return r
+	}
+	return line
 }
