@@ -201,6 +201,7 @@ func (env *Glisp) InitInfixOps() {
 		MunchLeft: arrayOpMunchLeft,
 	}
 
+	// don't think actually gets called.
 	semicolonOp := env.Infix(";", 0)
 	semicolonOp.MunchLeft =
 		func(env *Glisp, pr *Pratt, left Sexp) (Sexp, error) {
@@ -209,7 +210,7 @@ func (env *Glisp) InitInfixOps() {
 			if err != nil {
 				return SexpNull, err
 			}
-			P(" ... in semicolon MunchLeft, right = '%v'", right.SexpString(0))
+			Q(" ... in semicolon MunchLeft, right = '%v'", right.SexpString(0))
 			return &SexpSemicolon{Left: left, Right: right}, nil
 		}
 
@@ -291,7 +292,7 @@ func InfixBuilder(env *Glisp, name string, args []Sexp) (Sexp, error) {
 			return ret, nil
 		}
 		xs = append(xs, x)
-		P("end of infix builder loop, pr.NextToken = '%v'", pr.NextToken.SexpString(0))
+		Q("end of infix builder loop, pr.NextToken = '%v'", pr.NextToken.SexpString(0))
 		if pr.IsEOF() {
 			break
 		}
@@ -402,17 +403,17 @@ func (p *Pratt) Expression(env *Glisp, rbp int) (ret Sexp, err error) {
 		if ret == nil {
 			Q("Expression is returning Sexp ret = nil")
 		} else {
-			P("Expression is returning Sexp ret = '%v'", ret.SexpString(0))
+			Q("Expression is returning Sexp ret = '%v'", ret.SexpString(0))
 		}
 	}()
 	cnode := p.NextToken
 	if cnode != nil {
-		P("top of Expression, rbp = %v, cnode = '%v'", rbp, cnode.SexpString(0))
+		Q("top of Expression, rbp = %v, cnode = '%v'", rbp, cnode.SexpString(0))
 	} else {
-		P("top of Expression, rbp = %v, cnode is nil", rbp)
+		Q("top of Expression, rbp = %v, cnode is nil", rbp)
 	}
 	if p.IsEOF() {
-		P("Expression sees IsEOF, returning cnode = %v", cnode.SexpString(0))
+		Q("Expression sees IsEOF, returning cnode = %v", cnode.SexpString(0))
 		return cnode, nil
 	}
 	p.CnodeStack = append([]Sexp{p.NextToken}, p.CnodeStack...)
@@ -449,7 +450,7 @@ func (p *Pratt) Expression(env *Glisp, rbp int) (ret Sexp, err error) {
 
 	for !p.IsEOF() {
 		nextLbp := env.LeftBindingPower(p.NextToken)
-		P("nextLbp = %v", nextLbp)
+		Q("nextLbp = %v", nextLbp)
 		if rbp >= nextLbp {
 			break
 		}
@@ -463,7 +464,7 @@ func (p *Pratt) Expression(env *Glisp, rbp int) (ret Sexp, err error) {
 				curOp = op
 			}
 		case *SexpArray:
-			P("assigning curOp to arrayOp")
+			Q("assigning curOp to arrayOp")
 			curOp = arrayOp
 		default:
 			panic(fmt.Errorf("how to handle cnode type = %#v", cnode))
@@ -472,21 +473,21 @@ func (p *Pratt) Expression(env *Glisp, rbp int) (ret Sexp, err error) {
 		p.CnodeStack[0] = p.NextToken
 		//_cnode_stack.front() = NextToken;
 
-		P("in MunchLeft loop, before Advance, p.NextToken = %v",
+		Q("in MunchLeft loop, before Advance, p.NextToken = %v",
 			p.NextToken.SexpString(0))
 		p.Advance()
 		if p.Pos < len(p.Stream) {
-			P("in MunchLeft loop, after Advance, p.NextToken = %v",
+			Q("in MunchLeft loop, after Advance, p.NextToken = %v",
 				p.NextToken.SexpString(0))
 		}
 
 		// if cnode->munch_left() returns this/itself, then
 		// the net effect is: p.AccumTree = cnode;
 		if curOp != nil && curOp.MunchLeft != nil {
-			P("about to MunchLeft, cnode = %v, p.AccumTree = %v", cnode.SexpString(0), p.AccumTree.SexpString(0))
+			Q("about to MunchLeft, cnode = %v, p.AccumTree = %v", cnode.SexpString(0), p.AccumTree.SexpString(0))
 			p.AccumTree, err = curOp.MunchLeft(env, p, p.AccumTree)
 			if err != nil {
-				P("curOp.MunchLeft saw err = %v", err)
+				Q("curOp.MunchLeft saw err = %v", err)
 				return SexpNull, err
 			}
 		} else {
@@ -498,7 +499,7 @@ func (p *Pratt) Expression(env *Glisp, rbp int) (ret Sexp, err error) {
 
 	p.CnodeStack = p.CnodeStack[1:]
 	//_cnode_stack.pop_front()
-	P("at end of Expression(%v), returning p.AccumTree=%v, err=nil", rbp, p.AccumTree.SexpString(0))
+	Q("at end of Expression(%v), returning p.AccumTree=%v, err=nil", rbp, p.AccumTree.SexpString(0))
 	return p.AccumTree, nil
 }
 
@@ -509,7 +510,7 @@ func (p *Pratt) Advance() error {
 		return io.EOF
 	}
 	p.NextToken = p.Stream[p.Pos]
-	P("end of Advance, p.NextToken = '%v'", p.NextToken.SexpString(0))
+	Q("end of Advance, p.NextToken = '%v'", p.NextToken.SexpString(0))
 	return nil
 }
 
