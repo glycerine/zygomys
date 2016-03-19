@@ -262,9 +262,9 @@ func Repl(env *Glisp, cfg *GlispConfig) {
 		var expr Sexp
 		n := len(exprsInput)
 		if n > 0 {
-			P("repl: len(exprsInput)==%v", n)
+			Q("repl: len(exprsInput)==%v", n)
 			for i := range exprsInput {
-				P("repl: exprsInput[%v] = '%v'", i, exprsInput[i].SexpString(0))
+				Q("repl: exprsInput[%v] = '%v'", i, exprsInput[i].SexpString(0))
 			}
 
 			firstStr := exprsInput[0].SexpString(0)
@@ -307,10 +307,10 @@ func Repl(env *Glisp, cfg *GlispConfig) {
 				// at the repl
 				switch sym := expr.(type) {
 				case *SexpSelector:
-					P("repl calling RHS() on SexpSelector")
+					Q("repl calling RHS() on SexpSelector")
 					rhs, err := sym.RHS()
 					if err != nil {
-						P("repl problem in call to RHS() on SexpSelector: '%v'", err)
+						Q("repl problem in call to RHS() on SexpSelector: '%v'", err)
 						fmt.Print(env.GetStackTrace(err))
 						env.Clear()
 						continue
@@ -491,11 +491,11 @@ func ReplMain(cfg *GlispConfig) {
 }
 
 func (env *Glisp) ReplLineInfixWrap(line string) string {
-	P("ReplLineInfixWrap called on '%v' ", line)
+	Q("ReplLineInfixWrap called on '%v' ", line)
 	s := strings.TrimSpace(line)
 	if len(s) > 0 && s[0] != '(' && s[0] != '{' {
 		r := "{" + s + "}"
-		P("ReplLineInfixWrap '%v' -> '%v'", line, r)
+		Q("ReplLineInfixWrap '%v' -> '%v'", line, r)
 		return r
 	}
 	return line
