@@ -40,7 +40,7 @@ func ConcatArray(arr *SexpArray, rest []Sexp) (Sexp, error) {
 
 // (arrayidx ar [0 1])
 func ArrayIndexFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
-	P("in ArrayIndexFunction, args = '%#v'", args)
+	//P("in ArrayIndexFunction, args = '%#v'", args)
 	narg := len(args)
 	if narg != 2 {
 		return SexpNull, WrongNargs
