@@ -200,42 +200,6 @@ func (env *Glisp) InitInfixOps() {
 		Bp:        80,
 		MunchLeft: arrayOpMunchLeft,
 	}
-
-	// don't think actually gets called.
-	semicolonOp := env.Infix(";", 0)
-	semicolonOp.MunchLeft =
-		func(env *Glisp, pr *Pratt, left Sexp) (Sexp, error) {
-			P("in semicolon MunchLeft, left = '%v'", left.SexpString(0))
-			right, err := pr.Expression(env, 0)
-			if err != nil {
-				return SexpNull, err
-			}
-			Q(" ... in semicolon MunchLeft, right = '%v'", right.SexpString(0))
-			return &SexpSemicolon{Left: left, Right: right}, nil
-		}
-
-	/*
-		dotOp := env.Infix(".", 80)
-		dotOp.MunchLeft =
-			func(env *Glisp, pr *Pratt, left Sexp) (Sexp, error) {
-				token := pr.NextToken
-				//var h *SexpHash
-				//switch x := token.(type) {
-				switch token.(type) {
-				case *SexpHash:
-					// okay
-					//h = x
-				default:
-					return SexpNull, fmt.Errorf("dot (.) must be " +
-						"applied to a hash or record")
-				}
-				list := MakeList([]Sexp{
-					dotOp.Sym, left, token,
-				})
-				pr.Advance()
-				return list, nil
-			}
-	*/
 }
 
 type RightMuncher func(env *Glisp, pr *Pratt) (Sexp, error)
@@ -291,13 +255,20 @@ func InfixBuilder(env *Glisp, name string, args []Sexp) (Sexp, error) {
 			//Q("infixExpand: returning ret = '%v'", ret.SexpString(0))
 			return ret, nil
 		}
-		xs = append(xs, x)
+		_, isSemi := x.(*SexpSemicolon)
+		if !isSemi {
+			xs = append(xs, x)
+		}
 		Q("end of infix builder loop, pr.NextToken = '%v'", pr.NextToken.SexpString(0))
 		if pr.IsEOF() {
 			break
 		}
 
 	}
+	//	Q("infix builder loop done, here are my expressions:")
+	//	for i, ele := range xs {
+	//		Q("xs[%v] = %v", i, ele.SexpString(0))
+	//	}
 	dup := env.Duplicate()
 	ev, err := dup.EvalExpressions(xs)
 	if err != nil {

@@ -179,10 +179,7 @@ var SexpNull = &SexpSentinel{Val: 0}
 var SexpEnd = &SexpSentinel{Val: 1}
 var SexpMarker = &SexpSentinel{Val: 2}
 
-type SexpSemicolon struct {
-	Left  Sexp
-	Right Sexp
-}
+type SexpSemicolon struct{}
 
 func (r *SexpSemicolon) Type() *RegisteredType {
 	return nil // TODO what should this be?
