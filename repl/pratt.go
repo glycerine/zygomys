@@ -178,6 +178,17 @@ func dotOpMunchLeft(env *Glisp, pr *Pratt, left Sexp) (Sexp, error) {
 	return list, nil
 }
 
+func starOpMunchRight(env *Glisp, pr *Pratt) (Sexp, error) {
+	right, err := pr.Expression(env, 70)
+	if err != nil {
+		return SexpNull, err
+	}
+	list := MakeList([]Sexp{
+		env.MakeSymbol("*"), right,
+	})
+	return list, nil
+}
+
 var arrayOp *InfixOp
 
 // InitInfixOps establishes the env.infixOps definitions
@@ -185,7 +196,10 @@ var arrayOp *InfixOp
 func (env *Glisp) InitInfixOps() {
 	env.Infix("+", 50)
 	env.Infix("-", 50)
-	env.Infix("*", 60)
+
+	star := env.Infix("*", 60)
+	star.MunchRight = starOpMunchRight
+
 	env.Infix("/", 60)
 	env.Infix("mod", 60)
 	env.Infixr("**", 65)
@@ -213,6 +227,7 @@ func (env *Glisp) InitInfixOps() {
 
 	dotOp := env.Infix(".", 80)
 	dotOp.MunchLeft = dotOpMunchLeft
+
 }
 
 type RightMuncher func(env *Glisp, pr *Pratt) (Sexp, error)
