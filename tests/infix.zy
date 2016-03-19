@@ -74,3 +74,8 @@
 (infixExpand {h.a.b[2] = 99})
 {h.a.b[2] = 99}
 (assert (== {h.a.b[2]} 99))
+
+// dot after array indexing
+(def arr [(hash a:(hash b:[3 4]))])
+(assert (== {arr[0].a.b[1]} 4))
+(infixExpand {arr[0].a.b[0]})

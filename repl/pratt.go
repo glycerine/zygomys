@@ -200,6 +200,28 @@ func (env *Glisp) InitInfixOps() {
 		Bp:        80,
 		MunchLeft: arrayOpMunchLeft,
 	}
+
+	dotOp := env.Infix(".", 80)
+	dotOp.MunchLeft =
+		func(env *Glisp, pr *Pratt, left Sexp) (Sexp, error) {
+			P("dotOp MunchLeft, left = '%v'. NextToken=%v", left.SexpString(0), pr.NextToken.SexpString(0))
+			token := pr.NextToken
+			//var h *SexpHash
+			//switch x := token.(type) {
+			switch token.(type) {
+			case *SexpHash:
+				// okay
+				//h = x
+			default:
+				return SexpNull, fmt.Errorf("dot (.) must be " +
+					"applied to a hash or record")
+			}
+			list := MakeList([]Sexp{
+				env.MakeSymbol(":"), left, token,
+			})
+			pr.Advance()
+			return list, nil
+		}
 }
 
 type RightMuncher func(env *Glisp, pr *Pratt) (Sexp, error)
@@ -379,12 +401,12 @@ func (p *Pratt) Expression(env *Glisp, rbp int) (ret Sexp, err error) {
 	}()
 	cnode := p.NextToken
 	if cnode != nil {
-		Q("top of Expression, rbp = %v, cnode = '%v'", rbp, cnode.SexpString(0))
+		P("top of Expression, rbp = %v, cnode = '%v'", rbp, cnode.SexpString(0))
 	} else {
-		Q("top of Expression, rbp = %v, cnode is nil", rbp)
+		P("top of Expression, rbp = %v, cnode is nil", rbp)
 	}
 	if p.IsEOF() {
-		Q("Expression sees IsEOF, returning cnode = %v", cnode.SexpString(0))
+		P("Expression sees IsEOF, returning cnode = %v", cnode.SexpString(0))
 		return cnode, nil
 	}
 	p.CnodeStack = append([]Sexp{p.NextToken}, p.CnodeStack...)
@@ -400,19 +422,19 @@ func (p *Pratt) Expression(env *Glisp, rbp int) (ret Sexp, err error) {
 			curOp = op
 		}
 	case *SexpArray:
-		Q("in pratt parsing, got array x = '%v'", x.SexpString(0))
+		P("in pratt parsing, got array x = '%v'", x.SexpString(0))
 	}
 
 	if curOp != nil && curOp.MunchRight != nil {
 		// munch_right() of atoms returns this/itself, in which
 		// case: p.AccumTree = t; is the result.
-		Q("about to MunchRight on cnode = %v", cnode.SexpString(0))
+		P("about to MunchRight on cnode = %v", cnode.SexpString(0))
 		p.AccumTree, err = curOp.MunchRight(env, p)
 		if err != nil {
-			Q("Expression(%v) MunchRight saw err = %v", rbp, err)
+			P("Expression(%v) MunchRight saw err = %v", rbp, err)
 			return SexpNull, err
 		}
-		Q("after MunchRight on cnode = %v, p.AccumTree = '%v'",
+		P("after MunchRight on cnode = %v, p.AccumTree = '%v'",
 			cnode.SexpString(0), p.AccumTree.SexpString(0))
 	} else {
 		// do this, or have the default MunchRight return itself.
@@ -421,7 +443,7 @@ func (p *Pratt) Expression(env *Glisp, rbp int) (ret Sexp, err error) {
 
 	for !p.IsEOF() {
 		nextLbp := env.LeftBindingPower(p.NextToken)
-		Q("nextLbp = %v", nextLbp)
+		P("nextLbp = %v", nextLbp)
 		if rbp >= nextLbp {
 			break
 		}
@@ -435,7 +457,7 @@ func (p *Pratt) Expression(env *Glisp, rbp int) (ret Sexp, err error) {
 				curOp = op
 			}
 		case *SexpArray:
-			Q("assigning curOp to arrayOp")
+			P("assigning curOp to arrayOp")
 			curOp = arrayOp
 		default:
 			panic(fmt.Errorf("how to handle cnode type = %#v", cnode))
@@ -444,21 +466,21 @@ func (p *Pratt) Expression(env *Glisp, rbp int) (ret Sexp, err error) {
 		p.CnodeStack[0] = p.NextToken
 		//_cnode_stack.front() = NextToken;
 
-		Q("in MunchLeft loop, before Advance, p.NextToken = %v",
+		P("in MunchLeft loop, before Advance, p.NextToken = %v",
 			p.NextToken.SexpString(0))
 		p.Advance()
 		if p.Pos < len(p.Stream) {
-			Q("in MunchLeft loop, after Advance, p.NextToken = %v",
+			P("in MunchLeft loop, after Advance, p.NextToken = %v",
 				p.NextToken.SexpString(0))
 		}
 
 		// if cnode->munch_left() returns this/itself, then
 		// the net effect is: p.AccumTree = cnode;
 		if curOp != nil && curOp.MunchLeft != nil {
-			Q("about to MunchLeft, cnode = %v, p.AccumTree = %v", cnode.SexpString(0), p.AccumTree.SexpString(0))
+			P("about to MunchLeft, cnode = %v, p.AccumTree = %v", cnode.SexpString(0), p.AccumTree.SexpString(0))
 			p.AccumTree, err = curOp.MunchLeft(env, p, p.AccumTree)
 			if err != nil {
-				Q("curOp.MunchLeft saw err = %v", err)
+				P("curOp.MunchLeft saw err = %v", err)
 				return SexpNull, err
 			}
 		} else {
@@ -470,7 +492,7 @@ func (p *Pratt) Expression(env *Glisp, rbp int) (ret Sexp, err error) {
 
 	p.CnodeStack = p.CnodeStack[1:]
 	//_cnode_stack.pop_front()
-	Q("at end of Expression(%v), returning p.AccumTree=%v, err=nil", rbp, p.AccumTree.SexpString(0))
+	P("at end of Expression(%v), returning p.AccumTree=%v, err=nil", rbp, p.AccumTree.SexpString(0))
 	return p.AccumTree, nil
 }
 
@@ -481,7 +503,7 @@ func (p *Pratt) Advance() error {
 		return io.EOF
 	}
 	p.NextToken = p.Stream[p.Pos]
-	Q("end of Advance, p.NextToken = '%v'", p.NextToken.SexpString(0))
+	P("end of Advance, p.NextToken = '%v'", p.NextToken.SexpString(0))
 	return nil
 }
 
@@ -501,7 +523,7 @@ func (env *Glisp) LeftBindingPower(sx Sexp) int {
 		if found {
 			return op.Bp
 		}
-		Q("LeftBindingPower: no entry in env.infixOps for operation '%s'",
+		P("LeftBindingPower: no entry in env.infixOps for operation '%s'",
 			x.name)
 		return 0
 	case *SexpArray:
