@@ -95,3 +95,7 @@ h.a.b[0]
 {j=1}
 (assert (== {h.a.b[j] + 5} 9))
 (assert (== {h.a.b[j] * 5} 20))
+
+(defn sq [x] {x*x})
+// want this to give us 29, not 4
+(sq 5) + 4
