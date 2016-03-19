@@ -168,6 +168,16 @@ func arrayOpMunchLeft(env *Glisp, pr *Pratt, left Sexp) (Sexp, error) {
 	return list, nil
 }
 
+func dotOpMunchLeft(env *Glisp, pr *Pratt, left Sexp) (Sexp, error) {
+	P("dotOp MunchLeft, left = '%v'. NextToken='%v'. pr.CnodeStack[0]='%v'", left.SexpString(0), pr.NextToken.SexpString(0), pr.CnodeStack[0].SexpString(0))
+	//token := pr.NextToken
+	list := MakeList([]Sexp{
+		env.MakeSymbol("hget"), left, pr.CnodeStack[0],
+	})
+	//pr.Advance()
+	return list, nil
+}
+
 var arrayOp *InfixOp
 
 // InitInfixOps establishes the env.infixOps definitions
@@ -202,26 +212,7 @@ func (env *Glisp) InitInfixOps() {
 	}
 
 	dotOp := env.Infix(".", 80)
-	dotOp.MunchLeft =
-		func(env *Glisp, pr *Pratt, left Sexp) (Sexp, error) {
-			P("dotOp MunchLeft, left = '%v'. NextToken=%v", left.SexpString(0), pr.NextToken.SexpString(0))
-			token := pr.NextToken
-			//var h *SexpHash
-			//switch x := token.(type) {
-			switch token.(type) {
-			case *SexpHash:
-				// okay
-				//h = x
-			default:
-				return SexpNull, fmt.Errorf("dot (.) must be " +
-					"applied to a hash or record")
-			}
-			list := MakeList([]Sexp{
-				env.MakeSymbol(":"), left, token,
-			})
-			pr.Advance()
-			return list, nil
-		}
+	dotOp.MunchLeft = dotOpMunchLeft
 }
 
 type RightMuncher func(env *Glisp, pr *Pratt) (Sexp, error)
@@ -454,14 +445,21 @@ func (p *Pratt) Expression(env *Glisp, rbp int) (ret Sexp, err error) {
 		case *SexpSymbol:
 			op, found := env.infixOps[x.name]
 			if found {
+				P("assigning curOp <- cnode '%s'", x.name)
 				curOp = op
+			} else {
+				if x.isDot {
+					curOp = env.infixOps["."]
+					P("assigning curOp <- dotInfixOp; then curOp = %#v", curOp)
+				}
 			}
 		case *SexpArray:
-			P("assigning curOp to arrayOp")
+			P("assigning curOp <- arrayOp")
 			curOp = arrayOp
 		default:
 			panic(fmt.Errorf("how to handle cnode type = %#v", cnode))
 		}
+		P("curOp = %#v", curOp)
 
 		p.CnodeStack[0] = p.NextToken
 		//_cnode_stack.front() = NextToken;
@@ -474,6 +472,8 @@ func (p *Pratt) Expression(env *Glisp, rbp int) (ret Sexp, err error) {
 				p.NextToken.SexpString(0))
 		}
 
+		// dotOpMunchLeft?
+
 		// if cnode->munch_left() returns this/itself, then
 		// the net effect is: p.AccumTree = cnode;
 		if curOp != nil && curOp.MunchLeft != nil {
@@ -484,6 +484,7 @@ func (p *Pratt) Expression(env *Glisp, rbp int) (ret Sexp, err error) {
 				return SexpNull, err
 			}
 		} else {
+			P("curOp has not MunchLeft, setting AccumTree <- cnode")
 			// do this, or have the default MunchLeft return itself.
 			p.AccumTree = cnode
 		}
@@ -522,6 +523,11 @@ func (env *Glisp) LeftBindingPower(sx Sexp) int {
 		op, found := env.infixOps[x.name]
 		if found {
 			return op.Bp
+		}
+		if x.isDot {
+			P("LeftBindingPower: dot symbol '%v', "+
+				"giving it binding-power 80", x.name)
+			return 80
 		}
 		P("LeftBindingPower: no entry in env.infixOps for operation '%s'",
 			x.name)

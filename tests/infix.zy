@@ -78,4 +78,6 @@
 // dot after array indexing
 (def arr [(hash a:(hash b:[3 4]))])
 (assert (== {arr[0].a.b[1]} 4))
-(infixExpand {arr[0].a.b[0]})
+(infixExpand {arr[0].a.b[1]})
+
+(infixExpand {arr[0].a.b})

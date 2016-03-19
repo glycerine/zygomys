@@ -303,12 +303,22 @@ func HashAccessFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		return SexpNull, WrongNargs
 	}
 
+	// handle *SexpSelector
+	container := args[0]
+	var err error
+	if ptr, isPtrLike := container.(HasRHS); isPtrLike {
+		container, err = ptr.RHS()
+		if err != nil {
+			return SexpNull, err
+		}
+	}
+
 	var hash *SexpHash
-	switch e := args[0].(type) {
+	switch e := container.(type) {
 	case *SexpHash:
 		hash = e
 	default:
-		return SexpNull, errors.New("first argument of to h* function must be hash")
+		return SexpNull, errors.New("first argument to h* function must be hash")
 	}
 
 	switch name {
@@ -1057,7 +1067,17 @@ func GenericAccessFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		return SexpNull, WrongNargs
 	}
 
-	switch args[0].(type) {
+	// handle *SexpSelector
+	container := args[0]
+	var err error
+	if ptr, isPtrLike := container.(HasRHS); isPtrLike {
+		container, err = ptr.RHS()
+		if err != nil {
+			return SexpNull, err
+		}
+	}
+
+	switch container.(type) {
 	case *SexpHash:
 		return HashAccessFunction(env, name, args)
 	case *SexpArray:
