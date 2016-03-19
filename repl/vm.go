@@ -777,3 +777,34 @@ func (a CreateClosureInstr) Execute(env *Glisp) error {
 	env.datastack.PushExpr(myInvok)
 	return nil
 }
+
+type AssignInstr struct {
+}
+
+func (a AssignInstr) InstrString() string {
+	return "assign stack top to stack top -1"
+}
+
+func (a AssignInstr) Execute(env *Glisp) error {
+	env.pc++
+	rhs, err := env.datastack.PopExpr()
+	if err != nil {
+		return err
+	}
+	lhs, err := env.datastack.PopExpr()
+	if err != nil {
+		return err
+	}
+	switch x := lhs.(type) {
+	case *SexpSymbol:
+		return env.LexicalBindSymbol(x, rhs)
+	case *SexpSelector:
+		_, err := x.RHS() // check for errors
+		if err != nil {
+			return err
+		}
+		x.Container.Val[x.Select.Val[0].(*SexpInt).Val] = rhs
+		return nil
+	}
+	return fmt.Errorf("AssignInstr: don't know how to assign to %T", lhs)
+}

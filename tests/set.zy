@@ -1,0 +1,5 @@
+// should be able to set on the output of arrayidx
+(def ar [4 5 6])
+(def i 2)
+(set (arrayidx ar [i]) 99)
+(assert {ar[i] == 99})

@@ -159,28 +159,49 @@ func (gen *Generator) GenerateFn(args []Sexp, orig Sexp) error {
 	return nil
 }
 
-func (gen *Generator) GenerateDef(args []Sexp) error {
+func (gen *Generator) GenerateDef(args []Sexp, opname string) error {
 	if len(args) != 2 {
 		return fmt.Errorf("Wrong number of arguments to def")
 	}
-
-	plhs, err := gen.GetLHS(args[0], "def")
-	if err != nil {
-		return err
+	Q("GenerateDef call with args[0]=%v", args[0].SexpString(0))
+	dup := true
+	var instr Instruction
+	switch args[0].(type) {
+	case *SexpPair:
+		dup = false
+		Q("def sees assign to pair, using AssignInstr{}")
+		instr = AssignInstr{}
+		err := gen.Generate(args[0])
+		if err != nil {
+			return err
+		}
+	default:
+		lhs, err := gen.GetLHS(args[0], "def")
+		if err != nil {
+			return err
+		}
+		switch opname {
+		case "def":
+			instr = PopStackPutEnvInstr{lhs}
+		case "set":
+			instr = UpdateInstr{lhs}
+		default:
+			panic(fmt.Errorf("unknown opname '%s'", opname))
+		}
 	}
-	//	lhs := *plhs
-	lhs := plhs
 
 	gen.Tail = false
-	err = gen.Generate(args[1])
+	err := gen.Generate(args[1])
 	if err != nil {
 		return err
 	}
 	// duplicate the value so def leaves its value
 	// on the stack and becomes an expression rather
 	// than a statement.
-	gen.AddInstruction(DupInstr(0))
-	gen.AddInstruction(PopStackPutEnvInstr{lhs})
+	if dup {
+		gen.AddInstruction(DupInstr(0))
+	}
+	gen.AddInstruction(instr)
 	return nil
 }
 
@@ -551,7 +572,7 @@ func (gen *Generator) GenerateCallBySymbol(sym *SexpSymbol, args []Sexp, orig Se
 	case "quote":
 		return gen.GenerateQuote(args)
 	case "def":
-		return gen.GenerateDef(args)
+		return gen.GenerateDef(args, "def")
 	case "mdef":
 		return gen.GenerateMultiDef(args)
 	case "fn":
@@ -577,7 +598,8 @@ func (gen *Generator) GenerateCallBySymbol(sym *SexpSymbol, args []Sexp, orig Se
 	case "for":
 		return gen.GenerateForLoop(args)
 	case "set":
-		return gen.GenerateSet(args)
+		//return gen.GenerateSet(args)
+		return gen.GenerateDef(args, "set")
 	case "break":
 		return gen.GenerateBreak(args)
 	case "continue":
@@ -643,6 +665,8 @@ func (gen *Generator) GenerateDispatch(fun Sexp, args []Sexp) error {
 }
 
 func (gen *Generator) GenerateAssignment(expr *SexpPair, assignPos int) error {
+	Q("in GenerateAssignment, expr='%v', assignPos = %v",
+		expr.SexpString(0), assignPos)
 	if assignPos == 0 {
 		return gen.GenerateCall(expr)
 	}
@@ -664,7 +688,7 @@ func (gen *Generator) GenerateAssignment(expr *SexpPair, assignPos int) error {
 	// of return value flow, rather than exact lhs to rhs count equality.
 
 	for i := range rhs {
-		err = gen.GenerateDef([]Sexp{lhs[i], rhs[i]})
+		err = gen.GenerateDef([]Sexp{lhs[i], rhs[i]}, "def")
 		if err != nil {
 			return err
 		}
@@ -997,7 +1021,7 @@ func (gen *Generator) GenerateSet(args []Sexp) error {
 }
 
 func (gen *Generator) GetLHS(arg Sexp, opname string) (*SexpSymbol, error) {
-	//P("GetLHS called with arg '%s'", arg.SexpString())
+	Q("GetLHS (opname=%s) called with arg '%s'", opname, arg.SexpString(0))
 	var lhs *SexpSymbol
 	switch expr := arg.(type) {
 	case *SexpSymbol:
@@ -1101,7 +1125,7 @@ func isQuotedSymbol(list *SexpPair) (unquotedSymbol Sexp, isQuo bool) {
 // side-effect (or main effect) has to be pushing an expression on the top of
 // the datastack that represents the expanded and substituted expression
 func (gen *Generator) GenerateSyntaxQuote(args []Sexp) error {
-	//P("GenerateSyntaxQuote() called with args[0]='%#v'", args[0])
+	//Q("GenerateSyntaxQuote() called with args[0]='%#v'", args[0])
 
 	if len(args) != 1 {
 		return fmt.Errorf("syntaxQuote takes exactly one argument")
@@ -1129,7 +1153,7 @@ func (gen *Generator) GenerateSyntaxQuote(args []Sexp) error {
 }
 
 func (gen *Generator) generateSyntaxQuoteList(arg Sexp) error {
-	//P("GenerateSyntaxQuoteList() called with arg='%#v'", arg)
+	//Q("GenerateSyntaxQuoteList() called with arg='%#v'", arg)
 
 	switch a := arg.(type) {
 	case *SexpPair:
@@ -1145,7 +1169,7 @@ func (gen *Generator) generateSyntaxQuoteList(arg Sexp) error {
 	// being "unquote" and second being the symbol
 	// to substitute.
 	quotebody, _ := ListToArray(arg)
-	//P("quotebody = '%#v'", quotebody)
+	//Q("quotebody = '%#v'", quotebody)
 
 	if len(quotebody) == 2 {
 		var issymbol bool

@@ -191,6 +191,21 @@ func comparePointers(a *SexpPointer, bs Sexp) (int, error) {
 }
 
 func Compare(a Sexp, b Sexp) (int, error) {
+
+	var err error
+	if ptr, isPtrLike := a.(PointerLike); isPtrLike {
+		a, err = ptr.RHS()
+		if err != nil {
+			return 0, err
+		}
+	}
+	if ptr, isPtrLike := b.(PointerLike); isPtrLike {
+		b, err = ptr.RHS()
+		if err != nil {
+			return 0, err
+		}
+	}
+
 	switch at := a.(type) {
 	case *SexpInt:
 		return compareInt(at, b)

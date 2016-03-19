@@ -40,7 +40,7 @@ func ConcatArray(arr *SexpArray, rest []Sexp) (Sexp, error) {
 
 // (arrayidx ar [0 1])
 func ArrayIndexFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
-	//P("in ArrayIndexFunction, args = '%#v'", args)
+	P("in ArrayIndexFunction, args = '%#v'", args)
 	narg := len(args)
 	if narg != 2 {
 		return SexpNull, WrongNargs
@@ -64,7 +64,11 @@ func ArrayIndexFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 			args[1].SexpString(0), args[1])
 	}
 
-	return ar.IndexBy(idx)
+	//	return ar.IndexBy(idx)
+	return &SexpSelector{
+		Select:    idx,
+		Container: ar,
+	}, nil
 }
 
 // IndexBy subsets one array (possibly multidimensional) by another.
@@ -104,4 +108,57 @@ func (arr *SexpArray) IndexBy(idx *SexpArray) (Sexp, error) {
 
 func (arr *SexpArray) NumDim() int {
 	return 1
+}
+
+// SexpSelector: select a subset of an array:
+// can be multidimensional index/slice
+// and hence know its container and its position(s),
+// and thus be able to read and write that position as
+// need be.
+type SexpSelector struct {
+	Select    *SexpArray
+	Container *SexpArray
+}
+
+func (si *SexpSelector) SexpString(indent int) string {
+	return fmt.Sprintf("(arraySelector %v %v)", si.Container.SexpString(indent), si.Select.SexpString(indent))
+}
+
+// Type returns the type of the value.
+func (si *SexpSelector) Type() *RegisteredType {
+	return GoStructRegistry.Lookup("arraySelector")
+}
+
+// RHS applies the selector to the contain and returns
+// the value obtained.
+func (x *SexpSelector) RHS() (Sexp, error) {
+	if len(x.Select.Val) != 1 {
+		return SexpNull, fmt.Errorf("SexpSelector: only " +
+			"size 1 selectors implemented")
+	}
+	var i int64
+	switch asInt := x.Select.Val[0].(type) {
+	case *SexpInt:
+		i = asInt.Val
+	default:
+		return SexpNull, fmt.Errorf("SexpSelector: int "+
+			"selector required; we saw %T", x.Select.Val[0])
+	}
+	if i < 0 {
+		return SexpNull, fmt.Errorf("SexpSelector: negative "+
+			"indexes not supported; we saw %v", i)
+	}
+	if i >= int64(len(x.Container.Val)) {
+		return SexpNull, fmt.Errorf("SexpSelector: index "+
+			"%v is out-of-bounds; beyond %v", i, len(x.Container.Val))
+	}
+	return x.Container.Val[i], nil
+}
+
+// PointerLike structs have an RHS (right-hand-side)
+// method that can be used to dereference the pointer-
+// like object, yielding a value suitable for the
+// right-hand-side of an assignment statement.
+type PointerLike interface {
+	RHS() (Sexp, error)
 }

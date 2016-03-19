@@ -146,6 +146,7 @@ var ReflectRT *RegisteredType
 var ErrorRT *RegisteredType
 var SentinelRT *RegisteredType
 var ClosureRT *RegisteredType
+var ArraySelectorRT *RegisteredType
 
 type RegisteredType struct {
 	initDone        bool
@@ -225,6 +226,10 @@ func init() {
 
 	// add go builtin types
 	// ====================
+
+	gsr.RegisterBuiltin("arraySelector", &RegisteredType{GenDefMap: false, Factory: func(env *Glisp) (interface{}, error) {
+		return &SexpSelector{}, nil
+	}})
 
 	gsr.RegisterBuiltin("comment",
 		&RegisteredType{GenDefMap: false, Factory: func(env *Glisp) (interface{}, error) {
