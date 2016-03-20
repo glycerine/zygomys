@@ -103,11 +103,11 @@
 
 ;; keypress that, when in a zygo-mode script, sends a line to the interpreter
 ;;  and then steps to the next line.
-(setq *zygo-keypress-to-sendline* (kbd "C-9"))
+(setq *zygo-keypress-to-sendline* (kbd "C-n"))
 
 ;; keypress that, when in a zygo-mode script, sends an sexp to the repl
 ;;  and then steps to the next line.
-(setq *zygo-keypress-to-send-sexp-jdev*      (kbd "C-n"))
+(setq *zygo-keypress-to-send-sexp-jdev*      (kbd "C-9"))
 (setq *zygo-keypress-to-send-sexp-jdev-prev* (kbd "C-p"))
 
 ;; end commonly-adjusted parameters
@@ -348,8 +348,8 @@ code line."
 (defvar DEBUG_STATUS 'off
   "DEBUG_STATUS controls the DEBUG macro's behavior; legit values are 'on or 'off.")
 
-;(setq DEBUG_STATUS 'on)
-(setq DEBUG_STATUS 'off)
+(setq DEBUG_STATUS 'on)
+;(setq DEBUG_STATUS 'off)
 
 (defmacro DEBUG (&rest body)
   "DEBUG is simple call to (@body) or nil, depending on the value of DEBUG_STATUS being 'on or not. 
@@ -604,7 +604,7 @@ which is just following the next form back."
        (push-mark)
        (my-forward-sexp-ignoring-comments)
        (setq pend (point))
-       (skip-lisp-comment-lines) ;; get to the beginning of the next form, so point is at the beginning of next line.
+       (skip-zygo-comment-lines) ;; get to the beginning of the next form, so point is at the beginning of next line.
        ;;(setq str (buffer-substring pstart pend))
        (with-current-buffer clisp-buf (goto-char (point-max)))
        (append-to-buffer clisp-buf pstart pend)
@@ -640,7 +640,7 @@ which is just following the next form back."
 	       (display-buffer clisp-buf)
 	       (recenter)
 	       )
-	     ;;(skip-lisp-comment-lines)
+	     ;;(skip-zygo-comment-lines)
 	     )
 	 (beginning-of-line)))
 
@@ -881,10 +881,14 @@ output is passed to the filter `inferior-zygo-output-digest'."
 (defun skip-zygo-comment-lines ()
   "skip over lines that start with // before they have another non-whitespace character"
   (interactive)
+  (DEBUG message "skip-zygo-comment-lines running")
   (let* ((done-skipping)
 	 (startp (point))
 	 (nextcomment)
 	 (eol)
+     (bol nil)
+     (eol nil)
+     (prevbol nil)
 	 (nextword)
 	 )
     ;; 
@@ -896,6 +900,21 @@ output is passed to the filter `inferior-zygo-output-digest'."
       (setq nextcomment   (nil-to-point-max (search-forward *inferior-zygo-comment-char* nil 0 1)))
       (setq eol           (progn (goto-char startp) (nil-to-point-max (search-forward "\n" nil 0 1))))
       (setq nextword      (progn (goto-char startp) (+ (point) (skip-chars-forward "\t ;\n"))))
+
+      ;; debug stuff
+      (setq bol           (progn (goto-char startp)                         (nil-to-point-min (search-backward "\n" 0 0 1))))
+      (setq prevbol       (progn (goto-char (max (point-min) (- bol 1)))    (nil-to-point-min (search-backward "\n" 0 0 1))))
+
+      (goto-char startp)
+
+      (DEBUG message "startp       is %s" startp)
+      (DEBUG message "bol          is %s" bol)
+      (DEBUG message "eol          is %s" eol)
+      (DEBUG message "prevbol      is %s" prevbol)
+      (DEBUG message "nextcomment  is %s" nextcomment)
+      (DEBUG message "nextword     is %s" nextword)
+
+      ;; end debug stuff
       
       ;; either stop at the word, or go to the end of line
       (if (< nextword eol)
