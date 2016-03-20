@@ -1,4 +1,4 @@
-// work in progress; will show debug prints, do not be concerned.
+// assignment
 (def a 10)
 (.a = 24)
 (assert (== 24 a))

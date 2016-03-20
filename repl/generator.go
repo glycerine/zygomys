@@ -665,7 +665,7 @@ func (gen *Generator) GenerateDispatch(fun Sexp, args []Sexp) error {
 }
 
 func (gen *Generator) GenerateAssignment(expr *SexpPair, assignPos int) error {
-	Q("in GenerateAssignment, expr='%v', assignPos = %v",
+	P("in GenerateAssignment, expr='%v', assignPos = %v",
 		expr.SexpString(0), assignPos)
 	if assignPos == 0 {
 		return gen.GenerateCall(expr)
@@ -1054,7 +1054,7 @@ func (gen *Generator) GetLHS(arg Sexp, opname string) (*SexpSymbol, error) {
 	if lhs.isDot {
 		return nil, fmt.Errorf("illegal to %s dot-symbol, attempted on '%s'", opname, lhs.name)
 	}
-	//return &lhs, nil
+
 	return lhs, nil
 }
 

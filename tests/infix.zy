@@ -108,3 +108,9 @@ h.a.b[0]
 
 (assert (== (multi 1) 7))
 
+// should be able to set via dot symbol now
+
+a=(hash b:2 c:3  d:4)
+a.d=6
+(assert (== a.d 6))
+
