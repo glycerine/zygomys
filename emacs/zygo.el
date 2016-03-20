@@ -61,11 +61,11 @@
 
 (setq *inferior-zygo-regex-prompt* "[^\(zygo>\)\|\(\.\.\.\)]*[> ]")
 
-(defvar *zygo-keypress-to-sendline* (kbd "C-u")
+(defvar *zygo-keypress-to-sendline* (kbd "C-n")
   "keypress that, when in a pure mode script, sends a line to the interpreter
    and then steps to the next line.")
 
-(defvar *zygo-keypress-to-send-sexp-jdev*      (kbd "C-n")
+(defvar *zygo-keypress-to-send-sexp-jdev*      (kbd "C-u")
   "keypress that sends the next sexp to the repl, and advances past it.")
 
 (defvar *zygo-keypress-to-send-sexp-jdev-prev* (kbd "C-p")

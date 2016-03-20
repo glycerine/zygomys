@@ -16,3 +16,15 @@
 (assert (== (g greet) expected))
 (assert (== (.greet g) expected))
 (assert (== (.greet) "hello"))
+
+// automatic * dereference of a.f dot-symbol should
+// happen for call-position
+(def h2 (hash g:3 f:(fn [x] {x*x})))
+(assert (== (h2.f 4) 16))
+
+(def g h2.f)
+(assert (== (g 3) 9))
+
+// perhaps more properly, not depending on the auto-deference mechanism:
+(def ff (* h2.f))
+(assert (== (ff 3) 9))

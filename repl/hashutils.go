@@ -194,8 +194,8 @@ func (hash *SexpHash) HashGet(env *Glisp, key Sexp) (Sexp, error) {
 	}
 
 	if val == SexpEnd {
-		msg := fmt.Sprintf("HashGet: key %s not found", key.SexpString(0))
-		return SexpNull, errors.New(msg)
+		return SexpNull, fmt.Errorf("%s has no field '%s'", hash.TypeName, key.SexpString(0))
+		//return SexpNull, fmt.Errorf("%s has no field '%s'", hash.UserStructDefn.Name, key.SexpString(0))
 	}
 	return val, nil
 }
