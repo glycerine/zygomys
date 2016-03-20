@@ -154,7 +154,7 @@ func (x *SexpSelector) RHS() (Sexp, error) {
 	}
 	if i >= int64(len(x.Container.Val)) {
 		return SexpNull, fmt.Errorf("SexpSelector: index "+
-			"%v is out-of-bounds; beyond %v", i, len(x.Container.Val))
+			"%v is out-of-bounds; length is %v", i, len(x.Container.Val))
 	}
 	return x.Container.Val[i], nil
 }
