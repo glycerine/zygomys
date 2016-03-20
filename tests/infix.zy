@@ -99,3 +99,12 @@ h.a.b[0]
 (defn sq [x] {x*x})
 // want this to give us 29, not 4 -- at the repl
 (sq 5) + 4
+
+(defn multi [x] {
+  x = x + 1;
+  x = x + 2;
+  x = x + 3;
+  })
+
+(assert (== (multi 1) 7))
+
