@@ -348,8 +348,8 @@ code line."
 (defvar DEBUG_STATUS 'off
   "DEBUG_STATUS controls the DEBUG macro's behavior; legit values are 'on or 'off.")
 
-(setq DEBUG_STATUS 'on)
-;(setq DEBUG_STATUS 'off)
+;(setq DEBUG_STATUS 'on)
+(setq DEBUG_STATUS 'off)
 
 (defmacro DEBUG (&rest body)
   "DEBUG is simple call to (@body) or nil, depending on the value of DEBUG_STATUS being 'on or not. 
