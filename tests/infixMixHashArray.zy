@@ -69,3 +69,6 @@ arr[0].a
 // we can intermix the has [1 1] access at the end, and
 // the arrayidx should still work:
 (assert (== {b[0].b[0].g.h[3][1][2][1 7]} %one))
+
+(def f (hash a:(hash b:(hash c:(hash d:[(hash e:(hash f:8))])))))
+(assert (== {f.a.b.c.d[0].e.f} 8))
