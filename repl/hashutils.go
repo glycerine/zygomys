@@ -64,7 +64,18 @@ func hashHelper(expr Sexp) (hashcode int, isList bool, err error) {
 }
 
 func MakeHash(args []Sexp, typename string, env *Glisp) (*SexpHash, error) {
-	//Q("MakeHash called")
+	//Q("MakeHash called ")
+	//	for i := range args {
+	//		P("MakeHash args[i] = '%v'", args[i].SexpString(0))
+	//	}
+
+	// when passed for example (hash [0]:12) we see
+	// 3 args -- the colon is passed as the colon function;
+	// so eliminate it as it is just an
+	// extra unwanted element. This means we can never store
+	// the colon function in a hash; that's okay; its
+	// purpose is convenient syntax.
+	args = env.EliminateColonFunctionFromArgs(args)
 	if len(args)%2 != 0 {
 		return &SexpHash{},
 			errors.New("hash requires even number of arguments")
@@ -972,7 +983,7 @@ func (x *SexpHashSelector) AssignToSelection(env *Glisp, rhs Sexp) error {
 
 // (arrayidx ar [0 1]) refers here
 func HashIndexFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
-	P("in HashIndexFunction, args = '%#v'", args)
+	Q("in HashIndexFunction, args = '%#v'", args)
 	narg := len(args)
 	if narg != 2 {
 		return SexpNull, WrongNargs
@@ -1020,4 +1031,20 @@ func HashIndexFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		Container: hash,
 	}
 	return &ret, nil
+}
+
+func (env *Glisp) EliminateColonFunctionFromArgs(args []Sexp) []Sexp {
+	r := []Sexp{}
+outerLoop:
+	for i := range args {
+		switch x := args[i].(type) {
+		case *SexpFunction:
+			if x.name == ":" {
+				Q("eliminating ColonFunc: args[%d] = %T/val=%#v", i, x, x)
+				continue outerLoop
+			}
+		}
+		r = append(r, args[i])
+	}
+	return r
 }

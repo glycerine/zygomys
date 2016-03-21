@@ -71,3 +71,6 @@ h
 (hset h [1 0] %c)
 (hset h [1 1] %d)
 (assert (== {h[0 0]} %a))
+
+{h2=(hash [4 4]:%slicekey)}
+(hash [4 4]:%slicekey)

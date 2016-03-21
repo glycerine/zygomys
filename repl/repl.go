@@ -302,7 +302,7 @@ func Repl(env *Glisp, cfg *GlispConfig) {
 				*/
 				switch sym := expr.(type) {
 				case Selector:
-					P("repl calling RHS() on Selector")
+					Q("repl calling RHS() on Selector")
 					rhs, err := sym.RHS(env)
 					if err != nil {
 						Q("repl problem in call to RHS() on SexpSelector: '%v'", err)
@@ -310,7 +310,7 @@ func Repl(env *Glisp, cfg *GlispConfig) {
 						env.Clear()
 						continue
 					} else {
-						P("got back rhs of type %T", rhs)
+						Q("got back rhs of type %T", rhs)
 						fmt.Println(rhs.SexpString(0))
 						continue
 					}
