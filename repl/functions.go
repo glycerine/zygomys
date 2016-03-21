@@ -309,7 +309,7 @@ func HashAccessFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	// handle *SexpSelector
 	container := args[0]
 	var err error
-	if ptr, isPtrLike := container.(HasRHS); isPtrLike {
+	if ptr, isPtrLike := container.(Selector); isPtrLike {
 		container, err = ptr.RHS(env)
 		if err != nil {
 			return SexpNull, err
@@ -1086,7 +1086,7 @@ func GenericAccessFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	// handle *SexpSelector
 	container := args[0]
 	var err error
-	if ptr, isPtrLike := container.(HasRHS); isPtrLike {
+	if ptr, isPtrLike := container.(Selector); isPtrLike {
 		container, err = ptr.RHS(env)
 		if err != nil {
 			return SexpNull, err
@@ -1135,8 +1135,8 @@ func AssignmentFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	switch s := args[0].(type) {
 	case *SexpSymbol:
 		sym = s
-	case *SexpSelector:
-		err := s.AssignToSelection(args[1])
+	case Selector:
+		err := s.AssignToSelection(env, args[1])
 		return args[1], err
 
 	default:
@@ -1545,12 +1545,12 @@ func stripAnyDotPrefix(s string) string {
 	return s
 }
 
-// SubstituteRHS locates any SexpSelector(s) (HasRHS implementers, really)
+// SubstituteRHS locates any SexpSelector(s) (Selector implementers, really)
 // and substitutes
 // the value of x.RHS() for each x in args.
 func (env *Glisp) SubstituteRHS(args []Sexp) ([]Sexp, error) {
 	for i := range args {
-		obj, hasRhs := args[i].(HasRHS)
+		obj, hasRhs := args[i].(Selector)
 		if hasRhs {
 			sx, err := obj.RHS(env)
 			if err != nil {

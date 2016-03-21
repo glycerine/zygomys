@@ -805,8 +805,8 @@ func (a AssignInstr) Execute(env *Glisp) error {
 	switch x := lhs.(type) {
 	case *SexpSymbol:
 		return env.LexicalBindSymbol(x, rhs)
-	case *SexpSelector:
-		err := x.AssignToSelection(rhs)
+	case Selector:
+		err := x.AssignToSelection(env, rhs)
 		return err
 	}
 	return fmt.Errorf("AssignInstr: don't know how to assign to %T", lhs)

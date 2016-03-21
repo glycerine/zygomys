@@ -464,6 +464,15 @@ func (sym *SexpSymbol) RHS(env *Glisp) (Sexp, error) {
 	return sym, nil
 }
 
+func (sym *SexpSymbol) AssignToSelection(env *Glisp, rhs Sexp) error {
+	if sym.isDot && env != nil {
+		_, err := dotGetSetHelper(env, sym.name, &rhs)
+		return err
+	}
+	panic("not implemented yet")
+	return nil
+}
+
 func (sym *SexpSymbol) SexpString(indent int) string {
 	if sym.colonTail {
 		//		return sym.name + ":"

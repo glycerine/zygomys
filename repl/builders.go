@@ -762,8 +762,8 @@ func ColonAccessBuilder(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		return HashAccessFunction(env, name, swapped)
 	case *SexpArray:
 		return ArrayAccessFunction(env, name, swapped)
-	case *SexpSelector:
-		P("*SexpSelector seen in : operator form.")
+	case *SexpArraySelector:
+		Q("*SexpSelector seen in : operator form.")
 		return sx.RHS(env)
 	}
 	return SexpNull, fmt.Errorf("second argument to ':' function must be hash or array")

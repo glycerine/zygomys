@@ -84,7 +84,7 @@
 
 // simpler: using dot symbols as the key an hget call
 (def h (hash a:(hash b:[3 4] d:9)))
-h.a.b[0]
+{h.a.b[0]}
 (assert (== (hget h .a.b) [3 4]))
 
 (assert (== (* h.a.d) 9))
@@ -98,7 +98,7 @@ h.a.b[0]
 
 (defn sq [x] {x*x})
 // want this to give us 29, not 4 -- at the repl
-(sq 5) + 4
+{(sq 5) + 4}
 
 (defn multi [x] {
   x = x + 1;

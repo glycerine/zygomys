@@ -54,7 +54,7 @@ func ArrayIndexFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 
 	var ar *SexpArray
 	switch ar2 := args[0].(type) {
-	case *SexpSelector:
+	case *SexpArraySelector:
 		x, err := ar2.RHS(env)
 		if err != nil {
 			return SexpNull, err
@@ -67,6 +67,8 @@ func ArrayIndexFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		}
 	case *SexpArray:
 		ar = ar2
+	case *SexpHash:
+		return HashIndexFunction(env, name, args)
 	default:
 		return SexpNull, fmt.Errorf("bad (arrayidx ar index) call: ar was not an array, instead '%s'/type %T",
 			args[0].SexpString(0), args[0])
@@ -81,10 +83,10 @@ func ArrayIndexFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 			args[1].SexpString(0), args[1])
 	}
 
-	ret := SexpSelector{}
-	ret.Select = idx
-	ret.Container = ar
-
+	ret := SexpArraySelector{
+		Select:    idx,
+		Container: ar,
+	}
 	return &ret, nil
 }
 
@@ -132,12 +134,12 @@ func (arr *SexpArray) NumDim() int {
 // and hence know its container and its position(s),
 // and thus be able to read and write that position as
 // need be.
-type SexpSelector struct {
+type SexpArraySelector struct {
 	Select    *SexpArray
 	Container *SexpArray
 }
 
-func (si *SexpSelector) SexpString(indent int) string {
+func (si *SexpArraySelector) SexpString(indent int) string {
 	rhs, err := si.RHS(nil)
 	if err != nil {
 		return fmt.Sprintf("(arraySelector %v %v)", si.Container.SexpString(indent), si.Select.SexpString(indent))
@@ -146,15 +148,15 @@ func (si *SexpSelector) SexpString(indent int) string {
 }
 
 // Type returns the type of the value.
-func (si *SexpSelector) Type() *RegisteredType {
+func (si *SexpArraySelector) Type() *RegisteredType {
 	return GoStructRegistry.Lookup("arraySelector")
 }
 
 // RHS applies the selector to the contain and returns
 // the value obtained.
-func (x *SexpSelector) RHS(env *Glisp) (Sexp, error) {
+func (x *SexpArraySelector) RHS(env *Glisp) (Sexp, error) {
 	if len(x.Select.Val) != 1 {
-		return SexpNull, fmt.Errorf("SexpSelector: only " +
+		return SexpNull, fmt.Errorf("SexpArraySelector: only " +
 			"size 1 selectors implemented")
 	}
 	var i int64
@@ -162,29 +164,37 @@ func (x *SexpSelector) RHS(env *Glisp) (Sexp, error) {
 	case *SexpInt:
 		i = asInt.Val
 	default:
-		return SexpNull, fmt.Errorf("SexpSelector: int "+
+		return SexpNull, fmt.Errorf("SexpArraySelector: int "+
 			"selector required; we saw %T", x.Select.Val[0])
 	}
 	if i < 0 {
-		return SexpNull, fmt.Errorf("SexpSelector: negative "+
+		return SexpNull, fmt.Errorf("SexpArraySelector: negative "+
 			"indexes not supported; we saw %v", i)
 	}
 	if i >= int64(len(x.Container.Val)) {
-		return SexpNull, fmt.Errorf("SexpSelector: index "+
+		return SexpNull, fmt.Errorf("SexpArraySelector: index "+
 			"%v is out-of-bounds; length is %v", i, len(x.Container.Val))
 	}
 	return x.Container.Val[i], nil
 }
 
-// HasRHS structs have a RHS (right-hand-side)
-// method that can be used to dereference the pointer-
-// like object, yielding a value suitable for the
-// right-hand-side of an assignment statement.
-type HasRHS interface {
+// Selector stores indexing information that isn't
+// yet materialized for getting or setting.
+//
+type Selector interface {
+	// RHS (right-hand-side) is used to dereference
+	// the pointer-like Selector, yielding a value suitable for the
+	// right-hand-side of an assignment statement.
+	//
 	RHS(env *Glisp) (Sexp, error)
+
+	// AssignToSelection sets the selection to rhs
+	// The selected elements are the left-hand-side of the
+	// assignment *lhs = rhs
+	AssignToSelection(env *Glisp, rhs Sexp) error
 }
 
-func (x *SexpSelector) AssignToSelection(rhs Sexp) error {
+func (x *SexpArraySelector) AssignToSelection(env *Glisp, rhs Sexp) error {
 	_, err := x.RHS(nil) // check for errors
 	if err != nil {
 		return err

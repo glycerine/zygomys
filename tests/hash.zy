@@ -65,3 +65,9 @@ h
 (hdel h key2:)
 h
 
+// hashes should accept arrays as indexes
+(hset h [0 0] %a)
+(hset h [0 1] %b)
+(hset h [1 0] %c)
+(hset h [1 1] %d)
+(assert (== {h[0 0]} %a))

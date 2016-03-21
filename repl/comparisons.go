@@ -36,7 +36,7 @@ func compareFloat(f *SexpFloat, expr Sexp) (int, error) {
 	case *SexpChar:
 		return signumFloat(f.Val - float64(e.Val)), nil
 	}
-	errmsg := fmt.Sprintf("cannot compare %T to %T", f, expr)
+	errmsg := fmt.Sprintf("err 91: cannot compare %T to %T", f, expr)
 	return 0, errors.New(errmsg)
 }
 
@@ -61,7 +61,7 @@ func compareInt(i *SexpInt, expr Sexp) (int, error) {
 		P("compareInt(): r.Elem().Type() = %v/%T", r.Elem().Type(), r.Elem().Type())
 		P("compareInt(): r.Elem().Type().Name() = %v/%T", r.Elem().Type().Name(), r.Elem().Type().Name())
 	}
-	errmsg := fmt.Sprintf("cannot compare %T to %T", i, expr)
+	errmsg := fmt.Sprintf("err 92: cannot compare %T to %T", i, expr)
 	return 0, errors.New(errmsg)
 }
 
@@ -74,7 +74,7 @@ func compareChar(c *SexpChar, expr Sexp) (int, error) {
 	case *SexpChar:
 		return signumInt(int64(c.Val) - int64(e.Val)), nil
 	}
-	errmsg := fmt.Sprintf("cannot compare %T to %T", c, expr)
+	errmsg := fmt.Sprintf("err 93: cannot compare %T to %T", c, expr)
 	return 0, errors.New(errmsg)
 }
 
@@ -91,7 +91,7 @@ func compareString(s *SexpStr, expr Sexp) (int, error) {
 		}
 
 	}
-	errmsg := fmt.Sprintf("cannot compare %T to %T", s, expr)
+	errmsg := fmt.Sprintf("err 94: cannot compare %T to %T", s, expr)
 	return 0, errors.New(errmsg)
 }
 
@@ -100,7 +100,7 @@ func (env *Glisp) compareSymbol(sym *SexpSymbol, expr Sexp) (int, error) {
 	case *SexpSymbol:
 		return signumInt(int64(sym.number - e.number)), nil
 	}
-	errmsg := fmt.Sprintf("cannot compare %T to %T", sym, expr)
+	errmsg := fmt.Sprintf("err 95: cannot compare %T to %T", sym, expr)
 	return 0, errors.New(errmsg)
 }
 
@@ -110,7 +110,7 @@ func (env *Glisp) comparePair(a *SexpPair, b Sexp) (int, error) {
 	case *SexpPair:
 		bp = t
 	default:
-		errmsg := fmt.Sprintf("cannot compare %T to %T", a, b)
+		errmsg := fmt.Sprintf("err 96: cannot compare %T to %T", a, b)
 		return 0, errors.New(errmsg)
 	}
 	res, err := env.Compare(a.Head, bp.Head)
@@ -129,7 +129,7 @@ func (env *Glisp) compareArray(a *SexpArray, b Sexp) (int, error) {
 	case *SexpArray:
 		ba = t
 	default:
-		errmsg := fmt.Sprintf("cannot compare %T to %T", a, b)
+		errmsg := fmt.Sprintf("err 97: cannot compare %T to %T", a, b)
 		return 0, errors.New(errmsg)
 	}
 	var length int
@@ -158,7 +158,7 @@ func compareBool(a *SexpBool, b Sexp) (int, error) {
 	case *SexpBool:
 		bb = bt
 	default:
-		errmsg := fmt.Sprintf("cannot compare %T to %T", a, b)
+		errmsg := fmt.Sprintf("err 98: cannot compare %T to %T", a, b)
 		return 0, errors.New(errmsg)
 	}
 
@@ -181,7 +181,7 @@ func comparePointers(a *SexpPointer, bs Sexp) (int, error) {
 	case *SexpPointer:
 		b = bt
 	default:
-		return 0, fmt.Errorf("cannot compare %T to %T", a, bs)
+		return 0, fmt.Errorf("err 99: cannot compare %T to %T", a, bs)
 	}
 
 	if a.Target == b.Target {
@@ -193,14 +193,14 @@ func comparePointers(a *SexpPointer, bs Sexp) (int, error) {
 func (env *Glisp) Compare(a Sexp, b Sexp) (int, error) {
 
 	var err error
-	if ptr, isPtrLike := a.(HasRHS); isPtrLike {
-		a, err = ptr.RHS(env)
+	if sel, isSel := a.(Selector); isSel {
+		a, err = sel.RHS(env)
 		if err != nil {
 			return 0, err
 		}
 	}
-	if ptr, isPtrLike := b.(HasRHS); isPtrLike {
-		b, err = ptr.RHS(env)
+	if sel, isSel := b.(Selector); isSel {
+		b, err = sel.RHS(env)
 		if err != nil {
 			return 0, err
 		}
@@ -248,6 +248,6 @@ func (env *Glisp) Compare(a Sexp, b Sexp) (int, error) {
 		}
 
 	}
-	errmsg := fmt.Sprintf("cannot compare %T to %T", a, b)
+	errmsg := fmt.Sprintf("err 100: cannot compare %T to %T", a, b)
 	return 0, errors.New(errmsg)
 }

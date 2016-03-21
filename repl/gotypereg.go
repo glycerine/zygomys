@@ -228,7 +228,7 @@ func init() {
 	// ====================
 
 	gsr.RegisterBuiltin("arraySelector", &RegisteredType{GenDefMap: false, Factory: func(env *Glisp) (interface{}, error) {
-		return &SexpSelector{}, nil
+		return &SexpArraySelector{}, nil
 	}})
 
 	gsr.RegisterBuiltin("hashSelector", &RegisteredType{GenDefMap: false, Factory: func(env *Glisp) (interface{}, error) {

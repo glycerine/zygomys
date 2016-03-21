@@ -36,7 +36,7 @@ func HashExpression(env *Glisp, expr Sexp) (int, error) {
 			return hashcode2, nil
 		}
 		return 0, fmt.Errorf("list '%s' found where hash key needed", res.SexpString(0))
-	}
+	} // end if env == nil
 	return 0, fmt.Errorf("cannot hash type %T", expr)
 }
 
@@ -57,6 +57,8 @@ func hashHelper(expr Sexp) (hashcode int, isList bool, err error) {
 		return int(hasher.Sum32()), false, nil
 	case *SexpPair:
 		return 0, true, nil
+	case *SexpArray:
+		return int(Blake2bUint64([]byte(e.SexpString(0)))), false, nil
 	}
 	return 0, false, fmt.Errorf("cannot hash type %T", expr)
 }
@@ -933,7 +935,7 @@ func SetPrettyPrintFlag(env *Glisp, name string, args []Sexp) (Sexp, error) {
 
 // SexpHashSelector: reference to a symbol in a hash table.
 type SexpHashSelector struct {
-	Select    *SexpSymbol
+	Select    Sexp
 	Container *SexpHash
 }
 
@@ -945,9 +947,10 @@ func (h *SexpHash) NewSexpHashSelector(sym *SexpSymbol) *SexpHashSelector {
 }
 
 func (si *SexpHashSelector) SexpString(indent int) string {
-	rhs, err := si.RHS()
+	rhs, err := si.RHS(si.Container.env)
 	if err != nil {
-		panic(err)
+		return fmt.Sprintf("SexpHashSelector error: could not get RHS: '%v'",
+			err)
 	}
 	return fmt.Sprintf("%v /*(hashSelector %v %v)*/", rhs.SexpString(indent), si.Container.SexpString(indent), si.Select.SexpString(indent))
 }
@@ -959,10 +962,62 @@ func (si *SexpHashSelector) Type() *RegisteredType {
 
 // RHS applies the selector to the contain and returns
 // the value obtained.
-func (x *SexpHashSelector) RHS() (Sexp, error) {
+func (x *SexpHashSelector) RHS(env *Glisp) (Sexp, error) {
 	return x.Container.HashGet(x.Container.env, x.Select)
 }
 
-func (x *SexpHashSelector) AssignToSelection(rhs Sexp) error {
+func (x *SexpHashSelector) AssignToSelection(env *Glisp, rhs Sexp) error {
 	return x.Container.HashSet(x.Select, rhs)
+}
+
+// (arrayidx ar [0 1]) refers here
+func HashIndexFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
+	P("in HashIndexFunction, args = '%#v'", args)
+	narg := len(args)
+	if narg != 2 {
+		return SexpNull, WrongNargs
+	}
+
+	var err error
+	args, err = env.ResolveDotSym(args)
+	if err != nil {
+		return SexpNull, err
+	}
+
+	var hash *SexpHash
+	switch ar2 := args[0].(type) {
+	case *SexpHash:
+		hash = ar2
+	case *SexpArray:
+		return ArrayIndexFunction(env, name, args)
+	case Selector:
+		x, err := ar2.RHS(env)
+		if err != nil {
+			return SexpNull, err
+		}
+		switch xH := x.(type) {
+		case *SexpHash:
+			hash = xH
+		default:
+			return SexpNull, fmt.Errorf("bad (hashidx h index) call: h in hashidxdid not resolve to an array, instead '%s'/type %T", x.SexpString(0), x)
+		}
+	default:
+		return SexpNull, fmt.Errorf("bad (hashidx h index) call: h was not a hashmap, instead '%s'/type %T",
+			args[0].SexpString(0), args[0])
+	}
+
+	var idx *SexpArray
+	switch idx2 := args[1].(type) {
+	case *SexpArray:
+		idx = idx2
+	default:
+		return SexpNull, fmt.Errorf("bad (hashidx ar index) call: index was not a hashmap, instead '%s'/type %T",
+			args[1].SexpString(0), args[1])
+	}
+
+	ret := SexpHashSelector{
+		Select:    idx,
+		Container: hash,
+	}
+	return &ret, nil
 }

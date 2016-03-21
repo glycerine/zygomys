@@ -291,9 +291,18 @@ func Repl(env *Glisp, cfg *GlispConfig) {
 			default:
 				// experiment with showing dot-symbol dereference automatically
 				// at the repl
+				/*
+					P("repl checking for Selector on expr = %T", expr)
+					_, isSel := expr.(Selector)
+					if isSel {
+						P("repl: expr is selector! expr = %v", expr.SexpString(0))
+					} else {
+						P("repl: expr '%v' is NOT a selector", expr.SexpString(0))
+					}
+				*/
 				switch sym := expr.(type) {
-				case *SexpSelector:
-					Q("repl calling RHS() on SexpSelector")
+				case Selector:
+					P("repl calling RHS() on Selector")
 					rhs, err := sym.RHS(env)
 					if err != nil {
 						Q("repl problem in call to RHS() on SexpSelector: '%v'", err)
@@ -301,6 +310,7 @@ func Repl(env *Glisp, cfg *GlispConfig) {
 						env.Clear()
 						continue
 					} else {
+						P("got back rhs of type %T", rhs)
 						fmt.Println(rhs.SexpString(0))
 						continue
 					}
