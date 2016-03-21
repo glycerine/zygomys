@@ -1,6 +1,11 @@
 
 // assignment using hashidx
 (def h (hash Mickey:"mouse"))
+
+// we should be able to create hashidx for
+// non-existent fields, about to be assigned:
+(hashidx h .e)
+
 (set (hashidx h .e) 9)
 (def idx (hashidx h .e))
 (set idx 9)

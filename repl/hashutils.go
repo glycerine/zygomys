@@ -173,14 +173,14 @@ func MakeHash(args []Sexp, typename string, env *Glisp) (*SexpHash, error) {
 
 func (h *SexpHash) DotPathHashGet(env *Glisp, sym *SexpSymbol) (Sexp, error) {
 	path := DotPartsRegex.FindAllString(sym.name, -1)
-	//Q("in DotPathHashGet(), path = '%#v'", path)
+	P("in DotPathHashGet(), path = '%#v'", path)
 	if len(path) == 0 {
 		return SexpNull, fmt.Errorf("internal error: DotPathHashGet" +
 			" path had zero length")
 	}
 
-	//Q("\n in DotPathHashGet(), about to call nestedPathGetSet() with"+
-	//	"path='%#v\n", path)
+	P("\n in DotPathHashGet(), about to call nestedPathGetSet() with"+
+		"path='%#v\n", path)
 	exp, err := h.nestedPathGetSet(env, path, nil)
 	if err != nil {
 		return SexpNull, err
@@ -189,6 +189,8 @@ func (h *SexpHash) DotPathHashGet(env *Glisp, sym *SexpSymbol) (Sexp, error) {
 }
 
 func (hash *SexpHash) HashGet(env *Glisp, key Sexp) (Sexp, error) {
+	P("top of HashGet, key = '%v'", key.SexpString(0))
+
 	switch sym := key.(type) {
 	case *SexpSymbol:
 		if sym == nil {
@@ -210,7 +212,7 @@ func (hash *SexpHash) HashGet(env *Glisp, key Sexp) (Sexp, error) {
 	}
 
 	if val == SexpEnd {
-		return SexpNull, fmt.Errorf("%s has no field '%s'", hash.TypeName, key.SexpString(0))
+		return SexpNull, fmt.Errorf("%s has no field '%s' [err 1]", hash.TypeName, key.SexpString(0))
 		//return SexpNull, fmt.Errorf("%s has no field '%s'", hash.UserStructDefn.Name, key.SexpString(0))
 	}
 	return val, nil
@@ -291,7 +293,7 @@ func (h *SexpHash) TypeCheckField(key Sexp, val Sexp) error {
 		Q("is key '%s' defined?", k)
 		declaredTyp, ok := p.UserStructDefn.FieldType[k]
 		if !ok {
-			return fmt.Errorf("%s has no field '%s'", p.UserStructDefn.Name, k)
+			return fmt.Errorf("%s has no field '%s' [err 2]", p.UserStructDefn.Name, k)
 		}
 		obsTyp := val.Type()
 		if obsTyp == nil {
@@ -788,17 +790,17 @@ func (h *SexpHash) nestedPathGetSet(env *Glisp, dotpaths []string, setVal *Sexp)
 	var err error
 	askh := h
 	lenpath := len(dotpaths)
-	Q("\n in nestedPathGetSet, dotpaths=%#v\n", dotpaths)
+	P("\n in nestedPathGetSet, dotpaths=%#v\n", dotpaths)
 	for i := range dotpaths {
 		if setVal != nil && i == lenpath-1 {
 			// assign now
 			err = askh.HashSet(env.MakeSymbol(dotpaths[i][1:]), *setVal)
-			//Q("\n i=%v in nestedPathGetSet, dotpaths[i][1:]='%v' call to "+
-			//   "HashSet returned err = '%s'\n", i, dotpaths[i][1:], err)
+			P("\n i=%v in nestedPathGetSet, dotpaths[i][1:]='%v' call to "+
+				"HashSet returned err = '%s'\n", i, dotpaths[i][1:], err)
 			return *setVal, err
 		}
 		ret, err = askh.HashGet(env, env.MakeSymbol(dotpaths[i][1:]))
-		Q("\n i=%v in nestedPathGet, dotpaths[i][1:]='%v' call to "+
+		P("\n i=%v in nestedPathGet, dotpaths[i][1:]='%v' call to "+
 			"HashGet returned '%s'\n", i, dotpaths[i][1:], ret.SexpString(0))
 		if err != nil {
 			return SexpNull, err
@@ -809,7 +811,7 @@ func (h *SexpHash) nestedPathGetSet(env *Glisp, dotpaths []string, setVal *Sexp)
 		// invar: i < lenpath-1, so go deeper
 		switch h2 := ret.(type) {
 		case *SexpHash:
-			//Q("\n found hash in h2 at i=%d, looping to next i\n", i)
+			P("\n found hash in h2 at i=%d, looping to next i\n", i)
 			askh = h2
 		default:
 			return SexpNull, fmt.Errorf("not a record: cannot get field '%s'"+
@@ -983,24 +985,43 @@ func (x *SexpHashSelector) RHS(env *Glisp) (sx Sexp, err error) {
 	if x.Select == nil {
 		panic("cannot call RHS on hash selector with nil Select")
 	}
-	P("x.Select is '%#v'", x.Select)
+	P("SexpHashSelector.RHS(): x.Select is '%#v'", x.Select)
 	switch t := x.Select.(type) {
 	case *SexpSymbol:
+		P("SexpHashSelector.RHS(): x.Select is symbol, t = '%#v'", t)
+		P("SexpHashSelector.RHS(): x.Container is '%v'",
+			x.Container.SexpString(0))
 		sx, err = x.Container.DotPathHashGet(x.Container.env, t)
+		if err != nil {
+			P("SexpHashSelector.RHS() sees err when calling"+
+				" on x.Container.DotPathHashGet: with query t='%#v' err='%v'", t, err)
+			return SexpNull, err
+		}
 	default:
+		P("SexpHashSelector.RHS() selector is not a symbol, x= '%#v'", x)
 		sx, err = x.Container.HashGet(x.Container.env, x.Select)
-	}
-	if err != nil {
-		P("SexpHashSelector.RHS() sees err when calling"+
-			" on x.Container.HashGet: '%v'", err)
-		return SexpNull, err
+		if err != nil {
+			P("SexpHashSelector.RHS() sees err when calling"+
+				" on x.Container.HashGet: '%v'", err)
+			return SexpNull, err
+		}
 		//return &SexpStr{S: fmt.Sprintf("(hashidx   %s   %s)", x.Container.SexpString(0), x.Select.SexpString(0))}, nil
 	}
+	P("SexpHashSelector) RHS() returning sx = '%v'", sx)
 	return sx, nil
 }
 
 func (x *SexpHashSelector) AssignToSelection(env *Glisp, rhs Sexp) error {
-	Q("in SexpHashSelector.AssignToSelection with rhs = '%v' and container = '%v'", rhs.SexpString(0), x.Container.SexpString(0))
+	P("in SexpHashSelector.AssignToSelection with rhs = '%v' and container = '%v'", rhs.SexpString(0), x.Container.SexpString(0))
+	switch sym := x.Select.(type) {
+	case *SexpSymbol:
+		path := DotPartsRegex.FindAllString(sym.name, -1)
+		for i := range path {
+			path[i] = stripAnyDotPrefix(path[i])
+		}
+		_, err := x.Container.nestedPathGetSet(env, path, &rhs)
+		return err
+	}
 	return x.Container.HashSet(x.Select, rhs)
 }
 
@@ -1069,12 +1090,16 @@ func HashIndexFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	switch x := sel.(type) {
 	case *SexpSymbol:
 		sel = x
-		if x.isDot {
-			Q("hashidx sees dot symbol: '%s', removing any prefix dot", x.name)
-			if len(x.name) >= 2 && x.name[0] == '.' {
-				sel = env.MakeSymbol(x.name[1:])
+		/*
+			if x.isDot {
+				Q("hashidx sees dot symbol: '%s', removing any prefix dot", x.name)
+				if len(x.name) >= 2 && x.name[0] == '.' {
+					selSym := env.MakeSymbol(x.name[1:])
+					//selSym.isDot = true
+					sel = selSym
+				}
 			}
-		}
+		*/
 	default:
 		// okay to have SexpArray/other as selector
 	}

@@ -2,6 +2,8 @@
 // dot after array indexing
 (def arr [(hash a:(hash b:[3 4]))])
 
+arr[0].a
+
 // was problem with hashidx:
 {arr[0].a.b[1]}
 //  (arrayidx (hashidx (arrayidx arr [0]) .a.b) [1]))

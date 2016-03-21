@@ -179,6 +179,12 @@ func (env *Glisp) MakeDotSymbol(name string) *SexpSymbol {
 }
 
 func (env *Glisp) DetectSigils(sym *SexpSymbol) {
+	if sym == nil {
+		return
+	}
+	if len(sym.name) == 0 {
+		return
+	}
 	switch sym.name[0] {
 	case '$':
 		sym.isSigil = true
