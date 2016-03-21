@@ -976,7 +976,7 @@ func (si *SexpHashSelector) Type() *RegisteredType {
 
 // RHS applies the selector to the contain and returns
 // the value obtained.
-func (x *SexpHashSelector) RHS(env *Glisp) (Sexp, error) {
+func (x *SexpHashSelector) RHS(env *Glisp) (sx Sexp, err error) {
 	if env == nil {
 		panic("SexpHashSelector.RSH() called with nil env")
 	}
@@ -984,11 +984,17 @@ func (x *SexpHashSelector) RHS(env *Glisp) (Sexp, error) {
 		panic("cannot call RHS on hash selector with nil Select")
 	}
 	P("x.Select is '%#v'", x.Select)
-	sx, err := x.Container.HashGet(x.Container.env, x.Select)
+	switch t := x.Select.(type) {
+	case *SexpSymbol:
+		sx, err = x.Container.DotPathHashGet(x.Container.env, t)
+	default:
+		sx, err = x.Container.HashGet(x.Container.env, x.Select)
+	}
 	if err != nil {
-		Q("SexpHashSelector.RHS() sees err when calling"+
+		P("SexpHashSelector.RHS() sees err when calling"+
 			" on x.Container.HashGet: '%v'", err)
-		return &SexpStr{S: fmt.Sprintf("(hashidx   %s   %s)", x.Container.SexpString(0), x.Select.SexpString(0))}, nil
+		return SexpNull, err
+		//return &SexpStr{S: fmt.Sprintf("(hashidx   %s   %s)", x.Container.SexpString(0), x.Select.SexpString(0))}, nil
 	}
 	return sx, nil
 }
@@ -1000,10 +1006,10 @@ func (x *SexpHashSelector) AssignToSelection(env *Glisp, rhs Sexp) error {
 
 // (arrayidx ar [0 1]) refers here
 func HashIndexFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
-	Q("in HashIndexFunction, with %v args = '%#v', env=%p",
+	P("in HashIndexFunction, with %v args = '%#v', env=%p",
 		len(args), args, env)
 	for i := range args {
-		Q("in HashIndexFunction, args[%v] = '%v'", i, args[i].SexpString(0))
+		P("in HashIndexFunction, args[%v] = '%v'", i, args[i].SexpString(0))
 	}
 	narg := len(args)
 	if narg != 2 {
@@ -1014,18 +1020,19 @@ func HashIndexFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		return SexpNull, err
 	}
 	args[0] = tmp[0]
-	Q("HashIndexFunction: past dot resolve, args[0] is now '%v'",
-		args[0].SexpString(0))
+	P("HashIndexFunction: past dot resolve, args[0] is now type %T/val='%v'",
+		args[0], args[0].SexpString(0))
 
 	var hash *SexpHash
-	switch ar2 := args[0].(type) {
+	switch ar0 := args[0].(type) {
 	case *SexpHash:
-		hash = ar2
+		hash = ar0
 	case *SexpArray:
 		Q("HashIndexFunction: args[0] is an array, defering to ArrayIndexFunction")
 		return ArrayIndexFunction(env, name, args)
 	case Selector:
-		x, err := ar2.RHS(env)
+		x, err := ar0.RHS(env)
+		P("ar0.RHS() returned x = %#v", x)
 		if err != nil {
 			Q("HashIndexFunction: Selector error: '%v'", err)
 			return SexpNull, err
@@ -1051,7 +1058,7 @@ func HashIndexFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 				" that resolved to an array '%v'", xH.SexpString(0))
 			return ArrayIndexFunction(env, name, []Sexp{xH, args[1]})
 		default:
-			return SexpNull, fmt.Errorf("bad (hashidx h index) call: h did not resolve to a hash, instead '%s'/type %T", x.SexpString(0), x)
+			return SexpNull, fmt.Errorf("bad (hashidx h index) call: h did not resolve to a hash, instead '%s'/type %T", x.SexpString(0), x) // failing here with x a  *SexpStr
 		}
 	default:
 		return SexpNull, fmt.Errorf("bad (hashidx h index) call: h was not a hashmap, instead '%s'/type %T",

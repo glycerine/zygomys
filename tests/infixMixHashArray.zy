@@ -1,0 +1,69 @@
+
+// dot after array indexing
+(def arr [(hash a:(hash b:[3 4]))])
+
+// was problem with hashidx:
+{arr[0].a.b[1]}
+//  (arrayidx (hashidx (arrayidx arr [0]) .a.b) [1]))
+
+
+(hashidx (arrayidx arr [0]) .a.b)
+(printf ">>> %#v <<<" (hashidx (arrayidx arr [0]) .a.b))
+(arrayidx (hashidx (arrayidx arr [0]) .a.b) [1])
+         
+
+
+(assert (== {arr[0].a.b[1]} 4))
+(infixExpand {arr[0].a.b[1]})
+
+(infixExpand {arr[0].a.b})
+
+// simpler: using dot symbols as the key an hget call
+(def h (hash a:(hash b:[3 4] d:9)))
+{h.a.b[0]}
+(assert (== (hget h .a.b) [3 4]))
+
+(assert (== (* h.a.d) 9))
+(assert (== {* h.a.d} 9))
+//(infixExpand {h.a.b})
+
+(assert (== {h.a.b[0] + 5} 8))
+{j=1}
+(assert (== {h.a.b[j] + 5} 9))
+(assert (== {h.a.b[j] * 5} 20))
+
+(defn sq [x] {x*x})
+// want this to give us 29, not 4 -- at the repl
+{(sq 5) + 4}
+
+(defn multi [x] {
+  x = x + 1;
+  x = x + 2;
+  x = x + 3;
+  })
+
+(assert (== (multi 1) 7))
+
+// should be able to set via dot symbol now
+
+{a=(hash b:2 c:3  d:4)}
+(set a.d 6)
+(assert (== a.d 6))
+{a.d=8}
+(assert (== a.d 8))
+//(infixExpand {a.d=6})
+
+(set a.bebe 7)
+(assert (== a.bebe 7))
+(set a.b 77)
+(assert (== a.b 77))
+(expectError "Error generating (set a.b = 7):\nWrong number of arguments to set"    (set a.b = 7)) // error, not panic
+
+{b=[(hash b:[(hash g:(hash h:[1 2 (hash i:[8 9]) [99 [101 102 (hash [1 7]:%one)]]]))])]}
+(assert (== {b[0].b[0].g.h[2].i[1]} 9))
+(assert (== {b[0].b[0].g.h[3][1]} [101 102  (hash [1 7]:%one)]))
+(assert (== {b[0].b[0].g.h[3][1][0]} 101))
+
+// we can intermix the has [1 1] access at the end, and
+// the arrayidx should still work:
+(assert (== {b[0].b[0].g.h[3][1][2][1 7]} %one))
