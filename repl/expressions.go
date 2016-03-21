@@ -240,6 +240,8 @@ type SexpArray struct {
 
 	IsFuncDeclTypeArray bool
 	Infix               bool
+
+	Env *Glisp
 }
 
 func (r *SexpArray) Type() *RegisteredType {

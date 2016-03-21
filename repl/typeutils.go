@@ -168,6 +168,10 @@ func TypeOf(expr Sexp) *SexpStr {
 		v = "regtype"
 	case *SexpPointer:
 		v = e.MyType.RegisteredName
+	case *SexpArraySelector:
+		v = "arraySelector"
+	case *SexpHashSelector:
+		v = "hashSelector"
 	case *SexpReflect:
 		rt := expr.Type()
 		if rt != nil {

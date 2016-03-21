@@ -193,6 +193,9 @@ func (env *Glisp) DetectSigils(sym *SexpSymbol) {
 }
 
 func (env *Glisp) MakeSymbol(name string) *SexpSymbol {
+	if env == nil {
+		panic("internal problem:  env.MakeSymbol called with nil env")
+	}
 	symnum, ok := env.symtable[name]
 	if ok {
 		symbol := &SexpSymbol{name: name, number: symnum}
@@ -295,7 +298,7 @@ func (env *Glisp) ReturnFromFunction() error {
 
 func (env *Glisp) CallUserFunction(
 	function *SexpFunction, name string, nargs int) (nargReturned int, err error) {
-
+	P("CallUserFunction calling name '%s' with nargs=%v", name, nargs)
 	for _, prehook := range env.before {
 		expressions, err := env.datastack.GetExpressions(nargs)
 		if err != nil {

@@ -30,7 +30,7 @@ func RemoveCommentsFilter(x Sexp) bool {
 func (env *Glisp) FilterAny(x Sexp, f Filter) (filtered Sexp, keep bool) {
 	switch ele := x.(type) {
 	case *SexpArray:
-		res := &SexpArray{Val: env.FilterArray(ele.Val, f), Typ: ele.Typ, IsFuncDeclTypeArray: ele.IsFuncDeclTypeArray}
+		res := &SexpArray{Val: env.FilterArray(ele.Val, f), Typ: ele.Typ, IsFuncDeclTypeArray: ele.IsFuncDeclTypeArray, Env: env}
 		return res, true
 	case *SexpPair:
 		return env.FilterList(ele, f), true

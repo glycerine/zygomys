@@ -169,10 +169,10 @@ func arrayOpMunchLeft(env *Glisp, pr *Pratt, left Sexp) (Sexp, error) {
 }
 
 func dotOpMunchLeft(env *Glisp, pr *Pratt, left Sexp) (Sexp, error) {
-	//Q("dotOp MunchLeft, left = '%v'. NextToken='%v'. pr.CnodeStack[0]='%v'", left.SexpString(0), pr.NextToken.SexpString(0), pr.CnodeStack[0].SexpString(0))
+	P("dotOp MunchLeft, left = '%v'. NextToken='%v'. pr.CnodeStack[0]='%v'", left.SexpString(0), pr.NextToken.SexpString(0), pr.CnodeStack[0].SexpString(0))
 	//token := pr.NextToken
 	list := MakeList([]Sexp{
-		env.MakeSymbol("hget"), left, pr.CnodeStack[0],
+		env.MakeSymbol("hashidx"), left, pr.CnodeStack[0],
 	})
 	//pr.Advance()
 	return list, nil

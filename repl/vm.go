@@ -544,7 +544,7 @@ func (s VectorizeInstr) Execute(env *Glisp) error {
 		}
 		vec = append([]Sexp{expr}, vec...)
 	}
-	env.datastack.PushExpr(&SexpArray{Val: vec})
+	env.datastack.PushExpr(&SexpArray{Val: vec, Env: env})
 	env.pc++
 	return nil
 }

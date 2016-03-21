@@ -184,7 +184,7 @@ func RestFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		if len(expr.Val) == 0 {
 			return expr, nil
 		}
-		return &SexpArray{Val: expr.Val[1:]}, nil
+		return &SexpArray{Val: expr.Val[1:], Env: env}, nil
 	case *SexpSentinel:
 		if expr == SexpNull {
 			return SexpNull, nil
@@ -351,7 +351,7 @@ func HashAccessFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		for i := 0; i < n; i++ {
 			keys = append(keys, (hash.KeyOrder)[i])
 		}
-		return &SexpArray{Val: keys}, nil
+		return &SexpArray{Val: keys, Env: env}, nil
 	case "hpair":
 		if len(args) != 2 {
 			return SexpNull, WrongNargs
@@ -417,7 +417,7 @@ func SliceFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 
 	switch t := args[0].(type) {
 	case *SexpArray:
-		return &SexpArray{Val: t.Val[start:end]}, nil
+		return &SexpArray{Val: t.Val[start:end], Env: env}, nil
 	case *SexpStr:
 		return &SexpStr{S: t.S[start:end]}, nil
 	}
@@ -466,11 +466,11 @@ func AppendFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	case *SexpArray:
 		switch name {
 		case "append":
-			return &SexpArray{Val: append(t.Val, args[1])}, nil
+			return &SexpArray{Val: append(t.Val, args[1]), Env: env}, nil
 		case "appendslice":
 			switch sl := args[1].(type) {
 			case *SexpArray:
-				return &SexpArray{Val: append(t.Val, sl.Val...)}, nil
+				return &SexpArray{Val: append(t.Val, sl.Val...), Env: env}, nil
 			default:
 				return SexpNull, fmt.Errorf("Second argument of appendslice must be slice")
 			}
@@ -709,13 +709,13 @@ func MakeArrayFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		arr[i] = fill
 	}
 
-	return &SexpArray{Val: arr}, nil
+	return env.NewSexpArray(arr), nil
 }
 
 func ConstructorFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	switch name {
 	case "array":
-		return &SexpArray{Val: args}, nil
+		return env.NewSexpArray(args), nil
 	case "list":
 		return MakeList(args), nil
 	case "hash":
@@ -923,6 +923,7 @@ func CoreFunctions() map[string]GlispUserFunction {
 		"deref":       DerefFunction,
 		".":           DotFunction,
 		"arrayidx":    ArrayIndexFunction,
+		"hashidx":     HashIndexFunction,
 	}
 }
 
@@ -1124,7 +1125,7 @@ func StopFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 // the assignment function, =
 func AssignmentFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	Q("\n AssignmentFunction called with name ='%s'. args='%s'\n", name,
-		(&SexpArray{Val: args}).SexpString(0))
+		env.NewSexpArray(args).SexpString(0))
 
 	narg := len(args)
 	if narg != 2 {

@@ -77,6 +77,14 @@
 
 // dot after array indexing
 (def arr [(hash a:(hash b:[3 4]))])
+
+// was problem with hashidx:
+{arr[0].a.b[1]}
+//  (arrayidx (hashidx (arrayidx arr [0]) .a.b) [1]))
+(arrayidx (hashidx (arrayidx arr [0]) .a.b) [1])
+         
+
+
 (assert (== {arr[0].a.b[1]} 4))
 (infixExpand {arr[0].a.b[1]})
 
@@ -117,7 +125,6 @@
 (assert (== a.d 8))
 //(infixExpand {a.d=6})
 
-
 (set a.bebe 7)
 (assert (== a.bebe 7))
 (set a.b 77)
@@ -132,5 +139,3 @@
 // we can intermix the has [1 1] access at the end, and
 // the arrayidx should still work:
 (assert (== {b[0].b[0].g.h[3][1][2][1 7]} %one))
-
-

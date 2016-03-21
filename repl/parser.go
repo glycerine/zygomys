@@ -286,7 +286,7 @@ func (parser *Parser) ParseArray(depth int) (Sexp, error) {
 		arr = append(arr, expr)
 	}
 
-	return &SexpArray{Val: arr}, nil
+	return &SexpArray{Val: arr, Env: parser.env}, nil
 }
 
 func (parser *Parser) ParseExpression(depth int) (res Sexp, err error) {
@@ -430,7 +430,7 @@ func (p *Parser) ParseTokens() ([]Sexp, error) {
 		r := make([]Sexp, 0)
 		for _, k := range out {
 			r = append(r, k.Expr...)
-			Q("\n ParseTokens k.Expr = '%v'\n\n", (&SexpArray{Val: k.Expr}).SexpString(0))
+			Q("\n ParseTokens k.Expr = '%v'\n\n", (&SexpArray{Val: k.Expr, Env: p.env}).SexpString(0))
 			if k.Err != nil {
 				return r, k.Err
 			}
@@ -542,9 +542,8 @@ func (parser *Parser) ParseInfix(depth int) (Sexp, error) {
 	list.Head = parser.env.MakeSymbol("infix")
 	list.Tail = SexpNull
 	if len(arr) > 0 {
-		list.Tail = Cons(&SexpArray{Val: arr, Infix: true}, SexpNull)
+		list.Tail = Cons(&SexpArray{Val: arr, Infix: true, Env: parser.env}, SexpNull)
 	}
 	return &list, nil
-
-	//return &SexpArray{Val: arr, Infix: true}, nil
+	//return &SexpArray{Val: arr, Infix: true, Env: env}, nil
 }

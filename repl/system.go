@@ -83,7 +83,7 @@ func FlattenToWordsFunction(env *Glisp, name string, args []Sexp) (Sexp, error) 
 	for i := range stringArgs {
 		res[i] = &SexpStr{S: stringArgs[i]}
 	}
-	return &SexpArray{Val: res}, nil
+	return env.NewSexpArray(res), nil
 }
 
 func flattenToWordsHelper(args []Sexp) ([]string, error) {

@@ -185,7 +185,7 @@ func CallGoMethodFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 				}
 			}
 		}
-		return &SexpArray{Val: r}, nil
+		return env.NewSexpArray(r), nil
 	}()
 	if wasPanic {
 		return SexpNull, fmt.Errorf("\n recovered from panic "+

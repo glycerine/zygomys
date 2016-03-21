@@ -58,7 +58,7 @@ func SlurpfileFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	}
 
 	VPrintf("read %d lines\n", lineNum)
-	return &SexpArray{Val: a}, nil
+	return env.NewSexpArray(a), nil
 }
 
 // (writef path); (write path) is the macro version.
@@ -154,7 +154,7 @@ func SplitStringFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		split[i] = &SexpStr{S: s[i]}
 	}
 
-	return &SexpArray{Val: split}, nil
+	return env.NewSexpArray(split), nil
 }
 
 // (nsplit "a\nb") -> ["a" "b"]

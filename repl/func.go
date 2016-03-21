@@ -93,7 +93,7 @@ func FuncBuilder(env *Glisp, name string,
 	P("in func builder, isAnon = %v", isAnon)
 	P("in func builder, inputs = %v", inputs.SexpString(0))
 	P("in func builder, returns = %v", returns.SexpString(0))
-	P("in func builder, body = %v", (&SexpArray{Val: body}).SexpString(0))
+	P("in func builder, body = %v", (&SexpArray{Val: body, Env: env}).SexpString(0))
 
 	inHash, err := GetFuncArgArray(inputs, env, "inputs")
 	if err != nil {
@@ -123,7 +123,7 @@ func FuncBuilder(env *Glisp, name string,
 
 	//	sfun, err := buildSexpFun(env, symN.name, funcargs, body, orig)
 
-	//orig := &SexpArray{Val: args}
+	//orig := &SexpArray{Val: args, Env: env}
 	origa := []Sexp{env.MakeSymbol("func")}
 	origa = append(origa, args...)
 	orig := MakeList(origa)

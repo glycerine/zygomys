@@ -291,7 +291,7 @@ func decodeGoToSexpHelper(r interface{}, depth int, env *Glisp, preferSym bool) 
 		for i := range val {
 			slice = append(slice, decodeGoToSexpHelper(val[i], depth+1, env, preferSym))
 		}
-		return &SexpArray{Val: slice}
+		return &SexpArray{Val: slice, Env: env}
 
 	case map[string]interface{}:
 

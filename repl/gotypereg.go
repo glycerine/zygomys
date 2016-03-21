@@ -368,7 +368,7 @@ func TypeListFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	for i := range r {
 		s[i] = &SexpStr{S: r[i]}
 	}
-	return &SexpArray{Val: s}, nil
+	return env.NewSexpArray(s), nil
 }
 
 func (env *Glisp) ImportBaseTypes() {

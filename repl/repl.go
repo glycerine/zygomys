@@ -113,7 +113,7 @@ func (pr *Prompter) getExpressionWithLiner(env *Glisp) (readin string, xs []Sexp
 		switch err {
 		case nil:
 			line += "\n" + nextline
-			Q("no problem parsing line '%s' into '%s', proceeding...\n", line, (&SexpArray{Val: x}).SexpString(0))
+			Q("no problem parsing line '%s' into '%s', proceeding...\n", line, (&SexpArray{Val: x, Env: env}).SexpString(0))
 			return line, xs, nil
 		case ResetRequested:
 			continue
@@ -262,7 +262,7 @@ func Repl(env *Glisp, cfg *GlispConfig) {
 		var expr Sexp
 		n := len(exprsInput)
 		if n > 0 {
-			infixWrappedSexp := MakeList([]Sexp{infixSym, &SexpArray{Val: exprsInput}})
+			infixWrappedSexp := MakeList([]Sexp{infixSym, &SexpArray{Val: exprsInput, Env: env}})
 			expr, err = env.EvalExpressions([]Sexp{infixWrappedSexp})
 		} else {
 			line = env.ReplLineInfixWrap(line)

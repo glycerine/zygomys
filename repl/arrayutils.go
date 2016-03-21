@@ -10,14 +10,14 @@ func MapArray(env *Glisp, fun *SexpFunction, arr *SexpArray) (Sexp, error) {
 	for i := range arr.Val {
 		result[i], err = env.Apply(fun, arr.Val[i:i+1])
 		if err != nil {
-			return &SexpArray{Val: result, Typ: firstTyp}, err
+			return &SexpArray{Val: result, Typ: firstTyp, Env: env}, err
 		}
 		if firstTyp == nil {
 			firstTyp = result[i].Type()
 		}
 	}
 
-	return &SexpArray{Val: result, Typ: firstTyp}, nil
+	return &SexpArray{Val: result, Typ: firstTyp, Env: env}, nil
 }
 
 func ConcatArray(arr *SexpArray, rest []Sexp) (Sexp, error) {
@@ -40,7 +40,7 @@ func ConcatArray(arr *SexpArray, rest []Sexp) (Sexp, error) {
 
 // (arrayidx ar [0 1])
 func ArrayIndexFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
-	//P("in ArrayIndexFunction, args = '%#v'", args)
+	P("in ArrayIndexFunction, args = '%#v'", args)
 	narg := len(args)
 	if narg != 2 {
 		return SexpNull, WrongNargs
@@ -63,13 +63,16 @@ func ArrayIndexFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		case *SexpArray:
 			ar = xArr
 		case *SexpHash:
-			return HashIndexFunction(env, name, args)
+			return HashIndexFunction(env, name, []Sexp{xArr, args[1]})
 		default:
 			return SexpNull, fmt.Errorf("bad (arrayidx ar index) call: ar as arrayidx, but that did not resolve to an array, instead '%s'/type %T", x.SexpString(0), x)
 		}
 	case *SexpArray:
 		ar = ar2
 	case *SexpHash:
+		return HashIndexFunction(env, name, args)
+	case *SexpHashSelector:
+		P("ArrayIndexFunction sees args[0] is a hashSelector")
 		return HashIndexFunction(env, name, args)
 	default:
 		return SexpNull, fmt.Errorf("bad (arrayidx ar index) call: ar was not an array, instead '%s'/type %T",
@@ -142,10 +145,16 @@ type SexpArraySelector struct {
 }
 
 func (si *SexpArraySelector) SexpString(indent int) string {
-	rhs, err := si.RHS(nil)
+	P("in SexpArraySelector.SexpString(), si.Container.Env = %p", si.Container.Env)
+	rhs, err := si.RHS(si.Container.Env)
 	if err != nil {
 		return fmt.Sprintf("(arraySelector %v %v)", si.Container.SexpString(indent), si.Select.SexpString(indent))
 	}
+
+	P("in SexpArraySelector.SexpString(), rhs = %v", rhs.SexpString(indent))
+	P("in SexpArraySelector.SexpString(), si.Container = %v", si.Container.SexpString(indent))
+	P("in SexpArraySelector.SexpString(), si.Select = %v", si.Select.SexpString(indent))
+
 	return fmt.Sprintf("%v /*(arraySelector %v %v)*/", rhs.SexpString(indent), si.Container.SexpString(indent), si.Select.SexpString(indent))
 }
 
@@ -177,7 +186,9 @@ func (x *SexpArraySelector) RHS(env *Glisp) (Sexp, error) {
 		return SexpNull, fmt.Errorf("SexpArraySelector: index "+
 			"%v is out-of-bounds; length is %v", i, len(x.Container.Val))
 	}
-	return x.Container.Val[i], nil
+	ret := x.Container.Val[i]
+	P("arraySelector returning ret = %#v", ret)
+	return ret, nil
 }
 
 // Selector stores indexing information that isn't
@@ -197,10 +208,14 @@ type Selector interface {
 }
 
 func (x *SexpArraySelector) AssignToSelection(env *Glisp, rhs Sexp) error {
-	_, err := x.RHS(nil) // check for errors
+	_, err := x.RHS(x.Container.Env) // check for errors
 	if err != nil {
 		return err
 	}
 	x.Container.Val[x.Select.Val[0].(*SexpInt).Val] = rhs
 	return nil
+}
+
+func (env *Glisp) NewSexpArray(arr []Sexp) *SexpArray {
+	return &SexpArray{Val: arr, Env: env}
 }

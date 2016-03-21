@@ -17,7 +17,7 @@ func (r *SexpRegexp) Type() *RegisteredType {
 	return nil // TODO what should this be?
 }
 
-func regexpFindIndex(
+func regexpFindIndex(env *Glisp,
 	needle *regexp.Regexp, haystack string) (Sexp, error) {
 
 	loc := needle.FindStringIndex(haystack)
@@ -27,7 +27,7 @@ func regexpFindIndex(
 		arr[i] = Sexp(&SexpInt{Val: int64(loc[i])})
 	}
 
-	return &SexpArray{Val: arr}, nil
+	return &SexpArray{Val: arr, Env: env}, nil
 }
 
 func RegexpFind(env *Glisp, name string,
@@ -58,7 +58,7 @@ func RegexpFind(env *Glisp, name string,
 		str := needle.FindString(haystack)
 		return &SexpStr{S: str}, nil
 	case "regexpFindIndex":
-		return regexpFindIndex(needle, haystack)
+		return regexpFindIndex(env, needle, haystack)
 	case "regexpMatch":
 		matches := needle.MatchString(haystack)
 		return &SexpBool{Val: matches}, nil
