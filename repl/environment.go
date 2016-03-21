@@ -298,7 +298,7 @@ func (env *Glisp) ReturnFromFunction() error {
 
 func (env *Glisp) CallUserFunction(
 	function *SexpFunction, name string, nargs int) (nargReturned int, err error) {
-	P("CallUserFunction calling name '%s' with nargs=%v", name, nargs)
+	Q("CallUserFunction calling name '%s' with nargs=%v", name, nargs)
 	for _, prehook := range env.before {
 		expressions, err := env.datastack.GetExpressions(nargs)
 		if err != nil {

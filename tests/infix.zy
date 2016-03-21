@@ -81,6 +81,10 @@
 // was problem with hashidx:
 {arr[0].a.b[1]}
 //  (arrayidx (hashidx (arrayidx arr [0]) .a.b) [1]))
+
+
+(hashidx (arrayidx arr [0]) .a.b)
+(printf ">>> %#v <<<" (hashidx (arrayidx arr [0]) .a.b))
 (arrayidx (hashidx (arrayidx arr [0]) .a.b) [1])
          
 

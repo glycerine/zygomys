@@ -196,7 +196,12 @@ func (p UpdateInstr) Execute(env *Glisp) error {
 		_, err := dotGetSetHelper(env, p.sym.name, &expr)
 		return err
 	}
-
+	/*
+		switch p.sym.(type) {
+		case Selector:
+			P("UpdateInstr: I see Selector '%s'", p.sym.SexpString(0))
+		}
+	*/
 	_, err, scope = env.LexicalLookupSymbol(p.sym, false)
 	if err != nil {
 		// not found up the stack, so treat like (def)
@@ -806,6 +811,7 @@ func (a AssignInstr) Execute(env *Glisp) error {
 	case *SexpSymbol:
 		return env.LexicalBindSymbol(x, rhs)
 	case Selector:
+		Q("AssignInstr: I see lhs is Selector")
 		err := x.AssignToSelection(env, rhs)
 		return err
 	}

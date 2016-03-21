@@ -184,6 +184,7 @@ func (gen *Generator) GenerateDef(args []Sexp, opname string) error {
 		case "def":
 			instr = PopStackPutEnvInstr{lhs}
 		case "set":
+			Q("GenerateDef is doing set with UpdateInstr: lhs = '%s'", lhs.SexpString(0))
 			instr = UpdateInstr{lhs}
 		default:
 			panic(fmt.Errorf("unknown opname '%s'", opname))

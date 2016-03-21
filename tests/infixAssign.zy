@@ -1,0 +1,25 @@
+
+// assignment using hashidx
+(def h (hash Mickey:"mouse"))
+(set (hashidx h .e) 9)
+(def idx (hashidx h .e))
+(set idx 9)
+
+// assignment after array and dot selection:
+{q = [0 3 4 (hash a:%b c:%d)]}
+q
+(arrayidx q [3])
+(hashidx (arrayidx q [3]) .e)
+(set (hashidx (arrayidx q [3]) .e) 9)
+q // now crashes
+
+(hashidx {q[3]} .e)
+{q[3].e = 9}
+q
+(infixExpand {q[3].e = 9})
+(infixExpand {q[3].e = 9})
+// (quote (set (hget (arrayidx q [3]) .e) 9))
+// or
+// (quote (set (hashidx (arrayidx q [3]) .e) 9))
+(assert (== q[3].e 9))
+
