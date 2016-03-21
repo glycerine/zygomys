@@ -244,9 +244,14 @@ func InfixBuilder(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		arr = v
 	case *SexpPair:
 		if name == "infixExpand" {
+			_, isSent := v.Tail.(*SexpSentinel)
+			if isSent {
+				// expansion of {} is nil
+				return SexpNull, nil
+			}
 			pair, isPair := v.Tail.(*SexpPair)
 			if !isPair {
-				return SexpNull, fmt.Errorf("infixExpand expects (infix []) as its argument; instead we saw '%T'", v.Tail)
+				return SexpNull, fmt.Errorf("infixExpand expects (infix []) as its argument; instead we saw '%T' [err 3]", v.Tail)
 			}
 			switch ar2 := pair.Head.(type) {
 			case *SexpArray:

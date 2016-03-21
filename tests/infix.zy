@@ -74,3 +74,5 @@
 (infixExpand {h.a.b[2] = 99})
 {h.a.b[2] = 99}
 (assert (== {h.a.b[2]} 99))
+
+(infixExpand {})
