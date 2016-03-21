@@ -1,0 +1,21 @@
+(defmap user)
+
+// multi-line input was getting 'End' SexpSentinel tokens after each comma
+// causing the MakeHash call to fail with odd arg count.
+
+// should work, but wasn't
+// error in infix:-1: Error calling 'infix': Error calling 'msgmap': hash requires even number of arguments
+{u3 = (user a:false,
+           b: false)}
+
+// should work, but wasn't
+// Error on line 2: Invalid syntax, don't know what to do with 1 ')'
+{u3 = (user a:false,
+           b: false,)}
+
+// multi-line input was getting 'End' SexpSentinel tokens after each comma
+{u2 = (user
+ a:false,
+ b:false,
+ c:true)}
+

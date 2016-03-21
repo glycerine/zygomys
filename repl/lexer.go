@@ -675,9 +675,6 @@ top:
 		case '\n':
 			lexer.linenum++
 			fallthrough
-			//		case ',':
-			//			// comma, same as whitespace
-			//			fallthrough
 		case ' ':
 			fallthrough
 		case '\t':
