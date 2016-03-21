@@ -112,13 +112,15 @@ h.a.b[0]
 
 {a=(hash b:2 c:3  d:4)}
 (set a.d 6)
-{a.d=6}
-(infixExpand {a.d=6})
 (assert (== a.d 6))
+{a.d=8}
+(assert (== a.d 8))
+//(infixExpand {a.d=6})
+
 
 (set a.bebe 7)
 (assert (== a.bebe 7))
 (set a.b 77)
 (assert (== a.b 77))
-(expectError "Error generating (set a.b = 7):\nWrong number of arguments to def"    (set a.b = 7)) // error, not panic
+(expectError "Error generating (set a.b = 7):\nWrong number of arguments to set"    (set a.b = 7)) // error, not panic
 

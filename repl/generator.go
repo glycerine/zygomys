@@ -161,7 +161,7 @@ func (gen *Generator) GenerateFn(args []Sexp, orig Sexp) error {
 
 func (gen *Generator) GenerateDef(args []Sexp, opname string) error {
 	if len(args) != 2 {
-		return fmt.Errorf("Wrong number of arguments to def")
+		return fmt.Errorf("Wrong number of arguments to %s", opname)
 	}
 	Q("GenerateDef call with args[0]=%v", args[0].SexpString(0))
 	dup := true
