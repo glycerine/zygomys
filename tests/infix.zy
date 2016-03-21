@@ -124,3 +124,9 @@ h.a.b[0]
 (assert (== a.b 77))
 (expectError "Error generating (set a.b = 7):\nWrong number of arguments to set"    (set a.b = 7)) // error, not panic
 
+{b=[(hash b:[(hash g:(hash h:[1 2 (hash i:[8 9]) [99 [101 102]]]))])]}
+(assert (== {b[0].b[0].g.h[2].i[1]} 9))
+(assert (== {b[0].b[0].g.h[3][1]} [101 102]))
+(assert (== {b[0].b[0].g.h[3][1][0]} 101))
+
+
