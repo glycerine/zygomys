@@ -231,6 +231,10 @@ func init() {
 		return &SexpSelector{}, nil
 	}})
 
+	gsr.RegisterBuiltin("hashSelector", &RegisteredType{GenDefMap: false, Factory: func(env *Glisp) (interface{}, error) {
+		return &SexpHashSelector{}, nil
+	}})
+
 	gsr.RegisterBuiltin("comment",
 		&RegisteredType{GenDefMap: false, Factory: func(env *Glisp) (interface{}, error) {
 			return SexpNull, nil

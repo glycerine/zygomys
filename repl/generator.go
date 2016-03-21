@@ -598,7 +598,6 @@ func (gen *Generator) GenerateCallBySymbol(sym *SexpSymbol, args []Sexp, orig Se
 	case "for":
 		return gen.GenerateForLoop(args)
 	case "set":
-		//return gen.GenerateSet(args)
 		return gen.GenerateDef(args, "set")
 	case "break":
 		return gen.GenerateBreak(args)
@@ -665,7 +664,7 @@ func (gen *Generator) GenerateDispatch(fun Sexp, args []Sexp) error {
 }
 
 func (gen *Generator) GenerateAssignment(expr *SexpPair, assignPos int) error {
-	P("in GenerateAssignment, expr='%v', assignPos = %v",
+	Q("in GenerateAssignment, expr='%v', assignPos = %v",
 		expr.SexpString(0), assignPos)
 	if assignPos == 0 {
 		return gen.GenerateCall(expr)
@@ -738,8 +737,8 @@ func (gen *Generator) Generate(expr Sexp) error {
 			isAssign, pos := IsAssignmentList(e, 0)
 			legalLeftHandSide := true
 			if isAssign && pos > 0 {
-				_, err := gen.GetLHS(e.Head, "assign")
-				if err != nil {
+				lhs, err := gen.GetLHS(e.Head, "assign")
+				if err != nil || (lhs != nil && lhs.isDot) {
 					legalLeftHandSide = false
 				}
 			}
@@ -968,58 +967,6 @@ func (gen *Generator) GenerateForLoop(args []Sexp) error {
 	return nil
 }
 
-func (gen *Generator) GenerateSet(args []Sexp) error {
-	narg := len(args)
-	if narg != 2 {
-		return fmt.Errorf("malformed set statement, need 2 arguments")
-	}
-	/*
-		var lhs *SexpSymbol
-		switch expr := arg.(type) {
-		case *SexpPair:
-			// gracefully handle the quoted symbols we get from macros
-			unquotedSymbol, isQuo := isQuotedSymbol(expr)
-			switch {
-			case isQuo:
-				// auto-unquoting first argument to def
-				lhs = unquotedSymbol.(*SexpSymbol)
-			default:
-				switch sy := expr.Head.(type) {
-				case *SexpSymbol:
-					if sy.name == "arrayidx" {
-						lhs = expr
-					}
-				default:
-					return fmt.Errorf("set: left-hand-side must be a symbol -- "+
-						"but we have %T/val=%v", expr, expr.SexpString(0))
-				}
-			}
-		default:
-			return nil, fmt.Errorf("set: left-hand-side must be a symbol; we have %T", arg)
-		}
-	*/
-	plhs, err := gen.GetLHS(args[0], "set")
-	if err != nil {
-		return err
-	}
-	//	lhs := *plhs
-	lhs := plhs
-
-	rhs := args[1]
-	gen.Tail = false
-	err = gen.Generate(rhs)
-	if err != nil {
-		return err
-	}
-
-	// leaving a copy on the stack makes set an expression
-	// with a value. Useful for chaining.
-	gen.AddInstruction(DupInstr(0))
-	gen.AddInstruction(UpdateInstr{lhs})
-	return nil
-
-}
-
 func (gen *Generator) GetLHS(arg Sexp, opname string) (*SexpSymbol, error) {
 	Q("GetLHS (opname=%s) called with arg '%s'", opname, arg.SexpString(0))
 	var lhs *SexpSymbol
@@ -1052,7 +999,8 @@ func (gen *Generator) GetLHS(arg Sexp, opname string) (*SexpSymbol, error) {
 	}
 
 	if lhs.isDot {
-		return nil, fmt.Errorf("illegal to %s dot-symbol, attempted on '%s'", opname, lhs.name)
+		Q("in GetLHS(), lhs.isDot == true, return lhs='%v'", lhs.SexpString(0))
+		//return nil, fmt.Errorf("illegal to %s dot-symbol, attempted on '%s'", opname, lhs.name)
 	}
 
 	return lhs, nil

@@ -95,7 +95,7 @@ func compareString(s *SexpStr, expr Sexp) (int, error) {
 	return 0, errors.New(errmsg)
 }
 
-func compareSymbol(sym *SexpSymbol, expr Sexp) (int, error) {
+func (env *Glisp) compareSymbol(sym *SexpSymbol, expr Sexp) (int, error) {
 	switch e := expr.(type) {
 	case *SexpSymbol:
 		return signumInt(int64(sym.number - e.number)), nil
@@ -104,7 +104,7 @@ func compareSymbol(sym *SexpSymbol, expr Sexp) (int, error) {
 	return 0, errors.New(errmsg)
 }
 
-func comparePair(a *SexpPair, b Sexp) (int, error) {
+func (env *Glisp) comparePair(a *SexpPair, b Sexp) (int, error) {
 	var bp *SexpPair
 	switch t := b.(type) {
 	case *SexpPair:
@@ -113,17 +113,17 @@ func comparePair(a *SexpPair, b Sexp) (int, error) {
 		errmsg := fmt.Sprintf("cannot compare %T to %T", a, b)
 		return 0, errors.New(errmsg)
 	}
-	res, err := Compare(a.Head, bp.Head)
+	res, err := env.Compare(a.Head, bp.Head)
 	if err != nil {
 		return 0, err
 	}
 	if res != 0 {
 		return res, nil
 	}
-	return Compare(a.Tail, bp.Tail)
+	return env.Compare(a.Tail, bp.Tail)
 }
 
-func compareArray(a *SexpArray, b Sexp) (int, error) {
+func (env *Glisp) compareArray(a *SexpArray, b Sexp) (int, error) {
 	var ba *SexpArray
 	switch t := b.(type) {
 	case *SexpArray:
@@ -140,7 +140,7 @@ func compareArray(a *SexpArray, b Sexp) (int, error) {
 	}
 
 	for i := 0; i < length; i++ {
-		res, err := Compare(a.Val[i], ba.Val[i])
+		res, err := env.Compare(a.Val[i], ba.Val[i])
 		if err != nil {
 			return 0, err
 		}
@@ -190,17 +190,17 @@ func comparePointers(a *SexpPointer, bs Sexp) (int, error) {
 	return 1, nil
 }
 
-func Compare(a Sexp, b Sexp) (int, error) {
+func (env *Glisp) Compare(a Sexp, b Sexp) (int, error) {
 
 	var err error
 	if ptr, isPtrLike := a.(HasRHS); isPtrLike {
-		a, err = ptr.RHS()
+		a, err = ptr.RHS(env)
 		if err != nil {
 			return 0, err
 		}
 	}
 	if ptr, isPtrLike := b.(HasRHS); isPtrLike {
-		b, err = ptr.RHS()
+		b, err = ptr.RHS(env)
 		if err != nil {
 			return 0, err
 		}
@@ -218,11 +218,11 @@ func Compare(a Sexp, b Sexp) (int, error) {
 	case *SexpStr:
 		return compareString(at, b)
 	case *SexpSymbol:
-		return compareSymbol(at, b)
+		return env.compareSymbol(at, b)
 	case *SexpPair:
-		return comparePair(at, b)
+		return env.comparePair(at, b)
 	case *SexpArray:
-		return compareArray(at, b)
+		return env.compareArray(at, b)
 	case *SexpHash:
 		return compareHash(at, b)
 	case *RegisteredType:

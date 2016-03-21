@@ -262,26 +262,8 @@ func Repl(env *Glisp, cfg *GlispConfig) {
 		var expr Sexp
 		n := len(exprsInput)
 		if n > 0 {
-			/*
-				Q("repl: len(exprsInput)==%v", n)
-				for i := range exprsInput {
-					Q("repl: exprsInput[%v] = '%v'", i, exprsInput[i].SexpString(0))
-				}
-
-				firstStr := exprsInput[0].SexpString(0)
-				if len(firstStr) > 0 && firstStr[0] != '(' {
-					// treat as infix
-			*/
 			infixWrappedSexp := MakeList([]Sexp{infixSym, &SexpArray{Val: exprsInput}})
 			expr, err = env.EvalExpressions([]Sexp{infixWrappedSexp})
-			/*
-				} else {
-					// no infix assumption
-
-					// already parsed, so avoid parsing again if we can.
-					expr, err = env.EvalExpressions(exprsInput)
-				}
-			*/
 		} else {
 			line = env.ReplLineInfixWrap(line)
 			expr, err = env.EvalString(line + " ") // print standalone variables
@@ -312,7 +294,7 @@ func Repl(env *Glisp, cfg *GlispConfig) {
 				switch sym := expr.(type) {
 				case *SexpSelector:
 					Q("repl calling RHS() on SexpSelector")
-					rhs, err := sym.RHS()
+					rhs, err := sym.RHS(env)
 					if err != nil {
 						Q("repl problem in call to RHS() on SexpSelector: '%v'", err)
 						fmt.Print(env.GetStackTrace(err))

@@ -212,7 +212,7 @@ func (hash *SexpHash) HashGetDefault(env *Glisp, key Sexp, defaultval Sexp) (Sex
 	}
 
 	for _, pair := range arr {
-		res, err := Compare(pair.Head, key)
+		res, err := env.Compare(pair.Head, key)
 		if err == nil && res == 0 {
 			return pair.Tail, nil
 		}
@@ -339,7 +339,7 @@ func (hash *SexpHash) HashSet(key Sexp, val Sexp) error {
 
 	found := false
 	for i, pair := range arr {
-		res, err := Compare(pair.Head, key)
+		res, err := hash.env.Compare(pair.Head, key)
 		if err == nil && res == 0 {
 			arr[i] = Cons(key, val)
 			found = true
@@ -371,7 +371,7 @@ func (hash *SexpHash) HashDelete(key Sexp) error {
 
 	hash.NumKeys--
 	for i, pair := range arr {
-		res, err := Compare(pair.Head, key)
+		res, err := hash.env.Compare(pair.Head, key)
 		if err == nil && res == 0 {
 			hash.Map[hashval] = append(arr[0:i], arr[i+1:]...)
 			break
@@ -927,4 +927,42 @@ func SetPrettyPrintFlag(env *Glisp, name string, args []Sexp) (Sexp, error) {
 
 	env.Pretty = b.Val
 	return SexpNull, nil
+}
+
+// selectors for hash tables
+
+// SexpHashSelector: reference to a symbol in a hash table.
+type SexpHashSelector struct {
+	Select    *SexpSymbol
+	Container *SexpHash
+}
+
+func (h *SexpHash) NewSexpHashSelector(sym *SexpSymbol) *SexpHashSelector {
+	return &SexpHashSelector{
+		Select:    sym,
+		Container: h,
+	}
+}
+
+func (si *SexpHashSelector) SexpString(indent int) string {
+	rhs, err := si.RHS()
+	if err != nil {
+		panic(err)
+	}
+	return fmt.Sprintf("%v /*(hashSelector %v %v)*/", rhs.SexpString(indent), si.Container.SexpString(indent), si.Select.SexpString(indent))
+}
+
+// Type returns the type of the value.
+func (si *SexpHashSelector) Type() *RegisteredType {
+	return GoStructRegistry.Lookup("hashSelector")
+}
+
+// RHS applies the selector to the contain and returns
+// the value obtained.
+func (x *SexpHashSelector) RHS() (Sexp, error) {
+	return x.Container.HashGet(x.Container.env, x.Select)
+}
+
+func (x *SexpHashSelector) AssignToSelection(rhs Sexp) error {
+	return x.Container.HashSet(x.Select, rhs)
 }

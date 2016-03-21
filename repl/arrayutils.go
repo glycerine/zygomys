@@ -121,7 +121,7 @@ type SexpSelector struct {
 }
 
 func (si *SexpSelector) SexpString(indent int) string {
-	rhs, err := si.RHS()
+	rhs, err := si.RHS(nil)
 	if err != nil {
 		return fmt.Sprintf("(arraySelector %v %v)", si.Container.SexpString(indent), si.Select.SexpString(indent))
 	}
@@ -135,7 +135,7 @@ func (si *SexpSelector) Type() *RegisteredType {
 
 // RHS applies the selector to the contain and returns
 // the value obtained.
-func (x *SexpSelector) RHS() (Sexp, error) {
+func (x *SexpSelector) RHS(env *Glisp) (Sexp, error) {
 	if len(x.Select.Val) != 1 {
 		return SexpNull, fmt.Errorf("SexpSelector: only " +
 			"size 1 selectors implemented")
@@ -164,11 +164,11 @@ func (x *SexpSelector) RHS() (Sexp, error) {
 // like object, yielding a value suitable for the
 // right-hand-side of an assignment statement.
 type HasRHS interface {
-	RHS() (Sexp, error)
+	RHS(env *Glisp) (Sexp, error)
 }
 
 func (x *SexpSelector) AssignToSelection(rhs Sexp) error {
-	_, err := x.RHS() // check for errors
+	_, err := x.RHS(nil) // check for errors
 	if err != nil {
 		return err
 	}

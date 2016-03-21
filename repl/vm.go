@@ -170,9 +170,6 @@ func (p PopStackPutEnvInstr) Execute(env *Glisp) error {
 // to implement (set v 10) when v is
 // not in the local scope.
 //
-// (set .x 3) does nothing; use
-// (set x 3) to change x upscope.
-//
 type UpdateInstr struct {
 	sym *SexpSymbol
 }
@@ -189,8 +186,15 @@ func (p UpdateInstr) Execute(env *Glisp) error {
 	env.pc++
 	var scope *Scope
 
-	if p.sym.isDot || p.sym.isSigil {
+	if p.sym.isSigil {
+		Q("UpdateInstr: ignoring sigil symbol '%s'", p.sym.SexpString(0))
 		return nil
+	}
+	if p.sym.isDot {
+		Q("UpdateInstr: dot symbol '%s' being updated with dotGetSetHelper()",
+			p.sym.SexpString(0))
+		_, err := dotGetSetHelper(env, p.sym.name, &expr)
+		return err
 	}
 
 	_, err, scope = env.LexicalLookupSymbol(p.sym, false)
@@ -241,7 +245,7 @@ func (c CallInstr) Execute(env *Glisp) error {
 			// not already set.
 
 			// are we a value request (no further args), or a fuction/method call?
-			P("\n in CallInstr, found dot-symbol\n")
+			Q("\n in CallInstr, found dot-symbol\n")
 			if c.nargs == 0 {
 				// value request
 				if dotLookupErr != nil {
@@ -252,7 +256,7 @@ func (c CallInstr) Execute(env *Glisp) error {
 				return nil
 			} else {
 				// function call
-				P("in CallInstr, dot-symbol followed by more args")
+				Q("in CallInstr, dot-symbol followed by more args")
 				// get our function from the top of datastack
 				expressions, err := env.datastack.PopExpressions(c.nargs)
 				if err != nil {
@@ -260,13 +264,13 @@ func (c CallInstr) Execute(env *Glisp) error {
 				}
 
 				// does our dot-symbol itself refer to a function?
-				P("in CallInstr, found dot-symbol, dot-symbol refers to type %T", dotSymRef)
+				Q("in CallInstr, found dot-symbol, dot-symbol refers to type %T", dotSymRef)
 				switch fn := dotSymRef.(type) {
 				case *SexpFunction:
 					c.setupDotCallHelper(env, fn, &indirectFuncName, expressions, 0, dotSymRef)
 				default:
 					top := expressions[0]
-					P("in CallInstr, found dot-symbol, first arg to dot-symbol is of type %T", top)
+					Q("in CallInstr, found dot-symbol, first arg to dot-symbol is of type %T", top)
 					switch ftop := top.(type) {
 					case *SexpFunction:
 						c.setupDotCallHelper(env, ftop, &indirectFuncName, expressions, 1, dotSymRef)
@@ -816,19 +820,19 @@ func (c *CallInstr) setupDotCallHelper(
 	xprBegin int,
 	dotSymRef Sexp) {
 
-	P("\n in CallInstr, fetched out function call from top of datastack.\n")
+	Q("\n in CallInstr, fetched out function call from top of datastack.\n")
 	*indirectFuncName = ftop
 	if ftop.user {
-		P("\n in CallInstr, with user func, passing dot-symbol in directly so assignment will work.\n")
+		Q("\n in CallInstr, with user func, passing dot-symbol in directly so assignment will work.\n")
 		env.datastack.PushExpr(c.sym)
 	} else {
-		P("\n in CallInstr, with sexp func, dereferencing dot-symbol '%s' -> '%s'\n", c.sym.name, dotSymRef.SexpString(0))
+		Q("\n in CallInstr, with sexp func, dereferencing dot-symbol '%s' -> '%s'\n", c.sym.name, dotSymRef.SexpString(0))
 		env.datastack.PushExpr(dotSymRef)
 	}
 	pushme := expressions[xprBegin:]
 	for j := range pushme {
 		env.datastack.PushExpr(pushme[j])
 	}
-	P("\n in CallInstr, after setting up stack for dot-symbol call, datastack:\n")
+	Q("\n in CallInstr, after setting up stack for dot-symbol call, datastack:\n")
 	//env.datastack.PrintStack()
 }

@@ -18,7 +18,7 @@ func CompareFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		return SexpNull, WrongNargs
 	}
 
-	res, err := Compare(args[0], args[1])
+	res, err := env.Compare(args[0], args[1])
 	if err != nil {
 		return SexpNull, err
 	}
@@ -310,7 +310,7 @@ func HashAccessFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	container := args[0]
 	var err error
 	if ptr, isPtrLike := container.(HasRHS); isPtrLike {
-		container, err = ptr.RHS()
+		container, err = ptr.RHS(env)
 		if err != nil {
 			return SexpNull, err
 		}
@@ -1087,7 +1087,7 @@ func GenericAccessFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	container := args[0]
 	var err error
 	if ptr, isPtrLike := container.(HasRHS); isPtrLike {
-		container, err = ptr.RHS()
+		container, err = ptr.RHS(env)
 		if err != nil {
 			return SexpNull, err
 		}
@@ -1238,6 +1238,7 @@ func QuoteListFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 }
 
 // if setVal is nil, only get and return the lookup.
+// Otherwise set and return the value we set.
 func dotGetSetHelper(env *Glisp, name string, setVal *Sexp) (Sexp, error) {
 	path := DotPartsRegex.FindAllString(name, -1)
 	//Q("\n in dotGetSetHelper(), path = '%#v'\n", path)
@@ -1551,7 +1552,7 @@ func (env *Glisp) SubstituteRHS(args []Sexp) ([]Sexp, error) {
 	for i := range args {
 		obj, hasRhs := args[i].(HasRHS)
 		if hasRhs {
-			sx, err := obj.RHS()
+			sx, err := obj.RHS(env)
 			if err != nil {
 				return args, err
 			}

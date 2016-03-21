@@ -448,7 +448,12 @@ func (p *Pratt) Expression(env *Glisp, rbp int) (ret Sexp, err error) {
 	}
 
 	for !p.IsEOF() {
-		nextLbp := env.LeftBindingPower(p.NextToken)
+		nextLbp, err := env.LeftBindingPower(p.NextToken)
+		if err != nil {
+			Q("env.LeftBindingPower('%s') saw err = %v",
+				p.NextToken.SexpString(0), err)
+			return SexpNull, err
+		}
 		Q("nextLbp = %v", nextLbp)
 		if rbp >= nextLbp {
 			break
@@ -530,30 +535,29 @@ func (p *Pratt) IsEOF() bool {
 	return false
 }
 
-func (env *Glisp) LeftBindingPower(sx Sexp) int {
+func (env *Glisp) LeftBindingPower(sx Sexp) (int, error) {
 	switch x := sx.(type) {
 	case *SexpInt:
-		return 0
+		return 0, nil
 	case *SexpSymbol:
 		op, found := env.infixOps[x.name]
 		if found {
-			return op.Bp
+			return op.Bp, nil
 		}
 		if x.isDot {
 			Q("LeftBindingPower: dot symbol '%v', "+
 				"giving it binding-power 80", x.name)
-			return 80
+			return 80, nil
 		}
 		Q("LeftBindingPower: no entry in env.infixOps for operation '%s'",
 			x.name)
-		return 0
+		return 0, nil
 	case *SexpArray:
-		return 80
+		return 80, nil
 	case *SexpSemicolon:
-		return 0
+		return 0, nil
 	}
-	panic(fmt.Errorf("LeftBindingPower: unhandled sx :%#v", sx))
-	//return 0
+	return 0, fmt.Errorf("LeftBindingPower: unhandled sx :%#v", sx)
 }
 
 func (p *Pratt) ShowCnodeStack() {

@@ -457,6 +457,13 @@ type SexpSymbol struct {
 	sigil     string
 }
 
+func (sym *SexpSymbol) RHS(env *Glisp) (Sexp, error) {
+	if sym.isDot && env != nil {
+		return dotGetSetHelper(env, sym.name, nil)
+	}
+	return sym, nil
+}
+
 func (sym *SexpSymbol) SexpString(indent int) string {
 	if sym.colonTail {
 		//		return sym.name + ":"
