@@ -52,23 +52,40 @@ func ArrayIndexFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		return SexpNull, err
 	}
 
-	ar, isAr := args[0].(*SexpArray)
-	if !isAr {
+	var ar *SexpArray
+	switch ar2 := args[0].(type) {
+	case *SexpSelector:
+		x, err := ar2.RHS(env)
+		if err != nil {
+			return SexpNull, err
+		}
+		switch xArr := x.(type) {
+		case *SexpArray:
+			ar = xArr
+		default:
+			return SexpNull, fmt.Errorf("bad (arrayidx ar index) call: ar as arrayidx, but that did not resolve to an array, instead '%s'/type %T", x.SexpString(0), x)
+		}
+	case *SexpArray:
+		ar = ar2
+	default:
 		return SexpNull, fmt.Errorf("bad (arrayidx ar index) call: ar was not an array, instead '%s'/type %T",
 			args[0].SexpString(0), args[0])
 	}
 
-	idx, isAr := args[1].(*SexpArray)
-	if !isAr {
+	var idx *SexpArray
+	switch idx2 := args[1].(type) {
+	case *SexpArray:
+		idx = idx2
+	default:
 		return SexpNull, fmt.Errorf("bad (arrayidx ar index) call: index was not an array, instead '%s'/type %T",
 			args[1].SexpString(0), args[1])
 	}
 
-	//	return ar.IndexBy(idx)
-	return &SexpSelector{
-		Select:    idx,
-		Container: ar,
-	}, nil
+	ret := SexpSelector{}
+	ret.Select = idx
+	ret.Container = ar
+
+	return &ret, nil
 }
 
 // IndexBy subsets one array (possibly multidimensional) by another.
