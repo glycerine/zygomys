@@ -62,6 +62,8 @@ func ArrayIndexFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		switch xArr := x.(type) {
 		case *SexpArray:
 			ar = xArr
+		case *SexpHash:
+			return HashIndexFunction(env, name, args)
 		default:
 			return SexpNull, fmt.Errorf("bad (arrayidx ar index) call: ar as arrayidx, but that did not resolve to an array, instead '%s'/type %T", x.SexpString(0), x)
 		}
