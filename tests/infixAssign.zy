@@ -7,8 +7,6 @@
 (hashidx h .e)
 
 (set (hashidx h .e) 9)
-(def idx (hashidx h .e))
-(set idx 9)
 
 // assignment after array and dot selection:
 {q = [0 3 4 (hash a:%b c:%d)]}
@@ -26,5 +24,5 @@ q
 // (quote (set (hget (arrayidx q [3]) .e) 9))
 // or
 // (quote (set (hashidx (arrayidx q [3]) .e) 9))
-(assert (== q[3].e 9))
+(assert (== {q[3].e} 9))
 

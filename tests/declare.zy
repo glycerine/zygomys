@@ -57,7 +57,7 @@
 (assert (== 3 (.hasSlice.SliceOfLife len)))
 
 // if we try to update a non-existant field (good for catching typos), we cannot:
-(expectError `Error calling '.hasSlice.NewField': Car has no field 'NewField'`
+(expectError `Error calling '.hasSlice.NewField': Car has no field 'NewField' [err 2]`
             (.hasSlice.NewField = "wacky"))
 
 // and the decalred types must be matched.
@@ -87,8 +87,8 @@
 (def e (Dog))
 (.d.tag = 12)
 (.e.big = true)
-(expectError `Error calling '.e.tag': Dog has no field 'tag'` (.e.tag = 445))
-(expectError `Error calling '.d.big': Dog has no field 'big'` (.d.big = true))
+(expectError `Error calling '.e.tag': Dog has no field 'tag' [err 2]` (.e.tag = 445))
+(expectError `Error calling '.d.big': Dog has no field 'big' [err 2]` (.d.big = true))
 
 // not yet implemented stuff:
 

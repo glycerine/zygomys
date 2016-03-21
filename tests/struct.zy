@@ -24,5 +24,5 @@
 // type checking the fields of a struct
 (expectError "Error calling 'Dog': field Dog.Name is string, cannot assign int64 '12'" (Dog Name:12))
 (expectError `Error calling 'Dog': field Dog.Number is int64, cannot assign string '"hello"'` (Dog Number:"hello"))
-(expectError `Error calling 'Dog': Dog has no field 'NotHere'` (Dog NotHere:"hello"))
+(expectError `Error calling 'Dog': Dog has no field 'NotHere' [err 2]` (Dog NotHere:"hello"))
 
