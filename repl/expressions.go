@@ -180,6 +180,7 @@ var SexpEnd = &SexpSentinel{Val: 1}
 var SexpMarker = &SexpSentinel{Val: 2}
 
 type SexpSemicolon struct{}
+type SexpComma struct{}
 
 func (r *SexpSemicolon) Type() *RegisteredType {
 	return nil // TODO what should this be?
@@ -187,6 +188,14 @@ func (r *SexpSemicolon) Type() *RegisteredType {
 
 func (s *SexpSemicolon) SexpString(indent int) string {
 	return ";"
+}
+
+func (r *SexpComma) Type() *RegisteredType {
+	return nil // TODO what should this be?
+}
+
+func (s *SexpComma) SexpString(indent int) string {
+	return ","
 }
 
 func (sent *SexpSentinel) SexpString(indent int) string {

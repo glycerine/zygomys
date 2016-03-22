@@ -27,6 +27,26 @@ func RemoveCommentsFilter(x Sexp) bool {
 	}
 }
 
+// detect SexpEnd values and return false on them to filter them out.
+func RemoveEndsFilter(x Sexp) bool {
+	switch n := x.(type) {
+	case *SexpSentinel:
+		if n.Val == SexpEnd.Val {
+			return false
+		}
+	}
+	return true
+}
+
+// detect SexpComma values and return false on them to filter them out.
+func RemoveCommasFilter(x Sexp) bool {
+	switch x.(type) {
+	case *SexpComma:
+		return false
+	}
+	return true
+}
+
 func (env *Glisp) FilterAny(x Sexp, f Filter) (filtered Sexp, keep bool) {
 	switch ele := x.(type) {
 	case *SexpArray:

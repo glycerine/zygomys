@@ -64,10 +64,10 @@ func hashHelper(expr Sexp) (hashcode int, isList bool, err error) {
 }
 
 func MakeHash(args []Sexp, typename string, env *Glisp) (*SexpHash, error) {
-	P("MakeHash called ")
-	for i := range args {
-		P("MakeHash args[i=%v] = '%v'", i, args[i].SexpString(0))
-	}
+	//	Q("MakeHash called ")
+	//	for i := range args {
+	//		Q("MakeHash args[i=%v] = '%v'", i, args[i].SexpString(0))
+	//	}
 
 	// when passed for example (hash [0]:12) we see
 	// 3 args -- the colon is passed as the colon function;

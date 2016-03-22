@@ -301,7 +301,7 @@ func (parser *Parser) ParseExpression(depth int) (res Sexp, err error) {
 	lexer := parser.lexer
 	env := parser.env
 
-getAnother:
+	//getAnother:
 	tok, err := lexer.GetNextToken()
 	if err != nil {
 		return SexpEnd, err
@@ -413,7 +413,7 @@ getAnother:
 		//parser.ParseBlockComment(&tok)
 		//goto getAnother
 	case TokenComma:
-		goto getAnother
+		return &SexpComma{}, nil
 	case TokenSemicolon:
 		return &SexpSemicolon{}, nil
 	}

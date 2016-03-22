@@ -19,3 +19,6 @@
  b:false,
  c:true)}
 
+// comma alone doing the same, should be okay now.
+,
+,

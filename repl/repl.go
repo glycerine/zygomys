@@ -108,7 +108,13 @@ func (pr *Prompter) getExpressionWithLiner(env *Glisp) (readin string, xs []Sexp
 		env.parser.NewInput(bytes.NewBuffer([]byte(nextline + "\n")))
 		x, err = env.parser.ParseTokens()
 		if len(x) > 0 {
-			xs = append(xs, x...)
+			for i := range x {
+				if x[i] == SexpEnd {
+					P("found an SexpEnd token, omitting it")
+					continue
+				}
+				xs = append(xs, x[i])
+			}
 		}
 		switch err {
 		case nil:
