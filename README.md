@@ -59,7 +59,7 @@ $ go get github.com/glycerine/zygomys/cmd/zygo
  * [x] Easy to extend. See the `repl/random.go`, `repl/regexp.go`, and `repl/time.go` files for examples.
  * [x] Clojure-like threading `(-> hash field1: field2:)` and `(:field hash)` selection. 
  * [x] Lisp-style macros for your DSL.
- * [x] optional infix notation within `{}` curly braces. Expressions typed at the REPL are assumed to be infix (wrapped in implicity {}), enhancing the REPL experience for dealing with math.
+ * [x] optional infix notation within `{}` curly braces. Expressions typed at the REPL are assumed to be infix (wrapped in {} implicitly), enhancing the REPL experience for dealing with math.
 
 ### obligatory XKCD
 
