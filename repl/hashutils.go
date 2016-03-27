@@ -75,7 +75,7 @@ func MakeHash(args []Sexp, typename string, env *Glisp) (*SexpHash, error) {
 	// extra unwanted element. This means we can never store
 	// the colon function in a hash; that's okay; its
 	// purpose is convenient syntax.
-	args = env.EliminateColonFunctionFromArgs(args)
+	args = env.EliminateColonAndCommaFromArgs(args)
 	if len(args)%2 != 0 {
 		return &SexpHash{env: env},
 			errors.New("hash requires even number of arguments")
@@ -1110,14 +1110,17 @@ func HashIndexFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	return &ret, nil
 }
 
-func (env *Glisp) EliminateColonFunctionFromArgs(args []Sexp) []Sexp {
+func (env *Glisp) EliminateColonAndCommaFromArgs(args []Sexp) []Sexp {
 	r := []Sexp{}
 outerLoop:
 	for i := range args {
 		switch x := args[i].(type) {
+		case *SexpComma:
+			//Q("eliminating comma")
+			continue outerLoop
 		case *SexpFunction:
 			if x.name == ":" {
-				Q("eliminating ColonFunc: args[%d] = %T/val=%#v", i, x, x)
+				//Q("eliminating ColonFunc: args[%d] = %T/val=%#v", i, x, x)
 				continue outerLoop
 			}
 		}

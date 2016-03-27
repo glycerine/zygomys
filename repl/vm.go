@@ -793,8 +793,36 @@ func (a AssignInstr) Execute(env *Glisp) error {
 		Q("AssignInstr: I see lhs is Selector")
 		err := x.AssignToSelection(env, rhs)
 		return err
+	case *SexpArray:
+		switch rhsArray := rhs.(type) {
+		case *SexpArray:
+			P("AssignInstr: lhs is SexpArray '%v', *and* rhs is SexpArray ='%v'",
+				x.SexpString(0), rhsArray.SexpString(0))
+			nRhs := len(rhsArray.Val)
+			nLhs := len(x.Val)
+			if nRhs != nLhs {
+				return fmt.Errorf("assignment count mismatch %v != %v", nLhs, nRhs)
+			}
+			for i := range x.Val {
+				switch sym := x.Val[i].(type) {
+				case *SexpSymbol:
+					err = env.LexicalBindSymbol(sym, rhsArray.Val[i])
+					if err != nil {
+						return err
+					}
+				default:
+					return fmt.Errorf("assignment error: left-hand-side element %v needs to be a symbol but"+
+						" we found %T", i, x.Val[i])
+				}
+			}
+			return nil
+		default:
+			return fmt.Errorf("AssignInstr: don't know how to assign rhs %T to lhs %T",
+				rhs.SexpString(0), lhs.SexpString(0))
+		}
+		return nil
 	}
-	return fmt.Errorf("AssignInstr: don't know how to assign to %T", lhs)
+	return fmt.Errorf("AssignInstr: don't know how to assign to lhs %T", lhs)
 }
 
 /*
