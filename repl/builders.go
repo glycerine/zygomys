@@ -737,7 +737,7 @@ func ColonAccessBuilder(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	if len(args) < 1 || len(args) > 3 {
 		return SexpNull, WrongNargs
 	}
-	//P("ColonAccessBuilder, args = %#v", args)
+	////Q("ColonAccessBuilder, args = %#v", args)
 	name = "hget"
 
 	dup := env.Duplicate()
@@ -787,22 +787,36 @@ func CommaBuilder(env *Glisp, name string, args []Sexp) (Sexp, error) {
 }
 
 func commaHelper(a Sexp, res *[]Sexp) {
-	//P("top of commaHelper with a = '%s'", a.SexpString(0))
+	//Q("top of commaHelper with a = '%s'", a.SexpString(0))
 	switch x := a.(type) {
 	case *SexpPair:
+		sy, isQuo := isQuotedSymbol(x)
+		if isQuo {
+			symN := sy.(*SexpSymbol)
+			//Q("have quoted symbol symN=%v", symN.SexpString(0))
+			*res = append(*res, symN)
+			return
+		}
+
 		ar, err := ListToArray(x)
 		if err != nil || len(ar) < 1 {
 			return
 		}
+
 		switch sym := ar[0].(type) {
 		case *SexpSymbol:
 			if sym.name == "comma" {
-				//P("have recursive comma")
+				//Q("have recursive comma")
 				over := ar[1:]
 				for i := range over {
 					commaHelper(over[i], res)
 				}
+			} else {
+				//Q("have symbol sym = '%v'", sym.SexpString(0))
+				*res = append(*res, a)
 			}
+		default:
+			*res = append(*res, a)
 		}
 	default:
 		*res = append(*res, a)

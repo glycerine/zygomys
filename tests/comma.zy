@@ -14,3 +14,14 @@
 // array on LHS is not presently okay
 // [f,g,h] = [4,5,6]
 
+// (comma %a) should return [a], but was giving []
+(comma %a)
+
+{a11,b22,j33 = %a ,4,"hi"}
+//re-assign within same types should be fine
+{b22,a11= 56,%hello}
+
+(assert (== (comma %a 3) [%a 3]))
+
+{a1,b2 = 1,2}
+// already bound, type mismatch: {a1,b2 = %hi, %there}

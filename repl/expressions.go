@@ -492,7 +492,7 @@ func (sym *SexpSymbol) SexpString(indent int) string {
 }
 
 func (r *SexpSymbol) Type() *RegisteredType {
-	return nil // TODO what should this be?
+	return GoStructRegistry.Registry["symbol"]
 }
 
 func (sym SexpSymbol) Name() string {

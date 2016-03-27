@@ -333,6 +333,10 @@ func init() {
 
 	// add Sexp types
 
+	gsr.RegisterBuiltin("symbol", &RegisteredType{GenDefMap: false, Factory: func(env *Glisp) (interface{}, error) {
+		return &SexpSymbol{}, nil
+	}})
+
 	/* either:
 
 		gsr.RegisterBuiltin("time.Time", &RegisteredType{GenDefMap: false, Factory: func(env *Glisp) (interface{}, error) {

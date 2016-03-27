@@ -142,7 +142,7 @@ func (stack *Stack) BindSymbol(sym *SexpSymbol, expr Sexp) error {
 			return nil
 		}
 		if rhsTy == nil {
-			return fmt.Errorf("right-hand-side had nil type")
+			return fmt.Errorf("right-hand-side had nil type back from Type() call; val = '%s'/%T", expr.SexpString(0), expr)
 		}
 
 		// both sides have type
