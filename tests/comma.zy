@@ -1,6 +1,16 @@
 // commas are actual tokens, not just white space;
-// even though they currently act like spaces during parsing.
+// they build up an array
 {a,b,c = true,false,true}
 (assert a)
 (assert c)
 (assert (not b))
+
+// array on RHS is okay
+{aa,bb,cc = [11, 22, 33]}
+(assert (== aa 11))
+(assert (== bb 22))
+(assert (== cc 33))
+
+// array on LHS is not presently okay
+// [f,g,h] = [4,5,6]
+
