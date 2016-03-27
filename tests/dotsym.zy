@@ -22,7 +22,7 @@
 (assert (== (.s.asst.sidekick.fname) "henry"))
 
 // assign
-(.s.asst.sidekick.lname = "smith")
+{s.asst.sidekick.lname = "smith"}
 (assert (== (.s.asst.sidekick.lname) "smith"))
 
 // without leading .

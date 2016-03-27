@@ -572,7 +572,7 @@ func (env *Glisp) Run() (Sexp, error) {
 		instr := env.curfunc.fun[env.pc]
 		if env.debugExec {
 			fmt.Printf("\n ====== in '%s', about to run: '%v'\n",
-				env.curfunc.name, instr)
+				env.curfunc.name, instr.InstrString())
 			env.DumpEnvironment()
 			fmt.Printf("\n ====== in '%s', now running the above.\n",
 				env.curfunc.name)

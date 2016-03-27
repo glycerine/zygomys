@@ -48,21 +48,21 @@
 
 // structs can be changed in type-safe ways
 // First lets make a Car struct, using the already declared Car type.
-(hasSlice = (Car SliceOfLife: ["hi" "there"]))
+{hasSlice = (Car SliceOfLife: ["hi" "there"])}
 (assert (== (:SliceOfLife hasSlice) ["hi" "there"]))
 (assert (== 2 (len (.hasSlice.SliceOfLife))))
 
 // then lets change the struct
-(.hasSlice.SliceOfLife = ["zygo" "rocks" "it"])
-(assert (== 3 (.hasSlice.SliceOfLife len)))
+{hasSlice.SliceOfLife = ["zygo" "rocks" "it"]}
+(assert (== 3 (len hasSlice.SliceOfLife)))
 
 // if we try to update a non-existant field (good for catching typos), we cannot:
-(expectError `Error calling '.hasSlice.NewField': Car has no field 'NewField' [err 2]`
-            (.hasSlice.NewField = "wacky"))
+(expectError `Error calling 'infix': Car has no field 'NewField' [err 2]`
+            {hasSlice.NewField = "wacky"})
 
 // and the decalred types must be matched.
-(expectError `Error calling '.hasSlice.SliceOfLife': field Car.SliceOfLife is ([]string), cannot assign ([]int64) '[1 2 3]'`
-              (.hasSlice.SliceOfLife = [1 2 3]))
+(expectError `Error calling 'infix': field Car.SliceOfLife is ([]string), cannot assign ([]int64) '[1 2 3]'`
+              {hasSlice.SliceOfLife = [1 2 3]})
 
 
 // nil for slices and pointers should be okay
@@ -70,12 +70,12 @@
 (Car OtherCar:nil)
 
 // assignment of [] (the empty slice) should also work
-(.hasSlice.SliceOfLife = [])
+{hasSlice.SliceOfLife = []}
 (assert (== 0 (len (.hasSlice.SliceOfLife))))
 
 // we can point to ourselves if need be.
 (def w (Car Name: "Willow"))
-(.w.OtherCar = (& w))
+{w.OtherCar = (& w)}
 (assert (== (& w) (:OtherCar w)))
 // or with dot symbol notation:
 (assert (== (& w) (.w.OtherCar)))
@@ -85,10 +85,10 @@
 (def d (Dog))
 (struct Dog [(field big: bool)])
 (def e (Dog))
-(.d.tag = 12)
-(.e.big = true)
-(expectError `Error calling '.e.tag': Dog has no field 'tag' [err 2]` (.e.tag = 445))
-(expectError `Error calling '.d.big': Dog has no field 'big' [err 2]` (.d.big = true))
+{d.tag = 12}
+{e.big = true}
+(expectError `Error calling 'infix': Dog has no field 'tag' [err 2]` {e.tag = 445})
+(expectError `Error calling 'infix': Dog has no field 'big' [err 2]` {d.big = true})
 
 // not yet implemented stuff:
 

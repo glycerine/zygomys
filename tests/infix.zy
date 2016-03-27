@@ -76,3 +76,12 @@
 (assert (== {h.a.b[2]} 99))
 
 (infixExpand {})
+
+// single assignment
+{g = 12}
+(assert (== g 12))
+
+// multiple assignment
+//{a b = 5 6}
+//(infixExpand {a b = 5 6})
+

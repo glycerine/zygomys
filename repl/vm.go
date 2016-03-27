@@ -199,7 +199,7 @@ func (p UpdateInstr) Execute(env *Glisp) error {
 	/*
 		switch p.sym.(type) {
 		case Selector:
-			P("UpdateInstr: I see Selector '%s'", p.sym.SexpString(0))
+			Q("UpdateInstr: I see Selector '%s'", p.sym.SexpString(0))
 		}
 	*/
 	_, err, scope = env.LexicalLookupSymbol(p.sym, false)
@@ -261,29 +261,7 @@ func (c CallInstr) Execute(env *Glisp) error {
 				return nil
 			} else {
 				// function call
-				Q("in CallInstr, dot-symbol followed by more args")
-				// get our function from the top of datastack
-				expressions, err := env.datastack.PopExpressions(c.nargs)
-				if err != nil {
-					return err
-				}
-
-				// does our dot-symbol itself refer to a function?
-				Q("in CallInstr, found dot-symbol, dot-symbol refers to type %T", dotSymRef)
-				switch fn := dotSymRef.(type) {
-				case *SexpFunction:
-					c.setupDotCallHelper(env, fn, &indirectFuncName, expressions, 0, dotSymRef)
-				default:
-					top := expressions[0]
-					Q("in CallInstr, found dot-symbol, first arg to dot-symbol is of type %T", top)
-					switch ftop := top.(type) {
-					case *SexpFunction:
-						c.setupDotCallHelper(env, ftop, &indirectFuncName, expressions, 1, dotSymRef)
-					default:
-						return fmt.Errorf("dot-symbol '%s' was followed by non-function '%s'.",
-							c.sym.name, ftop.SexpString(0))
-					}
-				}
+				indirectFuncName = dotSymRef
 			}
 		} else {
 			// not isDot
@@ -307,6 +285,7 @@ func (c CallInstr) Execute(env *Glisp) error {
 
 		}
 
+		Q("in CallInstr, reached switch on indirectFuncName.(type)")
 		switch g := indirectFuncName.(type) {
 		case *SexpFunction:
 			if !g.user {
@@ -341,7 +320,7 @@ func (c CallInstr) Execute(env *Glisp) error {
 		_, err := env.CallUserFunction(f.Constructor, c.sym.name, c.nargs)
 		return err
 	}
-	return errors.New(fmt.Sprintf("%s is not a function", c.sym.name))
+	return fmt.Errorf("%s is not a function", c.sym.name)
 }
 
 type DispatchInstr struct {
@@ -818,6 +797,7 @@ func (a AssignInstr) Execute(env *Glisp) error {
 	return fmt.Errorf("AssignInstr: don't know how to assign to %T", lhs)
 }
 
+/*
 func (c *CallInstr) setupDotCallHelper(
 	env *Glisp,
 	ftop *SexpFunction,
@@ -826,19 +806,32 @@ func (c *CallInstr) setupDotCallHelper(
 	xprBegin int,
 	dotSymRef Sexp) {
 
-	Q("\n in CallInstr, fetched out function call from top of datastack.\n")
+	Q("\n in CallInstr setupDotCallHelper(), fetched out function call from top of datastack.\n")
+	Q("xprBegin is %v, expressions are:", xprBegin)
+	for i := range expressions {
+		Q("expressions[%v]='%v'", i, expressions[i].SexpString(0))
+	}
 	*indirectFuncName = ftop
 	if ftop.user {
 		Q("\n in CallInstr, with user func, passing dot-symbol in directly so assignment will work.\n")
 		env.datastack.PushExpr(c.sym)
 	} else {
+		Q("\n in CallInstr, with sexp func, data stack before:\n")
+		env.datastack.PrintStack()
+
 		Q("\n in CallInstr, with sexp func, dereferencing dot-symbol '%s' -> '%s'\n", c.sym.name, dotSymRef.SexpString(0))
+
 		env.datastack.PushExpr(dotSymRef)
+
+		Q("\n in CallInstr, with sexp func, data stack after:\n")
+		env.datastack.PrintStack()
+		Q("\n in CallInstr, with sexp func, done with PrintStack.\n")
 	}
 	pushme := expressions[xprBegin:]
 	for j := range pushme {
 		env.datastack.PushExpr(pushme[j])
 	}
 	Q("\n in CallInstr, after setting up stack for dot-symbol call, datastack:\n")
-	//env.datastack.PrintStack()
+	env.datastack.PrintStack()
 }
+*/

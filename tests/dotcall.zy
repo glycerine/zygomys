@@ -1,6 +1,6 @@
 // dotcalls to user functions and sexp functions
 // should work
-(.a = 4) // leaving 4 on datastack??
+{a = 4} // leaving 4 on datastack??
 (assert (== a 4))
 
 (= %v 10)
@@ -10,11 +10,9 @@
 (defn g [b] (let [togeth (concat "say: " b)] (printf "g says %v\n" togeth) togeth))
 (g "99999 whatsup")
 
-(def ggg (.greet g))
 
 (def expected "say: hello")
 (assert (== (g greet) expected))
-(assert (== (.greet g) expected))
 (assert (== (.greet) "hello"))
 
 // automatic * dereference of a.f dot-symbol should
