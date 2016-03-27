@@ -37,6 +37,7 @@ func (env *Glisp) ImportPackageBuilder() {
 	env.AddBuilder("package", PackageBuilder)
 	env.AddBuilder("var", VarBuilder)
 	env.AddBuilder("expectError", ExpectErrorBuilder)
+	env.AddBuilder("comma", CommaBuilder)
 	//	env.AddBuilder("&", AddressOfBuilder)
 
 	env.AddFunction("sliceOf", SliceOfFunction)
@@ -767,4 +768,43 @@ func ColonAccessBuilder(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		return sx.RHS(env)
 	}
 	return SexpNull, fmt.Errorf("second argument to ':' function must be hash or array")
+}
+
+// CommaBuilder turns expressions on the LHS and RHS like {a,b,c = 1,2,3}
+// into arrays (set [a b c] [1 2 3])
+func CommaBuilder(env *Glisp, name string, args []Sexp) (Sexp, error) {
+
+	n := len(args)
+	if n < 1 {
+		return SexpNull, nil
+	}
+
+	res := make([]Sexp, 0)
+	for i := range args {
+		commaHelper(args[i], &res)
+	}
+	return &SexpArray{Val: res}, nil
+}
+
+func commaHelper(a Sexp, res *[]Sexp) {
+	//P("top of commaHelper with a = '%s'", a.SexpString(0))
+	switch x := a.(type) {
+	case *SexpPair:
+		ar, err := ListToArray(x)
+		if err != nil || len(ar) < 1 {
+			return
+		}
+		switch sym := ar[0].(type) {
+		case *SexpSymbol:
+			if sym.name == "comma" {
+				//P("have recursive comma")
+				over := ar[1:]
+				for i := range over {
+					commaHelper(over[i], res)
+				}
+			}
+		}
+	default:
+		*res = append(*res, a)
+	}
 }

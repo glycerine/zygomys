@@ -47,15 +47,23 @@ func RemoveCommasFilter(x Sexp) bool {
 	return true
 }
 
-func (env *Glisp) FilterAny(x Sexp, f Filter) (filtered Sexp, keep bool) {
+type TreeState struct {
+	InsideInfix bool
+}
+
+func NewTreeState() *TreeState {
+	return &TreeState{}
+}
+
+func (env *Glisp) FilterAny(x Sexp, f Filter, ts *TreeState) (filtered Sexp, keep bool) {
 	switch ele := x.(type) {
 	case *SexpArray:
-		res := &SexpArray{Val: env.FilterArray(ele.Val, f), Typ: ele.Typ, IsFuncDeclTypeArray: ele.IsFuncDeclTypeArray, Env: env}
+		res := &SexpArray{Val: env.FilterArray(ele.Val, f, ts), Typ: ele.Typ, IsFuncDeclTypeArray: ele.IsFuncDeclTypeArray, Env: env}
 		return res, true
 	case *SexpPair:
-		return env.FilterList(ele, f), true
+		return env.FilterList(ele, f, ts), true
 	case *SexpHash:
-		return env.FilterHash(ele, f), true
+		return env.FilterHash(ele, f, ts), true
 	default:
 		keep = f(x)
 		if keep {
@@ -65,14 +73,14 @@ func (env *Glisp) FilterAny(x Sexp, f Filter) (filtered Sexp, keep bool) {
 	}
 }
 
-func (env *Glisp) FilterArray(x []Sexp, f Filter) []Sexp {
+func (env *Glisp) FilterArray(x []Sexp, f Filter, ts *TreeState) []Sexp {
 	//P("FilterArray: before: %d in size", len(x))
 	//for i := range x {
 	//P("x[i=%d] = %v", i, x[i].SexpString())
 	//}
 	res := []Sexp{}
 	for i := range x {
-		filtered, keep := env.FilterAny(x[i], f)
+		filtered, keep := env.FilterAny(x[i], f, ts)
 		if keep {
 			res = append(res, filtered)
 		}
@@ -84,7 +92,7 @@ func (env *Glisp) FilterArray(x []Sexp, f Filter) []Sexp {
 	return res
 }
 
-func (env *Glisp) FilterHash(h *SexpHash, f Filter) *SexpHash {
+func (env *Glisp) FilterHash(h *SexpHash, f Filter, ts *TreeState) *SexpHash {
 	// should not actually need this, since hashes
 	// don't yet exist in parsed symbols. (they are
 	// still lists).
@@ -92,7 +100,7 @@ func (env *Glisp) FilterHash(h *SexpHash, f Filter) *SexpHash {
 	return h
 }
 
-func (env *Glisp) FilterList(h *SexpPair, f Filter) Sexp {
+func (env *Glisp) FilterList(h *SexpPair, f Filter, ts *TreeState) Sexp {
 	//P("in FilterList")
 	arr, err := ListToArray(h)
 	res := []Sexp{}
@@ -100,7 +108,7 @@ func (env *Glisp) FilterList(h *SexpPair, f Filter) Sexp {
 		// don't filter pair lists
 		return h
 	}
-	res = env.FilterArray(arr, f)
+	res = env.FilterArray(arr, f, ts)
 	return MakeList(res)
 }
 

@@ -1,6 +1,6 @@
 // commas are actual tokens, not just white space;
 // even though they currently act like spaces during parsing.
-(a,b,c = true,false,true)
+{a,b,c = true,false,true}
 (assert a)
 (assert c)
 (assert (not b))

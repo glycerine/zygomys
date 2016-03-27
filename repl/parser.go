@@ -258,6 +258,12 @@ func (parser *Parser) ParseArray(depth int) (Sexp, error) {
 				return SexpEnd, err
 			}
 
+			if tok.typ == TokenComma {
+				// pop off the ,
+				_, _ = lexer.GetNextToken()
+				continue getTok
+			}
+
 			if tok.typ != TokenEnd {
 				break getTok
 			} else {
