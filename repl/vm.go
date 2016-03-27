@@ -796,8 +796,8 @@ func (a AssignInstr) Execute(env *Glisp) error {
 	case *SexpArray:
 		switch rhsArray := rhs.(type) {
 		case *SexpArray:
-			P("AssignInstr: lhs is SexpArray '%v', *and* rhs is SexpArray ='%v'",
-				x.SexpString(0), rhsArray.SexpString(0))
+			//Q("AssignInstr: lhs is SexpArray '%v', *and* rhs is SexpArray ='%v'",
+			//	x.SexpString(0), rhsArray.SexpString(0))
 			nRhs := len(rhsArray.Val)
 			nLhs := len(x.Val)
 			if nRhs != nLhs {
@@ -817,8 +817,8 @@ func (a AssignInstr) Execute(env *Glisp) error {
 			}
 			return nil
 		default:
-			return fmt.Errorf("AssignInstr: don't know how to assign rhs %T to lhs %T",
-				rhs.SexpString(0), lhs.SexpString(0))
+			return fmt.Errorf("AssignInstr: don't know how to assign rhs %T `%v` to lhs %T `%v`",
+				rhs, rhs.SexpString(0), lhs, lhs.SexpString(0))
 		}
 		return nil
 	}
