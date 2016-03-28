@@ -1418,16 +1418,18 @@ func (gen *Generator) GenerateReturn(xs []Sexp) error {
 		return nil
 	}
 
+	if n > 1 {
+		gen.AddInstruction(PushInstr{SexpMarker})
+	}
 	for i := range xs {
-		switch x := xs[i].(type) {
-		case *SexpSymbol:
-			gen.AddInstruction(EnvToStackInstr{sym: x})
-		default:
-			gen.AddInstruction(PushInstr{expr: xs[i]})
+		P("return calling Generate on xs[i=%v]=%v", i, xs[i].SexpString(0))
+		err := gen.Generate(xs[i])
+		if err != nil {
+			return err
 		}
 	}
 	if n > 1 {
-		gen.AddInstruction(VectorizeInstr(n))
+		gen.AddInstruction(VectorizeInstr(0))
 	}
 	return nil
 }

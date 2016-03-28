@@ -65,7 +65,7 @@ func (env *Glisp) FunctionCallNameTypeCheck(f *SexpFunction, nargs *int) error {
 	haveByName := len(submittedByName)
 	if haveByName > 0 {
 		if haveByName != f.inputTypes.NumKeys {
-			return fmt.Errorf("named arguments count %v != expected %v, names must be provided for all arguments.", haveByName, f.inputTypes.NumKeys)
+			return fmt.Errorf("named arguments count %v != expected %v", haveByName, f.inputTypes.NumKeys)
 		}
 
 		// prep finalArgs in the order dictated
