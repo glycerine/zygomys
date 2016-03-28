@@ -41,7 +41,7 @@ func FuncBuilder(env *Glisp, name string,
 	default:
 		return SexpNull, fmt.Errorf("bad func name: symbol required")
 	}
-	P("good: have func name '%v'", symN.name)
+	Q("good: have func name '%v'", symN.name)
 	funcName := symN.name
 
 	builtin, builtTyp := env.IsBuiltinSym(symN)
@@ -86,30 +86,30 @@ func FuncBuilder(env *Glisp, name string,
 
 	body := args[bodyLoc:]
 
-	P("in func builder, args = ")
+	Q("in func builder, args = ")
 	for i := range args {
-		P("args[%v] = '%s'", i, args[i].SexpString(0))
+		Q("args[%v] = '%s'", i, args[i].SexpString(0))
 	}
-	P("in func builder, isAnon = %v", isAnon)
-	P("in func builder, inputs = %v", inputs.SexpString(0))
-	P("in func builder, returns = %v", returns.SexpString(0))
-	P("in func builder, body = %v", (&SexpArray{Val: body, Env: env}).SexpString(0))
+	Q("in func builder, isAnon = %v", isAnon)
+	Q("in func builder, inputs = %v", inputs.SexpString(0))
+	Q("in func builder, returns = %v", returns.SexpString(0))
+	Q("in func builder, body = %v", (&SexpArray{Val: body, Env: env}).SexpString(0))
 
 	inHash, err := GetFuncArgArray(inputs, env, "inputs")
 	if err != nil {
 		return SexpNull, fmt.Errorf("inputs array parsing error: %v", err)
 	}
-	P("inHash = '%v'", inHash.SexpString(0))
+	Q("inHash = '%v'", inHash.SexpString(0))
 
 	retHash, err := GetFuncArgArray(returns, env, "returns")
 	if err != nil {
 		return SexpNull, fmt.Errorf("returns array parsing error: %v", err)
 	}
-	P("retHash = '%v'", retHash.SexpString(0))
+	Q("retHash = '%v'", retHash.SexpString(0))
 
 	env.datastack.PushExpr(SexpNull)
 
-	P("FuncBuilder() about to call buildSexpFun")
+	Q("FuncBuilder() about to call buildSexpFun")
 
 	// ===================================
 	// ===================================
@@ -207,8 +207,8 @@ func GetFuncArgArray(arr *SexpArray, env *Glisp, where string) (*SexpHash, error
 		name := ar[i]
 		typ := ar[i+1]
 
-		P("name = %#v", name)
-		P("typ  = %#v", typ)
+		Q("name = %#v", name)
+		Q("typ  = %#v", typ)
 
 		var symN *SexpSymbol
 		switch b := name.(type) {
@@ -238,8 +238,8 @@ func GetFuncArgArray(arr *SexpArray, env *Glisp, where string) (*SexpHash, error
 			}
 		}
 
-		P("symN   = '%s'", symN.SexpString(0))
-		P("symTyp = '%s'", symTyp.SexpString(0))
+		Q("symN   = '%s'", symN.SexpString(0))
+		Q("symTyp = '%s'", symTyp.SexpString(0))
 
 		r, err, _ := env.LexicalLookupSymbol(symTyp, false)
 		if err != nil {

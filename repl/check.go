@@ -7,7 +7,7 @@ import (
 // FunctionCallNameTypeCheck type checks a function call.
 func (env *Glisp) FunctionCallNameTypeCheck(f *SexpFunction, nargs *int) error {
 	if f.inputTypes != nil {
-		P("FunctionCallNameTypeCheck sees inputTypes: '%v'", f.inputTypes.SexpString(0))
+		Q("FunctionCallNameTypeCheck sees inputTypes: '%v'", f.inputTypes.SexpString(0))
 	} else {
 		return nil // no type checking requested
 	}
@@ -32,7 +32,7 @@ func (env *Glisp) FunctionCallNameTypeCheck(f *SexpFunction, nargs *int) error {
 		switch sym := exprs[i].(type) {
 		case *SexpSymbol:
 			if sym.colonTail {
-				P("in env.CallFunction, have symbol.colonTail: exprs[%v]='%#v'", i, sym)
+				Q("in env.CallFunction, have symbol.colonTail: exprs[%v]='%#v'", i, sym)
 				typ, err := f.inputTypes.HashGet(env, sym)
 				if err != nil {
 					return fmt.Errorf("%s takes no argument '%s'", f.name, sym.name)
@@ -54,10 +54,10 @@ func (env *Glisp) FunctionCallNameTypeCheck(f *SexpFunction, nargs *int) error {
 						sym.name, typ.SexpString(0), valtyp.SexpString(0))
 				}
 			} else {
-				P("in env.CallFunction, exprs[%v]='%v'/type=%T", i, exprs[i].SexpString(0), exprs[i])
+				Q("in env.CallFunction, exprs[%v]='%v'/type=%T", i, exprs[i].SexpString(0), exprs[i])
 			}
 		default:
-			P("in env.CallFunction, exprs[%v]='%v'/type=%T", i, exprs[i].SexpString(0), exprs[i])
+			Q("in env.CallFunction, exprs[%v]='%v'/type=%T", i, exprs[i].SexpString(0), exprs[i])
 		}
 	}
 
@@ -75,7 +75,7 @@ func (env *Glisp) FunctionCallNameTypeCheck(f *SexpFunction, nargs *int) error {
 				// search for sy.name in our submittedByName args
 				a, found := submittedByName[sy.name]
 				if found {
-					P("%s call: matching %v-th argument named '%s': passing value '%s'",
+					Q("%s call: matching %v-th argument named '%s': passing value '%s'",
 						f.name, i, sy.name, a.SexpString(0))
 					finalArgs[i] = a
 				}

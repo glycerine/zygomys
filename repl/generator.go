@@ -1422,7 +1422,7 @@ func (gen *Generator) GenerateReturn(xs []Sexp) error {
 		gen.AddInstruction(PushInstr{SexpMarker})
 	}
 	for i := range xs {
-		P("return calling Generate on xs[i=%v]=%v", i, xs[i].SexpString(0))
+		Q("return calling Generate on xs[i=%v]=%v", i, xs[i].SexpString(0))
 		err := gen.Generate(xs[i])
 		if err != nil {
 			return err

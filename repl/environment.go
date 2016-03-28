@@ -284,7 +284,7 @@ func (env *Glisp) CallFunction(function *SexpFunction, nargs int) error {
 	env.curfunc = function
 	env.pc = 0
 
-	//P("\n CallFunction starting with stack:\n")
+	//Q("\n CallFunction starting with stack:\n")
 	//env.ShowStackStackAndScopeStack()
 
 	return nil
