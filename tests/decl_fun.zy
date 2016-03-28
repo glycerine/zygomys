@@ -1,9 +1,19 @@
 // declare functions with types
 
-(func trundle [a:int b:string] [n:int err:error]
-  (return 78 nil))
+(func trundle [a:int64 b:string] [n:int64 err:error]
+      (printf "trundled called, a = %v, b = %v\n" a b)
+      (return (+ a 78) nil))
 
-//(assert (== 78 (trundle a:3 b:"hi")))
+// and they get type checked:
+(expectError "named arguments count 1 != expected 2" (trundle a:3))
+(trundle a:3 b:"hi")
+
+// and they return what they say:
+(assert (== [81,nil] (trundle a:3 b:"hi")))
+
+(expectError (concat "trundle takes no argument 'c'")
+              (trundle c:5))
+
 
 (expectError (concat "Error calling 'func': inputs array parsing error: "
                       "could not identify type Wrench: symbol `Wrench` not found")
