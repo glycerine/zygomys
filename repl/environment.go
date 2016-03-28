@@ -255,6 +255,12 @@ func (env *Glisp) CallFunction(function *SexpFunction, nargs int) error {
 		prehook(env, function.name, expressions)
 	}
 
+	// do name and type checking
+	err := env.FunctionCallNameTypeCheck(function, &nargs)
+	if err != nil {
+		return err
+	}
+
 	if function.varargs {
 		err := env.wrangleOptargs(function.nargs, nargs)
 		if err != nil {

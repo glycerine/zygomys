@@ -15,6 +15,13 @@ func (stack *Stack) PushExpr(expr Sexp) {
 	stack.Push(DataStackElem{expr})
 }
 
+func (stack *Stack) PushExpressions(expr []Sexp) error {
+	for _, x := range expr {
+		stack.Push(DataStackElem{x})
+	}
+	return nil
+}
+
 func (stack *Stack) PopExpr() (Sexp, error) {
 	elem, err := stack.Pop()
 	if err != nil {

@@ -512,12 +512,12 @@ func (b BindlistInstr) Execute(env *Glisp) error {
 type VectorizeInstr int
 
 func (s VectorizeInstr) InstrString() string {
-	return "vectorize"
+	return fmt.Sprintf("vectorize %v", int(s))
 }
 
 func (s VectorizeInstr) Execute(env *Glisp) error {
 	vec := make([]Sexp, 0)
-
+	env.pc++
 	for {
 		expr, err := env.datastack.PopExpr()
 		if err != nil {
@@ -529,7 +529,6 @@ func (s VectorizeInstr) Execute(env *Glisp) error {
 		vec = append([]Sexp{expr}, vec...)
 	}
 	env.datastack.PushExpr(&SexpArray{Val: vec, Env: env})
-	env.pc++
 	return nil
 }
 

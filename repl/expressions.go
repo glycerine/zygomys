@@ -245,6 +245,7 @@ func (r *SexpPair) Type() *RegisteredType {
 
 type SexpArray struct {
 	Val []Sexp
+
 	Typ *RegisteredType
 
 	IsFuncDeclTypeArray bool

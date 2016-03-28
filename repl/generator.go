@@ -1412,13 +1412,22 @@ func getQuotedSymbol(expr *SexpPair) (*SexpSymbol, error) {
 	return labelsym, nil
 }
 
-func (gen *Generator) GenerateReturn(expressions []Sexp) error {
-	size := len(expressions)
-	if size == 0 {
-
+func (gen *Generator) GenerateReturn(xs []Sexp) error {
+	n := len(xs)
+	if n == 0 {
 		return nil
 	}
 
-	//gen.AddInstruction()
+	for i := range xs {
+		switch x := xs[i].(type) {
+		case *SexpSymbol:
+			gen.AddInstruction(EnvToStackInstr{sym: x})
+		default:
+			gen.AddInstruction(PushInstr{expr: xs[i]})
+		}
+	}
+	if n > 1 {
+		gen.AddInstruction(VectorizeInstr(n))
+	}
 	return nil
 }
