@@ -41,10 +41,8 @@ $ go get github.com/glycerine/zygomys/cmd/zygo
 ### not your average parentheses... features in zygomys 4.6.3 include
 
  * [x] struct defintion and type checking. [See `tests/declare.zy` for examples.](https://github.com/glycerine/zygomys/blob/master/tests/declare.zy)
- * [x] dot-symbols such as `.plane` or `.plane.wing` give OO-flavor and compact, expressive notation. [See the wiki](https://github.com/glycerine/zygomys/wiki#differences-from-traditional-lisp-syntax) for discussion
- * [x] dot-symbols avoid the need for macros in many cases
- * [x] Readable assignment: `(.a = 10)` assigns value 10 to symbol `a`  (NB use `==` for equality checks)
- * [x] Readable nested method calls: `(.a.b.c Fly)` calls method `Fly` on object `c` that lives within objects `a` and `b`.
+ * [x] Readable assignment: `(a = 10)` assigns value 10 to symbol `a`  (NB use `==` for equality checks)
+ * [x] Readable nested method calls: `((a.b.c.Fly))` calls method `Fly` on object `c` that lives within objects `a` and `b`.
  * [x] Use `zygo` to configure trees of Go structs, and then run methods on them at natively-compiled speed (since you are calling into Go code).
  * [x] sandbox-able environment; try `zygo -sandbox` and see the NewGlispSandbox() function.
  * [x] `emacs/zygo.el` emacs mode provides one-keypress stepping through code.
