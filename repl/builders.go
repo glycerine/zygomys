@@ -33,6 +33,7 @@ func (env *Glisp) ImportPackageBuilder() {
 	env.AddBuilder("sys", SystemBuilder)
 	env.AddBuilder("struct", StructBuilder)
 	env.AddBuilder("func", FuncBuilder)
+	env.AddBuilder("method", FuncBuilder)
 	env.AddBuilder("interface", InterfaceBuilder)
 	env.AddBuilder("package", PackageBuilder)
 	env.AddBuilder("var", VarBuilder)
@@ -398,17 +399,80 @@ func PackageBuilder(env *Glisp, name string,
 func InterfaceBuilder(env *Glisp, name string,
 	args []Sexp) (Sexp, error) {
 
-	if len(args) < 1 {
+	nargs := len(args)
+	switch {
+	case nargs < 1:
 		return SexpNull, fmt.Errorf("interface name is missing. use: " +
-			"(interface interface-name ...)\n")
+			"(interface interface-name [...])\n")
+	case nargs == 1:
+		return SexpNull, fmt.Errorf("interface array of methods missing. use: " +
+			"(interface interface-name [...])\n")
+	case nargs > 2:
+		return SexpNull, WrongNargs
 	}
 
-	Q("in interface builder, args = ")
-	for i := range args {
-		Q("args[%v] = '%s'", i, args[i].SexpString(0))
+	//	P("in interface builder, past arg check")
+	var iname string
+	var symN *SexpSymbol
+	switch sy := args[0].(type) {
+	case *SexpSymbol:
+		symN = sy
+		iname = sy.name
+	default:
+		return SexpNull, fmt.Errorf("interface name must be a symbol; we got %T", args[0])
 	}
 
-	return SexpNull, nil
+	// sanity check the name
+	builtin, builtTyp := env.IsBuiltinSym(symN)
+	if builtin {
+		return SexpNull,
+			fmt.Errorf("already have %s '%s', refusing to overwrite with interface",
+				builtTyp, symN.name)
+	}
+
+	if env.HasMacro(symN) {
+		return SexpNull, fmt.Errorf("Already have macro named '%s': refusing"+
+			" to define interface  of same name.", symN.name)
+	}
+	// end sanity check the name
+
+	var arrMeth *SexpArray
+	switch ar := args[1].(type) {
+	case *SexpArray:
+		arrMeth = ar
+	default:
+		return SexpNull, fmt.Errorf("interface method vector expected after name; we got %T", args[1])
+	}
+
+	//	P("in interface builder, args = ")
+	//	for i := range args {
+	//		P("args[%v] = '%s'", i, args[i].SexpString(0))
+	//	}
+
+	methods := make([]*SexpFunction, 0)
+	methodSlice := arrMeth.Val
+	if len(methodSlice) > 0 {
+		dup := env.Duplicate()
+		for i := range methodSlice {
+			ev, err := dup.EvalExpressions([]Sexp{methodSlice[i]})
+			if err != nil {
+				return SexpNull, fmt.Errorf("error parsing the %v-th method in interface definition: '%v'", i, err)
+			}
+			me, gotFunc := ev.(*SexpFunction)
+			if !gotFunc {
+				return SexpNull,
+					fmt.Errorf("error parsing the %v-th method in interface: was not function but rather %T",
+						i, ev)
+			}
+			methods = append(methods, me)
+		}
+	}
+
+	decl := &SexpInterfaceDecl{
+		name:    iname,
+		methods: methods,
+	}
+	return decl, nil
 }
 
 func SliceOfFunction(env *Glisp, name string,

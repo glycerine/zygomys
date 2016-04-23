@@ -117,6 +117,7 @@ func NewGlispWithFuncs(funcs map[string]GlispUserFunction) *Glisp {
 
 func (env *Glisp) Clone() *Glisp {
 	dupenv := new(Glisp)
+	dupenv.parser = env.parser
 	dupenv.baseTypeCtor = env.baseTypeCtor
 	dupenv.datastack = env.datastack.Clone()
 	dupenv.linearstack = env.linearstack.Clone()
@@ -145,6 +146,7 @@ func (env *Glisp) Clone() *Glisp {
 
 func (env *Glisp) Duplicate() *Glisp {
 	dupenv := new(Glisp)
+	dupenv.parser = env.parser
 	dupenv.baseTypeCtor = env.baseTypeCtor
 	dupenv.datastack = dupenv.NewStack(DataStackSize)
 	dupenv.linearstack = dupenv.NewStack(ScopeStackSize)
@@ -427,6 +429,7 @@ func (env *Glisp) EvalString(str string) (Sexp, error) {
 }
 
 func (env *Glisp) EvalExpressions(xs []Sexp) (Sexp, error) {
+	//P("inside EvalExpressions with env %p: xs[0] = %s", env, xs[0].SexpString(0))
 	err := env.LoadExpressions(xs)
 	if err != nil {
 		return SexpNull, err
@@ -675,6 +678,14 @@ func (env *Glisp) ShowStackStackAndScopeStack() error {
 	return nil
 }
 
+func (env *Glisp) ShowGlobalStack() error {
+	prev := env.showGlobalScope
+	env.showGlobalScope = true
+	err := env.ShowStackStackAndScopeStack()
+	env.showGlobalScope = prev
+	return err
+}
+
 func (env *Glisp) LexicalLookupSymbol(sym *SexpSymbol, undot bool) (Sexp, error, *Scope) {
 
 	// DotSymbols always evaluate to themselves, unless
@@ -690,14 +701,14 @@ func (env *Glisp) LexicalLookupSymbol(sym *SexpSymbol, undot bool) (Sexp, error,
 	// (2) check the env.curfunc.closedOverScopes; it has a full
 	//     copy of the runtime linearstack at definition time.
 
-	VPrintf("LexicalLookupSymbol('%s')\n", sym.name)
+	//P("LexicalLookupSymbol('%s')\n", sym.name)
 
 	// (1) linearstack
 	exp, err, scope := env.linearstack.LookupSymbolUntilFunction(sym)
 	switch err {
 	case nil:
-		VPrintf("LexicalLookupSymbol('%s') found on linearstack in scope '%s'\n",
-			sym.name, scope.Name)
+		//P("LexicalLookupSymbol('%s') found on linearstack in scope '%s'\n",
+		//	sym.name, scope.Name)
 		return exp, err, scope
 	case SymNotFound:
 		break
@@ -705,14 +716,14 @@ func (env *Glisp) LexicalLookupSymbol(sym *SexpSymbol, undot bool) (Sexp, error,
 		panic(fmt.Errorf("unexpected error from symbol lookup: %v", err))
 	}
 
-	VPrintf("LexicalLookupSymbol('%s') past linearstack\n", sym.name)
+	//P("LexicalLookupSymbol('%s') past linearstack\n", sym.name)
 
 	// (2) env.curfunc.closedOverScope
 	exp, err, scope = env.curfunc.ClosingLookupSymbol(sym)
 	switch err {
 	case nil:
-		VPrintf("LexicalLookupSymbol('%s') found on curfunc.closeScope in scope '%s'\n",
-			sym.name, scope.Name)
+		//P("LexicalLookupSymbol('%s') found on curfunc.closeScope in scope '%s'\n",
+		//	sym.name, scope.Name)
 		return exp, err, scope
 	case SymNotFound:
 		break

@@ -632,6 +632,7 @@ func (gen *Generator) GenerateCallBySymbol(sym *SexpSymbol, args []Sexp, orig Se
 		return err
 	}
 	if oldtail && sym.name == gen.funcname {
+		//P("generating a tail call... my gen.scopes = %v", gen.scopes)
 		// to do a tail call
 		// pop off all the extra scopes
 		// then jump to beginning of function

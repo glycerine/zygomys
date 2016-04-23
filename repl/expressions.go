@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"reflect"
 	"strconv"
+	"strings"
 )
 
 // all Sexp are typed, and have a zero value corresponding to
@@ -504,6 +505,32 @@ func (sym SexpSymbol) Number() int {
 	return sym.number
 }
 
+// SexpInterfaceDecl
+type SexpInterfaceDecl struct {
+	name    string
+	methods []*SexpFunction
+}
+
+func (r *SexpInterfaceDecl) SexpString(indent int) string {
+	space := strings.Repeat(" ", indent)
+	space4 := strings.Repeat(" ", indent+4)
+	s := space + "(interface " + r.name + " ["
+	if len(r.methods) > 0 {
+		s += "\n"
+	}
+	for i := range r.methods {
+		s += space4 + r.methods[i].SexpString(indent+4) + "\n"
+	}
+	s += space + "])"
+	return s
+}
+
+func (r *SexpInterfaceDecl) Type() *RegisteredType {
+	// todo: how to register/what to register?
+	return GoStructRegistry.Registry[r.name]
+}
+
+// SexpFunction
 type SexpFunction struct {
 	name              string
 	user              bool
@@ -516,6 +543,7 @@ type SexpFunction struct {
 	isBuilder         bool // see defbuild; builders are builtins that receive un-evaluated expressions
 	inputTypes        *SexpHash
 	returnTypes       *SexpHash
+	hasBody           bool // could just be declaration in an interface, without a body
 }
 
 func (sf *SexpFunction) Type() *RegisteredType {

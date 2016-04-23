@@ -90,24 +90,24 @@
 (expectError `Error calling 'infix': Dog has no field 'tag' [err 2]` {e.tag = 445})
 (expectError `Error calling 'infix': Dog has no field 'big' [err 2]` {d.big = true})
 
-// not yet implemented stuff:
 
-// Here is how we'll declare functions:
+// How to declare functions that are type checked, use func:
 // 
 // we'll always use named return types; so we can
 // have an implicit return; this facilitates automatic compile-down.
 //
-//(func doSomething [a:int b:string] [n:int err:error]
-//  (return a nil))
+(func doSomething [a:int b:string] [n:int err:error]
+  (return a nil))
+
 //
 // And here is how to declare interfaces:
 //
-// declare interfaces
-// (interface Driveable [
-//      (func driveIt [a:int b:string] [n:int err:error])
-//   ])
+(interface Drivable [
+   (func driveIt [a:int b:string] [n:int err:error])
+])
+
 //
 // declare methods like this:
 //
-// (func [p: (* Car)] driveIt [a:int b:string] [n:int err:error])
-//
+(method [p: (* Car)] driveIt [a:int b:string] [n:int err:error])
+

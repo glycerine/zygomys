@@ -33,3 +33,10 @@
       (func driveIt [a:int b:string] [n:int err:error])
    ])
 */
+
+// function declaration
+(func driveIt [a:int64 b:string] [n:int64 err:error])
+//{y = (driveIt 1 2)}
+
+// method declaration
+(method [(p *Car)] DriveAway [][s:string] (return "road-road-road"))

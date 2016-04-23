@@ -38,3 +38,4 @@
 
 // testing anonymous dispatch
 ((fn [a] (assert (== a 0))) 0)
+

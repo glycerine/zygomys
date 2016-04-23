@@ -7,11 +7,18 @@ import (
 func FuncBuilder(env *Glisp, name string,
 	args []Sexp) (Sexp, error) {
 
-	use := "use: (func func-name [inputs:type ...] [returns:type ...])"
+	useName := name
+	isMethod := false
+	if name == "method" {
+		isMethod = true
+		useName = "method [p: (* StructName)]"
+	}
+
+	use := "use: (" + useName + " funcName [inputs:type ...] [returns:type ...])"
 
 	n := len(args)
 	if n < 1 {
-		return SexpNull, fmt.Errorf("func definition missing arguments. %s", use)
+		return SexpNull, fmt.Errorf("missing arguments. %s", use)
 	}
 
 	inputsLoc := 1
@@ -32,12 +39,23 @@ func FuncBuilder(env *Glisp, name string,
 		}
 
 	case *SexpArray:
-		// anonymous function
-		symN = env.GenSymbol("__anon")
-		isAnon = true
-		inputsLoc--
-		returnsLoc--
-		bodyLoc--
+		if isMethod {
+			ok := false
+			symN, ok = args[1].(*SexpSymbol)
+			if !ok {
+				return SexpNull, fmt.Errorf("bad method name: symbol required after receiver array")
+			}
+			inputsLoc++
+			returnsLoc++
+			bodyLoc++
+		} else {
+			// anonymous function
+			symN = env.GenSymbol("__anon")
+			isAnon = true
+			inputsLoc--
+			returnsLoc--
+			bodyLoc--
+		}
 	default:
 		return SexpNull, fmt.Errorf("bad func name: symbol required")
 	}
@@ -67,8 +85,8 @@ func FuncBuilder(env *Glisp, name string,
 	var inputs *SexpArray
 	switch ar := args[inputsLoc].(type) {
 	default:
-		return SexpNull, fmt.Errorf("bad func declaration '%v': second argument "+
-			"must be a array of input declarations. %s", funcName, use)
+		return SexpNull, fmt.Errorf("bad func declaration '%v': "+
+			"expected array of input declarations after the name. %s", funcName, use)
 	case *SexpArray:
 		inputs = ar
 		inputs.IsFuncDeclTypeArray = true
@@ -167,8 +185,16 @@ func FuncBuilder(env *Glisp, name string,
 		return MissingFunction, err
 	}
 
+	// minimal sanity check that we return the number of arguments
+	// on the stack that are declared
+	if len(body) == 0 {
+		for range retHash.KeyOrder {
+			gen.AddInstruction(PushInstr{expr: SexpNull})
+		}
+	}
+
 	gen.AddInstruction(RemoveScopeInstr{})
-	gen.AddInstruction(ReturnInstr{nil})
+	gen.AddInstruction(ReturnInstr{nil}) // nil is the error returned
 
 	newfunc := GlispFunction(gen.instructions)
 	sfun := gen.env.MakeFunction(gen.funcname, nargs,
@@ -188,6 +214,9 @@ func FuncBuilder(env *Glisp, name string,
 		return SexpNull, fmt.Errorf("internal error: could not bind symN:'%s' into env: %v", symN.name, err)
 	}
 
+	if len(body) > 0 {
+		invok.(*SexpFunction).hasBody = true
+	}
 	return invok, nil
 }
 
@@ -207,8 +236,8 @@ func GetFuncArgArray(arr *SexpArray, env *Glisp, where string) (*SexpHash, error
 		name := ar[i]
 		typ := ar[i+1]
 
-		Q("name = %#v", name)
-		Q("typ  = %#v", typ)
+		//P("name = %#v", name)
+		//P("typ  = %#v", typ)
 
 		var symN *SexpSymbol
 		switch b := name.(type) {
@@ -238,8 +267,11 @@ func GetFuncArgArray(arr *SexpArray, env *Glisp, where string) (*SexpHash, error
 			}
 		}
 
-		Q("symN   = '%s'", symN.SexpString(0))
-		Q("symTyp = '%s'", symTyp.SexpString(0))
+		//P("here is env.ShowGlobalStack():")
+		//env.ShowGlobalStack()
+
+		//P("symN   = '%s'", symN.SexpString(0))
+		//P("symTyp = '%s'", symTyp.SexpString(0))
 
 		r, err, _ := env.LexicalLookupSymbol(symTyp, false)
 		if err != nil {
