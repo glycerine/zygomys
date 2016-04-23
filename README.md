@@ -38,7 +38,7 @@ for the whole project when speaking aloud. In writing, the full
 $ go get github.com/glycerine/zygomys/cmd/zygo
 ~~~
 
-### not your average parentheses... features in zygomys 4.6.3 include
+### not your average parentheses... features in zygomys 4.6.4 include
 
  * [x] struct defintion and type checking. [See `tests/declare.zy` for examples.](https://github.com/glycerine/zygomys/blob/master/tests/declare.zy)
  * [x] Readable assignment: `(a = 10)` assigns value 10 to symbol `a`  (NB use `==` for equality checks)
