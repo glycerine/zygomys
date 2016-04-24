@@ -39,3 +39,9 @@
 // testing anonymous dispatch
 ((fn [a] (assert (== a 0))) 0)
 
+// function declarations
+(func driveIt [a:int64 b:string] [n:int64 err:error])
+//{y = (driveIt 1 2)}
+
+// method declarations
+(method [(p *Car)] DriveAway [][s:string] (return "road-road-road"))

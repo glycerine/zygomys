@@ -313,6 +313,12 @@ func (h *SexpHash) TypeCheckField(key Sexp, val Sexp) error {
 		Q("obsTyp is %T / val = %#v", obsTyp, obsTyp)
 		Q("declaredTyp is %T / val = %#v", declaredTyp, declaredTyp)
 		if obsTyp != declaredTyp {
+			if obsTyp.RegisteredName == "[]" {
+				if strings.HasPrefix(declaredTyp.RegisteredName, "[]") {
+					// okay to assign empty slice to typed slice
+					goto done
+				}
+			}
 			return fmt.Errorf("field %v.%v is %v, cannot assign %v '%v'",
 				p.UserStructDefn.Name,
 				k,
@@ -321,6 +327,7 @@ func (h *SexpHash) TypeCheckField(key Sexp, val Sexp) error {
 				val.SexpString(0))
 		}
 	}
+done:
 	return nil
 }
 

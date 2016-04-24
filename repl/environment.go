@@ -278,7 +278,10 @@ func (env *Glisp) CallFunction(function *SexpFunction, nargs int) error {
 		panic("where's the global scope?")
 	}
 
-	env.linearstack.PushScope()
+	// speculate: maybe this is not needed anymore, since a function does
+	// itself do a linearstack.PushScope() upon entry, right?
+	//env.linearstack.PushScope()
+	//P("CallFunction did linearstack.PushScope(): now %v deep", env.linearstack.Size())
 	env.addrstack.PushAddr(env.curfunc, env.pc+1)
 
 	// this effectely *is* the call, because it sets the
@@ -305,7 +308,9 @@ func (env *Glisp) ReturnFromFunction() error {
 	if err != nil {
 		return err
 	}
-	_, err = env.linearstack.Pop()
+	//P("ReturnFromFunction is pop-ing linearstack; now %v deep", env.linearstack.Size())
+	// speculate mirror the above specualation:
+	//_, err = env.linearstack.Pop()
 
 	return err
 }
@@ -519,7 +524,9 @@ func (env *Glisp) DumpEnvironment() {
 	fmt.Printf("DataStack: (length %d)\n", env.datastack.Size())
 	env.datastack.PrintStack()
 	fmt.Printf("Linear stack: (length %d)\n", env.linearstack.Size())
-	env.linearstack.PrintScopeStack()
+	//env.linearstack.PrintScopeStack()
+	// instead of the above, try:
+	env.showStackHelper(env.linearstack, "linearstack")
 }
 
 func (env *Glisp) ReachedEnd() bool {

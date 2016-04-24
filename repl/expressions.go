@@ -263,6 +263,10 @@ func (r *SexpArray) Type() *RegisteredType {
 			if ty != nil {
 				r.Typ = GoStructRegistry.GetOrCreateSliceType(ty)
 			}
+		} else {
+			// empty array
+			r.Typ = GoStructRegistry.Lookup("[]")
+			//P("lookup [] returned type %#v", r.Typ)
 		}
 	}
 	return r.Typ

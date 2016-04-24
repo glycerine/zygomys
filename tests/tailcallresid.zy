@@ -1,0 +1,13 @@
+// tail calling was leaving residual lexical scopes on the
+// linear (call) stack, that would cause the func driveIt
+// decl below to fail to lookup int64... check for this.
+
+(defn factTc [n accum]
+  (cond (== n 0) accum
+    (let [newn (- n 1)
+          newaccum (* accum n)]
+      (factTc newn newaccum))))
+
+(factTc 5 1)
+
+(func driveIt [a:int64 b:string] [n:int64 err:error])

@@ -96,7 +96,7 @@ func (e *RegisteredType) Init() {
 		e.ValueCache = reflect.ValueOf(val)
 		e.TypeCache = e.ValueCache.Type()
 		e.PointerName = fmt.Sprintf("%T", val)
-		e.ReflectName = e.PointerName[1:]
+		e.ReflectName = e.PointerName[1:] // todo: make this conditional on whether PointerName starts with '*'.
 		e.DisplayAs = e.ReflectName
 	}
 	e.initDone = true
@@ -226,6 +226,11 @@ func init() {
 
 	// add go builtin types
 	// ====================
+
+	// empty array
+	gsr.RegisterBuiltin("[]", &RegisteredType{GenDefMap: false, Factory: func(env *Glisp) (interface{}, error) {
+		return &SexpArray{}, nil
+	}})
 
 	gsr.RegisterBuiltin("arraySelector", &RegisteredType{GenDefMap: false, Factory: func(env *Glisp) (interface{}, error) {
 		return &SexpArraySelector{}, nil

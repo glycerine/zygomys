@@ -184,7 +184,7 @@ func RestFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		if len(expr.Val) == 0 {
 			return expr, nil
 		}
-		return &SexpArray{Val: expr.Val[1:], Env: env}, nil
+		return &SexpArray{Val: expr.Val[1:], Env: env, Typ: expr.Typ}, nil
 	case *SexpSentinel:
 		if expr == SexpNull {
 			return SexpNull, nil
@@ -348,10 +348,17 @@ func HashAccessFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		}
 		keys := make([]Sexp, 0)
 		n := len(hash.KeyOrder)
+		arr := &SexpArray{Env: env}
 		for i := 0; i < n; i++ {
 			keys = append(keys, (hash.KeyOrder)[i])
+
+			// try to get a .Typ value going too... from the first available.
+			if arr.Typ == nil {
+				arr.Typ = (hash.KeyOrder)[i].Type()
+			}
 		}
-		return &SexpArray{Val: keys, Env: env}, nil
+		arr.Val = keys
+		return arr, nil
 	case "hpair":
 		if len(args) != 2 {
 			return SexpNull, WrongNargs
@@ -417,7 +424,7 @@ func SliceFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 
 	switch t := args[0].(type) {
 	case *SexpArray:
-		return &SexpArray{Val: t.Val[start:end], Env: env}, nil
+		return &SexpArray{Val: t.Val[start:end], Env: env, Typ: t.Typ}, nil
 	case *SexpStr:
 		return &SexpStr{S: t.S[start:end]}, nil
 	}
@@ -466,11 +473,11 @@ func AppendFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	case *SexpArray:
 		switch name {
 		case "append":
-			return &SexpArray{Val: append(t.Val, args[1]), Env: env}, nil
+			return &SexpArray{Val: append(t.Val, args[1]), Env: env, Typ: t.Typ}, nil
 		case "appendslice":
 			switch sl := args[1].(type) {
 			case *SexpArray:
-				return &SexpArray{Val: append(t.Val, sl.Val...), Env: env}, nil
+				return &SexpArray{Val: append(t.Val, sl.Val...), Env: env, Typ: t.Typ}, nil
 			default:
 				return SexpNull, fmt.Errorf("Second argument of appendslice must be slice")
 			}

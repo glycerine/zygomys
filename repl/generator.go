@@ -390,6 +390,7 @@ func (gen *Generator) GenerateCond(args []Sexp) error {
 	}
 	instructions := subgen.instructions
 
+	// we generate the cond bottom up, so i counts down, not up.
 	for i := len(args)/2 - 1; i >= 0; i-- {
 		subgen.Reset()
 		err := subgen.Generate(args[2*i])
@@ -414,6 +415,7 @@ func (gen *Generator) GenerateCond(args []Sexp) error {
 		subgen.AddInstructions(body_code)
 		subgen.AddInstruction(JumpInstr{addpc: len(instructions) + 1})
 		subgen.AddInstructions(instructions)
+
 		instructions = subgen.instructions
 	}
 
@@ -632,15 +634,16 @@ func (gen *Generator) GenerateCallBySymbol(sym *SexpSymbol, args []Sexp, orig Se
 		return err
 	}
 	if oldtail && sym.name == gen.funcname {
-		//P("generating a tail call... my gen.scopes = %v", gen.scopes)
+		//P("generating a tail call for %v ... my gen.scopes = %v", sym.name, gen.scopes)
 		// to do a tail call
 		// pop off all the extra scopes
 		// then jump to beginning of function
 		for i := 0; i < gen.scopes; i++ {
 			gen.AddInstruction(RemoveScopeInstr{})
 		}
-		gen.AddInstruction(GotoInstr{0})
+		gen.AddInstruction(GotoInstr{1}) // goto 1 instead of 0 to avoid adding a new scope
 	} else {
+		//P("not generating a tail call... sym.name: %v", sym.name)
 		gen.AddInstruction(CallInstr{sym, len(args)})
 	}
 	gen.Tail = oldtail
