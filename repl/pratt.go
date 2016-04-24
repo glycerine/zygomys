@@ -298,10 +298,10 @@ func InfixBuilder(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		}
 
 	}
-	//	Q("infix builder loop done, here are my expressions:")
-	//	for i, ele := range xs {
+	//Q("infix builder loop done, here are my expressions:")
+	//for i, ele := range xs {
 	//		Q("xs[%v] = %v", i, ele.SexpString(0))
-	//	}
+	//}
 	dup := env.Duplicate()
 	ev, err := dup.EvalExpressions(xs)
 	if err != nil {
@@ -484,6 +484,10 @@ func (p *Pratt) Expression(env *Glisp, rbp int) (ret Sexp, err error) {
 		case *SexpComma:
 			curOp = env.infixOps["comma"]
 			Q("assigning curOp <- infixOps[`comma`]; then curOp = %#v", curOp)
+		case *SexpPair:
+			// sexp-call, treat like function call with rbp 80
+			Q("Expression sees an SexpPair")
+			// leaving curOp nil seems to work just fine here.
 		default:
 			panic(fmt.Errorf("how to handle cnode type = %#v", cnode))
 		}
@@ -566,6 +570,8 @@ func (env *Glisp) LeftBindingPower(sx Sexp) (int, error) {
 		return 15, nil
 	case *SexpSemicolon:
 		return 0, nil
+	case *SexpPair:
+		return 80, nil
 	}
 	return 0, fmt.Errorf("LeftBindingPower: unhandled sx :%#v", sx)
 }

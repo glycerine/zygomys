@@ -85,3 +85,10 @@
 //{a b = 5 6}
 //(infixExpand {a b = 5 6})
 
+// was giving errors having a function call follow a semicolon: Error calling 'infix': LeftBindingPower: unhandled sx :&zygo.SexpPair{Head:(*zygo.SexpSymbol)(0xc82022d530), Tail:(*zygo.SexpPair)(0xc820241aa0)}
+//
+{a = 10; b = 12; d = 3; (println {a+b*d})}
+
+// mixed parses fine, and takes the value from the e at the end; the last expression.
+(assert (== 126 { (println "one"); (println "two"); a = 10; d = (+ 1 2); e = 100 + (+ a d {5 + 6}) + 2; (println e); e}))
+            
