@@ -32,6 +32,8 @@ type InfixOp struct {
 	Bp         int          // binding power, aka precedence level.
 	MunchRight RightMuncher // aka nud
 	MunchLeft  LeftMuncher  // aka led
+	MunchStmt  StmtMuncher  // aka std
+	IsAssign   bool
 }
 
 // Infix creates a new infix operator
@@ -112,7 +114,7 @@ func (env *Glisp) Assignment(op string, bp int) *InfixOp {
 		Sym: oper,
 		Bp:  bp,
 		MunchLeft: func(env *Glisp, pr *Pratt, left Sexp) (Sexp, error) {
-			// TODO: check that left is okay as an LVALUE
+			// TODO: check that left is okay as an LVALUE.
 
 			right, err := pr.Expression(env, bp-1)
 			if err != nil {
@@ -128,6 +130,7 @@ func (env *Glisp) Assignment(op string, bp int) *InfixOp {
 			Q("assignment returning list: '%v'", list.SexpString(0))
 			return list, nil
 		},
+		IsAssign: true,
 	}
 	env.infixOps[op] = iop
 	return iop
@@ -152,6 +155,31 @@ func (env *Glisp) PostfixAssign(op string, bp int) *InfixOp {
 	env.infixOps[op] = iop
 	return iop
 }
+
+/*
+// Statement parses one statement (e.g. if-statement)
+
+// Stmt creates a new statement
+func (env *Glisp) Stmt(op string) *InfixOp {
+	oper := env.MakeSymbol(op)
+	iop := &InfixOp{
+		Sym: oper,
+		Bp:  80,
+		MunchStmt: func(env *Glisp, pr *Pratt, left Sexp) (Sexp, error) {
+			right, err := pr.Expression(env, bp)
+			if err != nil {
+				return SexpNull, err
+			}
+			list := MakeList([]Sexp{
+				oper, left, right,
+			})
+			return list, nil
+		},
+	}
+	env.infixOps[op] = iop
+	return iop
+}
+*/
 
 func arrayOpMunchLeft(env *Glisp, pr *Pratt, left Sexp) (Sexp, error) {
 	oper := env.MakeSymbol("arrayidx")
@@ -232,6 +260,7 @@ func (env *Glisp) InitInfixOps() {
 
 type RightMuncher func(env *Glisp, pr *Pratt) (Sexp, error)
 type LeftMuncher func(env *Glisp, pr *Pratt, left Sexp) (Sexp, error)
+type StmtMuncher func(env *Glisp, pr *Pratt) (Sexp, error)
 
 func InfixBuilder(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	//Q("InfixBuilder top, name='%s', len(args)==%v ", name, len(args))

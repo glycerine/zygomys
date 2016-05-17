@@ -5,8 +5,8 @@ import (
 	"time"
 )
 
-var Verbose bool // set to true to debug
-var Working bool // currently under investigation
+var Verbose bool = true // set to true to debug
+var Working bool        // currently under investigation
 
 var V = VPrintf
 var W = WPrintf

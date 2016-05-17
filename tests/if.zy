@@ -1,0 +1,15 @@
+// infix if and if-else
+{ a = 10;
+  b = 0;
+  if a < 9 {
+    b++
+  } else {
+    b += 10
+  }
+  (assert (== b 10))
+
+  if a > 9 {
+    b++
+  }
+  (assert (== b 11))
+}
