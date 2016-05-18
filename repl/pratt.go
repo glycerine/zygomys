@@ -32,7 +32,7 @@ type InfixOp struct {
 	Bp         int          // binding power, aka precedence level.
 	MunchRight RightMuncher // aka nud
 	MunchLeft  LeftMuncher  // aka led
-	MunchStmt  StmtMuncher  // aka std
+	MunchStmt  StmtMuncher  // aka std. Used only at the beginning of a statement.
 	IsAssign   bool
 }
 
@@ -155,31 +155,6 @@ func (env *Glisp) PostfixAssign(op string, bp int) *InfixOp {
 	env.infixOps[op] = iop
 	return iop
 }
-
-/*
-// Statement parses one statement (e.g. if-statement)
-
-// Stmt creates a new statement
-func (env *Glisp) Stmt(op string) *InfixOp {
-	oper := env.MakeSymbol(op)
-	iop := &InfixOp{
-		Sym: oper,
-		Bp:  80,
-		MunchStmt: func(env *Glisp, pr *Pratt, left Sexp) (Sexp, error) {
-			right, err := pr.Expression(env, bp)
-			if err != nil {
-				return SexpNull, err
-			}
-			list := MakeList([]Sexp{
-				oper, left, right,
-			})
-			return list, nil
-		},
-	}
-	env.infixOps[op] = iop
-	return iop
-}
-*/
 
 func arrayOpMunchLeft(env *Glisp, pr *Pratt, left Sexp) (Sexp, error) {
 	oper := env.MakeSymbol("arrayidx")
@@ -614,4 +589,85 @@ func (p *Pratt) ShowCnodeStack() {
 	for i := range p.CnodeStack {
 		fmt.Printf("CnodeStack[%v] = %v\n", i, p.CnodeStack[i].SexpString(0))
 	}
+}
+
+func (p *Pratt) Statement(env *Glisp) (ret Sexp, err error) {
+
+	cnode := p.NextToken
+	if cnode != nil {
+		P("top of Statement, cnode = '%v'", cnode.SexpString(0))
+	} else {
+		P("top of Statement, cnode is nil")
+	}
+	if p.IsEOF() {
+		P("Statement sees IsEOF, returning cnode = %v", cnode.SexpString(0))
+		return cnode, nil
+	}
+	if cnode != nil && cnode.MunchStmt != nil {
+		P("cnode '%v' has a MunchStmt", cnode.SexpString(0))
+		p.Advance()
+		//scope.reserve(cnode)
+		return cnode.MunchStmt(env, p)
+	}
+	v, err := p.Expression(env, 0)
+	P("in Statement, got from p.Expression(env, 0) the v, err = %#v, %#v", v, err)
+	//	if (!v.IsAssignment && v.id !== "(") {
+	//		v.error("Bad expression statement.");
+	//	}
+	//p.Advance(";");
+	return v, err
+}
+
+func (p *Pratt) MultipleStatements(env *Glisp) (ret Sexp, err error) {
+	var a []Sexp
+	var s Sexp
+	for !p.IsEOF() {
+
+		P("MultipleStatements: p.NextToken = %#v", p.NextToken)
+		if p.NextToken.Sym != nil && p.NextNoken.Sym.name == "}" {
+			break
+		}
+		s, err = p.Statement(env)
+		P("MultipleStatements: back from p.Statement(env): s = '%v', err = '%v'", s.SexpString(0), err)
+		if err != nil {
+			break
+		}
+		if s != nil {
+			a = append(a, s)
+		} else {
+			break
+		}
+	}
+	return &SexpArray{Val: a}, err
+}
+
+/*
+var block = function () {
+	var t = token;
+	advance("{");
+	return t.std();
+};
+*/
+
+// Statement parses one statement (e.g. if-statement)
+
+// Stmt creates a new statement
+func (env *Glisp) Stmt(op string) *InfixOp {
+	oper := env.MakeSymbol(op)
+	iop := &InfixOp{
+		Sym: oper,
+		Bp:  80,
+		MunchStmt: func(env *Glisp, pr *Pratt, left Sexp) (Sexp, error) {
+			right, err := pr.Expression(env, bp)
+			if err != nil {
+				return SexpNull, err
+			}
+			list := MakeList([]Sexp{
+				oper, left, right,
+			})
+			return list, nil
+		},
+	}
+	env.infixOps[op] = iop
+	return iop
 }
