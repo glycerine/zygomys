@@ -267,7 +267,7 @@ func (env *Glisp) InitInfixOps() {
 		}
 
 		list := MakeList([]Sexp{
-			env.MakeSymbol("condIfOpMunchRightOutput"), right, thenExpr, elseExpr,
+			env.MakeSymbol("cond"), right, thenExpr, elseExpr,
 		})
 		return list, nil
 	}
@@ -661,6 +661,15 @@ func (env *Glisp) LeftBindingPower(sx Sexp) (int, error) {
 	case *SexpSemicolon:
 		return 0, nil
 	case *SexpPair:
+		if x.Head != nil {
+			switch sym := x.Head.(type) {
+			case *SexpSymbol:
+				if sym.name == "infix" {
+					P("detected infix!!! -- setting binding power to 0")
+					return 0, nil
+				}
+			}
+		}
 		return 80, nil
 	}
 	return 0, fmt.Errorf("LeftBindingPower: unhandled sx :%#v", sx)

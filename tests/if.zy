@@ -1,4 +1,8 @@
 // infix if and if-else
+
+(assert (== (infixExpand {if 1 == 2 { 3 } else { 4 }})  (quote (cond (== 1 2) (infix [3]) (infix [4])))))
+(assert (== (infixExpand {if 1 == 2 { 3 }}) (quote (cond (== 1 2) {3} nil))))
+
 { a = 10;
   b = 0;
   if a < 9 {
