@@ -50,6 +50,9 @@ func (env *Glisp) Infix(op string, bp int) *InfixOp {
 			list := MakeList([]Sexp{
 				oper, left, right,
 			})
+
+			P("in Infix(), MunchLeft() call, pr.NextToken = %v. list returned = '%v'",
+				pr.NextToken.SexpString(0), list.SexpString(0))
 			return list, nil
 		},
 	}
@@ -230,9 +233,44 @@ func (env *Glisp) InitInfixOps() {
 	dotOp := env.Infix(".", 80)
 	dotOp.MunchLeft = dotOpMunchLeft
 
-	ifOp := env.Infix("if", 90)
-	ifOp.MunchStmt = ifOpMunchStmt
-	ifOp.MunchLeft = ifOpMunchLeft
+	ifOp := env.Prefix("if", 5)
+	P("ipOf = %#v", ifOp)
+
+	ifOp.MunchRight = func(env *Glisp, pr *Pratt) (Sexp, error) {
+		P("ifOp.MunchRight(): NextToken='%v'. pr.CnodeStack[0]='%v'", pr.NextToken.SexpString(0), pr.CnodeStack[0].SexpString(0))
+		right, err := pr.Expression(env, 0)
+		P("ifOp.MunchRight: back from Expression-1st-call, err = %#v, right = '%v'", err, right.SexpString(0))
+		if err != nil {
+			return SexpNull, err
+		}
+		P("in ifOpMunchRight, got from p.Expression(env, 0) the right = '%v', err = %#v, pr.CnodeStack[0] = %#v, ifOp.Sym = '%v'", right.SexpString(0), err, pr.CnodeStack[0], ifOp.Sym.SexpString(0))
+
+		thenExpr, err := pr.Expression(env, 0)
+		P("ifOp.MunchRight: back from Expression-2nd-call, err = %#v, thenExpr = '%v'", err, thenExpr.SexpString(0))
+		if err != nil {
+			return SexpNull, err
+		}
+
+		P("ifOp.MunchRight(), after Expression-2nd-call: . NextToken='%v'. pr.CnodeStack[0]='%v'", pr.NextToken.SexpString(0), pr.CnodeStack[0].SexpString(0))
+		var elseExpr Sexp = SexpNull
+		switch sym := pr.NextToken.(type) {
+		case *SexpSymbol:
+			if sym.name == "else" {
+				P("detected else, advancing past it")
+				pr.Advance()
+				elseExpr, err = pr.Expression(env, 0)
+				P("ifOp.MunchRight: back from Expression-3rd-call, err = %#v, elseExpr = '%v'", err, elseExpr.SexpString(0))
+				if err != nil {
+					return SexpNull, err
+				}
+			}
+		}
+
+		list := MakeList([]Sexp{
+			env.MakeSymbol("condIfOpMunchRightOutput"), right, thenExpr, elseExpr,
+		})
+		return list, nil
+	}
 
 	env.Infix("comma", 15)
 }
@@ -241,16 +279,33 @@ func ifOpMunchStmt(env *Glisp, pr *Pratt) (Sexp, error) {
 	P("in ifOpMunchStmt() NextToken='%v'. pr.CnodeStack[0]='%v'",
 		pr.NextToken.SexpString(0), pr.CnodeStack[0].SexpString(0))
 	list := MakeList([]Sexp{
-		env.MakeSymbol("cond"), pr.CnodeStack[0],
+		env.MakeSymbol("ifOpMunchStmtOutput"), pr.CnodeStack[0],
 	})
 	P("ifOpMunchStmt() returning list = '%#v'", list)
 	return list, nil
 }
 
 func ifOpMunchLeft(env *Glisp, pr *Pratt, left Sexp) (Sexp, error) {
-	P("ifOp MunchLeft, left = '%v'. NextToken='%v'. pr.CnodeStack[0]='%v'", left.SexpString(0), pr.NextToken.SexpString(0), pr.CnodeStack[0].SexpString(0))
+	P("ifOpMunchLeft(), left = '%v'. NextToken='%v'. pr.CnodeStack[0]='%v'", left.SexpString(0), pr.NextToken.SexpString(0), pr.CnodeStack[0].SexpString(0))
 	list := MakeList([]Sexp{
-		env.MakeSymbol("cond"), left, pr.CnodeStack[0],
+		env.MakeSymbol("ifOpMunchLeftOutput"), left, pr.CnodeStack[0],
+	})
+	return list, nil
+}
+
+func ifOpMunchRight(env *Glisp, pr *Pratt) (Sexp, error) {
+	P("ifOpMunchRight(). NextToken='%v'. pr.CnodeStack[0]='%v'", pr.NextToken.SexpString(0), pr.CnodeStack[0].SexpString(0))
+
+	right, err := pr.Expression(env, 0)
+	if err != nil {
+		return SexpNull, err
+	}
+	P("in ifOpMunchRight, got from p.Expression(env, 0) the right = %#v, err = %#v, pr.CnodeStack[0] = %#v",
+		right, err, pr.CnodeStack[0])
+
+	list := MakeList([]Sexp{
+		//		env.MakeSymbol("ifOpMunchRightOutput"), right, pr.CnodeStack[0],
+		env.MakeSymbol("ifOpMunchRightOutput"), right,
 	})
 	return list, nil
 }
@@ -456,7 +511,10 @@ func (p *Pratt) Expression(env *Glisp, rbp int) (ret Sexp, err error) {
 	case *SexpSymbol:
 		op, found := env.infixOps[x.name]
 		if found {
+			P("Expression lookup of op.Sym=%v/op='%#v' succeeded", op.Sym.SexpString(0), op)
 			curOp = op
+		} else {
+			P("Expression lookup of x.name == '%v' failed", x.name)
 		}
 	case *SexpArray:
 		P("in pratt parsing, got array x = '%v'", x.SexpString(0))
@@ -479,13 +537,14 @@ func (p *Pratt) Expression(env *Glisp, rbp int) (ret Sexp, err error) {
 	}
 
 	for !p.IsEOF() {
+		P("not IsEOF in Expression")
 		nextLbp, err := env.LeftBindingPower(p.NextToken)
 		if err != nil {
 			P("env.LeftBindingPower('%s') saw err = %v",
 				p.NextToken.SexpString(0), err)
 			return SexpNull, err
 		}
-		P("nextLbp = %v", nextLbp)
+		P("nextLbp = %v, and rbp = %v, so rpb >= nextLbp == %v", nextLbp, rbp, rbp >= nextLbp)
 		if rbp >= nextLbp {
 			break
 		}
