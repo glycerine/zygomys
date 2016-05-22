@@ -3,6 +3,11 @@
 (assert (== (infixExpand {if 1 == 2 { 3 } else { 4 }})  (quote (quote (cond (== 1 2) (infix [3]) (infix [4]))))))
 (assert (== (str (infixExpand {if 1 == 2 { 3 }})) (str (quote (quote (cond (== 1 2) {3} nil))))))
 
+(assert (== (infixExpand { a = 10; b = 12 }) (quote (set a 10) (set b 12))))
+
+(infixExpand { a = 10; b = 0; if a < 9 { b++ } else { b += 10  }})
+
+
 { a = 10;
   b = 0;
   if a < 9 {
@@ -11,7 +16,7 @@
     b += 10
   }
   (assert (== b 10))
-
+  ;
   if a > 9 {
     b++
   }

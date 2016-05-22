@@ -537,10 +537,13 @@ func (parser *Parser) ParseInfix(depth int) (Sexp, error) {
 			break
 		}
 
+		P("debug: ParseInfix(depth=%v) calling ParseExpression", depth)
 		expr, err := parser.ParseExpression(depth + 1)
 		if err != nil {
 			return SexpNull, err
 		}
+		P("debug2: ParseInfix(depth=%v) appending expr = '%v'", depth, expr.SexpString(0))
+
 		arr = append(arr, expr)
 	}
 
