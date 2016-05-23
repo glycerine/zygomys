@@ -344,6 +344,10 @@ func InfixBuilder(env *Glisp, name string, args []Sexp) (Sexp, error) {
 			break
 		}
 
+		_, nextIsSemi := pr.NextToken.(*SexpSemicolon)
+		if nextIsSemi {
+			pr.Advance() // skip over the semicolon
+		}
 	}
 	P("infix builder loop done, here are my expressions:")
 	for i, ele := range xs {

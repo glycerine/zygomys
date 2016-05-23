@@ -9,6 +9,11 @@
 
 (infixExpand { a = 10; b = 0; { if a < 9 { b++ } else { b += 10  }   (assert (== b 10)) }})
 
+// smallest example of the first if-parse problem, now fixed.
+(assert (== (str (infixExpand { a=10; if a < 9 56 })) (str (quote (quote (set a 10) (cond (< a 9) 56 nil))))))
+
+// the lost else problem:
+//
 // this next omits the else terms when parsing, and the 2nd then.
 { a = 10;  b = 0;  if a < 9 {    b++  } else {    b += 10  }  (assert (== b 10))  ;  if a > 9 {    b++  }  (assert (== b 11)) }
 
