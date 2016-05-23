@@ -7,9 +7,9 @@
 
 (infixExpand { a = 10; b = 0; if a < 9 { b++ } else { b += 10  }})
 
-(infixExpand { a = 10; b = 0; { if a < 9 { b++ } else { b += 10  }}})
-//problem: (quote (set a 10) (set b 0) if (< a 9) (infix [b ++]) else (infix [b += 10]))
+(infixExpand { a = 10; b = 0; { if a < 9 { b++ } else { b += 10  }   (assert (== b 10)) }})
 
+// this next omits the else terms when parsing, or the 2nd then
 { a = 10;
   b = 0;
   if a < 9 {
