@@ -9,6 +9,18 @@
 
 (infixExpand { a = 10; b = 0; { if a < 9 { b++ } else { b += 10  }   (assert (== b 10)) }})
 
+// this next omits the else terms when parsing, and the 2nd then.
+{ a = 10;  b = 0;  if a < 9 {    b++  } else {    b += 10  }  (assert (== b 10))  ;  if a > 9 {    b++  }  (assert (== b 11)) }
+
+// reduced version
+{ if a < 9 {    b++  } else {    b += 10  }  (assert (== b 10))  ;  if a > 9 {    b++  }  (assert (== b 11)) }
+
+
+// parses okay with semicolons added:
+{ a=10; b=0; if a < 9 {    b++  } else {    b += 10  };  (assert (== b 10))  ;  if a > 9 {    b++  };  (assert (== b 11)) }
+
+// except that the if doesn't get turned into a cond.
+
 // this next omits the else terms when parsing, or the 2nd then
 { a = 10;
   b = 0;

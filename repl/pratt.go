@@ -234,11 +234,11 @@ func (env *Glisp) InitInfixOps() {
 	dotOp.MunchLeft = dotOpMunchLeft
 
 	ifOp := env.Prefix("if", 5)
-	P("ipOf = %#v", ifOp)
+	//P("ifOp = %#v", ifOp.SexpString(0))
 
 	ifOp.MunchRight = func(env *Glisp, pr *Pratt) (Sexp, error) {
 		P("ifOp.MunchRight(): NextToken='%v'. pr.CnodeStack[0]='%v'", pr.NextToken.SexpString(0), pr.CnodeStack[0].SexpString(0))
-		right, err := pr.Expression(env, 0)
+		right, err := pr.Expression(env, 5)
 		P("ifOp.MunchRight: back from Expression-1st-call, err = %#v, right = '%v'", err, right.SexpString(0))
 		if err != nil {
 			return SexpNull, err
@@ -259,6 +259,7 @@ func (env *Glisp) InitInfixOps() {
 				P("detected else, advancing past it")
 				pr.Advance()
 				elseExpr, err = pr.Expression(env, 0)
+				// elseExpr, err = pr.Expression(env, 110)
 				P("ifOp.MunchRight: back from Expression-3rd-call, err = %#v, elseExpr = '%v'", err, elseExpr.SexpString(0))
 				if err != nil {
 					return SexpNull, err
@@ -303,7 +304,7 @@ func InfixBuilder(env *Glisp, name string, args []Sexp) (Sexp, error) {
 			}
 			switch ar2 := pair.Head.(type) {
 			case *SexpArray:
-				//P("infixExpand, doing recursive call to InfixBuilder, ar2 = '%v'", ar2.SexpString())
+				P("infixExpand, doing recursive call to InfixBuilder, ar2 = '%v'", ar2.SexpString(0))
 				return InfixBuilder(env, name, []Sexp{ar2})
 			default:
 				return SexpNull, fmt.Errorf("infixExpand expects (infix []) as its argument; instead we saw '%T'", v.Tail)
