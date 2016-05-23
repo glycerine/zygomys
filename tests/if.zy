@@ -23,7 +23,10 @@
 // this next omits the else terms when parsing, and the 2nd then.
 // adding in the semi-colons manually fixes the lost else:
 // works:
-{ a = 10;  b = 0;  if a < 9 {    b++  } else {    b += 10  } ; (assert (== b 10))  ;  if a > 9 {    b++  };  (assert (== b 11)) }
+// { a = 10;  b = 0;  if a < 9 {    b++  } else {    b += 10  } ; (assert (== b 10))  ;  if a > 9 {    b++  };  (assert (== b 11)) }
+
+(assert (== (str (infixExpand { a = 10;  b = 0;  if a < 9 {    b++  } else {    b += 10  } ; (assert (== b 10))  ;  if a > 9 {    b++  };  (assert (== b 11)) })) "(quote (set a 10) (set b 0) (cond (< a 9) (infix [b ++]) (infix [b += 10])) (assert (== b 10)) (cond (> a 9) (infix [b ++]) nil) (assert (== b 11)))"))
+/*
 // mis-parses, bad, lost else:
 { a = 10;  b = 0;  if a < 9 {    b++  } else {    b += 10  }  (assert (== b 10))  ;  if a > 9 {    b++  }  (assert (== b 11)) }
 
@@ -51,3 +54,4 @@
   }
   (assert (== b 11))
 }
+*/
