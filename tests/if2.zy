@@ -1,0 +1,15 @@
+{ a = 10;
+  b = 0;
+  if a < 9 {
+    b++
+  } else {
+    b += 10 // either this was getting lost
+  }
+  (assert (== b 10)) // or this was getting lost
+  
+  if a > 9 {
+    b++
+  }
+  (assert (== b 11)) 
+}
+
