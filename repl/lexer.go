@@ -13,7 +13,8 @@ import (
 type TokenType int
 
 const (
-	TokenLParen TokenType = iota
+	TokenTypeEmpty TokenType = iota
+	TokenLParen
 	TokenRParen
 	TokenLSquare
 	TokenRSquare
@@ -126,9 +127,21 @@ type Lexer struct {
 	tokens   []Token
 	buffer   *bytes.Buffer
 
-	stream  io.RuneScanner
-	next    []io.RuneScanner
-	linenum int
+	prevToken     Token
+	prevPrevToken Token
+	stream        io.RuneScanner
+	next          []io.RuneScanner
+	linenum       int
+}
+
+func (lexer *Lexer) AppendToken(tok Token) {
+	lexer.tokens = append(lexer.tokens, tok)
+	lexer.prevPrevToken = lexer.prevToken
+	lexer.prevToken = tok
+}
+
+func (lexer *Lexer) PrependToken(tok Token) {
+	lexer.tokens = append([]Token{tok}, lexer.tokens...)
 }
 
 func NewLexer(p *Parser) *Lexer {
@@ -267,7 +280,7 @@ func (x *Lexer) DecodeAtom(atom string) (Token, error) {
 		return x.Token(TokenFloat, atom), nil
 	}
 	if DotSymbolRegex.MatchString(atom) {
-		//P("matched DotSymbolRegex '%v'", atom)
+		//Q("matched DotSymbolRegex '%v'", atom)
 		return x.Token(TokenDotSymbol, atom), nil
 	}
 	if BuiltinOpRegex.MatchString(atom) {
@@ -276,10 +289,10 @@ func (x *Lexer) DecodeAtom(atom string) (Token, error) {
 	if atom == ":" {
 		return x.Token(TokenSymbol, atom), nil
 	} else if SymbolRegex.MatchString(atom) {
-		////P("matched symbol regex, atom='%v'", atom)
+		////Q("matched symbol regex, atom='%v'", atom)
 		n := len(atom)
 		if atom[n-1] == ':' {
-			////P("matched symbol regex with colon, atom[:n-1]='%v'", atom[:n-1])
+			////Q("matched symbol regex with colon, atom[:n-1]='%v'", atom[:n-1])
 			return x.Token(TokenSymbolColon, atom[:n-1]), nil
 		}
 		return x.Token(TokenSymbol, atom), nil
@@ -305,25 +318,8 @@ func (lexer *Lexer) dumpBuffer() error {
 	if err != nil {
 		return err
 	}
-	/*
-		if tok.typ == TokenDotSymbol {
-
-			path := DotPartsRegex.FindAllString(name, -1)
-			lenpath := len(path)
-			if lenpath > 1 && tok.str[0] != '.' {
-				P("in lexer dumpBuffer(), path = '%#v'\n", path)
-				lexer.buffer.Reset()
-				lexer.tokens = append(lexer.tokens, x.Token(TokenSymbol, path[0]))
-				for i := 1; i < lenpath; i++ {
-					lexer.tokens = append(lexer.tokens, x.Token(TokenDot, "."))
-					lexer.tokens = append(lexer.tokens, x.Token(TokenSymbol, path[i]))
-				}
-				return nil
-			}
-		}
-	*/
 	lexer.buffer.Reset()
-	lexer.tokens = append(lexer.tokens, tok)
+	lexer.AppendToken(tok)
 	return nil
 
 }
@@ -335,19 +331,19 @@ func (lexer *Lexer) dumpBuffer() error {
 func (lexer *Lexer) dumpComment() {
 	str := lexer.buffer.String()
 	lexer.buffer.Reset()
-	lexer.tokens = append(lexer.tokens, lexer.Token(TokenComment, str))
+	lexer.AppendToken(lexer.Token(TokenComment, str))
 }
 
 func (lexer *Lexer) dumpString() {
 	str := lexer.buffer.String()
 	lexer.buffer.Reset()
-	lexer.tokens = append(lexer.tokens, lexer.Token(TokenString, str))
+	lexer.AppendToken(lexer.Token(TokenString, str))
 }
 
 func (lexer *Lexer) dumpBacktickString() {
 	str := lexer.buffer.String()
 	lexer.buffer.Reset()
-	lexer.tokens = append(lexer.tokens, lexer.Token(TokenBacktickString, str))
+	lexer.AppendToken(lexer.Token(TokenBacktickString, str))
 }
 
 func (x *Lexer) DecodeBrace(brace rune) Token {
@@ -373,7 +369,7 @@ top:
 	switch lexer.state {
 
 	case LexerCommentBlock:
-		//P("lexer.state = LexerCommentBlock")
+		//Q("lexer.state = LexerCommentBlock")
 		if r == '\n' {
 			_, err := lexer.buffer.WriteRune('\n')
 			if err != nil {
@@ -388,15 +384,14 @@ top:
 			return nil
 		}
 	case LexerCommentBlockAsterisk:
-		//P("lexer.state = LexerCommentBlockAsterisk")
+		//Q("lexer.state = LexerCommentBlockAsterisk")
 		if r == '/' {
 			_, err := lexer.buffer.WriteString("*/")
 			if err != nil {
 				return err
 			}
 			lexer.dumpComment()
-			lexer.tokens = append(lexer.tokens, lexer.Token(
-				TokenEndBlockComment, ""))
+			lexer.AppendToken(lexer.Token(TokenEndBlockComment, ""))
 			lexer.state = LexerNormal
 			return nil
 		}
@@ -408,7 +403,7 @@ top:
 		goto writeRuneToBuffer
 
 	case LexerFirstFwdSlash:
-		//P("lexer.state = LexerFirstFwdSlash")
+		//Q("lexer.state = LexerFirstFwdSlash")
 		if r == '/' {
 			err := lexer.dumpBuffer()
 			if err != nil {
@@ -428,8 +423,7 @@ top:
 				return err
 			}
 			lexer.state = LexerCommentBlock
-			lexer.tokens = append(lexer.tokens, lexer.Token(
-				TokenBeginBlockComment, ""))
+			lexer.AppendToken(lexer.Token(TokenBeginBlockComment, ""))
 			return nil
 		}
 		lexer.state = LexerBuiltinOperator
@@ -441,9 +435,9 @@ top:
 		goto top // process the unknown rune r
 
 	case LexerCommentLine:
-		//P("lexer.state = LexerCommentLine")
+		//Q("lexer.state = LexerCommentLine")
 		if r == '\n' {
-			//P("lexer.state = LexerCommentLine sees end of line comment: '%s', going to LexerNormal", string(lexer.buffer.Bytes()))
+			//Q("lexer.state = LexerCommentLine sees end of line comment: '%s', going to LexerNormal", string(lexer.buffer.Bytes()))
 			lexer.dumpComment()
 			lexer.state = LexerNormal
 			return nil
@@ -482,11 +476,9 @@ top:
 
 	case LexerUnquote:
 		if r == '@' {
-			lexer.tokens = append(
-				lexer.tokens, lexer.Token(TokenTildeAt, ""))
+			lexer.AppendToken(lexer.Token(TokenTildeAt, ""))
 		} else {
-			lexer.tokens = append(
-				lexer.tokens, lexer.Token(TokenTilde, ""))
+			lexer.AppendToken(lexer.Token(TokenTilde, ""))
 			lexer.buffer.WriteRune(r)
 		}
 		lexer.state = LexerNormal
@@ -499,18 +491,16 @@ top:
 		// so proceed to process the normal ':' actions.
 		if lexer.buffer.Len() == 0 {
 			if r == '=' {
-				lexer.tokens = append(lexer.tokens, lexer.Token(TokenFreshAssign, ":="))
+				lexer.AppendToken(lexer.Token(TokenFreshAssign, ":="))
 				return nil
 			}
-			//lexer.tokens = append(lexer.tokens, lexer.Token(TokenColonOperator, ":"))
-			//goto top // process the unknown rune r in Normal mode
 		}
 		if r == '=' {
 			err := lexer.dumpBuffer()
 			if err != nil {
 				return err
 			}
-			lexer.tokens = append(lexer.tokens, lexer.Token(TokenFreshAssign, ":="))
+			lexer.AppendToken(lexer.Token(TokenFreshAssign, ":="))
 			return nil
 		} else {
 			// but still allow ':' to be a token terminator at the end of a word.
@@ -518,7 +508,6 @@ top:
 			if err != nil {
 				return err
 			}
-			//lexer.tokens = append(lexer.tokens, lexer.Token(TokenQuote, ""))
 			err = lexer.dumpBuffer()
 			if err != nil {
 				return err
@@ -527,34 +516,34 @@ top:
 		}
 
 	case LexerBuiltinOperator:
-		//P("in LexerBuiltinOperator")
+		//Q("in LexerBuiltinOperator")
 		lexer.state = LexerNormal
 		// three cases: negative number, one rune operator, two rune operator
 		first := string(lexer.prevrune)
 		atom := fmt.Sprintf("%c%c", lexer.prevrune, r)
-		//P("in LexerBuiltinOperator, first='%s', atom='%s'", first, atom)
+		//Q("in LexerBuiltinOperator, first='%s', atom='%s'", first, atom)
 		// are we a negative number -1 or -.1 rather than  ->, --, -= operator?
 		if lexer.prevrune == '-' {
 			if FloatRegex.MatchString(atom) || DecimalRegex.MatchString(atom) {
-				//P("'%s' is the beginning of a negative number", atom)
+				//Q("'%s' is the beginning of a negative number", atom)
 				_, err := lexer.buffer.WriteString(atom)
 				if err != nil {
 					return err
 				}
 				return nil
 			} else {
-				//P("atom was not matched by FloatRegex: '%s'", atom)
+				//Q("atom was not matched by FloatRegex: '%s'", atom)
 			}
 		}
 
 		if BuiltinOpRegex.MatchString(atom) {
-			//P("2 rune atom in builtin op '%s', first='%s'", atom, first)
+			//Q("2 rune atom in builtin op '%s', first='%s'", atom, first)
 			// 2 rune op
-			lexer.tokens = append(lexer.tokens, lexer.Token(TokenSymbol, atom))
+			lexer.AppendToken(lexer.Token(TokenSymbol, atom))
 			return nil
 		}
-		//P("1 rune atom in builtin op '%s', first='%s'", atom, first)
-		lexer.tokens = append(lexer.tokens, lexer.Token(TokenSymbol, first))
+		//Q("1 rune atom in builtin op '%s', first='%s'", atom, first)
+		lexer.AppendToken(lexer.Token(TokenSymbol, first))
 		goto top // still have to parse r in normal
 
 	case LexerNormal:
@@ -603,7 +592,7 @@ top:
 			if err != nil {
 				return err
 			}
-			lexer.tokens = append(lexer.tokens, lexer.Token(TokenSemicolon, ";"))
+			lexer.AppendToken(lexer.Token(TokenSemicolon, ";"))
 			return nil
 
 		case ',':
@@ -611,7 +600,7 @@ top:
 			if err != nil {
 				return err
 			}
-			lexer.tokens = append(lexer.tokens, lexer.Token(TokenComma, ","))
+			lexer.AppendToken(lexer.Token(TokenComma, ","))
 			return nil
 
 		// colon terminates a keyword symbol, e.g. in `mykey: "myvalue"`;
@@ -629,14 +618,14 @@ top:
 			if err != nil {
 				return err
 			}
-			lexer.tokens = append(lexer.tokens, lexer.Token(TokenSymbol, "&"))
+			lexer.AppendToken(lexer.Token(TokenSymbol, "&"))
 			return nil
 
 		case '%': // replaces ' as our quote shorthand
 			if lexer.buffer.Len() > 0 {
 				return errors.New("Unexpected % quote")
 			}
-			lexer.tokens = append(lexer.tokens, lexer.Token(TokenQuote, ""))
+			lexer.AppendToken(lexer.Token(TokenQuote, ""))
 			return nil
 
 		// caret '^' replaces backtick '`' as the start of a macro template, so
@@ -645,7 +634,7 @@ top:
 			if lexer.buffer.Len() > 0 {
 				return errors.New("Unexpected ^ caret")
 			}
-			lexer.tokens = append(lexer.tokens, lexer.Token(TokenCaret, ""))
+			lexer.AppendToken(lexer.Token(TokenCaret, ""))
 			return nil
 
 		case '~':
@@ -670,7 +659,7 @@ top:
 			if err != nil {
 				return err
 			}
-			lexer.tokens = append(lexer.tokens, lexer.DecodeBrace(r))
+			lexer.AppendToken(lexer.DecodeBrace(r))
 			return nil
 		case '\n':
 			lexer.linenum++
@@ -699,9 +688,9 @@ writeRuneToBuffer:
 
 func (lexer *Lexer) PeekNextToken() (tok Token, err error) {
 	/*
-		P("\n in PeekNextToken()\n")
+		Q("\n in PeekNextToken()\n")
 		defer func() {
-			P("\n done with PeekNextToken() -> returning tok='%v', err=%v. tok='%#v'. tok==EndTk? %v\n",
+			Q("\n done with PeekNextToken() -> returning tok='%v', err=%v. tok='%#v'. tok==EndTk? %v\n",
 				tok, err, tok, tok == EndTk)
 		}()
 	*/

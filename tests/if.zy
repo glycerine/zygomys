@@ -55,3 +55,22 @@
   (assert (== b 11))
 }
 */
+
+/*
+Go's semicolon insertion rules:
+
+a) When the input is broken into tokens, a semicolon is automatically inserted into the token stream at the end of a non-blank line if the line's final token is:
+
+- an identifier or basic literal
+- one of the keywords break, continue, fallthrough or return
+    - one of the tokens ++ -- ) ] }
+
+    When the input is broken into tokens, a semicolon is automatically inserted into the token stream at the end of a non-blank line if the line's final token is
+
+    an identifier
+    an integer, floating-point, imaginary, rune, or string literal
+    one of the keywords break, continue, fallthrough, or return
+    one of the operators and delimiters ++, --, ), ], or }
+    To allow complex statements to occupy a single line, a semicolon may be omitted before a closing ")" or "}".
+    
+*/
