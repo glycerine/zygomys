@@ -42,8 +42,8 @@ func (env *Glisp) Infix(op string, bp int) *InfixOp {
 	iop := &InfixOp{
 		Sym: oper,
 		Bp:  bp,
-		MunchLeft: func(env *Glisp, pr *Pratt, left Sexp, depth int) (Sexp, error) {
-			right, err := pr.Expression(env, bp, depth+1)
+		MunchLeft: func(env *Glisp, pr *Pratt, left Sexp) (Sexp, error) {
+			right, err := pr.Expression(env, bp)
 			if err != nil {
 				return SexpNull, err
 			}
@@ -71,8 +71,8 @@ func (env *Glisp) Infixr(op string, bp int) *InfixOp {
 	iop := &InfixOp{
 		Sym: oper,
 		Bp:  bp,
-		MunchLeft: func(env *Glisp, pr *Pratt, left Sexp, depth int) (Sexp, error) {
-			right, err := pr.Expression(env, bp-1, depth+1)
+		MunchLeft: func(env *Glisp, pr *Pratt, left Sexp) (Sexp, error) {
+			right, err := pr.Expression(env, bp-1)
 			if err != nil {
 				return SexpNull, err
 			}
@@ -93,8 +93,8 @@ func (env *Glisp) Prefix(op string, bp int) *InfixOp {
 	iop := &InfixOp{
 		Sym: oper,
 		Bp:  bp,
-		MunchRight: func(env *Glisp, pr *Pratt, depth int) (Sexp, error) {
-			right, err := pr.Expression(env, bp, depth+1)
+		MunchRight: func(env *Glisp, pr *Pratt) (Sexp, error) {
+			right, err := pr.Expression(env, bp)
 			if err != nil {
 				return SexpNull, err
 			}
@@ -116,10 +116,10 @@ func (env *Glisp) Assignment(op string, bp int) *InfixOp {
 	iop := &InfixOp{
 		Sym: oper,
 		Bp:  bp,
-		MunchLeft: func(env *Glisp, pr *Pratt, left Sexp, depth int) (Sexp, error) {
+		MunchLeft: func(env *Glisp, pr *Pratt, left Sexp) (Sexp, error) {
 			// TODO: check that left is okay as an LVALUE.
 
-			right, err := pr.Expression(env, bp-1, depth+1)
+			right, err := pr.Expression(env, bp-1)
 			if err != nil {
 				return SexpNull, err
 			}
@@ -146,7 +146,7 @@ func (env *Glisp) PostfixAssign(op string, bp int) *InfixOp {
 	iop := &InfixOp{
 		Sym: oper,
 		Bp:  bp,
-		MunchLeft: func(env *Glisp, pr *Pratt, left Sexp, depth int) (Sexp, error) {
+		MunchLeft: func(env *Glisp, pr *Pratt, left Sexp) (Sexp, error) {
 			// TODO: check that left is okay as an LVALUE
 			list := MakeList([]Sexp{
 				oper, left,
@@ -159,13 +159,13 @@ func (env *Glisp) PostfixAssign(op string, bp int) *InfixOp {
 	return iop
 }
 
-func arrayOpMunchLeft(env *Glisp, pr *Pratt, left Sexp, depth int) (Sexp, error) {
+func arrayOpMunchLeft(env *Glisp, pr *Pratt, left Sexp) (Sexp, error) {
 	oper := env.MakeSymbol("arrayidx")
 	Q("pr.NextToken = '%v', left = %#v", pr.NextToken.SexpString(0), left)
 	if len(pr.CnodeStack) > 0 {
 		Q("pr.CnodeStack[0] = '%v'", pr.CnodeStack[0])
 	}
-	//right, err := pr.Expression(env, 0)
+
 	right := pr.NextToken
 	Q("right = %#v", right)
 	list := MakeList([]Sexp{
@@ -174,7 +174,7 @@ func arrayOpMunchLeft(env *Glisp, pr *Pratt, left Sexp, depth int) (Sexp, error)
 	return list, nil
 }
 
-func dotOpMunchLeft(env *Glisp, pr *Pratt, left Sexp, depth int) (Sexp, error) {
+func dotOpMunchLeft(env *Glisp, pr *Pratt, left Sexp) (Sexp, error) {
 	//Q("dotOp MunchLeft, left = '%v'. NextToken='%v'. pr.CnodeStack[0]='%v'", left.SexpString(0), pr.NextToken.SexpString(0), pr.CnodeStack[0].SexpString(0))
 	list := MakeList([]Sexp{
 		env.MakeSymbol("hashidx"), left, pr.CnodeStack[0],
@@ -182,8 +182,8 @@ func dotOpMunchLeft(env *Glisp, pr *Pratt, left Sexp, depth int) (Sexp, error) {
 	return list, nil
 }
 
-func starOpMunchRight(env *Glisp, pr *Pratt, depth int) (Sexp, error) {
-	right, err := pr.Expression(env, 70, depth+1)
+func starOpMunchRight(env *Glisp, pr *Pratt) (Sexp, error) {
+	right, err := pr.Expression(env, 70)
 	if err != nil {
 		return SexpNull, err
 	}
@@ -236,16 +236,16 @@ func (env *Glisp) InitInfixOps() {
 	ifOp := env.Prefix("if", 5)
 	//Q("ifOp = %#v", ifOp.SexpString(0))
 
-	ifOp.MunchRight = func(env *Glisp, pr *Pratt, depth int) (Sexp, error) {
+	ifOp.MunchRight = func(env *Glisp, pr *Pratt) (Sexp, error) {
 		Q("ifOp.MunchRight(): NextToken='%v'. pr.CnodeStack[0]='%v'", pr.NextToken.SexpString(0), pr.CnodeStack[0].SexpString(0))
-		right, err := pr.Expression(env, 5, depth+1)
+		right, err := pr.Expression(env, 5)
 		Q("ifOp.MunchRight: back from Expression-1st-call, err = %#v, right = '%v'", err, right.SexpString(0))
 		if err != nil {
 			return SexpNull, err
 		}
 		Q("in ifOpMunchRight, got from p.Expression(env, 0) the right = '%v', err = %#v, pr.CnodeStack[0] = %#v, ifOp.Sym = '%v'", right.SexpString(0), err, pr.CnodeStack[0], ifOp.Sym.SexpString(0))
 
-		thenExpr, err := pr.Expression(env, 0, depth+1)
+		thenExpr, err := pr.Expression(env, 0)
 		Q("ifOp.MunchRight: back from Expression-2nd-call, err = %#v, thenExpr = '%v'", err, thenExpr.SexpString(0))
 		if err != nil {
 			return SexpNull, err
@@ -258,7 +258,7 @@ func (env *Glisp) InitInfixOps() {
 			if sym.name == "else" {
 				Q("detected else, advancing past it")
 				pr.Advance()
-				elseExpr, err = pr.Expression(env, 0, depth+1)
+				elseExpr, err = pr.Expression(env, 0)
 				Q("ifOp.MunchRight: back from Expression-3rd-call, err = %#v, elseExpr = '%v'", err, elseExpr.SexpString(0))
 				if err != nil {
 					return SexpNull, err
@@ -275,9 +275,9 @@ func (env *Glisp) InitInfixOps() {
 	env.Infix("comma", 15)
 }
 
-type RightMuncher func(env *Glisp, pr *Pratt, depth int) (Sexp, error)
-type LeftMuncher func(env *Glisp, pr *Pratt, left Sexp, depth int) (Sexp, error)
-type StmtMuncher func(env *Glisp, pr *Pratt, depth int) (Sexp, error)
+type RightMuncher func(env *Glisp, pr *Pratt) (Sexp, error)
+type LeftMuncher func(env *Glisp, pr *Pratt, left Sexp) (Sexp, error)
+type StmtMuncher func(env *Glisp, pr *Pratt) (Sexp, error)
 
 func InfixBuilder(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	Q("InfixBuilder top, name='%s', len(args)==%v ", name, len(args))
@@ -324,9 +324,8 @@ func InfixBuilder(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		xs = append(xs, env.MakeSymbol("quote"))
 	}
 
-	depth := 0
 	for {
-		x, err := pr.Expression(env, 0, depth)
+		x, err := pr.Expression(env, 0)
 		if err != nil {
 			return SexpNull, err
 		}
@@ -372,7 +371,6 @@ type Pratt struct {
 	NextToken  Sexp
 	CnodeStack []Sexp
 	AccumTree  Sexp
-	//	Cur        Sexp
 
 	Pos    int
 	Stream []Sexp
@@ -460,7 +458,7 @@ func NewPratt(stream []Sexp) *Pratt {
 // at the top) in the resulting parse tree.
 //
 
-func (p *Pratt) Expression(env *Glisp, rbp int, depth int) (ret Sexp, err error) {
+func (p *Pratt) Expression(env *Glisp, rbp int) (ret Sexp, err error) {
 	defer func() {
 		if ret == nil {
 			Q("Expression is returning Sexp ret = nil")
@@ -468,7 +466,6 @@ func (p *Pratt) Expression(env *Glisp, rbp int, depth int) (ret Sexp, err error)
 			Q("Expression is returning Sexp ret = '%v'", ret.SexpString(0))
 		}
 	}()
-	topLevelExpressionCount := 0
 
 	cnode := p.NextToken
 	if cnode != nil {
@@ -484,7 +481,6 @@ func (p *Pratt) Expression(env *Glisp, rbp int, depth int) (ret Sexp, err error)
 	//p.ShowCnodeStack()
 
 	p.Advance()
-	topLevelExpressionCount++
 
 	var curOp *InfixOp
 	switch x := cnode.(type) {
@@ -504,7 +500,7 @@ func (p *Pratt) Expression(env *Glisp, rbp int, depth int) (ret Sexp, err error)
 		// munch_right() of atoms returns this/itself, in which
 		// case: p.AccumTree = t; is the result.
 		Q("about to MunchRight on cnode = %v", cnode.SexpString(0))
-		p.AccumTree, err = curOp.MunchRight(env, p, depth+1)
+		p.AccumTree, err = curOp.MunchRight(env, p)
 		if err != nil {
 			Q("Expression(%v) MunchRight saw err = %v", rbp, err)
 			return SexpNull, err
@@ -517,11 +513,6 @@ func (p *Pratt) Expression(env *Glisp, rbp int, depth int) (ret Sexp, err error)
 	}
 
 	for !p.IsEOF() {
-		//		if topLevelExpressionCount > 2 && depth == 0 {
-		//			Q("pseudo-eof emuation: topLevelExpressionCount == %v && depth == 0", topLevelExpressionCount)
-		//			break
-		//		}
-		Q("not IsEOF in Expression; depth == %v. topLevelExpressionCount = %v", depth, topLevelExpressionCount)
 		nextLbp, err := env.LeftBindingPower(p.NextToken)
 		if err != nil {
 			Q("env.LeftBindingPower('%s') saw err = %v",
@@ -569,7 +560,6 @@ func (p *Pratt) Expression(env *Glisp, rbp int, depth int) (ret Sexp, err error)
 		Q("in MunchLeft loop, before Advance, p.NextToken = %v",
 			p.NextToken.SexpString(0))
 		p.Advance()
-		topLevelExpressionCount++
 		if p.Pos < len(p.Stream) {
 			Q("in MunchLeft loop, after Advance, p.NextToken = %v",
 				p.NextToken.SexpString(0))
@@ -579,7 +569,7 @@ func (p *Pratt) Expression(env *Glisp, rbp int, depth int) (ret Sexp, err error)
 		// the net effect is: p.AccumTree = cnode;
 		if curOp != nil && curOp.MunchLeft != nil {
 			Q("about to MunchLeft, cnode = %v, p.AccumTree = %v", cnode.SexpString(0), p.AccumTree.SexpString(0))
-			p.AccumTree, err = curOp.MunchLeft(env, p, p.AccumTree, depth+1)
+			p.AccumTree, err = curOp.MunchLeft(env, p, p.AccumTree)
 			if err != nil {
 				Q("curOp.MunchLeft saw err = %v", err)
 				return SexpNull, err
@@ -679,107 +669,3 @@ func (p *Pratt) ShowCnodeStack() {
 		fmt.Printf("CnodeStack[%v] = %v\n", i, p.CnodeStack[i].SexpString(0))
 	}
 }
-
-func (p *Pratt) Statement(env *Glisp) (ret Sexp, err error) {
-
-	cnode := p.NextToken
-	if cnode != nil {
-		Q("top of Statement, cnode = '%v'", cnode.SexpString(0))
-	} else {
-		Q("top of Statement, cnode is nil")
-	}
-	if p.IsEOF() {
-		Q("Statement sees IsEOF, returning cnode = %v", cnode.SexpString(0))
-		return cnode, nil
-	}
-
-	var curOp *InfixOp
-	switch x := cnode.(type) {
-	case *SexpSymbol:
-		Q("in pratt Statement() parsing, cnode = '%v'", cnode.SexpString(0))
-		op, found := env.infixOps[x.name]
-		if found {
-			curOp = op
-		} else {
-			panic("unknown statement operation")
-		}
-	case *SexpArray:
-		Q("in pratt Statement() parsing, got array x = '%v'", x.SexpString(0))
-		panic("and do what?")
-	}
-
-	depth := 0
-	if curOp != nil && curOp.MunchStmt != nil {
-		Q("curOp '%#v' has a MunchStmt", curOp)
-		p.Advance()
-		//scope.reserve(curOp)
-		return curOp.MunchStmt(env, p, depth)
-	}
-	v, err := p.Expression(env, 0, depth)
-	Q("in Statement, got from p.Expression(env, 0) the v, err = %#v, %#v", v, err)
-	//	if (!v.IsAssignment && v.id !== "(") {
-	//		v.error("Bad expression statement.");
-	//	}
-	//p.Advance(";");
-	return v, err
-}
-
-/*
-// suspect parser.go ParseInfix takes care of this.
-func (p *Pratt) MultipleStatements(env *Glisp) (ret Sexp, err error) {
-	var a []Sexp
-	var s Sexp
-	for !p.IsEOF() {
-
-		Q("MultipleStatements: p.NextToken = %#v", p.NextToken)
-		if p.NextToken.Sym != nil {
-			//switch p.NextNoken.Sym.name == "}" {
-			break
-		}
-		s, err = p.Statement(env)
-		Q("MultipleStatements: back from p.Statement(env): s = '%v', err = '%v'", s.SexpString(0), err)
-		if err != nil {
-			break
-		}
-		if s != nil {
-			a = append(a, s)
-		} else {
-			break
-		}
-	}
-	return &SexpArray{Val: a}, err
-}
-*/
-
-/*
-var block = function () {
-	var t = token;
-	advance("{");
-	return t.std();
-};
-*/
-
-// Statement parses one statement (e.g. if-statement)
-
-/*
-// Stmt creates a new statement
-func (env *Glisp) Stmt(op string) *InfixOp {
-	oper := env.MakeSymbol(op)
-	iop := &InfixOp{
-		Sym: oper,
-		Bp:  80,
-		MunchStmt: func(env *Glisp, pr *Pratt) (Sexp, error) {
-			right, err := pr.Expression(env, 0)
-			if err != nil {
-				return SexpNull, err
-			}
-			list := MakeList([]Sexp{
-				oper, right,
-			})
-			return list, nil
-		},
-	}
-	env.infixOps[op] = iop
-	return iop
-}
-*/
