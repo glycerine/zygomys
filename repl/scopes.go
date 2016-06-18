@@ -92,18 +92,17 @@ func (stack *Stack) PopScope() error {
 func (stack *Stack) lookupSymbol(sym *SexpSymbol, minFrame int, setVal *Sexp) (Sexp, error, *Scope) {
 	if !stack.IsEmpty() {
 		for i := 0; i <= stack.tos-minFrame; i++ {
-			P("lookupSymbol checking stack %v of %v", i, (stack.tos-minFrame)+1)
+			//P("lookupSymbol checking stack %v of %v", i, (stack.tos-minFrame)+1)
 			elem, err := stack.Get(i)
 			if err != nil {
-				P("lookupSymbol bailing (early?) at i=%v on err='%v'", i, err)
+				//P("lookupSymbol bailing (early?) at i=%v on err='%v'", i, err)
 				return SexpNull, err, nil
 			}
 			switch scope := elem.(type) {
 			case (*Scope):
 				expr, ok := scope.Map[sym.number]
 				if ok {
-					P("lookupSymbol at stack scope# i=%v, we found sym '%s' with value '%s'",
-						i, sym.name, expr.SexpString(0))
+					//P("lookupSymbol at stack scope# i=%v, we found sym '%s' with value '%s'", i, sym.name, expr.SexpString(0))
 					if setVal != nil {
 						scope.Map[sym.number] = *setVal
 					}
@@ -112,7 +111,7 @@ func (stack *Stack) lookupSymbol(sym *SexpSymbol, minFrame int, setVal *Sexp) (S
 			}
 		}
 	}
-	P("lookupSymbol finished stack scan without finding it")
+	//P("lookupSymbol finished stack scan without finding it")
 	if stack.env != nil && stack.env.debugSymbolNotFound {
 		stack.env.ShowStackStackAndScopeStack()
 	}
@@ -153,21 +152,19 @@ func (stack *Stack) LookupSymbolUntilFunction(sym *SexpSymbol, setVal *Sexp) (Se
 					return expr, nil, scope
 				}
 				if scope.IsFunction {
-					P("   ...scope '%s' was a function, halting up search and checking captured closures\n",
-						scope.Name)
+					//P("   ...scope '%s' was a function, halting up search and checking captured closures\n", scope.Name)
 
 					// then check the captured closure scope stack
 
 					exp, err, whichScope := scope.MyFunction.ClosingLookupSymbol(sym, setVal)
 					switch err {
 					case nil:
-						P("LookupSymbolUntilFunction('%s') found in scope '%s'\n",
-							sym.name, whichScope.Name)
+						//P("LookupSymbolUntilFunction('%s') found in scope '%s'\n", sym.name, whichScope.Name)
 						return exp, err, whichScope
 					case SymNotFound:
 						break doneSearching
 					default:
-						P("unrecognized error '%v'", err)
+						//P("unrecognized error '%v'", err)
 						break doneSearching
 					}
 

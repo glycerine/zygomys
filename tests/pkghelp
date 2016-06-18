@@ -1,4 +1,4 @@
 (def a (hash b:42 dog: "bella" f: (fn [] 54) g: (fn [x] (+ x 7))))
-(defn assistor [y] (_ls) (+ y a.b (a.g 3)))
+(defn assistor [y] (+ y a.b (a.g 3)))
 
 
