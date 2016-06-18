@@ -1,0 +1,7 @@
+(def hi (package "hello"
+   { world := "earth"; (defn myfun [x] (concat world x)) }
+))
+
+(assert (== hi.world "earth"))
+(assert (== (hi.myfun "yes") "earthyes"))
+

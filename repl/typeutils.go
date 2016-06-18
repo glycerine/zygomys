@@ -188,6 +188,12 @@ func TypeOf(expr Sexp) *SexpStr {
 			P("kind = %v", kind)
 			v = "reflect.Value"
 		}
+	case *Stack:
+		if e.IsPackage {
+			v = "package"
+		} else {
+			v = "stack"
+		}
 	default:
 		fmt.Printf("\n error: unknown type: %T in '%#v'\n", e, e)
 	}

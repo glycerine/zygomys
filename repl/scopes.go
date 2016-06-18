@@ -298,8 +298,8 @@ type Showable interface {
 	Show(env *Glisp, indent int, label string) (string, error)
 }
 
+/*
 // nestedPathGetSet does a top-down lookup, as opposed to LexicalLookupSymbol which is bottom up
-// using a stack.
 func (s *Scope) nestedPathGetSet(env *Glisp, dotpaths []string, setVal *Sexp) (Sexp, error) {
 
 	if len(dotpaths) == 0 {
@@ -338,6 +338,8 @@ func (s *Scope) nestedPathGetSet(env *Glisp, dotpaths []string, setVal *Sexp) (S
 			return h2.nestedPathGetSet(env, dotpaths[1:], setVal)
 		case *Scope:
 			curScope = h2
+		case *Stack:
+			return h2.nestedPathGetSet(env, dotpaths[1:], setVal)
 		default:
 			return SexpNull, fmt.Errorf("not a record or scope: cannot get field '%s'"+
 				" out of type %T)", dotpaths[i+1][1:], h2)
@@ -346,3 +348,4 @@ func (s *Scope) nestedPathGetSet(env *Glisp, dotpaths []string, setVal *Sexp) (S
 	}
 	return ret, nil
 }
+*/

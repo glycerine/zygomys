@@ -820,7 +820,7 @@ func (h *SexpHash) nestedPathGetSet(env *Glisp, dotpaths []string, setVal *Sexp)
 		case *SexpHash:
 			P("\n found hash in h2 at i=%d, looping to next i\n", i)
 			askh = x
-		case *Scope:
+		case *Stack:
 			return x.nestedPathGetSet(env, dotpaths[1:], setVal)
 		default:
 			return SexpNull, fmt.Errorf("not a record: cannot get field '%s'"+

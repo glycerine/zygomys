@@ -1356,12 +1356,12 @@ func dotGetSetHelper(env *Glisp, name string, setVal *Sexp) (Sexp, error) {
 
 	// INVAR: lenpath > 1
 
-	// scope or hash? check for scope first (as when selecting values out of a package)
-	scop, isScope := ret.(*Scope)
-	if isScope {
-		P("found a scope: '%s'", scop.SexpString(0))
+	// package or hash? check for package
+	pkg, isStack := ret.(*Stack)
+	if isStack && pkg.IsPackage {
+		P("found a package: '%s'", pkg.SexpString(0))
 
-		exp, err := scop.nestedPathGetSet(env, path[1:], setVal)
+		exp, err := pkg.nestedPathGetSet(env, path[1:], setVal)
 		if err != nil {
 			return SexpNull, err
 		}
@@ -1372,7 +1372,7 @@ func dotGetSetHelper(env *Glisp, name string, setVal *Sexp) (Sexp, error) {
 		//Q("\n in dotGetSetHelper(), '%s' not found\n", key)
 		//			return SexpNull, err
 		//		}
-		//		return expr, nil, scop
+		//		return expr, nil, pkg
 	}
 
 	// at least .a.b if not a.b.c. etc: multiple elements,

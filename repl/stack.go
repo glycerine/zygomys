@@ -174,3 +174,57 @@ func (stack Stack) Show(env *Glisp, indent int, label string) (string, error) {
 func (s *Stack) TruncateToSize(newsize int) {
 	s.tos = newsize - 1
 }
+
+// nestedPathGetSet does a top-down lookup, as opposed to LexicalLookupSymbol which is bottom up
+func (s *Stack) nestedPathGetSet(env *Glisp, dotpaths []string, setVal *Sexp) (Sexp, error) {
+
+	if len(dotpaths) == 0 {
+		return SexpNull, fmt.Errorf("internal error: in nestedPathGetSet() dotpaths" +
+			" had zero length")
+	}
+
+	curStack := s
+
+	var ret Sexp = SexpNull
+	var err error
+	var scop *Scope
+	lenpath := len(dotpaths)
+	P("\n in nestedPathGetSet, dotpaths=%#v\n", dotpaths)
+	for i := range dotpaths {
+
+		curSym := env.MakeSymbol(stripAnyDotPrefix(dotpaths[i]))
+		if !curStack.IsPackage {
+			return SexpNull, fmt.Errorf("error locating symbol '%s': current Stack is not a package", curSym.name)
+		}
+
+		ret, err, scop = curStack.LookupSymbol(curSym, nil)
+		if err != nil {
+			return SexpNull, fmt.Errorf("could not find symbol '%s' in current package '%v'",
+				curSym.name, curStack.PackageName)
+		}
+		if setVal != nil && i == lenpath-1 {
+			// assign now
+			scop.Map[curSym.number] = *setVal
+			// done with SET
+			return *setVal, nil
+		}
+
+		if i == lenpath-1 {
+			// done with GET
+			return ret, nil
+		}
+		// invar: i < lenpath-1, so go deeper
+		switch x := ret.(type) {
+		case *SexpHash:
+			P("\n found hash in x at i=%d, looping to next i\n", i)
+			return x.nestedPathGetSet(env, dotpaths[1:], setVal)
+		case *Stack:
+			curStack = x
+		default:
+			return SexpNull, fmt.Errorf("not a record or scope: cannot get field '%s'"+
+				" out of type %T)", dotpaths[i+1][1:], x)
+		}
+
+	}
+	return ret, nil
+}
