@@ -441,6 +441,7 @@ func (env *Glisp) EvalString(str string) (Sexp, error) {
 	return env.Run()
 }
 
+// for most things now (except the main repl), prefer EvalFunction() instead of EvalExpressions.
 func (env *Glisp) EvalExpressions(xs []Sexp) (Sexp, error) {
 	//P("inside EvalExpressions with env %p: xs[0] = %s", env, xs[0].SexpString(0))
 	err := env.LoadExpressions(xs)
