@@ -562,18 +562,10 @@ func EvalFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	P("EvalFunction() called, name = '%s'; args = %#v", name, (&SexpArray{Val: args}).SexpString(0))
 
 	// Instead of LoadExpressions:
-	var ts *TreeState
-	args = env.FilterArray(args, RemoveCommentsFilter, ts)
-	args = env.FilterArray(args, RemoveEndsFilter, ts)
-	//args = env.FilterArray(args, RemoveCommasFilter, ts)
+	args = env.FilterArray(args, RemoveCommentsFilter)
+	args = env.FilterArray(args, RemoveEndsFilter)
 
 	gen := NewGenerator(env)
-	/*
-		if !env.ReachedEnd() {
-			P("EvalFunction is adding pop instruction since !env.ReachedEnd()")
-			gen.AddInstruction(PopInstr(0))
-		}
-	*/
 	err := gen.GenerateBegin(args)
 	if err != nil {
 		return SexpNull, err
@@ -583,31 +575,18 @@ func EvalFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	orig := &SexpArray{Val: args}
 	sfun := env.MakeFunction("evalGeneratedFunction", 0, false, newfunc, orig)
 
-	//P(" 444 EvalFunction is about to call our generated sfun = '%v'", sfun.SexpString(0))
-	//env.DumpEnvironment()
-
 	err = env.CallFunction(sfun, 0)
 	if err != nil {
 		return SexpNull, err
 	}
-
-	//P("555 after CallFunction, before Run:")
-	//env.DumpEnvironment()
 
 	var resultSexp Sexp
 	resultSexp, err = env.Run()
 	if err != nil {
 		return SexpNull, err
 	}
-	//env.datastack.PushExpr(resultSexp)
-
-	//P("777 EvalFunction successfullly did CallFunction(sfun, 0) and env.Run();  about to call env.ReturnFromFunction()")
-	//env.DumpEnvironment()
 
 	err = env.ReturnFromFunction()
-	//P("888 EvalFunction: ReturnFromFunction() returned err = %v", err)
-	//env.DumpEnvironment()
-
 	return resultSexp, err
 }
 

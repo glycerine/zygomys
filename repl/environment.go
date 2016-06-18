@@ -386,10 +386,9 @@ func (env *Glisp) CallUserFunction(
 
 func (env *Glisp) LoadExpressions(expressions []Sexp) error {
 	//ts := NewTreeState()
-	var ts *TreeState
-	expressions = env.FilterArray(expressions, RemoveCommentsFilter, ts)
-	expressions = env.FilterArray(expressions, RemoveEndsFilter, ts)
-	//expressions = env.FilterArray(expressions, RemoveCommasFilter, ts)
+	expressions = env.FilterArray(expressions, RemoveCommentsFilter)
+	expressions = env.FilterArray(expressions, RemoveEndsFilter)
+	//expressions = env.FilterArray(expressions, RemoveCommasFilter)
 
 	gen := NewGenerator(env)
 	if !env.ReachedEnd() {
