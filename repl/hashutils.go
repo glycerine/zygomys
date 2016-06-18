@@ -797,18 +797,18 @@ func (h *SexpHash) nestedPathGetSet(env *Glisp, dotpaths []string, setVal *Sexp)
 	var err error
 	askh := h
 	lenpath := len(dotpaths)
-	P("\n in nestedPathGetSet, dotpaths=%#v\n", dotpaths)
+	//P("\n in nestedPathGetSet, dotpaths=%#v\n", dotpaths)
 	for i := range dotpaths {
 		if setVal != nil && i == lenpath-1 {
 			// assign now
 			err = askh.HashSet(env.MakeSymbol(dotpaths[i][1:]), *setVal)
-			P("\n i=%v in nestedPathGetSet, dotpaths[i][1:]='%v' call to "+
-				"HashSet returned err = '%s'\n", i, dotpaths[i][1:], err)
+			//P("\n i=%v in nestedPathGetSet, dotpaths[i][1:]='%v' call to "+
+			//	"HashSet returned err = '%s'\n", i, dotpaths[i][1:], err)
 			return *setVal, err
 		}
 		ret, err = askh.HashGet(env, env.MakeSymbol(dotpaths[i][1:]))
-		P("\n i=%v in nestedPathGet, dotpaths[i][1:]='%v' call to "+
-			"HashGet returned '%s'\n", i, dotpaths[i][1:], ret.SexpString(0))
+		//P("\n i=%v in nestedPathGet, dotpaths[i][1:]='%v' call to "+
+		//	"HashGet returned '%s'\n", i, dotpaths[i][1:], ret.SexpString(0))
 		if err != nil {
 			return SexpNull, err
 		}
@@ -818,7 +818,7 @@ func (h *SexpHash) nestedPathGetSet(env *Glisp, dotpaths []string, setVal *Sexp)
 		// invar: i < lenpath-1, so go deeper
 		switch x := ret.(type) {
 		case *SexpHash:
-			P("\n found hash in h2 at i=%d, looping to next i\n", i)
+			//P("\n found hash in h2 at i=%d, looping to next i\n", i)
 			askh = x
 		case *Stack:
 			return x.nestedPathGetSet(env, dotpaths[1:], setVal)

@@ -189,7 +189,7 @@ func (s *Stack) nestedPathGetSet(env *Glisp, dotpaths []string, setVal *Sexp) (S
 	var err error
 	var scop *Scope
 	lenpath := len(dotpaths)
-	P("\n in nestedPathGetSet, dotpaths=%#v\n", dotpaths)
+	//P("\n in nestedPathGetSet, dotpaths=%#v\n", dotpaths)
 	for i := range dotpaths {
 
 		curSym := env.MakeSymbol(stripAnyDotPrefix(dotpaths[i]))

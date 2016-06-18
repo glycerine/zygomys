@@ -1309,7 +1309,7 @@ func QuoteListFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 // Otherwise set and return the value we set.
 func dotGetSetHelper(env *Glisp, name string, setVal *Sexp) (Sexp, error) {
 	path := DotPartsRegex.FindAllString(name, -1)
-	P("\n in dotGetSetHelper(), name = '%s', path = '%#v', setVal = '%#v'\n", name, path, setVal)
+	//P("\n in dotGetSetHelper(), name = '%s', path = '%#v', setVal = '%#v'\n", name, path, setVal)
 	if len(path) == 0 {
 		return SexpNull, fmt.Errorf("internal error: DotFunction" +
 			" path had zero length")
@@ -1359,7 +1359,7 @@ func dotGetSetHelper(env *Glisp, name string, setVal *Sexp) (Sexp, error) {
 	// package or hash? check for package
 	pkg, isStack := ret.(*Stack)
 	if isStack && pkg.IsPackage {
-		P("found a package: '%s'", pkg.SexpString(0))
+		//P("found a package: '%s'", pkg.SexpString(0))
 
 		exp, err := pkg.nestedPathGetSet(env, path[1:], setVal)
 		if err != nil {

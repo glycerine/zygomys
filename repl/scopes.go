@@ -312,7 +312,7 @@ func (s *Scope) nestedPathGetSet(env *Glisp, dotpaths []string, setVal *Sexp) (S
 	var ret Sexp = SexpNull
 	var ok bool
 	lenpath := len(dotpaths)
-	P("\n in nestedPathGetSet, dotpaths=%#v\n", dotpaths)
+	//P("\n in nestedPathGetSet, dotpaths=%#v\n", dotpaths)
 	for i := range dotpaths {
 		curSym := env.MakeSymbol(stripAnyDotPrefix(dotpaths[i]))
 		if setVal != nil && i == lenpath-1 {

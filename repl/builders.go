@@ -508,7 +508,7 @@ func PointerToFunction(env *Glisp, name string,
 		rt = arg.GoStructFactory
 	case *SexpPointer:
 		// dereference operation, rather than type declaration
-		P("dereference operation on *SexpPointer detected, returning target")
+		//P("dereference operation on *SexpPointer detected, returning target")
 		if arg == nil || arg.Target == nil {
 			return SexpNull, fmt.Errorf("illegal to dereference nil pointer")
 		}
