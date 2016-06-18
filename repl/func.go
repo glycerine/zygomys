@@ -153,7 +153,8 @@ func FuncBuilder(env *Glisp, name string,
 
 	gen.funcname = funcName
 
-	gen.AddInstruction(AddFuncScopeInstr{Name: "runtime " + gen.funcname})
+	afsHelper := &AddFuncScopeHelper{}
+	gen.AddInstruction(AddFuncScopeInstr{Name: "runtime " + gen.funcname, Helper: afsHelper})
 
 	argsyms := make([]*SexpSymbol, len(funcargs))
 
@@ -201,6 +202,10 @@ func FuncBuilder(env *Glisp, name string,
 		varargs, newfunc, orig)
 	sfun.inputTypes = inHash
 	sfun.returnTypes = retHash
+
+	// tell the function scope where their function is, to
+	// provide access to the captured-closure scopes at runtime.
+	afsHelper.MyFunction = sfun
 
 	clos := CreateClosureInstr{sfun}
 	notePc := env.pc

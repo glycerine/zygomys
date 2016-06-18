@@ -391,7 +391,12 @@ func (a AddScopeInstr) Execute(env *Glisp) error {
 }
 
 type AddFuncScopeInstr struct {
-	Name string
+	Name   string
+	Helper *AddFuncScopeHelper // we need a pointer we can update later once we know MyFunction
+}
+
+type AddFuncScopeHelper struct {
+	MyFunction *SexpFunction
 }
 
 func (a AddFuncScopeInstr) InstrString() string {
@@ -402,6 +407,7 @@ func (a AddFuncScopeInstr) Execute(env *Glisp) error {
 	sc := env.NewNamedScope(fmt.Sprintf("%s at pc=%v",
 		env.curfunc.name, env.pc))
 	sc.IsFunction = true
+	sc.MyFunction = a.Helper.MyFunction
 	env.linearstack.Push(sc)
 	env.pc++
 	return nil

@@ -710,20 +710,23 @@ func (env *Glisp) LexicalLookupSymbol(sym *SexpSymbol, setVal *Sexp) (Sexp, erro
 	}
 
 	// (1) first go up the linearstack (runtime stack) until
-	//     we get to the first function boundary; this gives
+	//     we get to the first (user-defined) function boundary; this gives
 	//     us actual arg bindings and any lets/newScopes
 	//     present at closure definition time.
 	// (2) check the env.curfunc.closedOverScopes; it has a full
 	//     copy of the runtime linearstack at definition time.
-
-	//P("LexicalLookupSymbol('%s')\n", sym.name)
+	//     If not found there, (say because we're in a '+' function),
+	//     go up the linearstack until we hit a user defined function boundary,
+	//     which will have captured in its closure a set of relevant
+	//     bindings.
+	P("LexicalLookupSymbol('%s')\n", sym.name)
 
 	// (1) linearstack
 	exp, err, scope := env.linearstack.LookupSymbolUntilFunction(sym, setVal)
 	switch err {
 	case nil:
-		//P("LexicalLookupSymbol('%s') found on linearstack in scope '%s'\n",
-		//	sym.name, scope.Name)
+		P("LexicalLookupSymbol('%s') found on linearstack in scope '%s'\n",
+			sym.name, scope.Name)
 		return exp, err, scope
 	case SymNotFound:
 		break
@@ -731,18 +734,20 @@ func (env *Glisp) LexicalLookupSymbol(sym *SexpSymbol, setVal *Sexp) (Sexp, erro
 		panic(fmt.Errorf("unexpected error from symbol lookup: %v", err))
 	}
 
-	//P("LexicalLookupSymbol('%s') past linearstack\n", sym.name)
+	P("LexicalLookupSymbol('%s') past linearstack\n", sym.name)
 
 	// (2) env.curfunc.closedOverScope
 	exp, err, scope = env.curfunc.ClosingLookupSymbol(sym, setVal)
 	switch err {
 	case nil:
-		//P("LexicalLookupSymbol('%s') found on curfunc.closeScope in scope '%s'\n",
-		//	sym.name, scope.Name)
+		P("LexicalLookupSymbol('%s') found on curfunc.closeScope in scope '%s'\n",
+			sym.name, scope.Name)
 		return exp, err, scope
 	case SymNotFound:
+		P("LexicalLookupSymbol('%s') NOT found in closed over scopes", sym.name)
 		break
 	default:
+		P("unrecognized error '%v'", err)
 		break
 	}
 

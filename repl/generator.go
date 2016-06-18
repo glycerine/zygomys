@@ -83,7 +83,8 @@ func buildSexpFun(
 		gen.funcname = name
 	}
 
-	gen.AddInstruction(AddFuncScopeInstr{Name: "runtime " + gen.funcname})
+	afsHelper := &AddFuncScopeHelper{}
+	gen.AddInstruction(AddFuncScopeInstr{Name: "runtime " + gen.funcname, Helper: afsHelper})
 
 	argsyms := make([]*SexpSymbol, len(funcargs.Val))
 
@@ -126,6 +127,11 @@ func buildSexpFun(
 	newfunc := GlispFunction(gen.instructions)
 	sfun := gen.env.MakeFunction(gen.funcname, nargs,
 		varargs, newfunc, orig)
+
+	// tell the function scope where their function is, to
+	// provide access to the captured-closure scopes at runtime.
+	afsHelper.MyFunction = sfun
+
 	return sfun, nil
 }
 
