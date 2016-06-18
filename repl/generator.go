@@ -61,8 +61,8 @@ func (gen *Generator) GenerateBegin(expressions []Sexp) error {
 		}
 		// insert pops after all but the last instruction
 		// that way the stack remains clean.
-		// Update: I think this messed up the stack more than helping it, so consider skipping?
-		// Arg, seemed to really mess up closure.zy tests, put it back.
+		// Without the (conditional) pop here, we really mess up
+		// the closure.zy tests.
 		if len(gen.instructions) > startInstructionCount {
 			gen.AddInstruction(PopInstr(0))
 		}

@@ -52,9 +52,9 @@ func (env *Glisp) SourceExpressions(expressions []Sexp) error {
 	if err != nil {
 		return err
 	}
-	P("debug: in SourceExpressions, FROM expressions='%s'", (&SexpArray{Val: expressions, Env: env}).SexpString(0))
-	P("debug: in SourceExpressions, gen=")
-	DumpFunction(GlispFunction(gen.instructions), -1)
+	//P("debug: in SourceExpressions, FROM expressions='%s'", (&SexpArray{Val: expressions, Env: env}).SexpString(0))
+	//P("debug: in SourceExpressions, gen=")
+	//DumpFunction(GlispFunction(gen.instructions), -1)
 	curfunc := env.curfunc
 	curpc := env.pc
 
@@ -62,14 +62,17 @@ func (env *Glisp) SourceExpressions(expressions []Sexp) error {
 		gen.instructions, nil)
 	env.pc = 0
 
+	// okay without this now:
 	//env.datastack.PushExpr(SexpNull)
 
 	if _, err = env.Run(); err != nil {
 		return err
 	}
 
-	fmt.Printf("\n debug done with Run in source, now stack is:\n")
-	env.datastack.PrintStack()
+	//fmt.Printf("\n debug done with Run in source, now stack is:\n")
+	//env.datastack.PrintStack()
+
+	// likewise, okay without this now:
 	//env.datastack.PopExpr()
 
 	env.pc = curpc
