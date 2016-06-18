@@ -393,9 +393,9 @@ func (env *Glisp) LoadExpressions(expressions []Sexp) error {
 	expressions = env.FilterArray(expressions, RemoveEndsFilter)
 
 	gen := NewGenerator(env)
-	//	if !env.ReachedEnd() {
-	//		gen.AddInstruction(PopInstr(0))
-	//	}
+	if !env.ReachedEnd() {
+		gen.AddInstruction(PopInstr(0))
+	}
 	err := gen.GenerateBegin(expressions)
 	if err != nil {
 		return err

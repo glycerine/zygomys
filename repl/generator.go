@@ -52,15 +52,20 @@ func (gen *Generator) GenerateBegin(expressions []Sexp) error {
 		return nil
 		//return NoExpressionsFound
 	}
+	startInstructionCount := 0
 	for _, expr := range expressions[:size-1] {
+		startInstructionCount = len(gen.instructions)
 		err := gen.Generate(expr)
 		if err != nil {
 			return err
 		}
 		// insert pops after all but the last instruction
 		// that way the stack remains clean.
-		// Update: I think this messed up the stack more than helping it, so don't do it anymore.
-		// gen.AddInstruction(PopInstr(0))
+		// Update: I think this messed up the stack more than helping it, so consider skipping?
+		// Arg, seemed to really mess up closure.zy tests, put it back.
+		if len(gen.instructions) > startInstructionCount {
+			gen.AddInstruction(PopInstr(0))
+		}
 	}
 	gen.Tail = oldtail
 	return gen.Generate(expressions[size-1])
