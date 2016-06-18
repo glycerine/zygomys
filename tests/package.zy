@@ -1,3 +1,4 @@
+// one can define a package directly, like this:
 (def hi (package "hello"
    { world := "earth"; (defn myfun [x] (concat world x)) }
 ))
@@ -5,7 +6,7 @@
 (assert (== hi.world "earth"))
 (assert (== (hi.myfun "yes") "earthyes"))
 
-// define a package p, by sourcing another file
+// or one can define a package by sourcing another file:
 {p = (package "doggerel" (source "tests/pkghelp"))}
 
 (assert (== p.a.b 42))
