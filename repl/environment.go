@@ -385,13 +385,17 @@ func (env *Glisp) CallUserFunction(
 }
 
 func (env *Glisp) LoadExpressions(expressions []Sexp) error {
+
+	//P("expressions before RemoveCommentsFilter: '%s'", (&SexpArray{Val: expressions, Env: env}).SexpString(0))
 	expressions = env.FilterArray(expressions, RemoveCommentsFilter)
+
+	//P("expressions after RemoveCommentsFilter: '%s'", (&SexpArray{Val: expressions, Env: env}).SexpString(0))
 	expressions = env.FilterArray(expressions, RemoveEndsFilter)
 
 	gen := NewGenerator(env)
-	if !env.ReachedEnd() {
-		gen.AddInstruction(PopInstr(0))
-	}
+	//	if !env.ReachedEnd() {
+	//		gen.AddInstruction(PopInstr(0))
+	//	}
 	err := gen.GenerateBegin(expressions)
 	if err != nil {
 		return err

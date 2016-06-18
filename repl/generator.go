@@ -58,8 +58,9 @@ func (gen *Generator) GenerateBegin(expressions []Sexp) error {
 			return err
 		}
 		// insert pops after all but the last instruction
-		// that way the stack remains clean
-		gen.AddInstruction(PopInstr(0))
+		// that way the stack remains clean.
+		// Update: I think this messed up the stack more than helping it, so don't do it anymore.
+		// gen.AddInstruction(PopInstr(0))
 	}
 	gen.Tail = oldtail
 	return gen.Generate(expressions[size-1])
