@@ -237,14 +237,14 @@ func (c CallInstr) Execute(env *Glisp) error {
 	if err != nil {
 		return err
 	}
-	P("\n in CallInstr, after looking up c.sym='%s', got funcobj='%v'. datastack is:\n", c.sym.name, funcobj.SexpString(0))
+	//P("\n in CallInstr, after looking up c.sym='%s', got funcobj='%v'. datastack is:\n", c.sym.name, funcobj.SexpString(0))
 	//env.datastack.PrintStack()
 	switch f := funcobj.(type) {
 	case *SexpSymbol:
 		// is it a dot-symbol call?
-		P("\n in CallInstr, found symbol\n")
+		//P("\n in CallInstr, found symbol\n")
 		if c.sym.isDot {
-			P("\n in CallInstr, found symbol, c.sym.isDot is true\n")
+			//P("\n in CallInstr, found symbol, c.sym.isDot is true\n")
 
 			dotSymRef, dotLookupErr := dotGetSetHelper(env, c.sym.name, nil)
 			// cannot error out yet, we might be assigning to a new field,
@@ -255,7 +255,7 @@ func (c CallInstr) Execute(env *Glisp) error {
 			}
 
 			// are we a value request (no further args), or a fuction/method call?
-			P("\n in CallInstr, found dot-symbol\n")
+			//P("\n in CallInstr, found dot-symbol\n")
 			// now always be a function call here, allowing zero-argument calls.
 			indirectFuncName = dotSymRef
 		} else {
@@ -276,11 +276,11 @@ func (c CallInstr) Execute(env *Glisp) error {
 						c.sym.name, f.name, f.name, err)
 				}
 			*/
-			P("\n in CallInstr, found symbol, c.sym.isDot is false. f of type %T/val = %v. indirectFuncName = '%v'\n", f, f.SexpString(0), indirectFuncName.SexpString(0))
+			//P("\n in CallInstr, found symbol, c.sym.isDot is false. f of type %T/val = %v. indirectFuncName = '%v'\n", f, f.SexpString(0), indirectFuncName.SexpString(0))
 
 		}
 
-		P("in CallInstr, reached switch on indirectFuncName.(type)")
+		//P("in CallInstr, reached switch on indirectFuncName.(type)")
 		switch g := indirectFuncName.(type) {
 		case *SexpFunction:
 			if !g.user {
@@ -311,7 +311,7 @@ func (c CallInstr) Execute(env *Glisp) error {
 			env.datastack.PushExpr(res)
 			return nil
 		}
-		P("call instruction for RegisteredType!")
+		//P("call instruction for RegisteredType!")
 		_, err := env.CallUserFunction(f.Constructor, c.sym.name, c.nargs)
 		return err
 	}

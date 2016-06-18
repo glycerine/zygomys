@@ -556,14 +556,16 @@ func OldEvalFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 // allowing eval to create closures under the lexical scope and
 // to allow proper scoping in a package.
 func EvalFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
-	if len(args) != 1 {
+	if len(args) < 1 {
 		return SexpNull, WrongNargs
 	}
-	P("EvalFunction() called, name = '%s'; args = %#v", name, (&SexpArray{Val: args}).SexpString(0))
+	//P("EvalFunction() called, name = '%s'; args = %#v", name, (&SexpArray{Val: args}).SexpString(0))
 
 	// Instead of LoadExpressions:
 	args = env.FilterArray(args, RemoveCommentsFilter)
 	args = env.FilterArray(args, RemoveEndsFilter)
+
+	startingDataStackSize := env.datastack.Size()
 
 	gen := NewGenerator(env)
 	err := gen.GenerateBegin(args)
@@ -587,6 +589,17 @@ func EvalFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	}
 
 	err = env.ReturnFromFunction()
+
+	// some sanity checks
+	if env.datastack.Size() > startingDataStackSize {
+		panic("we've left some extra stuff on the datastack during eval, don't be sloppy, fix it now!")
+		P("warning: truncating datastack back to startingDataStackSize %v", startingDataStackSize)
+		env.datastack.TruncateToSize(startingDataStackSize)
+	}
+	if env.datastack.Size() < startingDataStackSize {
+		panic("we've shrunk the datastack during eval, don't be sloppy, fix it now!")
+	}
+
 	return resultSexp, err
 }
 

@@ -359,8 +359,7 @@ func InfixBuilder(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		return ret, nil
 	}
 
-	dup := env.Duplicate()
-	ev, err := dup.EvalExpressions(xs)
+	ev, err := EvalFunction(env, "infixEval", xs)
 	if err != nil {
 		return SexpNull, err
 	}

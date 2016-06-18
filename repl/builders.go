@@ -316,10 +316,11 @@ func StructBuilder(env *Glisp, name string,
 				// allow this
 			} else {
 				// dup to avoid messing with the stack on eval:
-				dup := env.Duplicate()
+				//dup := env.Duplicate()
 				for i, ele := range arr {
 					Q("about to eval i=%v", i)
-					ev, err := dup.EvalExpressions([]Sexp{ele})
+					//ev, err := dup.EvalExpressions([]Sexp{ele})
+					ev, err := EvalFunction(env, "evalStructBuilder", []Sexp{ele})
 					Q("done with eval i=%v. ev=%v", i, ev.SexpString(0))
 					if err != nil {
 						return SexpNull, fmt.Errorf("bad struct declaration '%v': bad "+
@@ -496,7 +497,7 @@ func PointerToFunction(env *Glisp, name string,
 			"(%s a-regtype)\n", name)
 	}
 
-	P("in PointerToFunction(): args[0] = '%#v'", args[0])
+	//P("in PointerToFunction(): args[0] = '%#v'", args[0])
 
 	var rt *RegisteredType
 	switch arg := args[0].(type) {
