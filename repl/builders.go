@@ -437,9 +437,10 @@ func InterfaceBuilder(env *Glisp, name string,
 	methods := make([]*SexpFunction, 0)
 	methodSlice := arrMeth.Val
 	if len(methodSlice) > 0 {
-		dup := env.Duplicate()
+		//dup := env.Duplicate()
 		for i := range methodSlice {
-			ev, err := dup.EvalExpressions([]Sexp{methodSlice[i]})
+			//ev, err := dup.EvalExpressions([]Sexp{methodSlice[i]})
+			ev, err := EvalFunction(env, "evalInterface", []Sexp{methodSlice[i]})
 			if err != nil {
 				return SexpNull, fmt.Errorf("error parsing the %v-th method in interface definition: '%v'", i, err)
 			}
@@ -697,9 +698,10 @@ func VarBuilder(env *Glisp, name string,
 	}
 	Q("good: have var name '%v'", symN)
 
-	dup := env.Duplicate()
+	//dup := env.Duplicate()
 	Q("about to eval args[1]=%v", args[1])
-	ev, err := dup.EvalExpressions(args[1:2])
+	//ev, err := dup.EvalExpressions(args[1:2])
+	ev, err := EvalFunction(env, "evalVar", args[1:2])
 	Q("done with eval, ev=%v / type %T", ev.SexpString(0), ev)
 	if err != nil {
 		return SexpNull, fmt.Errorf("bad var declaration, problem with type '%v': %v", args[1].SexpString(0), err)
@@ -789,8 +791,9 @@ func ColonAccessBuilder(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	////Q("ColonAccessBuilder, args = %#v", args)
 	name = "hget"
 
-	dup := env.Duplicate()
-	collec, err := dup.EvalExpressions(args[1:2])
+	//dup := env.Duplicate()
+	//collec, err := dup.EvalExpressions(args[1:2])
+	collec, err := EvalFunction(env, "evalColonAccess", args[1:2])
 	if err != nil {
 		return SexpNull, err
 	}
@@ -800,7 +803,8 @@ func ColonAccessBuilder(env *Glisp, name string, args []Sexp) (Sexp, error) {
 
 	if len(args) == 3 {
 		// have default, needs eval too
-		defaul, err := dup.EvalExpressions(args[2:3])
+		//defaul, err := dup.EvalExpressions(args[2:3])
+		defaul, err := EvalFunction(env, "evalColonDefault", args[2:3])
 		if err != nil {
 			return SexpNull, err
 		}

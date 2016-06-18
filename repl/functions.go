@@ -592,8 +592,13 @@ func EvalFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 
 	// some sanity checks
 	if env.datastack.Size() > startingDataStackSize {
-		panic("we've left some extra stuff on the datastack during eval, don't be sloppy, fix it now!")
-		P("warning: truncating datastack back to startingDataStackSize %v", startingDataStackSize)
+		/*
+			xtra := env.datastack.Size() - startingDataStackSize
+			panic(fmt.Sprintf("we've left some extra stuff (xtra = %v) on the datastack "+
+				"during eval, don't be sloppy, fix it now! env.datastack.Size()=%v, startingDataStackSize = %v",
+				xtra, env.datastack.Size(), startingDataStackSize))
+			P("warning: truncating datastack back to startingDataStackSize %v", startingDataStackSize)
+		*/
 		env.datastack.TruncateToSize(startingDataStackSize)
 	}
 	if env.datastack.Size() < startingDataStackSize {
