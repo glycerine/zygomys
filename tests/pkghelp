@@ -1,3 +1,4 @@
+// helper file, used in package.zy to be the contents of a package
 (def a (hash b:42 dog: "bella" f: (fn [] 54) g: (fn [x] (+ x 7))))
 (defn assistor [y] (+ y a.b (a.g 3)))
 

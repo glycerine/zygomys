@@ -1,6 +1,9 @@
 // call through dot to get function, then call that function
 {a=(hash b:(hash))}
-{a.b.hi = (fn [x y] (fn [z] (begin (printf "x=%#v y=%#v z=%#v", x, y, z) (+ x y z))))}
+
+// commas are mucking up the print here... grrr
+//{a.b.hi = (fn [x y] (fn [z] (begin (printf "x=%#v y=%#v z=%#v", x, y, z) (+ x y z))))}
+{a.b.hi = (fn [x y] (fn [z] (begin (printf "x=%#v y=%#v z=%#v" x y z) (+ x y z))))}
 
 // ((a.b.hi 2 3) 4)  // was giving operands have invalid type, due to leaving function on stack
 (assert (== 9 ((a.b.hi 2 3) 4)))

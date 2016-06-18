@@ -171,7 +171,8 @@ func (stack Stack) Show(env *Glisp, indent int, label string) (string, error) {
 		showme, canshow := ele.(Showable)
 		if canshow {
 			r, err := showme.Show(env, indent+4,
-				fmt.Sprintf("elem %v (%#v) of %s:", i, showme, label))
+				//fmt.Sprintf("elem %v (%#v) of %s:", i, showme, label))
+				fmt.Sprintf("elem %v of %s:", i, label))
 			if err != nil {
 				return "", err
 			}

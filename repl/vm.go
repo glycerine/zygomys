@@ -671,10 +671,12 @@ func (s PopUntilStackmarkInstr) InstrString() string {
 }
 
 func (s PopUntilStackmarkInstr) Execute(env *Glisp) error {
+	env.pc++
 toploop:
 	for {
 		expr, err := env.datastack.PopExpr()
 		if err != nil {
+			P("alert: did not find SexpStackmark '%s'", s.sym.name)
 			return err
 		}
 		switch m := expr.(type) {
@@ -685,7 +687,6 @@ toploop:
 			}
 		}
 	}
-	env.pc++
 	return nil
 }
 

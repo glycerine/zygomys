@@ -602,7 +602,9 @@ func EvalFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		env.datastack.TruncateToSize(startingDataStackSize)
 	}
 	if env.datastack.Size() < startingDataStackSize {
-		panic("we've shrunk the datastack during eval, don't be sloppy, fix it now!")
+		P("about panic, since env.datastack.Size() < startingDataStackSize, here is env dump:")
+		env.DumpEnvironment()
+		panic(fmt.Sprintf("we've shrunk the datastack during eval, don't be sloppy, fix it now! env.datastack.Size()=%v. startingDataStackSize=%v", env.datastack.Size(), startingDataStackSize))
 	}
 
 	return resultSexp, err
