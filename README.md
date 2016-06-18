@@ -38,11 +38,11 @@ for the whole project when speaking aloud. In writing, the full
 $ go get github.com/glycerine/zygomys/cmd/zygo
 ~~~
 
-### not your average parentheses... features in zygomys 4.6.8 include
+### not your average parentheses... features in zygomys 4.7.0 include
 
+ * [x] package mechanism that supports modularity and isolation of scripts/packages/libraries from each other. See tests/package.zy
  * [x] struct defintion and type checking. [See `tests/declare.zy` for examples.](https://github.com/glycerine/zygomys/blob/master/tests/declare.zy)
- * [x] Readable assignment: `(a = 10)` assigns value 10 to symbol `a`  (NB use `==` for equality checks)
- * [x] Readable nested method calls: `((a.b.c.Fly))` calls method `Fly` on object `c` that lives within objects `a` and `b`.
+ * [x] Readable nested method calls: `(a.b.c.Fly)` calls method `Fly` on object `c` that lives within objects `a` and `b`.
  * [x] Use `zygo` to configure trees of Go structs, and then run methods on them at natively-compiled speed (since you are calling into Go code).
  * [x] sandbox-able environment; try `zygo -sandbox` and see the NewGlispSandbox() function.
  * [x] `emacs/zygo.el` emacs mode provides one-keypress stepping through code.
