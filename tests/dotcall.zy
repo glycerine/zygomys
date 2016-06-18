@@ -13,7 +13,7 @@
 
 (def expected "say: hello")
 (assert (== (g greet) expected))
-(assert (== (.greet) "hello"))
+(assert (== greet "hello"))
 
 // automatic * dereference of a.f dot-symbol should
 // happen for call-position

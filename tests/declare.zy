@@ -50,7 +50,7 @@
 // First lets make a Car struct, using the already declared Car type.
 {hasSlice = (Car SliceOfLife: ["hi" "there"])}
 (assert (== (:SliceOfLife hasSlice) ["hi" "there"]))
-(assert (== 2 (len (.hasSlice.SliceOfLife))))
+(assert (== 2 (len hasSlice.SliceOfLife)))
 
 // then lets change the struct
 {hasSlice.SliceOfLife = ["zygo" "rocks" "it"]}
@@ -60,7 +60,7 @@
 (expectError `Error calling 'infix': Car has no field 'NewField' [err 2]`
             {hasSlice.NewField = "wacky"})
 
-// and the decalred types must be matched.
+// and the declared types must be matched.
 (expectError `Error calling 'infix': field Car.SliceOfLife is ([]string), cannot assign ([]int64) '[1 2 3]'`
               {hasSlice.SliceOfLife = [1 2 3]})
 
@@ -71,14 +71,14 @@
 
 // assignment of [] (the empty slice) should also work
 {hasSlice.SliceOfLife = []}
-(assert (== 0 (len (.hasSlice.SliceOfLife))))
+(assert (== 0 (len hasSlice.SliceOfLife)))
 
 // we can point to ourselves if need be.
 (def w (Car Name: "Willow"))
 {w.OtherCar = (& w)}
 (assert (== (& w) (:OtherCar w)))
 // or with dot symbol notation:
-(assert (== (& w) (.w.OtherCar)))
+(assert (== (& w) w.OtherCar))
 
 // binding time for type should be the most recent definition in force.
 (struct Dog [(field tag: int64)])

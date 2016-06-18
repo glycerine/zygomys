@@ -797,17 +797,17 @@ func (h *SexpHash) nestedPathGetSet(env *Glisp, dotpaths []string, setVal *Sexp)
 	var err error
 	askh := h
 	lenpath := len(dotpaths)
-	Q("\n in nestedPathGetSet, dotpaths=%#v\n", dotpaths)
+	P("\n in nestedPathGetSet, dotpaths=%#v\n", dotpaths)
 	for i := range dotpaths {
 		if setVal != nil && i == lenpath-1 {
 			// assign now
 			err = askh.HashSet(env.MakeSymbol(dotpaths[i][1:]), *setVal)
-			Q("\n i=%v in nestedPathGetSet, dotpaths[i][1:]='%v' call to "+
+			P("\n i=%v in nestedPathGetSet, dotpaths[i][1:]='%v' call to "+
 				"HashSet returned err = '%s'\n", i, dotpaths[i][1:], err)
 			return *setVal, err
 		}
 		ret, err = askh.HashGet(env, env.MakeSymbol(dotpaths[i][1:]))
-		Q("\n i=%v in nestedPathGet, dotpaths[i][1:]='%v' call to "+
+		P("\n i=%v in nestedPathGet, dotpaths[i][1:]='%v' call to "+
 			"HashGet returned '%s'\n", i, dotpaths[i][1:], ret.SexpString(0))
 		if err != nil {
 			return SexpNull, err
@@ -816,13 +816,15 @@ func (h *SexpHash) nestedPathGetSet(env *Glisp, dotpaths []string, setVal *Sexp)
 			return ret, nil
 		}
 		// invar: i < lenpath-1, so go deeper
-		switch h2 := ret.(type) {
+		switch x := ret.(type) {
 		case *SexpHash:
-			Q("\n found hash in h2 at i=%d, looping to next i\n", i)
-			askh = h2
+			P("\n found hash in h2 at i=%d, looping to next i\n", i)
+			askh = x
+		case *Scope:
+			return x.nestedPathGetSet(env, dotpaths[1:], setVal)
 		default:
 			return SexpNull, fmt.Errorf("not a record: cannot get field '%s'"+
-				" in out of type %T)", dotpaths[i+1][1:], h2)
+				" out of type %T)", dotpaths[i+1][1:], x)
 
 		}
 

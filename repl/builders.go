@@ -35,7 +35,8 @@ func (env *Glisp) ImportPackageBuilder() {
 	env.AddBuilder("func", FuncBuilder)
 	env.AddBuilder("method", FuncBuilder)
 	env.AddBuilder("interface", InterfaceBuilder)
-	env.AddBuilder("package", PackageBuilder)
+	//env.AddBuilder("package", PackageBuilder)
+	//env.AddBuilder("import", ImportBuilder)
 	env.AddBuilder("var", VarBuilder)
 	env.AddBuilder("expectError", ExpectErrorBuilder)
 	env.AddBuilder("comma", CommaBuilder)
@@ -379,23 +380,6 @@ func StructBuilder(env *Glisp, name string,
 	return rt, nil
 }
 
-// this is just a stub. TODO: finish design, implement packages.
-func PackageBuilder(env *Glisp, name string,
-	args []Sexp) (Sexp, error) {
-
-	if len(args) < 1 {
-		return SexpNull, fmt.Errorf("package name is missing. use: " +
-			"(package package-name ...)\n")
-	}
-
-	Q("in package builder, args = ")
-	for i := range args {
-		Q("args[%v] = '%s'", i, args[i].SexpString(0))
-	}
-
-	return SexpNull, nil
-}
-
 func InterfaceBuilder(env *Glisp, name string,
 	args []Sexp) (Sexp, error) {
 
@@ -512,7 +496,7 @@ func PointerToFunction(env *Glisp, name string,
 			"(%s a-regtype)\n", name)
 	}
 
-	Q("in PointerToFunction(): args[0] = '%#v'", args[0])
+	P("in PointerToFunction(): args[0] = '%#v'", args[0])
 
 	var rt *RegisteredType
 	switch arg := args[0].(type) {
@@ -522,7 +506,7 @@ func PointerToFunction(env *Glisp, name string,
 		rt = arg.GoStructFactory
 	case *SexpPointer:
 		// dereference operation, rather than type declaration
-		Q("dereference operation on *SexpPointer detected, returning target")
+		P("dereference operation on *SexpPointer detected, returning target")
 		if arg == nil || arg.Target == nil {
 			return SexpNull, fmt.Errorf("illegal to dereference nil pointer")
 		}

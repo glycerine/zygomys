@@ -273,7 +273,7 @@ func GetFuncArgArray(arr *SexpArray, env *Glisp, where string) (*SexpHash, error
 		//P("symN   = '%s'", symN.SexpString(0))
 		//P("symTyp = '%s'", symTyp.SexpString(0))
 
-		r, err, _ := env.LexicalLookupSymbol(symTyp, false)
+		r, err, _ := env.LexicalLookupSymbol(symTyp, nil)
 		if err != nil {
 			return nil, fmt.Errorf("could not identify type %s: %v", symTyp.SexpString(0), err)
 		}

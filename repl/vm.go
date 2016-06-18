@@ -136,7 +136,7 @@ func (g EnvToStackInstr) Execute(env *Glisp) error {
 	}
 	var expr Sexp
 	var err error
-	expr, err, _ = env.LexicalLookupSymbol(g.sym, false)
+	expr, err, _ = env.LexicalLookupSymbol(g.sym, nil)
 	if err != nil {
 		return err
 	}
@@ -184,7 +184,6 @@ func (p UpdateInstr) Execute(env *Glisp) error {
 		return err
 	}
 	env.pc++
-	var scope *Scope
 
 	if p.sym.isSigil {
 		Q("UpdateInstr: ignoring sigil symbol '%s'", p.sym.SexpString(0))
@@ -202,15 +201,17 @@ func (p UpdateInstr) Execute(env *Glisp) error {
 			Q("UpdateInstr: I see Selector '%s'", p.sym.SexpString(0))
 		}
 	*/
-	_, err, scope = env.LexicalLookupSymbol(p.sym, false)
+
+	// if found up the stack, we will (set)	expr
+	_, err, _ = env.LexicalLookupSymbol(p.sym, &expr)
 	if err != nil {
 		// not found up the stack, so treat like (def)
 		// instead of (set)
 		return env.LexicalBindSymbol(p.sym, expr)
 	}
 
-	// found up the stack, so (set)
-	return scope.UpdateSymbolInScope(p.sym, expr)
+	//return scope.UpdateSymbolInScope(p.sym, expr) // LexicalLookupSymbol now takes a setVal pointer which does this automatically
+	return err
 }
 
 type CallInstr struct {
@@ -231,38 +232,32 @@ func (c CallInstr) Execute(env *Glisp) error {
 	var funcobj, indirectFuncName Sexp
 	var err error
 
-	funcobj, err, _ = env.LexicalLookupSymbol(c.sym, false)
+	funcobj, err, _ = env.LexicalLookupSymbol(c.sym, nil)
 
 	if err != nil {
 		return err
 	}
-	Q("\n in CallInstr, after looking up c.sym='%s', got funcobj='%v'. datastack is:\n", c.sym.name, funcobj.SexpString(0))
+	P("\n in CallInstr, after looking up c.sym='%s', got funcobj='%v'. datastack is:\n", c.sym.name, funcobj.SexpString(0))
 	//env.datastack.PrintStack()
 	switch f := funcobj.(type) {
 	case *SexpSymbol:
 		// is it a dot-symbol call?
-		Q("\n in CallInstr, found symbol\n")
+		P("\n in CallInstr, found symbol\n")
 		if c.sym.isDot {
-			Q("\n in CallInstr, found symbol, c.sym.isDot is true\n")
+			P("\n in CallInstr, found symbol, c.sym.isDot is true\n")
 
 			dotSymRef, dotLookupErr := dotGetSetHelper(env, c.sym.name, nil)
 			// cannot error out yet, we might be assigning to a new field,
 			// not already set.
 
-			// are we a value request (no further args), or a fuction/method call?
-			Q("\n in CallInstr, found dot-symbol\n")
-			if c.nargs == 0 {
-				// value request
-				if dotLookupErr != nil {
-					return dotLookupErr
-				}
-				env.datastack.PushExpr(dotSymRef)
-				env.pc++
-				return nil
-			} else {
-				// function call
-				indirectFuncName = dotSymRef
+			if dotLookupErr != nil {
+				return dotLookupErr
 			}
+
+			// are we a value request (no further args), or a fuction/method call?
+			P("\n in CallInstr, found dot-symbol\n")
+			// now always be a function call here, allowing zero-argument calls.
+			indirectFuncName = dotSymRef
 		} else {
 			// not isDot
 
@@ -281,11 +276,11 @@ func (c CallInstr) Execute(env *Glisp) error {
 						c.sym.name, f.name, f.name, err)
 				}
 			*/
-			Q("\n in CallInstr, found symbol, c.sym.isDot is false. f of type %T/val = %v. indirectFuncName = '%v'\n", f, f.SexpString(0), indirectFuncName.SexpString(0))
+			P("\n in CallInstr, found symbol, c.sym.isDot is false. f of type %T/val = %v. indirectFuncName = '%v'\n", f, f.SexpString(0), indirectFuncName.SexpString(0))
 
 		}
 
-		Q("in CallInstr, reached switch on indirectFuncName.(type)")
+		P("in CallInstr, reached switch on indirectFuncName.(type)")
 		switch g := indirectFuncName.(type) {
 		case *SexpFunction:
 			if !g.user {
@@ -316,7 +311,7 @@ func (c CallInstr) Execute(env *Glisp) error {
 			env.datastack.PushExpr(res)
 			return nil
 		}
-		Q("call instruction for RegisteredType!")
+		P("call instruction for RegisteredType!")
 		_, err := env.CallUserFunction(f.Constructor, c.sym.name, c.nargs)
 		return err
 	}
@@ -388,8 +383,8 @@ func (a AddScopeInstr) InstrString() string {
 }
 
 func (a AddScopeInstr) Execute(env *Glisp) error {
-	sc := env.NewNamedScope(fmt.Sprintf("runtime add scope for '%s' at pc=%v",
-		env.curfunc.name, env.pc))
+	sc := env.NewNamedScope(fmt.Sprintf("runtime add scope Name: '%s', curfunc: '%s', at pc=%v",
+		a.Name, env.curfunc.name, env.pc))
 	env.linearstack.Push(sc)
 	env.pc++
 	return nil
@@ -824,41 +819,23 @@ func (a AssignInstr) Execute(env *Glisp) error {
 	return fmt.Errorf("AssignInstr: don't know how to assign to lhs %T", lhs)
 }
 
-/*
-func (c *CallInstr) setupDotCallHelper(
-	env *Glisp,
-	ftop *SexpFunction,
-	indirectFuncName *Sexp,
-	expressions []Sexp,
-	xprBegin int,
-	dotSymRef Sexp) {
-
-	Q("\n in CallInstr setupDotCallHelper(), fetched out function call from top of datastack.\n")
-	Q("xprBegin is %v, expressions are:", xprBegin)
-	for i := range expressions {
-		Q("expressions[%v]='%v'", i, expressions[i].SexpString(0))
-	}
-	*indirectFuncName = ftop
-	if ftop.user {
-		Q("\n in CallInstr, with user func, passing dot-symbol in directly so assignment will work.\n")
-		env.datastack.PushExpr(c.sym)
-	} else {
-		Q("\n in CallInstr, with sexp func, data stack before:\n")
-		env.datastack.PrintStack()
-
-		Q("\n in CallInstr, with sexp func, dereferencing dot-symbol '%s' -> '%s'\n", c.sym.name, dotSymRef.SexpString(0))
-
-		env.datastack.PushExpr(dotSymRef)
-
-		Q("\n in CallInstr, with sexp func, data stack after:\n")
-		env.datastack.PrintStack()
-		Q("\n in CallInstr, with sexp func, done with PrintStack.\n")
-	}
-	pushme := expressions[xprBegin:]
-	for j := range pushme {
-		env.datastack.PushExpr(pushme[j])
-	}
-	Q("\n in CallInstr, after setting up stack for dot-symbol call, datastack:\n")
-	env.datastack.PrintStack()
+// PopScopeTransferToDataStackInstr is used to wrap up a package
+// and put it on the data stack as a value.
+type PopScopeTransferToDataStackInstr struct {
+	PackageName string
 }
-*/
+
+func (a PopScopeTransferToDataStackInstr) InstrString() string {
+	return "pop scope transfer to data stack as package " + a.PackageName
+}
+
+func (a PopScopeTransferToDataStackInstr) Execute(env *Glisp) error {
+	env.pc++
+	stackClone := env.linearstack.Clone()
+	stackClone.IsPackage = true // always/only used for packages.
+	stackClone.PackageName = a.PackageName
+	//P("PopScopeTransferToDataStackInstr: scope is '%v'", stackClone.SexpString(0))
+	env.linearstack.PopScope()
+	env.datastack.PushExpr(stackClone)
+	return nil
+}

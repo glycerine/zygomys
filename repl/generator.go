@@ -282,7 +282,7 @@ func (gen *Generator) GenerateDefmac(args []Sexp, orig Sexp) error {
 		return fmt.Errorf("'%s' is already a built-in function, cannot define macro with same name.", sym.name)
 	}
 
-	xpr, err, _ := gen.env.LexicalLookupSymbol(sym, false)
+	xpr, err, _ := gen.env.LexicalLookupSymbol(sym, nil)
 	if err == nil {
 		return fmt.Errorf("'%s' is already bound to '%s', refusing to define conflicting macro",
 			sym.name, xpr.SexpString(0))
@@ -608,6 +608,8 @@ func (gen *Generator) GenerateCallBySymbol(sym *SexpSymbol, args []Sexp, orig Se
 		return gen.GenerateContinue(args)
 	case "newScope":
 		return gen.GenerateNewScope(args)
+	case "package":
+		return gen.GeneratePackage(args)
 	case "return":
 		return gen.GenerateReturn(args)
 	case "_ls":
@@ -703,7 +705,7 @@ func (gen *Generator) GenerateCall(expr *SexpPair) error {
 	switch head := expr.Head.(type) {
 	case *SexpSymbol:
 		// detect builtin builder calls
-		x, err, _ := gen.env.LexicalLookupSymbol(head, false)
+		x, err, _ := gen.env.LexicalLookupSymbol(head, nil)
 		if err == nil {
 			fun, isFun := x.(*SexpFunction)
 			if isFun && fun.isBuilder {
@@ -1369,7 +1371,7 @@ func (gen *Generator) GenerateNewScope(expressions []Sexp) error {
 			return err
 		}
 		// insert pops after all but the last instruction
-		// that way the stack remains clean
+		// that way the stack remains clean... Q: how does this extra popping not mess up the expressions?
 		gen.AddInstruction(PopInstr(0))
 	}
 	gen.Tail = oldtail
@@ -1378,6 +1380,52 @@ func (gen *Generator) GenerateNewScope(expressions []Sexp) error {
 		return err
 	}
 	gen.AddInstruction(RemoveScopeInstr{})
+	return nil
+}
+
+func (gen *Generator) GeneratePackage(expressions []Sexp) error {
+	size := len(expressions)
+	if size < 1 {
+		return WrongNargs
+	}
+
+	var pkgName string
+	expr := expressions[0]
+	switch v := expr.(type) {
+	case *SexpSymbol:
+		pkgName = v.name
+	case *SexpStr:
+		pkgName = v.S
+	default:
+		return fmt.Errorf("package name must be symbol or string")
+	}
+
+	// use GenSymbol so we are sure to have a unique point
+	// to aim at when cleaning up.
+	symPkgName := gen.env.GenSymbol(pkgName)
+
+	oldtail := gen.Tail
+	gen.Tail = false
+
+	gen.AddInstruction(AddScopeInstr{Name: pkgName})
+	gen.AddInstruction(PushStackmarkInstr{sym: symPkgName})
+
+	if size > 1 {
+		for _, expr := range expressions[1 : size-1] {
+			err := gen.Generate(expr)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	gen.Tail = oldtail
+	err := gen.Generate(expressions[size-1])
+	if err != nil {
+		return err
+	}
+	gen.AddInstruction(PopUntilStackmarkInstr{sym: symPkgName})
+	gen.AddInstruction(PopScopeTransferToDataStackInstr{PackageName: pkgName})
 	return nil
 }
 

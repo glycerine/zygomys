@@ -247,7 +247,7 @@ func ArrayAccessFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		case *SexpInt:
 			i = int(j.Val)
 		default:
-			return SexpNull, fmt.Errorf("Second argument of aget could not be evaluated to integer")
+			return SexpNull, fmt.Errorf("Second argument of aget could not be evaluated to integer; got j = '%#v'/type = %T", j, j)
 		}
 	}
 
@@ -538,10 +538,11 @@ func ReadFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	return exp, err
 }
 
-func EvalFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
+func OldEvalFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	if len(args) != 1 {
 		return SexpNull, WrongNargs
 	}
+	P("EvalFunction() called, name = '%s'; args = %#v", name, args)
 	newenv := env.Duplicate()
 	err := newenv.LoadExpressions(args)
 	if err != nil {
@@ -549,6 +550,65 @@ func EvalFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	}
 	newenv.pc = 0
 	return newenv.Run()
+}
+
+// EvalFunction: new version doesn't use a duplicated environment,
+// allowing eval to create closures under the lexical scope and
+// to allow proper scoping in a package.
+func EvalFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
+	if len(args) != 1 {
+		return SexpNull, WrongNargs
+	}
+	P("EvalFunction() called, name = '%s'; args = %#v", name, (&SexpArray{Val: args}).SexpString(0))
+
+	// Instead of LoadExpressions:
+	var ts *TreeState
+	args = env.FilterArray(args, RemoveCommentsFilter, ts)
+	args = env.FilterArray(args, RemoveEndsFilter, ts)
+	//args = env.FilterArray(args, RemoveCommasFilter, ts)
+
+	gen := NewGenerator(env)
+	/*
+		if !env.ReachedEnd() {
+			P("EvalFunction is adding pop instruction since !env.ReachedEnd()")
+			gen.AddInstruction(PopInstr(0))
+		}
+	*/
+	err := gen.GenerateBegin(args)
+	if err != nil {
+		return SexpNull, err
+	}
+
+	newfunc := GlispFunction(gen.instructions)
+	orig := &SexpArray{Val: args}
+	sfun := env.MakeFunction("evalGeneratedFunction", 0, false, newfunc, orig)
+
+	//P(" 444 EvalFunction is about to call our generated sfun = '%v'", sfun.SexpString(0))
+	//env.DumpEnvironment()
+
+	err = env.CallFunction(sfun, 0)
+	if err != nil {
+		return SexpNull, err
+	}
+
+	//P("555 after CallFunction, before Run:")
+	//env.DumpEnvironment()
+
+	var resultSexp Sexp
+	resultSexp, err = env.Run()
+	if err != nil {
+		return SexpNull, err
+	}
+	//env.datastack.PushExpr(resultSexp)
+
+	//P("777 EvalFunction successfullly did CallFunction(sfun, 0) and env.Run();  about to call env.ReturnFromFunction()")
+	//env.DumpEnvironment()
+
+	err = env.ReturnFromFunction()
+	//P("888 EvalFunction: ReturnFromFunction() returned err = %v", err)
+	//env.DumpEnvironment()
+
+	return resultSexp, err
 }
 
 func TypeQueryFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
@@ -740,6 +800,8 @@ func ConstructorFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		return fld, nil
 	case "struct":
 		return MakeHash(args, "struct", env)
+	case "package":
+		return MakeHash(args, "package", env)
 	case "msgmap":
 		switch len(args) {
 		case 0:
@@ -914,6 +976,7 @@ func CoreFunctions() map[string]GlispUserFunction {
 		"list":        ConstructorFunction,
 		"hash":        ConstructorFunction,
 		"raw":         ConstructorFunction,
+		"package":     ConstructorFunction,
 		"str":         StringifyFunction,
 		"->":          ThreadMapFunction,
 		"flatten":     FlattenToWordsFunction,
@@ -1249,7 +1312,7 @@ func QuoteListFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 // Otherwise set and return the value we set.
 func dotGetSetHelper(env *Glisp, name string, setVal *Sexp) (Sexp, error) {
 	path := DotPartsRegex.FindAllString(name, -1)
-	//Q("\n in dotGetSetHelper(), path = '%#v'\n", path)
+	P("\n in dotGetSetHelper(), name = '%s', path = '%#v', setVal = '%#v'\n", name, path, setVal)
 	if len(path) == 0 {
 		return SexpNull, fmt.Errorf("internal error: DotFunction" +
 			" path had zero length")
@@ -1283,7 +1346,8 @@ func dotGetSetHelper(env *Glisp, name string, setVal *Sexp) (Sexp, error) {
 
 	key := stripAnyDotPrefix(path[0])
 	//Q("\n in dotGetSetHelper(), looking up '%s'\n", key)
-	ret, err, _ = env.LexicalLookupSymbol(env.MakeSymbol(key), false)
+	keySym := env.MakeSymbol(key)
+	ret, err, _ = env.LexicalLookupSymbol(keySym, nil)
 	if err != nil {
 		//Q("\n in dotGetSetHelper(), '%s' not found\n", key)
 		return SexpNull, err
@@ -1291,6 +1355,27 @@ func dotGetSetHelper(env *Glisp, name string, setVal *Sexp) (Sexp, error) {
 	if lenpath == 1 {
 		// single path element get, return it.
 		return ret, err
+	}
+
+	// INVAR: lenpath > 1
+
+	// scope or hash? check for scope first (as when selecting values out of a package)
+	scop, isScope := ret.(*Scope)
+	if isScope {
+		P("found a scope: '%s'", scop.SexpString(0))
+
+		exp, err := scop.nestedPathGetSet(env, path[1:], setVal)
+		if err != nil {
+			return SexpNull, err
+		}
+		return exp, nil
+
+		//		ret, err, _ = env.LexicalLookupSymbol(keySym, setVal)
+		//		if err != nil {
+		//Q("\n in dotGetSetHelper(), '%s' not found\n", key)
+		//			return SexpNull, err
+		//		}
+		//		return expr, nil, scop
 	}
 
 	// at least .a.b if not a.b.c. etc: multiple elements,
@@ -1356,7 +1441,7 @@ func DefinedFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		return &SexpBool{Val: false}, nil
 	}
 
-	_, err, _ := env.LexicalLookupSymbol(env.MakeSymbol(checkme), false)
+	_, err, _ := env.LexicalLookupSymbol(env.MakeSymbol(checkme), nil)
 	if err != nil {
 		return &SexpBool{Val: false}, nil
 	}

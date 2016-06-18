@@ -232,6 +232,21 @@ func init() {
 		return &SexpArray{}, nil
 	}})
 
+	// scope, as used by the package operation
+	gsr.RegisterBuiltin("packageScope", &RegisteredType{GenDefMap: false, Factory: func(env *Glisp) (interface{}, error) {
+		pkg := env.NewScope()
+		pkg.Name = "prototype"
+		pkg.IsPackage = true
+		return pkg, nil
+	}})
+
+	gsr.RegisterBuiltin("packageScopeStack", &RegisteredType{GenDefMap: false, Factory: func(env *Glisp) (interface{}, error) {
+		pkg := env.NewStack(0)
+		pkg.Name = "prototypePackageScopeStack"
+		pkg.IsPackage = true
+		return pkg, nil
+	}})
+
 	gsr.RegisterBuiltin("arraySelector", &RegisteredType{GenDefMap: false, Factory: func(env *Glisp) (interface{}, error) {
 		return &SexpArraySelector{}, nil
 	}})

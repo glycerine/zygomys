@@ -584,9 +584,9 @@ func (sf *SexpFunction) ClosingLookupSymbolUntilFunction(sym *SexpSymbol) (Sexp,
 	return SexpNull, SymNotFound, nil
 }
 
-func (sf *SexpFunction) ClosingLookupSymbol(sym *SexpSymbol) (Sexp, error, *Scope) {
+func (sf *SexpFunction) ClosingLookupSymbol(sym *SexpSymbol, setVal *Sexp) (Sexp, error, *Scope) {
 	if sf.closingOverScopes != nil {
-		return sf.closingOverScopes.LookupSymbol(sym)
+		return sf.closingOverScopes.LookupSymbol(sym, setVal)
 	}
 	return SexpNull, SymNotFound, nil
 }

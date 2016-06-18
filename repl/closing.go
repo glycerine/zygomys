@@ -17,10 +17,10 @@ func NewClosing(name string, env *Glisp) *Closing {
 func (c *Closing) IsStackElem() {}
 
 func (c *Closing) LookupSymbolUntilFunction(sym *SexpSymbol) (Sexp, error, *Scope) {
-	return c.Stack.LookupSymbolUntilFunction(sym)
+	return c.Stack.LookupSymbolUntilFunction(sym, nil)
 }
-func (c *Closing) LookupSymbol(sym *SexpSymbol) (Sexp, error, *Scope) {
-	return c.Stack.LookupSymbol(sym)
+func (c *Closing) LookupSymbol(sym *SexpSymbol, setVal *Sexp) (Sexp, error, *Scope) {
+	return c.Stack.LookupSymbol(sym, setVal)
 }
 
 func (c *Closing) Show(env *Glisp, indent int, label string) (string, error) {

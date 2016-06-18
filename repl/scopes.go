@@ -7,13 +7,42 @@ import (
 	"strings"
 )
 
+// Scopes map names to values. Scope nesting avoids variable name collisions and
+// allows namespace maintainance. Most scopes (inside loops, inside functions)
+// are implicitly created. Packages are scopes that the user can manipulate
+// explicitly.
 type Scope struct {
-	Map        map[int]Sexp
-	IsGlobal   bool
-	Name       string
-	Parent     *Scope
-	IsFunction bool // if true, read-only.
-	env        *Glisp
+	Map         map[int]Sexp
+	IsGlobal    bool
+	Name        string
+	PackageName string
+	Parent      *Scope
+	IsFunction  bool // if true, read-only.
+	IsPackage   bool
+	env         *Glisp
+}
+
+// SexpString satisfies the Sexp interface, producing a string presentation of the value.
+func (s *Scope) SexpString(indent int) string {
+	var label string
+	head := ""
+	if s.IsPackage {
+		head = "(package " + s.PackageName
+	} else {
+		label = "scope " + s.Name
+	}
+
+	str, err := s.Show(s.env, indent, s.Name)
+	if err != nil {
+		return "(" + label + ")"
+	}
+
+	return head + " " + str + " )"
+}
+
+// Type() satisfies the Sexp interface, returning the type of the value.
+func (s *Scope) Type() *RegisteredType {
+	return GoStructRegistry.Lookup("packageScope")
 }
 
 func (env *Glisp) NewScope() *Scope {
@@ -56,7 +85,10 @@ func (stack *Stack) PopScope() error {
 
 // dynamic scoping lookup. See env.LexicalLookupSymbol() for the lexically
 // scoped equivalent.
-func (stack *Stack) lookupSymbol(sym *SexpSymbol, minFrame int) (Sexp, error, *Scope) {
+// If setVal is not nil, and if we find the symbol, we set it in the scope
+// where it was found. This is equivalent to scope.UpdateSymbolInScope.
+//
+func (stack *Stack) lookupSymbol(sym *SexpSymbol, minFrame int, setVal *Sexp) (Sexp, error, *Scope) {
 	if !stack.IsEmpty() {
 		for i := 0; i <= stack.tos-minFrame; i++ {
 			elem, err := stack.Get(i)
@@ -67,6 +99,9 @@ func (stack *Stack) lookupSymbol(sym *SexpSymbol, minFrame int) (Sexp, error, *S
 			case (*Scope):
 				expr, ok := scope.Map[sym.number]
 				if ok {
+					if setVal != nil {
+						scope.Map[sym.number] = *setVal
+					}
 					return expr, nil, scope
 				}
 			}
@@ -79,19 +114,19 @@ func (stack *Stack) lookupSymbol(sym *SexpSymbol, minFrame int) (Sexp, error, *S
 	return SexpNull, fmt.Errorf("symbol `%s` not found", sym.name), nil
 }
 
-func (stack *Stack) LookupSymbol(sym *SexpSymbol) (Sexp, error, *Scope) {
-	return stack.lookupSymbol(sym, 0)
+func (stack *Stack) LookupSymbol(sym *SexpSymbol, setVal *Sexp) (Sexp, error, *Scope) {
+	return stack.lookupSymbol(sym, 0, setVal)
 }
 
 // LookupSymbolNonGlobal  - closures use this to only find symbols below the global scope, to avoid copying globals it'll always be-able to ref
 func (stack *Stack) LookupSymbolNonGlobal(sym *SexpSymbol) (Sexp, error, *Scope) {
-	return stack.lookupSymbol(sym, 1)
+	return stack.lookupSymbol(sym, 1, nil)
 }
 
 var SymNotFound = errors.New("symbol not found")
 
 // lookup symbols, but don't go beyond a function boundary
-func (stack *Stack) LookupSymbolUntilFunction(sym *SexpSymbol) (Sexp, error, *Scope) {
+func (stack *Stack) LookupSymbolUntilFunction(sym *SexpSymbol, setVal *Sexp) (Sexp, error, *Scope) {
 
 	if !stack.IsEmpty() {
 	doneSearching:
@@ -105,6 +140,9 @@ func (stack *Stack) LookupSymbolUntilFunction(sym *SexpSymbol) (Sexp, error, *Sc
 				VPrintf("   ...looking up in scope '%s'\n", scope.Name)
 				expr, ok := scope.Map[sym.number]
 				if ok {
+					if setVal != nil {
+						scope.UpdateSymbolInScope(sym, *setVal)
+					}
 					return expr, nil, scope
 				}
 				if scope.IsFunction {
@@ -258,4 +296,53 @@ func (scop Scope) Show(env *Glisp, indent int, label string) (s string, err erro
 
 type Showable interface {
 	Show(env *Glisp, indent int, label string) (string, error)
+}
+
+// nestedPathGetSet does a top-down lookup, as opposed to LexicalLookupSymbol which is bottom up
+// using a stack.
+func (s *Scope) nestedPathGetSet(env *Glisp, dotpaths []string, setVal *Sexp) (Sexp, error) {
+
+	if len(dotpaths) == 0 {
+		return SexpNull, fmt.Errorf("internal error: in nestedPathGetSet() dotpaths" +
+			" had zero length")
+	}
+
+	curScope := s
+
+	var ret Sexp = SexpNull
+	var ok bool
+	lenpath := len(dotpaths)
+	P("\n in nestedPathGetSet, dotpaths=%#v\n", dotpaths)
+	for i := range dotpaths {
+		curSym := env.MakeSymbol(stripAnyDotPrefix(dotpaths[i]))
+		if setVal != nil && i == lenpath-1 {
+			// assign now
+			curScope.Map[curSym.number] = *setVal
+			// done with SET
+			return *setVal, nil
+		}
+
+		ret, ok = curScope.Map[curSym.number]
+		if !ok {
+			return SexpNull, fmt.Errorf("could not find symbol '%s' in current Scope '%#v'",
+				curSym.name, curScope)
+		}
+		if i == lenpath-1 {
+			// done with GET
+			return ret, nil
+		}
+		// invar: i < lenpath-1, so go deeper
+		switch h2 := ret.(type) {
+		case *SexpHash:
+			P("\n found hash in h2 at i=%d, looping to next i\n", i)
+			return h2.nestedPathGetSet(env, dotpaths[1:], setVal)
+		case *Scope:
+			curScope = h2
+		default:
+			return SexpNull, fmt.Errorf("not a record or scope: cannot get field '%s'"+
+				" out of type %T)", dotpaths[i+1][1:], h2)
+		}
+
+	}
+	return ret, nil
 }

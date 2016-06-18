@@ -284,6 +284,9 @@ func (env *Glisp) CallFunction(function *SexpFunction, nargs int) error {
 	//P("CallFunction did linearstack.PushScope(): now %v deep", env.linearstack.Size())
 	env.addrstack.PushAddr(env.curfunc, env.pc+1)
 
+	//P("DEBUG linearstack with this next:")
+	//env.showStackHelper(env.linearstack, "linearstack")
+
 	// this effectely *is* the call, because it sets the
 	// next instructions to happen once we exit.
 	env.curfunc = function
@@ -336,6 +339,9 @@ func (env *Glisp) CallUserFunction(
 	env.curfunc = function
 	env.pc = -1
 
+	//P("DEBUG linearstack with this next, just before calling function.userfun:")
+	//env.showStackHelper(env.linearstack, "linearstack")
+
 	// protect against bad calls/bad reflection in usercalls
 	var wasPanic bool
 	var recovered interface{}
@@ -354,6 +360,10 @@ func (env *Glisp) CallUserFunction(
 		// the point we were getting to, before the panic protection:
 		return function.userfun(env, name, args)
 	}()
+
+	//P("DEBUG linearstack with this next, just *after* calling function.userfun:")
+	//env.showStackHelper(env.linearstack, "linearstack")
+
 	if wasPanic {
 		err = fmt.Errorf("CallUserFunction caught panic during call of "+
 			"'%s': '%v'\n stack trace:\n%v\n",
@@ -375,7 +385,8 @@ func (env *Glisp) CallUserFunction(
 }
 
 func (env *Glisp) LoadExpressions(expressions []Sexp) error {
-	ts := NewTreeState()
+	//ts := NewTreeState()
+	var ts *TreeState
 	expressions = env.FilterArray(expressions, RemoveCommentsFilter, ts)
 	expressions = env.FilterArray(expressions, RemoveEndsFilter, ts)
 	//expressions = env.FilterArray(expressions, RemoveCommasFilter, ts)
@@ -521,7 +532,7 @@ func (env *Glisp) DumpEnvironment() {
 	if !env.curfunc.user {
 		DumpFunction(env.curfunc.fun, env.pc)
 	}
-	fmt.Printf("DataStack: (length %d)\n", env.datastack.Size())
+	fmt.Printf("DataStack (%p): (length %d)\n", env.datastack, env.datastack.Size())
 	env.datastack.PrintStack()
 	fmt.Printf("Linear stack: (length %d)\n", env.linearstack.Size())
 	//env.linearstack.PrintScopeStack()
@@ -556,7 +567,7 @@ func (env *Glisp) Clear() {
 
 func (env *Glisp) FindObject(name string) (Sexp, bool) {
 	sym := env.MakeSymbol(name)
-	obj, err, _ := env.linearstack.LookupSymbol(sym)
+	obj, err, _ := env.linearstack.LookupSymbol(sym, nil)
 	if err != nil {
 		return SexpNull, false
 	}
@@ -654,7 +665,7 @@ func (env *Glisp) showStackHelper(stack *Stack, name string) {
 	if n < 0 {
 		note = "(empty)"
 	}
-	fmt.Printf(" ========  env.%s is %v deep: %s\n", name, n+1, note)
+	fmt.Printf(" ========  env(%p).%s is %v deep: %s\n", env, name, n+1, note)
 	s := ""
 	for i := 0; i <= n; i++ {
 		ele, err := stack.Get(n - i)
@@ -693,11 +704,10 @@ func (env *Glisp) ShowGlobalStack() error {
 	return err
 }
 
-func (env *Glisp) LexicalLookupSymbol(sym *SexpSymbol, undot bool) (Sexp, error, *Scope) {
+func (env *Glisp) LexicalLookupSymbol(sym *SexpSymbol, setVal *Sexp) (Sexp, error, *Scope) {
 
-	// DotSymbols always evaluate to themselves, unless
-	// undot is true.
-	if (sym.isDot || sym.isSigil || sym.colonTail) && !undot {
+	// DotSymbols always evaluate to themselves
+	if sym.isDot || sym.isSigil || sym.colonTail {
 		return sym, nil, nil
 	}
 
@@ -711,7 +721,7 @@ func (env *Glisp) LexicalLookupSymbol(sym *SexpSymbol, undot bool) (Sexp, error,
 	//P("LexicalLookupSymbol('%s')\n", sym.name)
 
 	// (1) linearstack
-	exp, err, scope := env.linearstack.LookupSymbolUntilFunction(sym)
+	exp, err, scope := env.linearstack.LookupSymbolUntilFunction(sym, setVal)
 	switch err {
 	case nil:
 		//P("LexicalLookupSymbol('%s') found on linearstack in scope '%s'\n",
@@ -726,7 +736,7 @@ func (env *Glisp) LexicalLookupSymbol(sym *SexpSymbol, undot bool) (Sexp, error,
 	//P("LexicalLookupSymbol('%s') past linearstack\n", sym.name)
 
 	// (2) env.curfunc.closedOverScope
-	exp, err, scope = env.curfunc.ClosingLookupSymbol(sym)
+	exp, err, scope = env.curfunc.ClosingLookupSymbol(sym, setVal)
 	switch err {
 	case nil:
 		//P("LexicalLookupSymbol('%s') found on curfunc.closeScope in scope '%s'\n",
@@ -793,7 +803,6 @@ func (env *Glisp) ResolveDotSym(arg []Sexp) ([]Sexp, error) {
 		switch sym := arg[i].(type) {
 		case *SexpSymbol:
 			resolved, err := dotGetSetHelper(env, sym.name, nil)
-			//resolved, err, _ := env.LexicalLookupSymbol(sym, true)
 			if err != nil {
 				return nil, err
 			}

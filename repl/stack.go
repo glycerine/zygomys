@@ -13,6 +13,35 @@ type Stack struct {
 	tos      int
 	elements []StackElem
 	env      *Glisp
+
+	Name string // type name
+
+	// package support:
+	PackageName string
+	IsPackage   bool
+}
+
+// SexpString satisfies the Sexp interface, producing a string presentation of the value.
+func (s *Stack) SexpString(indent int) string {
+	var label string
+	head := ""
+	if s.IsPackage {
+		head = "(stackpackage " + s.PackageName
+	} else {
+		label = "scope " + s.Name
+	}
+
+	str, err := s.Show(s.env, indent, s.Name)
+	if err != nil {
+		return "(" + label + ")"
+	}
+
+	return head + " " + str + " )"
+}
+
+// Type() satisfies the Sexp interface, returning the type of the value.
+func (s *Stack) Type() *RegisteredType {
+	return GoStructRegistry.Lookup("packageScopeStack")
 }
 
 func (env *Glisp) NewStack(size int) *Stack {
@@ -26,6 +55,7 @@ func (env *Glisp) NewStack(size int) *Stack {
 func (stack *Stack) Clone() *Stack {
 	ret := &Stack{}
 	ret.tos = stack.tos
+	ret.env = stack.env
 	ret.elements = make([]StackElem, len(stack.elements))
 	for i := range stack.elements {
 		ret.elements[i] = stack.elements[i]
@@ -94,6 +124,7 @@ func (stack *Stack) Pop() (StackElem, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	// invar n > 0
 	n := stack.Size()
 	if n == 0 {

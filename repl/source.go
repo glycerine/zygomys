@@ -16,7 +16,7 @@ func SimpleSourceFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 
 	src, isStr := args[0].(*SexpStr)
 	if !isStr {
-		return SexpNull, fmt.Errorf("-> error: first argument be a string")
+		return SexpNull, fmt.Errorf("-> error: first argument must be a string")
 	}
 
 	file := src.S
@@ -47,15 +47,6 @@ func SimpleSourceFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 // SourceExpressions, this should be called from a user func context
 func (env *Glisp) SourceExpressions(expressions []Sexp) error {
 	gen := NewGenerator(env)
-	// not sure what the point of this was, but the extra pop
-	// off the stack is causing source to fail because it is
-	// popping off our loop stack mark by mistake.
-	//if !env.ReachedEnd() {
-	//  gen.AddInstruction(PopInstr(0))
-	//}
-
-	//scope := env.LexicalPush("__source")
-	//	defer env.LexicalPop("__source")
 
 	err := gen.GenerateBegin(expressions)
 	if err != nil {

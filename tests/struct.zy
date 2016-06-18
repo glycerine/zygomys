@@ -7,7 +7,7 @@
 (def e (Dog Name:"Egbert"))
 
 (d = e)
-(assert (== (.d.Name) "Egbert"))
+(assert (== d.Name "Egbert"))
 (expectError "cannot assign int64 to Dog" (e = 12))
 (f = 4)
 (expectError "cannot assign Dog to int64" (f = d))

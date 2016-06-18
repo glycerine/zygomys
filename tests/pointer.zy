@@ -47,7 +47,7 @@ ptr2
 
 (pdog = (& d))
 (derefSet pdog (Dog Name:"Benicia"))
-(assert (== (.d.Name) "Benicia"))
+(assert (== d.Name "Benicia"))
 
 (expectError "Error calling 'derefSet': cannot assign type 'Dog' to type 'string'" (derefSet sptr d))
 (expectError "Error calling 'derefSet': type mismatch: value of type 'string' is not assignable to 'Dog'" (derefSet pdog "hi"))
@@ -77,9 +77,11 @@ ptr2
 (derefSet sss "happy")
 (assert (== (* sss) "happy"))
 
+// derefSet doesn't work now...
+
 (def h (hash a:(& 1) b:2))
-(derefSet (.h.a) 45)
-(assert (== (* (.h.a)) 45))
+(derefSet (* h.a) 45)
+(assert (== (* (* h.a)) 45))
 
 (def cat (Cat Name:"Claude"))
 (expectError "Error calling 'derefSet': derefSet only operates on pointers (*SexpPointer); we saw *zygo.SexpStr instead"
@@ -88,10 +90,10 @@ ptr2
 (struct Kanga [(field roo: (* Cat))])
 
 (def kanga (Kanga roo: (& cat)))
-(assert (== (:Name (* (.kanga.roo))) "Claude"))
+(assert (== (:Name (*(* kanga.roo))) "Claude"))
 (def jup (Cat Name:"Jupiter"))
 (derefSet (:roo kanga) jup)
-(assert (== (:Name (* (.kanga.roo))) "Jupiter"))
+(assert (== (:Name (*(* kanga.roo))) "Jupiter"))
 
 (def sn1 (snoopy of:"charlie"))
 (def sn2 (snoopy of:"sarah"))

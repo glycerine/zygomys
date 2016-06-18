@@ -74,3 +74,8 @@ h
 
 {h2=(hash [4 4]:%slicekey)}
 (hash [4 4]:%slicekey)
+
+// calling functions defined in hashes should work
+{h.b = (fn [] 42)}
+(assert (== (h.b) 42))
+
