@@ -1,4 +1,0 @@
-(def a (hash b:42))
-(defn assistor [y] (_ls) (+ y a.b))
-
-
