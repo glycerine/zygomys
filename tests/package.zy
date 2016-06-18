@@ -5,3 +5,11 @@
 (assert (== hi.world "earth"))
 (assert (== (hi.myfun "yes") "earthyes"))
 
+// define a package p, by sourcing another file
+{p = (package "doggerel" (source "tests/pkghelp"))}
+
+(assert (== p.a.b 42))
+(assert (== p.a.dog "bella"))
+(assert (== (p.a.f) 54)) // we can call functions
+(assert (== (p.assistor 9) (+ 9 42 3 7))) // functions can refer to package local values and functions
+

@@ -22,11 +22,22 @@ type Stack struct {
 }
 
 // SexpString satisfies the Sexp interface, producing a string presentation of the value.
+/*
+func (s *Stack) SexpString(indent int) string {
+	//var label string
+	head := ""
+	if s.IsPackage {
+		return "(package " + s.PackageName + ")"
+	}
+
+	return "(stack)"
+}
+*/
 func (s *Stack) SexpString(indent int) string {
 	var label string
 	head := ""
 	if s.IsPackage {
-		head = "(stackpackage " + s.PackageName
+		head = "(package " + s.PackageName
 	} else {
 		label = "scope " + s.Name
 	}
@@ -216,7 +227,7 @@ func (s *Stack) nestedPathGetSet(env *Glisp, dotpaths []string, setVal *Sexp) (S
 		// invar: i < lenpath-1, so go deeper
 		switch x := ret.(type) {
 		case *SexpHash:
-			P("\n found hash in x at i=%d, looping to next i\n", i)
+			//P("\n found hash in x at i=%d, looping to next i\n", i)
 			return x.nestedPathGetSet(env, dotpaths[1:], setVal)
 		case *Stack:
 			curStack = x
