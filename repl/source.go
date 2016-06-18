@@ -62,18 +62,16 @@ func (env *Glisp) SourceExpressions(expressions []Sexp) error {
 		gen.instructions, nil)
 	env.pc = 0
 
-	// okay without this now:
-	//env.datastack.PushExpr(SexpNull)
-
-	if _, err = env.Run(); err != nil {
+	result, err := env.Run()
+	if err != nil {
 		return err
 	}
 
-	//fmt.Printf("\n debug done with Run in source, now stack is:\n")
-	//env.datastack.PrintStack()
+	//P("end of SourceExpressions, result going onto datastack is: '%s'", result.SexpString(0))
+	env.datastack.PushExpr(result)
 
-	// likewise, okay without this now:
-	//env.datastack.PopExpr()
+	//P("debug done with Run in source, now stack is:")
+	//env.datastack.PrintStack()
 
 	env.pc = curpc
 	env.curfunc = curfunc
@@ -101,49 +99,52 @@ func SourceFileFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		return SexpNull, WrongNargs
 	}
 
-	var sourceItem func(item Sexp) error
-
-	sourceItem = func(item Sexp) error {
-		switch t := item.(type) {
-		case *SexpArray:
-			for _, v := range t.Val {
-				if err := sourceItem(v); err != nil {
-					return err
-				}
-			}
-		case *SexpPair:
-			expr := item
-			for expr != SexpNull {
-				list := expr.(*SexpPair)
-				if err := sourceItem(list.Head); err != nil {
-					return err
-				}
-				expr = list.Tail
-			}
-		case *SexpStr:
-			var f *os.File
-			var err error
-
-			if f, err = os.Open(t.S); err != nil {
-				return err
-			}
-			defer f.Close()
-			if err = env.SourceFile(f); err != nil {
-				return err
-			}
-
-		default:
-			return fmt.Errorf("%v: Expected `string`, `list`, `array` given type %T val %v", name, item, item)
-		}
-
-		return nil
-	}
-
 	for _, v := range args {
-		if err := sourceItem(v); err != nil {
+		if err := env.sourceItem(v); err != nil {
 			return SexpNull, err
 		}
 	}
 
-	return SexpNull, nil
+	result, err := env.datastack.PopExpr()
+	if err != nil {
+		return SexpNull, err
+	}
+	return result, nil
+}
+
+// helper
+func (env *Glisp) sourceItem(item Sexp) error {
+	switch t := item.(type) {
+	case *SexpArray:
+		for _, v := range t.Val {
+			if err := env.sourceItem(v); err != nil {
+				return err
+			}
+		}
+	case *SexpPair:
+		expr := item
+		for expr != SexpNull {
+			list := expr.(*SexpPair)
+			if err := env.sourceItem(list.Head); err != nil {
+				return err
+			}
+			expr = list.Tail
+		}
+	case *SexpStr:
+		var f *os.File
+		var err error
+
+		if f, err = os.Open(t.S); err != nil {
+			return err
+		}
+		defer f.Close()
+		if err = env.SourceFile(f); err != nil {
+			return err
+		}
+
+	default:
+		return fmt.Errorf("source: Expected `string`, `list`, `array` given type %T val %v", item, item)
+	}
+
+	return nil
 }

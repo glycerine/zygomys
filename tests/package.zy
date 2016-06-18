@@ -14,3 +14,9 @@
 (assert (== (p.a.f) 54)) // we can call functions
 (assert (== (p.assistor 9) (+ 9 42 3 7))) // functions can refer to package local values and functions
 
+// and test importing pre-made packages:
+{k := (source "tests/prepackage")}
+
+(assert (== (k.funky "yipee") "yipee roverDog chases cat"))
+(assert (== k.kit "cat"))
+

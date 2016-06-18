@@ -1368,13 +1368,6 @@ func dotGetSetHelper(env *Glisp, name string, setVal *Sexp) (Sexp, error) {
 			return SexpNull, err
 		}
 		return exp, nil
-
-		//		ret, err, _ = env.LexicalLookupSymbol(keySym, setVal)
-		//		if err != nil {
-		//Q("\n in dotGetSetHelper(), '%s' not found\n", key)
-		//			return SexpNull, err
-		//		}
-		//		return expr, nil, pkg
 	}
 
 	// at least .a.b if not a.b.c. etc: multiple elements,

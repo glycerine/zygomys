@@ -1437,6 +1437,7 @@ func (gen *Generator) GeneratePackage(expressions []Sexp) error {
 		return err
 	}
 	gen.AddInstruction(PopUntilStackmarkInstr{sym: symPkgName})
+	gen.AddInstruction(PopInstr(0)) // remove the stackmark itself now
 	gen.AddInstruction(PopScopeTransferToDataStackInstr{PackageName: pkgName})
 	return nil
 }

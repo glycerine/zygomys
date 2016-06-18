@@ -278,10 +278,6 @@ func (env *Glisp) CallFunction(function *SexpFunction, nargs int) error {
 		panic("where's the global scope?")
 	}
 
-	// speculate: maybe this is not needed anymore, since a function does
-	// itself do a linearstack.PushScope() upon entry, right?
-	//env.linearstack.PushScope()
-	//P("CallFunction did linearstack.PushScope(): now %v deep", env.linearstack.Size())
 	env.addrstack.PushAddr(env.curfunc, env.pc+1)
 
 	//P("DEBUG linearstack with this next:")
@@ -308,13 +304,6 @@ func (env *Glisp) ReturnFromFunction() error {
 	}
 	var err error
 	env.curfunc, env.pc, err = env.addrstack.PopAddr()
-	if err != nil {
-		return err
-	}
-	//P("ReturnFromFunction is pop-ing linearstack; now %v deep", env.linearstack.Size())
-	// speculate mirror the above specualation:
-	//_, err = env.linearstack.Pop()
-
 	return err
 }
 
@@ -624,13 +613,9 @@ func (env *Glisp) Run() (Sexp, error) {
 	}
 
 	if env.datastack.IsEmpty() {
+		// this does fire.
+		//P("debug: *** detected empty datastack, adding a null")
 		env.datastack.PushExpr(SexpNull)
-		/*
-			fmt.Printf("env.datastack was empty!!\n")
-			env.DumpEnvironment()
-			panic("env.datastack was empty!!")
-			//os.Exit(-1)
-		*/
 	}
 
 	return env.datastack.PopExpr()

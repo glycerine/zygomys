@@ -1,0 +1,6 @@
+// a pre-made package
+(package "helloKit"
+   (def kit "cat")
+   (def rov "erDog")
+   (defn funky [a] (concat a " rov" rov " chases " kit))
+)
