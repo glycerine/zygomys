@@ -20,3 +20,5 @@
 (assert (== (k.funky "yipee") "yipee roverDog chases cat"))
 (assert (== k.kit "cat"))
 
+// not available: still considering if this is worth the complexity:
+// package visibility rules like in Go: lowercase => private, Uppercase => Public.
