@@ -65,7 +65,7 @@ func ArrayIndexFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		case *SexpHash:
 			return HashIndexFunction(env, name, []Sexp{xArr, args[1]})
 		default:
-			return SexpNull, fmt.Errorf("bad (arrayidx ar index) call: ar as arrayidx, but that did not resolve to an array, instead '%s'/type %T", x.SexpString(0), x)
+			return SexpNull, fmt.Errorf("bad (arrayidx ar index) call: ar as arrayidx, but that did not resolve to an array, instead '%s'/type %T", x.SexpString(nil), x)
 		}
 	case *SexpArray:
 		ar = ar2
@@ -76,7 +76,7 @@ func ArrayIndexFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		return HashIndexFunction(env, name, args)
 	default:
 		return SexpNull, fmt.Errorf("bad (arrayidx ar index) call: ar was not an array, instead '%s'/type %T",
-			args[0].SexpString(0), args[0])
+			args[0].SexpString(nil), args[0])
 	}
 
 	var idx *SexpArray
@@ -85,7 +85,7 @@ func ArrayIndexFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		idx = idx2
 	default:
 		return SexpNull, fmt.Errorf("bad (arrayidx ar index) call: index was not an array, instead '%s'/type %T",
-			args[1].SexpString(0), args[1])
+			args[1].SexpString(nil), args[1])
 	}
 
 	ret := SexpArraySelector{
@@ -117,7 +117,7 @@ func (arr *SexpArray) IndexBy(idx *SexpArray) (Sexp, error) {
 	myInt, isInt := idx.Val[i].(*SexpInt)
 	if !isInt {
 		return SexpNull, fmt.Errorf("bad (arrayidx ar index) call: index with non-integer '%v'",
-			idx.Val[i].SexpString(0))
+			idx.Val[i].SexpString(nil))
 	}
 	k := myInt.Val
 	pos := k % int64(len(arr.Val))
@@ -144,18 +144,18 @@ type SexpArraySelector struct {
 	Container *SexpArray
 }
 
-func (si *SexpArraySelector) SexpString(indent int) string {
+func (si *SexpArraySelector) SexpString(ps *PrintState) string {
 	Q("in SexpArraySelector.SexpString(), si.Container.Env = %p", si.Container.Env)
 	rhs, err := si.RHS(si.Container.Env)
 	if err != nil {
-		return fmt.Sprintf("(arraySelector %v %v)", si.Container.SexpString(indent), si.Select.SexpString(indent))
+		return fmt.Sprintf("(arraySelector %v %v)", si.Container.SexpString(ps), si.Select.SexpString(ps))
 	}
 
-	Q("in SexpArraySelector.SexpString(), rhs = %v", rhs.SexpString(indent))
-	Q("in SexpArraySelector.SexpString(), si.Container = %v", si.Container.SexpString(indent))
-	Q("in SexpArraySelector.SexpString(), si.Select = %v", si.Select.SexpString(indent))
+	Q("in SexpArraySelector.SexpString(), rhs = %v", rhs.SexpString(ps))
+	Q("in SexpArraySelector.SexpString(), si.Container = %v", si.Container.SexpString(ps))
+	Q("in SexpArraySelector.SexpString(), si.Select = %v", si.Select.SexpString(ps))
 
-	return fmt.Sprintf("%v /*(arraySelector %v %v)*/", rhs.SexpString(indent), si.Container.SexpString(indent), si.Select.SexpString(indent))
+	return fmt.Sprintf("%v /*(arraySelector %v %v)*/", rhs.SexpString(ps), si.Container.SexpString(ps), si.Select.SexpString(ps))
 }
 
 // Type returns the type of the value.

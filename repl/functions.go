@@ -6,6 +6,7 @@ import (
 	"os"
 	"reflect"
 	"runtime"
+	"unicode"
 )
 
 var WrongNargs error = fmt.Errorf("wrong number of arguments")
@@ -662,7 +663,7 @@ func PrintFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	case *SexpStr:
 		str = expr.S
 	default:
-		str = expr.SexpString(0)
+		str = expr.SexpString(nil)
 	}
 
 	switch name {
@@ -795,12 +796,10 @@ func ConstructorFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 			return SexpNull, err
 		}
 		fld := (*SexpField)(h)
-		Q("hash for field is: '%v'", fld.SexpString(0))
+		Q("hash for field is: '%v'", fld.SexpString(nil))
 		return fld, nil
 	case "struct":
 		return MakeHash(args, "struct", env)
-	case "package":
-		return MakeHash(args, "package", env)
 	case "msgmap":
 		switch len(args) {
 		case 0:
@@ -975,7 +974,6 @@ func CoreFunctions() map[string]GlispUserFunction {
 		"list":        ConstructorFunction,
 		"hash":        ConstructorFunction,
 		"raw":         ConstructorFunction,
-		"package":     ConstructorFunction,
 		"str":         StringifyFunction,
 		"->":          ThreadMapFunction,
 		"flatten":     FlattenToWordsFunction,
@@ -1073,14 +1071,14 @@ func threadingHelper(env *Glisp, hash *SexpHash, args []Sexp) (Sexp, error) {
 	field, err := hash.HashGet(env, args[0])
 	if err != nil {
 		return SexpNull, fmt.Errorf("-> error: field '%s' not found",
-			args[0].SexpString(0))
+			args[0].SexpString(nil))
 	}
 	if len(args) > 1 {
 		h, isHash := field.(*SexpHash)
 		if !isHash {
 			return SexpNull, fmt.Errorf("request for field '%s' was "+
 				"not on a hash or defmap; instead type %T with value '%#v'",
-				args[1].SexpString(0), field, field)
+				args[1].SexpString(nil), field, field)
 		}
 		return threadingHelper(env, h, args[1:])
 	}
@@ -1092,7 +1090,7 @@ func StringifyFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		return SexpNull, WrongNargs
 	}
 
-	return &SexpStr{S: args[0].SexpString(0)}, nil
+	return &SexpStr{S: args[0].SexpString(nil)}, nil
 }
 
 func Sym2StrFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
@@ -1194,7 +1192,7 @@ func StopFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 // the assignment function, =
 func AssignmentFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	Q("\n AssignmentFunction called with name ='%s'. args='%s'\n", name,
-		env.NewSexpArray(args).SexpString(0))
+		env.NewSexpArray(args).SexpString(nil))
 
 	narg := len(args)
 	if narg != 2 {
@@ -1216,7 +1214,7 @@ func AssignmentFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 
 	if !sym.isDot {
 		Q("assignment sees LHS symbol but is not dot, binding '%s' to '%s'\n",
-			sym.name, args[1].SexpString(0))
+			sym.name, args[1].SexpString(nil))
 		err := env.LexicalBindSymbol(sym, args[1])
 		if err != nil {
 			return SexpNull, err
@@ -1259,7 +1257,7 @@ func JoinSymFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 			}
 			j += s
 		default:
-			return SexpNull, fmt.Errorf("error cannot joinsym type '%T' / val = '%s'", a, a.SexpString(0))
+			return SexpNull, fmt.Errorf("error cannot joinsym type '%T' / val = '%s'", a, a.SexpString(nil))
 		}
 	}
 
@@ -1275,7 +1273,7 @@ func joinSymHelper(arr []Sexp) (string, error) {
 
 		default:
 			return "", fmt.Errorf("not a symbol: '%s'",
-				arr[i].SexpString(0))
+				arr[i].SexpString(nil))
 		}
 	}
 	return j, nil
@@ -1305,6 +1303,18 @@ func QuoteListFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	}
 
 	return MakeList(arr2), nil
+}
+
+// helper used by dotGetSetHelper and sub-calls to check for private
+func errIfPrivate(pathPart string, pkg *Stack) error {
+	noDot := stripAnyDotPrefix(pathPart)
+
+	// references through a package must be Public
+	if !unicode.IsUpper([]rune(noDot)[0]) {
+		return fmt.Errorf("Cannot access private member '%s' of package '%s'",
+			noDot, pkg.PackageName)
+	}
+	return nil
 }
 
 // if setVal is nil, only get and return the lookup.
@@ -1361,7 +1371,7 @@ func dotGetSetHelper(env *Glisp, name string, setVal *Sexp) (Sexp, error) {
 	// package or hash? check for package
 	pkg, isStack := ret.(*Stack)
 	if isStack && pkg.IsPackage {
-		//P("found a package: '%s'", pkg.SexpString(0))
+		//P("found a package: '%s'", pkg.SexpString(nil))
 
 		exp, err := pkg.nestedPathGetSet(env, path[1:], setVal)
 		if err != nil {
@@ -1398,7 +1408,7 @@ func RemoveSymFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 
 	sym, ok := args[0].(*SexpSymbol)
 	if !ok {
-		return SexpNull, fmt.Errorf("symbol required, but saw %T/%v", args[0], args[0].SexpString(0))
+		return SexpNull, fmt.Errorf("symbol required, but saw %T/%v", args[0], args[0].SexpString(nil))
 	}
 
 	err := env.linearstack.DeleteSymbolFromTopOfStackScope(sym)
@@ -1582,8 +1592,8 @@ func DotFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	}
 	P("in DotFunction(), name='%v', args[0] = '%v', args[1]= '%v'",
 		name,
-		args[0].SexpString(0),
-		args[1].SexpString(0))
+		args[0].SexpString(nil),
+		args[1].SexpString(nil))
 	return SexpNull, nil
 	/*
 		var ret Sexp = SexpNull

@@ -1,24 +1,32 @@
 // one can define a package directly, like this:
 (def hi (package "hello"
-   { world := "earth"; (defn myfun [x] (concat world x)) }
+   { World := "earth"; (defn Myfun [x] (concat World x)) }
 ))
 
-(assert (== hi.world "earth"))
-(assert (== (hi.myfun "yes") "earthyes"))
+(assert (== hi.World "earth"))
+(assert (== (hi.Myfun "yes") "earthyes"))
 
 // or one can define a package by sourcing another file:
 {p = (package "doggerel" (source "tests/pkghelp"))}
 
-(assert (== p.a.b 42))
-(assert (== p.a.dog "bella"))
-(assert (== (p.a.f) 54)) // we can call functions
-(assert (== (p.assistor 9) (+ 9 42 3 7))) // functions can refer to package local values and functions
+(assert (== p.A.B 42))
+(assert (== p.A.Dog "bella"))
+(assert (== (p.A.F) 54)) // we can call functions
+(assert (== (p.Assistor 9) (+ 9 42 3 7))) // functions can refer to package local values and functions
 
 // and test importing pre-made packages:
 {k := (source "tests/prepackage")}
 
-(assert (== (k.funky "yipee") "yipee roverDog chases cat"))
-(assert (== k.kit "cat"))
+(assert (== (k.Funky "yipee") "yipee roverDog chases cat"))
+(assert (== k.Kit "cat"))
 
-// not available: still considering if this is worth the complexity:
 // package visibility rules like in Go: lowercase => private, Uppercase => Public.
+(expectError "Error calling '+': Cannot access private member 'privetLane' of package 'helloKit'" (+ k.privetLane 1))
+
+// check that visibility rules apply to imports of imports
+//(def outer (package "outerSpace" (def inner (package "innerSpace" (source "tests/prepackage")))))
+//(assert (== (outer.inner.Kit "cat")))
+//(expectError "Cannot access private member 'privetLane' of package 'helloKit'" outer.inner.privetLane)
+
+// verify no infinite loop on this...
+// (def outer (package "outerSpace" (def inner (package "innerSpace" (source "prepackage")))))

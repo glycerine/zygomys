@@ -91,7 +91,7 @@ func SexpToJson(exp Sexp) string {
 	case *SexpSymbol:
 		return `"` + e.name + `"`
 	default:
-		return exp.SexpString(0)
+		return exp.SexpString(nil)
 	}
 }
 
@@ -105,7 +105,7 @@ func (hash *SexpHash) jsonHashHelper() string {
 	}
 
 	for _, key := range hash.KeyOrder {
-		keyst := key.SexpString(0)
+		keyst := key.SexpString(nil)
 		ko = append(ko, keyst)
 		val, err := hash.HashGet(nil, key)
 		if err == nil {

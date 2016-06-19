@@ -17,7 +17,7 @@ type Sexp interface {
 	// Single-line strings can ignore indent.
 	// Only multiline strings should follow every
 	// newline with at least indent worth of spaces.
-	SexpString(indent int) string
+	SexpString(ps *PrintState) string
 
 	// Type returns the type of the value.
 	Type() *RegisteredType
@@ -60,7 +60,7 @@ func NewSexpPointer(pointedTo Sexp) *SexpPointer {
 	return p
 }
 
-func (p *SexpPointer) SexpString(indent int) string {
+func (p *SexpPointer) SexpString(ps *PrintState) string {
 	return fmt.Sprintf("%p", &p.Target)
 	//return fmt.Sprintf("(* %v) %p", p.PointedToType.RegisteredName, p.Target)
 }
@@ -136,7 +136,7 @@ func (r *SexpReflect) Type() *RegisteredType {
 		Q("SexpReflect.Type(): type named '%s' not found", k)
 		return nil
 	}
-	Q("SexpReflect.Type(): type named '%s' found as regtype '%v'", k, ty.SexpString(0))
+	Q("SexpReflect.Type(): type named '%s' found as regtype '%v'", k, ty.SexpString(nil))
 	return ty
 }
 
@@ -158,9 +158,9 @@ func (r *SexpClosureEnv) Type() *RegisteredType {
 	return nil // TODO what should this be?
 }
 
-func (c *SexpClosureEnv) SexpString(indent int) string {
+func (c *SexpClosureEnv) SexpString(ps *PrintState) string {
 	scop := (*Scope)(c)
-	s, err := scop.Show(scop.env, 0, "")
+	s, err := scop.Show(scop.env, ps, "")
 	if err != nil {
 		panic(err)
 	}
@@ -183,7 +183,7 @@ func (r *SexpSemicolon) Type() *RegisteredType {
 	return nil // TODO what should this be?
 }
 
-func (s *SexpSemicolon) SexpString(indent int) string {
+func (s *SexpSemicolon) SexpString(ps *PrintState) string {
 	return ";"
 }
 
@@ -191,11 +191,11 @@ func (r *SexpComma) Type() *RegisteredType {
 	return nil // TODO what should this be?
 }
 
-func (s *SexpComma) SexpString(indent int) string {
+func (s *SexpComma) SexpString(ps *PrintState) string {
 	return ","
 }
 
-func (sent *SexpSentinel) SexpString(indent int) string {
+func (sent *SexpSentinel) SexpString(ps *PrintState) string {
 	if sent == SexpNull {
 		return "nil"
 	}
@@ -213,25 +213,25 @@ func Cons(a Sexp, b Sexp) *SexpPair {
 	return &SexpPair{a, b}
 }
 
-func (pair *SexpPair) SexpString(indent int) string {
+func (pair *SexpPair) SexpString(ps *PrintState) string {
 	str := "("
 
 	for {
 		switch pair.Tail.(type) {
 		case *SexpPair:
-			str += pair.Head.SexpString(indent) + " "
+			str += pair.Head.SexpString(ps) + " "
 			pair = pair.Tail.(*SexpPair)
 			continue
 		}
 		break
 	}
 
-	str += pair.Head.SexpString(indent)
+	str += pair.Head.SexpString(ps)
 
 	if pair.Tail == SexpNull {
 		str += ")"
 	} else {
-		str += " \\ " + pair.Tail.SexpString(indent) + ")"
+		str += " \\ " + pair.Tail.SexpString(ps) + ")"
 	}
 
 	return str
@@ -268,7 +268,7 @@ func (r *SexpArray) Type() *RegisteredType {
 	return r.Typ
 }
 
-func (arr *SexpArray) SexpString(indent int) string {
+func (arr *SexpArray) SexpString(ps *PrintState) string {
 	opn := "["
 	cls := "]"
 	if arr.Infix {
@@ -281,7 +281,7 @@ func (arr *SexpArray) SexpString(indent int) string {
 	ta := arr.IsFuncDeclTypeArray
 	str := opn
 	for i, sexp := range arr.Val {
-		str += sexp.SexpString(indent)
+		str += sexp.SexpString(ps)
 		if ta && i%2 == 0 {
 			str += ":"
 		} else {
@@ -293,7 +293,7 @@ func (arr *SexpArray) SexpString(indent int) string {
 	return str
 }
 
-func (e *SexpError) SexpString(indent int) string {
+func (e *SexpError) SexpString(ps *PrintState) string {
 	return e.error.Error()
 }
 
@@ -412,7 +412,7 @@ func (h *SexpHash) SetGoStructFactory(factory *RegisteredType) {
 var SexpIntSize = 64
 var SexpFloatSize = 64
 
-func (r *SexpReflect) SexpString(indent int) string {
+func (r *SexpReflect) SexpString(ps *PrintState) string {
 	Q("in SexpReflect.SexpString(indent); top; type = %T", r)
 	if reflect.Value(r.Val).Type().Kind() == reflect.Ptr {
 		iface := reflect.Value(r.Val).Interface()
@@ -431,33 +431,33 @@ func (r *SexpReflect) SexpString(indent int) string {
 	}
 }
 
-func (b *SexpBool) SexpString(indent int) string {
+func (b *SexpBool) SexpString(ps *PrintState) string {
 	if bool(b.Val) {
 		return "true"
 	}
 	return "false"
 }
 
-func (i *SexpInt) SexpString(indent int) string {
+func (i *SexpInt) SexpString(ps *PrintState) string {
 	return strconv.Itoa(int(i.Val))
 }
 
-func (f *SexpFloat) SexpString(indent int) string {
+func (f *SexpFloat) SexpString(ps *PrintState) string {
 	return strconv.FormatFloat(f.Val, 'g', 5, SexpFloatSize)
 }
 
-func (c *SexpChar) SexpString(indent int) string {
+func (c *SexpChar) SexpString(ps *PrintState) string {
 	return strconv.QuoteRune(c.Val)
 }
 
-func (s *SexpStr) SexpString(indent int) string {
+func (s *SexpStr) SexpString(ps *PrintState) string {
 	if s.backtick {
 		return "`" + s.S + "`"
 	}
 	return strconv.Quote(string(s.S))
 }
 
-func (r *SexpRaw) SexpString(indent int) string {
+func (r *SexpRaw) SexpString(ps *PrintState) string {
 	return fmt.Sprintf("%#v", []byte(r.Val))
 }
 
@@ -485,7 +485,7 @@ func (sym *SexpSymbol) AssignToSelection(env *Glisp, rhs Sexp) error {
 	panic("not implemented yet")
 }
 
-func (sym *SexpSymbol) SexpString(indent int) string {
+func (sym *SexpSymbol) SexpString(ps *PrintState) string {
 	if sym.colonTail {
 		//		return sym.name + ":"
 	}
@@ -510,7 +510,8 @@ type SexpInterfaceDecl struct {
 	methods []*SexpFunction
 }
 
-func (r *SexpInterfaceDecl) SexpString(indent int) string {
+func (r *SexpInterfaceDecl) SexpString(ps *PrintState) string {
+	indent := ps.GetIndent()
 	space := strings.Repeat(" ", indent)
 	space4 := strings.Repeat(" ", indent+4)
 	s := space + "(interface " + r.name + " ["
@@ -518,7 +519,7 @@ func (r *SexpInterfaceDecl) SexpString(indent int) string {
 		s += "\n"
 	}
 	for i := range r.methods {
-		s += space4 + r.methods[i].SexpString(indent+4) + "\n"
+		s += space4 + r.methods[i].SexpString(ps.AddIndent(4)) + "\n"
 	}
 	s += space + "])"
 	return s
@@ -555,9 +556,10 @@ func (sf *SexpFunction) Copy() *SexpFunction {
 }
 
 func (sf *SexpFunction) SetClosing(clos *Closing) {
-	pre, err := sf.ShowClosing(clos.env, 4, "prev")
+	ps4 := NewPrintStateWithIndent(4)
+	pre, err := sf.ShowClosing(clos.env, ps4, "prev")
 	panicOn(err)
-	newnew, err := sf.ShowClosing(clos.env, 4, "newnew")
+	newnew, err := sf.ShowClosing(clos.env, ps4, "newnew")
 	panicOn(err)
 	VPrintf("99999 for sfun = %p, in sfun.SetClosing(), prev value is %p = '%s'\n",
 		sf, sf.closingOverScopes, pre)
@@ -565,11 +567,11 @@ func (sf *SexpFunction) SetClosing(clos *Closing) {
 	sf.closingOverScopes = clos
 }
 
-func (sf *SexpFunction) ShowClosing(env *Glisp, indent int, label string) (string, error) {
+func (sf *SexpFunction) ShowClosing(env *Glisp, ps *PrintState, label string) (string, error) {
 	if sf.closingOverScopes == nil {
 		return sf.name + " has no captured scopes.", nil
 	}
-	return sf.closingOverScopes.Show(env, indent, label)
+	return sf.closingOverScopes.Show(env, ps, label)
 }
 
 func (sf *SexpFunction) ClosingLookupSymbolUntilFunction(sym *SexpSymbol) (Sexp, error, *Scope) {
@@ -587,11 +589,11 @@ func (sf *SexpFunction) ClosingLookupSymbol(sym *SexpSymbol, setVal *Sexp) (Sexp
 	return SexpNull, SymNotFound, nil
 }
 
-func (sf *SexpFunction) SexpString(indent int) string {
+func (sf *SexpFunction) SexpString(ps *PrintState) string {
 	if sf.orig == nil {
 		return "fn [" + sf.name + "]"
 	}
-	return sf.orig.SexpString(indent)
+	return sf.orig.SexpString(ps)
 }
 
 func IsTruthy(expr Sexp) bool {
@@ -616,6 +618,6 @@ func (r *SexpStackmark) Type() *RegisteredType {
 	return nil // TODO what should this be?
 }
 
-func (mark *SexpStackmark) SexpString(indent int) string {
+func (mark *SexpStackmark) SexpString(ps *PrintState) string {
 	return "stackmark " + mark.sym.name
 }

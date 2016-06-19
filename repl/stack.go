@@ -21,7 +21,7 @@ type Stack struct {
 	IsPackage   bool
 }
 
-func (s *Stack) SexpString(indent int) string {
+func (s *Stack) SexpString(ps *PrintState) string {
 	var label string
 	head := ""
 	if s.IsPackage {
@@ -30,7 +30,7 @@ func (s *Stack) SexpString(indent int) string {
 		label = "scope " + s.Name
 	}
 
-	str, err := s.Show(s.env, indent, s.Name)
+	str, err := s.Show(s.env, ps, s.Name)
 	if err != nil {
 		return "(" + label + ")"
 	}
@@ -145,9 +145,9 @@ func (stack *Stack) PopAndDiscard() {
 
 func (stack *Stack) IsStackElem() {}
 
-func (stack Stack) Show(env *Glisp, indent int, label string) (string, error) {
+func (stack Stack) Show(env *Glisp, ps *PrintState, label string) (string, error) {
 	s := ""
-	rep := strings.Repeat(" ", indent)
+	rep := strings.Repeat(" ", ps.GetIndent())
 	s += fmt.Sprintf("%s %s\n", rep, label)
 	n := stack.Top()
 	for i := 0; i <= n; i++ {
@@ -157,7 +157,7 @@ func (stack Stack) Show(env *Glisp, indent int, label string) (string, error) {
 		}
 		showme, canshow := ele.(Showable)
 		if canshow {
-			r, err := showme.Show(env, indent+4,
+			r, err := showme.Show(env, ps.AddIndent(4),
 				fmt.Sprintf("elem %v of %s:", i, label))
 			if err != nil {
 				return "", err
@@ -193,6 +193,11 @@ func (s *Stack) nestedPathGetSet(env *Glisp, dotpaths []string, setVal *Sexp) (S
 		curSym := env.MakeSymbol(stripAnyDotPrefix(dotpaths[i]))
 		if !curStack.IsPackage {
 			return SexpNull, fmt.Errorf("error locating symbol '%s': current Stack is not a package", curSym.name)
+		}
+
+		err = errIfPrivate(curSym.name, curStack)
+		if err != nil {
+			return SexpNull, err
 		}
 
 		ret, err, scop = curStack.LookupSymbol(curSym, nil)

@@ -175,7 +175,7 @@ func (gen *Generator) GenerateDef(args []Sexp, opname string) error {
 	if len(args) != 2 {
 		return fmt.Errorf("Wrong number of arguments to %s", opname)
 	}
-	Q("GenerateDef call with args[0]=%v", args[0].SexpString(0))
+	Q("GenerateDef call with args[0]=%v", args[0].SexpString(nil))
 	dup := true
 	var instr Instruction
 	switch args[0].(type) {
@@ -196,7 +196,7 @@ func (gen *Generator) GenerateDef(args []Sexp, opname string) error {
 		case "def":
 			instr = PopStackPutEnvInstr{lhs}
 		case "set":
-			Q("GenerateDef is doing set with UpdateInstr: lhs = '%s'", lhs.SexpString(0))
+			Q("GenerateDef is doing set with UpdateInstr: lhs = '%s'", lhs.SexpString(nil))
 			instr = UpdateInstr{lhs}
 		default:
 			panic(fmt.Errorf("unknown opname '%s'", opname))
@@ -297,7 +297,7 @@ func (gen *Generator) GenerateDefmac(args []Sexp, orig Sexp) error {
 	xpr, err, _ := gen.env.LexicalLookupSymbol(sym, nil)
 	if err == nil {
 		return fmt.Errorf("'%s' is already bound to '%s', refusing to define conflicting macro",
-			sym.name, xpr.SexpString(0))
+			sym.name, xpr.SexpString(nil))
 	}
 
 	sfun, err := buildSexpFun(gen.env, sym.name, funcargs, args[2:], orig)
@@ -514,7 +514,7 @@ func (gen *Generator) GenerateAssert(args []Sexp) error {
 	}
 
 	reterrmsg := fmt.Sprintf("Assertion failed: %s\n",
-		args[0].SexpString(0))
+		args[0].SexpString(nil))
 	gen.AddInstruction(BranchInstr{true, 2})
 	gen.AddInstruction(ReturnInstr{fmt.Errorf(reterrmsg)})
 	gen.AddInstruction(PushInstr{SexpNull})
@@ -682,7 +682,7 @@ func (gen *Generator) GenerateDispatch(fun Sexp, args []Sexp) error {
 
 func (gen *Generator) GenerateAssignment(expr *SexpPair, assignPos int) error {
 	Q("in GenerateAssignment, expr='%v', assignPos = %v",
-		expr.SexpString(0), assignPos)
+		expr.SexpString(nil), assignPos)
 	if assignPos == 0 {
 		return gen.GenerateCall(expr)
 	}
@@ -698,7 +698,7 @@ func (gen *Generator) GenerateAssignment(expr *SexpPair, assignPos int) error {
 
 	if len(lhs) != len(rhs) {
 		return fmt.Errorf("assignment imbalance: left-hand-side had %v, while right-hand-side had %v; in expression '%s'",
-			len(lhs), len(rhs), expr.SexpString(0))
+			len(lhs), len(rhs), expr.SexpString(nil))
 	}
 	// TODO: once functions have typed number of return values, check that we have balance
 	// of return value flow, rather than exact lhs to rhs count equality.
@@ -763,14 +763,14 @@ func (gen *Generator) Generate(expr Sexp) error {
 				err := gen.GenerateAssignment(e, pos)
 				if err != nil {
 					return fmt.Errorf("Error generating %s:\n%v",
-						expr.SexpString(0), err)
+						expr.SexpString(nil), err)
 				}
 				return nil
 			}
 			err := gen.GenerateCall(e)
 			if err != nil {
 				return fmt.Errorf("Error generating %s:\n%v",
-					expr.SexpString(0), err)
+					expr.SexpString(nil), err)
 			}
 			return nil
 		} else {
@@ -985,7 +985,7 @@ func (gen *Generator) GenerateForLoop(args []Sexp) error {
 }
 
 func (gen *Generator) GetLHS(arg Sexp, opname string) (*SexpSymbol, error) {
-	Q("GetLHS (opname=%s) called with arg '%s'", opname, arg.SexpString(0))
+	Q("GetLHS (opname=%s) called with arg '%s'", opname, arg.SexpString(nil))
 	var lhs *SexpSymbol
 	switch expr := arg.(type) {
 	case *SexpSymbol:
@@ -999,7 +999,7 @@ func (gen *Generator) GetLHS(arg Sexp, opname string) (*SexpSymbol, error) {
 			lhs = unquotedSymbol.(*SexpSymbol)
 		default:
 			return nil, fmt.Errorf("%s: left-hand-side must be a symbol,"+
-				" but we have %T/val=%v", opname, expr, expr.SexpString(0))
+				" but we have %T/val=%v", opname, expr, expr.SexpString(nil))
 		}
 	default:
 		return nil, fmt.Errorf("%s: left-hand-side must be a symbol; we have %T", opname, arg)
@@ -1016,7 +1016,7 @@ func (gen *Generator) GetLHS(arg Sexp, opname string) (*SexpSymbol, error) {
 	}
 
 	if lhs.isDot {
-		Q("in GetLHS(), lhs.isDot == true, return lhs='%v'", lhs.SexpString(0))
+		Q("in GetLHS(), lhs.isDot == true, return lhs='%v'", lhs.SexpString(nil))
 		//return nil, fmt.Errorf("illegal to %s dot-symbol, attempted on '%s'", opname, lhs.name)
 	}
 
@@ -1047,7 +1047,7 @@ func (gen *Generator) GenerateMultiDef(args []Sexp) error {
 				syms[i] = unquotedSymbol.(*SexpSymbol)
 			}
 		default:
-			return fmt.Errorf("All mdef targets must be symbols, but %d-th was not, instead of type %T: '%s'", i+1, sym, sym.SexpString(0))
+			return fmt.Errorf("All mdef targets must be symbols, but %d-th was not, instead of type %T: '%s'", i+1, sym, sym.SexpString(nil))
 		}
 	}
 
@@ -1485,7 +1485,7 @@ func (gen *Generator) GenerateReturn(xs []Sexp) error {
 		gen.AddInstruction(PushInstr{SexpMarker})
 	}
 	for i := range xs {
-		Q("return calling Generate on xs[i=%v]=%v", i, xs[i].SexpString(0))
+		Q("return calling Generate on xs[i=%v]=%v", i, xs[i].SexpString(nil))
 		err := gen.Generate(xs[i])
 		if err != nil {
 			return err

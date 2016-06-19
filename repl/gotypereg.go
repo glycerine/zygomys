@@ -168,7 +168,7 @@ type RegisteredType struct {
 }
 
 func (p *RegisteredType) TypeCheckRecord(hash *SexpHash) error {
-	Q("in RegisteredType.TypeCheckRecord(hash = '%v')", hash.SexpString(0))
+	Q("in RegisteredType.TypeCheckRecord(hash = '%v')", hash.SexpString(nil))
 	if hash.TypeName == "field" {
 		Q("in RegisteredType.TypeCheckRecord, TypeName == field, skipping.")
 		return nil
@@ -188,12 +188,12 @@ func (p *RegisteredType) TypeCheckRecord(hash *SexpHash) error {
 	return nil
 }
 
-func (p *RegisteredType) SexpString(indent int) string {
+func (p *RegisteredType) SexpString(ps *PrintState) string {
 	if p == nil {
 		return "nil RegisteredType"
 	}
 	if p.UserStructDefn != nil {
-		return p.UserStructDefn.SexpString(indent)
+		return p.UserStructDefn.SexpString(ps)
 	}
 	return p.DisplayAs
 }

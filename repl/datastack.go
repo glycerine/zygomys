@@ -62,13 +62,13 @@ func (stack *Stack) GetExpr(n int) (Sexp, error) {
 func (stack *Stack) PrintStack() {
 	for i := 0; i <= stack.tos; i++ {
 		expr := stack.elements[i].(DataStackElem).expr
-		fmt.Println("\t" + expr.SexpString(0))
+		fmt.Println("\t" + expr.SexpString(nil))
 	}
 }
 
 func (stack *Stack) PrintScopeStack() {
 	for i := 0; i <= stack.tos; i++ {
 		scop := stack.elements[i].(*Scope)
-		scop.Show(stack.env, 4, "")
+		scop.Show(stack.env, NewPrintStateWithIndent(4), "")
 	}
 }

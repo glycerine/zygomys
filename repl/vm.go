@@ -78,7 +78,7 @@ type PushInstr struct {
 }
 
 func (p PushInstr) InstrString() string {
-	return "push " + p.expr.SexpString(0)
+	return "push " + p.expr.SexpString(nil)
 }
 
 func (p PushInstr) Execute(env *Glisp) error {
@@ -130,7 +130,7 @@ func (g EnvToStackInstr) Execute(env *Glisp) error {
 	macxpr, isMacro := env.macros[g.sym.number]
 	if isMacro {
 		if macxpr.orig != nil {
-			return fmt.Errorf("'%s' is a macro, with definition: %s\n", g.sym.name, macxpr.orig.SexpString(0))
+			return fmt.Errorf("'%s' is a macro, with definition: %s\n", g.sym.name, macxpr.orig.SexpString(nil))
 		}
 		return fmt.Errorf("'%s' is a builtin macro.\n", g.sym.name)
 	}
@@ -186,12 +186,12 @@ func (p UpdateInstr) Execute(env *Glisp) error {
 	env.pc++
 
 	if p.sym.isSigil {
-		Q("UpdateInstr: ignoring sigil symbol '%s'", p.sym.SexpString(0))
+		Q("UpdateInstr: ignoring sigil symbol '%s'", p.sym.SexpString(nil))
 		return nil
 	}
 	if p.sym.isDot {
 		Q("UpdateInstr: dot symbol '%s' being updated with dotGetSetHelper()",
-			p.sym.SexpString(0))
+			p.sym.SexpString(nil))
 		_, err := dotGetSetHelper(env, p.sym.name, &expr)
 		return err
 	}
@@ -231,7 +231,7 @@ func (c CallInstr) Execute(env *Glisp) error {
 	if err != nil {
 		return err
 	}
-	//P("\n in CallInstr, after looking up c.sym='%s', got funcobj='%v'. datastack is:\n", c.sym.name, funcobj.SexpString(0))
+	//P("\n in CallInstr, after looking up c.sym='%s', got funcobj='%v'. datastack is:\n", c.sym.name, funcobj.SexpString(nil))
 	//env.datastack.PrintStack()
 	switch f := funcobj.(type) {
 	case *SexpSymbol:
@@ -270,7 +270,7 @@ func (c CallInstr) Execute(env *Glisp) error {
 						c.sym.name, f.name, f.name, err)
 				}
 			*/
-			//P("\n in CallInstr, found symbol, c.sym.isDot is false. f of type %T/val = %v. indirectFuncName = '%v'\n", f, f.SexpString(0), indirectFuncName.SexpString(0))
+			//P("\n in CallInstr, found symbol, c.sym.isDot is false. f of type %T/val = %v. indirectFuncName = '%v'\n", f, f.SexpString(nil), indirectFuncName.SexpString(nil))
 
 		}
 
@@ -338,13 +338,13 @@ func (d DispatchInstr) Execute(env *Glisp) error {
 	switch arr := funcobj.(type) {
 	case *SexpArray:
 		if len(arr.Val) == 0 {
-			_, err := env.CallUserFunction(sxSliceOf, funcobj.SexpString(0), d.nargs)
+			_, err := env.CallUserFunction(sxSliceOf, funcobj.SexpString(nil), d.nargs)
 			return err
 		}
 		// call along with the array as an argument so we know the size of the
 		// array / matrix / tensor to make. The 2nd argument will be the dimension array.
 		env.datastack.PushExpr(arr)
-		_, err := env.CallUserFunction(sxArrayOf, funcobj.SexpString(0), d.nargs+1)
+		_, err := env.CallUserFunction(sxArrayOf, funcobj.SexpString(nil), d.nargs+1)
 		return err
 	}
 	return fmt.Errorf("not a function on top of datastack: '%T/%#v'", funcobj, funcobj)
@@ -739,7 +739,7 @@ type CreateClosureInstr struct {
 }
 
 func (a CreateClosureInstr) InstrString() string {
-	return "create closure " + a.sfun.SexpString(0)
+	return "create closure " + a.sfun.SexpString(nil)
 }
 
 func (a CreateClosureInstr) Execute(env *Glisp) error {
@@ -748,17 +748,18 @@ func (a CreateClosureInstr) Execute(env *Glisp) error {
 	myInvok := a.sfun.Copy()
 	myInvok.SetClosing(cls)
 
-	shown, err := myInvok.ShowClosing(env, 8,
+	ps8 := NewPrintStateWithIndent(8)
+	shown, err := myInvok.ShowClosing(env, ps8,
 		fmt.Sprintf("closedOverScopes of '%s'", myInvok.name))
 	if err != nil {
 		return err
 	}
 	VPrintf("+++ CreateClosure: assign to '%s' the stack:\n\n%s\n\n",
-		myInvok.SexpString(0), shown)
+		myInvok.SexpString(nil), shown)
 	top := cls.TopScope()
 	VPrintf("222 CreateClosure: top of NewClosing Scope has addr %p and is\n",
 		top)
-	top.Show(env, 8, fmt.Sprintf("top of NewClosing at %p", top))
+	top.Show(env, ps8, fmt.Sprintf("top of NewClosing at %p", top))
 
 	env.datastack.PushExpr(myInvok)
 	return nil
@@ -792,7 +793,7 @@ func (a AssignInstr) Execute(env *Glisp) error {
 		switch rhsArray := rhs.(type) {
 		case *SexpArray:
 			//Q("AssignInstr: lhs is SexpArray '%v', *and* rhs is SexpArray ='%v'",
-			//	x.SexpString(0), rhsArray.SexpString(0))
+			//	x.SexpString(nil), rhsArray.SexpString(nil))
 			nRhs := len(rhsArray.Val)
 			nLhs := len(x.Val)
 			if nRhs != nLhs {
@@ -813,7 +814,7 @@ func (a AssignInstr) Execute(env *Glisp) error {
 			return nil
 		default:
 			return fmt.Errorf("AssignInstr: don't know how to assign rhs %T `%v` to lhs %T `%v`",
-				rhs, rhs.SexpString(0), lhs, lhs.SexpString(0))
+				rhs, rhs.SexpString(nil), lhs, lhs.SexpString(nil))
 		}
 	}
 	return fmt.Errorf("AssignInstr: don't know how to assign to lhs %T", lhs)
@@ -834,7 +835,7 @@ func (a PopScopeTransferToDataStackInstr) Execute(env *Glisp) error {
 	stackClone := env.linearstack.Clone()
 	stackClone.IsPackage = true // always/only used for packages.
 	stackClone.PackageName = a.PackageName
-	//P("PopScopeTransferToDataStackInstr: scope is '%v'", stackClone.SexpString(0))
+	//P("PopScopeTransferToDataStackInstr: scope is '%v'", stackClone.SexpString(nil))
 	env.linearstack.PopScope()
 	env.datastack.PushExpr(stackClone)
 	return nil

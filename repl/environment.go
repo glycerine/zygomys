@@ -663,12 +663,12 @@ func (env *Glisp) showStackHelper(stack *Stack, name string) {
 		label := fmt.Sprintf("%s %v", name, i)
 		switch x := ele.(type) {
 		case *Stack:
-			s, _ = x.Show(env, 0, label)
+			s, _ = x.Show(env, nil, label)
 
 		case *Scope:
-			s, _ = x.Show(env, 0, label)
+			s, _ = x.Show(env, nil, label)
 		case Scope:
-			s, _ = x.Show(env, 0, label)
+			s, _ = x.Show(env, nil, label)
 		default:
 			panic(fmt.Errorf("unrecognized element on %s: %T/val=%v",
 				name, x, x))
@@ -763,7 +763,7 @@ func DumpClosureEnvFunction(env *Glisp, name string, args []Sexp) (Sexp, error) 
 }
 
 func ClosureToString(f *SexpFunction, env *Glisp) string {
-	s, err := f.ShowClosing(env, 0,
+	s, err := f.ShowClosing(env, nil,
 		fmt.Sprintf("closedOverScopes of '%s'", f.name))
 	if err != nil {
 		return err.Error()

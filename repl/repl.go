@@ -119,7 +119,7 @@ func (pr *Prompter) getExpressionWithLiner(env *Glisp) (readin string, xs []Sexp
 		switch err {
 		case nil:
 			line += "\n" + nextline
-			Q("no problem parsing line '%s' into '%s', proceeding...\n", line, (&SexpArray{Val: x, Env: env}).SexpString(0))
+			Q("no problem parsing line '%s' into '%s', proceeding...\n", line, (&SexpArray{Val: x, Env: env}).SexpString(nil))
 			return line, xs, nil
 		case ResetRequested:
 			continue
@@ -170,7 +170,7 @@ func Repl(env *Glisp, cfg *GlispConfig) {
 	for {
 		//line, err := pr.getExpressionOrig(reader)
 		line, exprsInput, err := pr.getExpressionWithLiner(env)
-		//Q("\n exprsInput(len=%d) = '%v'\n line = '%s'\n", len(exprsInput), (&SexpArray{Val: exprsInput}).SexpString(0), line)
+		//Q("\n exprsInput(len=%d) = '%v'\n line = '%s'\n", len(exprsInput), (&SexpArray{Val: exprsInput}).SexpString(nil), line)
 		if err != nil {
 			fmt.Println(err)
 			if err == io.EOF {
@@ -306,7 +306,7 @@ func Repl(env *Glisp, cfg *GlispConfig) {
 						continue
 					} else {
 						Q("got back rhs of type %T", rhs)
-						fmt.Println(rhs.SexpString(0))
+						fmt.Println(rhs.SexpString(nil))
 						continue
 					}
 				case *SexpSymbol:
@@ -317,11 +317,11 @@ func Repl(env *Glisp, cfg *GlispConfig) {
 							env.Clear()
 							continue
 						}
-						fmt.Println(resolved.SexpString(0))
+						fmt.Println(resolved.SexpString(nil))
 						continue
 					}
 				}
-				fmt.Println(expr.SexpString(0))
+				fmt.Println(expr.SexpString(nil))
 			}
 		}
 	}

@@ -7,7 +7,7 @@ import (
 // FunctionCallNameTypeCheck type checks a function call.
 func (env *Glisp) FunctionCallNameTypeCheck(f *SexpFunction, nargs *int) error {
 	if f.inputTypes != nil {
-		Q("FunctionCallNameTypeCheck sees inputTypes: '%v'", f.inputTypes.SexpString(0))
+		Q("FunctionCallNameTypeCheck sees inputTypes: '%v'", f.inputTypes.SexpString(nil))
 	} else {
 		return nil // no type checking requested
 	}
@@ -51,13 +51,13 @@ func (env *Glisp) FunctionCallNameTypeCheck(f *SexpFunction, nargs *int) error {
 				valtyp := val.Type()
 				if typ != nil && typ != valtyp {
 					return fmt.Errorf("type mismatch for parameter '%s': expected '%s', got '%s'",
-						sym.name, typ.SexpString(0), valtyp.SexpString(0))
+						sym.name, typ.SexpString(nil), valtyp.SexpString(nil))
 				}
 			} else {
-				Q("in env.CallFunction, exprs[%v]='%v'/type=%T", i, exprs[i].SexpString(0), exprs[i])
+				Q("in env.CallFunction, exprs[%v]='%v'/type=%T", i, exprs[i].SexpString(nil), exprs[i])
 			}
 		default:
-			Q("in env.CallFunction, exprs[%v]='%v'/type=%T", i, exprs[i].SexpString(0), exprs[i])
+			Q("in env.CallFunction, exprs[%v]='%v'/type=%T", i, exprs[i].SexpString(nil), exprs[i])
 		}
 	}
 
@@ -76,7 +76,7 @@ func (env *Glisp) FunctionCallNameTypeCheck(f *SexpFunction, nargs *int) error {
 				a, found := submittedByName[sy.name]
 				if found {
 					Q("%s call: matching %v-th argument named '%s': passing value '%s'",
-						f.name, i, sy.name, a.SexpString(0))
+						f.name, i, sy.name, a.SexpString(nil))
 					finalArgs[i] = a
 				}
 			default:

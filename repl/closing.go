@@ -23,8 +23,8 @@ func (c *Closing) LookupSymbol(sym *SexpSymbol, setVal *Sexp) (Sexp, error, *Sco
 	return c.Stack.LookupSymbol(sym, setVal)
 }
 
-func (c *Closing) Show(env *Glisp, indent int, label string) (string, error) {
-	return c.Stack.Show(env, indent, label)
+func (c *Closing) Show(env *Glisp, ps *PrintState, label string) (string, error) {
+	return c.Stack.Show(env, ps, label)
 }
 
 func (c *Closing) TopScope() *Scope {

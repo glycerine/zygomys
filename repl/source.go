@@ -112,7 +112,7 @@ func SourceFileFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	return result, nil
 }
 
-// helper
+// helper for SourceFileFunction recursion
 func (env *Glisp) sourceItem(item Sexp) error {
 	switch t := item.(type) {
 	case *SexpArray:
@@ -143,7 +143,7 @@ func (env *Glisp) sourceItem(item Sexp) error {
 		}
 
 	default:
-		return fmt.Errorf("source: Expected `string`, `list`, `array` given type %T val %v", item, item)
+		return fmt.Errorf("source: Expected `string`, `list`, `array`. Instead found type %T val %v", item, item)
 	}
 
 	return nil

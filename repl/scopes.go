@@ -24,7 +24,7 @@ type Scope struct {
 }
 
 // SexpString satisfies the Sexp interface, producing a string presentation of the value.
-func (s *Scope) SexpString(indent int) string {
+func (s *Scope) SexpString(ps *PrintState) string {
 	var label string
 	head := ""
 	if s.IsPackage {
@@ -33,7 +33,7 @@ func (s *Scope) SexpString(indent int) string {
 		label = "scope " + s.Name
 	}
 
-	str, err := s.Show(s.env, indent, s.Name)
+	str, err := s.Show(s.env, ps, s.Name)
 	if err != nil {
 		return "(" + label + ")"
 	}
@@ -188,7 +188,7 @@ func (stack *Stack) BindSymbol(sym *SexpSymbol, expr Sexp) error {
 	}
 	cur, already := stack.elements[stack.tos].(*Scope).Map[sym.number]
 	if already {
-		Q("BindSymbol already sees symbol %v, currently bound to '%v'", sym.name, cur.SexpString(0))
+		Q("BindSymbol already sees symbol %v, currently bound to '%v'", sym.name, cur.SexpString(nil))
 
 		lhsTy := cur.Type()
 		rhsTy := expr.Type()
@@ -204,11 +204,11 @@ func (stack *Stack) BindSymbol(sym *SexpSymbol, expr Sexp) error {
 			// so force type match
 			rhsTy = lhsTy
 
-			//return fmt.Errorf("right-hand-side had nil type back from Type() call; val = '%s'/%T", expr.SexpString(0), expr)
+			//return fmt.Errorf("right-hand-side had nil type back from Type() call; val = '%s'/%T", expr.SexpString(nil), expr)
 		}
 
 		// both sides have type
-		Q("BindSymbol: both sides have type. rhs=%v, lhs=%v", rhsTy.SexpString(0), lhsTy.SexpString(0))
+		Q("BindSymbol: both sides have type. rhs=%v, lhs=%v", rhsTy.SexpString(nil), lhsTy.SexpString(nil))
 
 		if lhsTy == rhsTy {
 			Q("BindSymbol: YES types match exactly. Good.")
@@ -289,9 +289,9 @@ func (a SymtabSorter) Len() int           { return len(a) }
 func (a SymtabSorter) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a SymtabSorter) Less(i, j int) bool { return a[i].Key < a[j].Key }
 
-func (scop Scope) Show(env *Glisp, indent int, label string) (s string, err error) {
-	rep := strings.Repeat(" ", indent)
-	rep4 := strings.Repeat(" ", indent+4)
+func (scop Scope) Show(env *Glisp, ps *PrintState, label string) (s string, err error) {
+	rep := strings.Repeat(" ", ps.Indent)
+	rep4 := strings.Repeat(" ", ps.Indent+4)
 	s += fmt.Sprintf("%s %s  %s\n", rep, label, scop.Name)
 	if scop.IsGlobal && !env.showGlobalScope {
 		s += fmt.Sprintf("%s (global scope - omitting content for brevity)\n", rep4)
@@ -304,7 +304,7 @@ func (scop Scope) Show(env *Glisp, indent int, label string) (s string, err erro
 	sortme := []*SymtabE{}
 	for symbolNumber, val := range scop.Map {
 		symbolName := env.revsymtable[symbolNumber]
-		sortme = append(sortme, &SymtabE{Key: symbolName, Val: val.SexpString(0)})
+		sortme = append(sortme, &SymtabE{Key: symbolName, Val: val.SexpString(ps)})
 	}
 	sort.Sort(SymtabSorter(sortme))
 	for i := range sortme {
@@ -315,5 +315,5 @@ func (scop Scope) Show(env *Glisp, indent int, label string) (s string, err erro
 }
 
 type Showable interface {
-	Show(env *Glisp, indent int, label string) (string, error)
+	Show(env *Glisp, ps *PrintState, label string) (string, error)
 }

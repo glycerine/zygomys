@@ -96,7 +96,7 @@ func WriteToFileFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	case *SexpArray:
 		slice = sl.Val
 		for i := range slice {
-			s := slice[i].SexpString(0)
+			s := slice[i].SexpString(nil)
 			if len(s) >= 2 && s[0] == '"' && s[len(s)-1] == '"' {
 				s = s[1 : len(s)-1]
 			} else if len(s) >= 2 && s[0] == '`' && s[len(s)-1] == '`' {
@@ -114,7 +114,7 @@ func WriteToFileFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		}
 
 	default:
-		s := sl.SexpString(0)
+		s := sl.SexpString(nil)
 		if len(s) >= 2 && s[0] == '"' && s[len(s)-1] == '"' {
 			s = s[1 : len(s)-1]
 		} else if len(s) >= 2 && s[0] == '`' && s[len(s)-1] == '`' {

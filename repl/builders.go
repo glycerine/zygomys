@@ -85,7 +85,7 @@ func (p *RecordDefn) Type() *RegisteredType {
 }
 
 // pretty print a struct
-func (p *RecordDefn) SexpString(indent int) string {
+func (p *RecordDefn) SexpString(ps *PrintState) string {
 	Q("RecordDefn::SexpString() called!")
 	if len(p.Fields) == 0 {
 		return fmt.Sprintf("(struct %s)", p.Name)
@@ -160,10 +160,10 @@ func (f *SexpField) FieldWidths() []int {
 			case *SexpSymbol:
 				str += s.name + ":"
 			default:
-				str += key.SexpString(0) + ":"
+				str += key.SexpString(nil) + ":"
 			}
 			wide = append(wide, len(str))
-			wide = append(wide, len(val.SexpString(0))+1)
+			wide = append(wide, len(val.SexpString(nil))+1)
 		} else {
 			panic(err)
 		}
@@ -185,14 +185,14 @@ func (f *SexpField) AlignString(pad []int) string {
 			case *SexpSymbol:
 				r += s.name + ":"
 			default:
-				r += key.SexpString(0) + ":"
+				r += key.SexpString(nil) + ":"
 			}
 			xtra := pad[i*2] - len(r)
 			if xtra < 0 {
 				panic(fmt.Sprintf("xtra = %d, pad[i=%v]=%v, len(r)=%v (r=%v)", xtra, i, pad[i], len(r), r))
 			}
 			leftpad := strings.Repeat(" ", xtra)
-			vs := val.SexpString(0)
+			vs := val.SexpString(nil)
 			rightpad := strings.Repeat(" ", pad[(i*2)+1]-len(vs))
 			if i == 0 {
 				spc = " "
@@ -211,7 +211,7 @@ func (f *SexpField) AlignString(pad []int) string {
 	return str + ")"
 }
 
-func (f *SexpField) SexpString(indent int) string {
+func (f *SexpField) SexpString(ps *PrintState) string {
 	hash := (*SexpHash)(f)
 	str := " (" + hash.TypeName + " "
 
@@ -224,12 +224,12 @@ func (f *SexpField) SexpString(indent int) string {
 			case *SexpSymbol:
 				str += s.name + ":"
 			default:
-				str += key.SexpString(0) + ":"
+				str += key.SexpString(nil) + ":"
 			}
 			if i > 0 {
-				str += val.SexpString(0) + " "
+				str += val.SexpString(nil) + " "
 			} else {
-				str += val.SexpString(0) + "    "
+				str += val.SexpString(nil) + "    "
 			}
 		} else {
 			panic(err)
@@ -252,7 +252,7 @@ func StructBuilder(env *Glisp, name string,
 
 	Q("in struct builder, name = '%s', args = ", name)
 	for i := range args {
-		Q("args[%v] = '%s' of type %T", i, args[i].SexpString(0), args[i])
+		Q("args[%v] = '%s' of type %T", i, args[i].SexpString(nil), args[i])
 	}
 	var symN *SexpSymbol
 	switch b := args[0].(type) {
@@ -321,7 +321,7 @@ func StructBuilder(env *Glisp, name string,
 					Q("about to eval i=%v", i)
 					//ev, err := dup.EvalExpressions([]Sexp{ele})
 					ev, err := EvalFunction(env, "evalStructBuilder", []Sexp{ele})
-					Q("done with eval i=%v. ev=%v", i, ev.SexpString(0))
+					Q("done with eval i=%v. ev=%v", i, ev.SexpString(nil))
 					if err != nil {
 						return SexpNull, fmt.Errorf("bad struct declaration '%v': bad "+
 							"field at array entry %v; error was '%v'", structName, i, err)
@@ -332,9 +332,9 @@ func StructBuilder(env *Glisp, name string,
 						Q("was not hash, instead was %T", ev)
 						return SexpNull, fmt.Errorf("bad struct declaration '%v': bad "+
 							"field array at entry %v; a (field ...) is required. Instead saw '%T'/with value = '%v'",
-							structName, i, ev, ev.SexpString(0))
+							structName, i, ev, ev.SexpString(nil))
 					}
-					Q("good eval i=%v, ev=%#v / %v", i, ev, ev.SexpString(0))
+					Q("good eval i=%v, ev=%#v / %v", i, ev, ev.SexpString(nil))
 					ko := asHash.KeyOrder
 					if len(ko) == 0 {
 						return SexpNull, fmt.Errorf("bad struct declaration '%v': bad "+
@@ -356,7 +356,7 @@ func StructBuilder(env *Glisp, name string,
 	uds := NewRecordDefn()
 	uds.SetName(structName)
 	uds.SetFields(flat)
-	Q("good: made typeDefnHash: '%s'", uds.SexpString(0))
+	Q("good: made typeDefnHash: '%s'", uds.SexpString(nil))
 	rt := NewRegisteredType(func(env *Glisp) (interface{}, error) {
 		return uds, nil
 	})
@@ -377,7 +377,7 @@ func StructBuilder(env *Glisp, name string,
 		return SexpNull, fmt.Errorf("late: struct builder could not bind symbol '%s': '%v'",
 			structName, err)
 	}
-	Q("good: bound symbol '%s' to RegisteredType '%s'", symN.SexpString(0), rt.SexpString(0))
+	Q("good: bound symbol '%s' to RegisteredType '%s'", symN.SexpString(nil), rt.SexpString(nil))
 	return rt, nil
 }
 
@@ -431,7 +431,7 @@ func InterfaceBuilder(env *Glisp, name string,
 
 	//	P("in interface builder, args = ")
 	//	for i := range args {
-	//		P("args[%v] = '%s'", i, args[i].SexpString(0))
+	//		P("args[%v] = '%s'", i, args[i].SexpString(nil))
 	//	}
 
 	methods := make([]*SexpFunction, 0)
@@ -480,10 +480,10 @@ func SliceOfFunction(env *Glisp, name string,
 	default:
 		return SexpNull, fmt.Errorf("argument tx in (%s x) was not regtype, "+
 			"instead type %T displaying as '%v' ",
-			name, arg, arg.SexpString(0))
+			name, arg, arg.SexpString(nil))
 	}
 
-	Q("sliceOf arg = '%s' with type %T", args[0].SexpString(0), args[0])
+	Q("sliceOf arg = '%s' with type %T", args[0].SexpString(nil), args[0])
 
 	sliceRt := GoStructRegistry.GetOrCreateSliceType(rt)
 	Q("in SliceOfFunction: returning sliceRt = '%#v'", sliceRt)
@@ -531,10 +531,10 @@ func PointerToFunction(env *Glisp, name string,
 	default:
 		return SexpNull, fmt.Errorf("argument x in (%s x) was not regtype or SexpPointer, "+
 			"instead type %T displaying as '%v' ",
-			name, arg, arg.SexpString(0))
+			name, arg, arg.SexpString(nil))
 	}
 
-	Q("pointer-to arg = '%s' with type %T", args[0].SexpString(0), args[0])
+	Q("pointer-to arg = '%s' with type %T", args[0].SexpString(nil), args[0])
 
 	ptrRt := GoStructRegistry.GetOrCreatePointerType(rt)
 	return ptrRt, nil
@@ -654,10 +654,10 @@ func ArrayOfFunction(env *Glisp, name string,
 	default:
 		return SexpNull, fmt.Errorf("argument tx in (%s x) was not regtype, "+
 			"instead type %T displaying as '%v' ",
-			name, arg, arg.SexpString(0))
+			name, arg, arg.SexpString(nil))
 	}
 
-	//Q("arrayOf arg = '%s' with type %T", args[0].SexpString(indent int), args[0])
+	//Q("arrayOf arg = '%s' with type %T", args[0].SexpString(nil), args[0])
 
 	derivedType := reflect.ArrayOf(sz, rt.TypeCache)
 	arrayRt := NewRegisteredType(func(env *Glisp) (interface{}, error) {
@@ -680,7 +680,7 @@ func VarBuilder(env *Glisp, name string,
 
 	Q("in var builder, name = '%s', args = ", name)
 	for i := range args {
-		Q("args[%v] = '%s' of type %T", i, args[i].SexpString(0), args[i])
+		Q("args[%v] = '%s' of type %T", i, args[i].SexpString(nil), args[i])
 	}
 	var symN *SexpSymbol
 	switch b := args[0].(type) {
@@ -702,9 +702,9 @@ func VarBuilder(env *Glisp, name string,
 	Q("about to eval args[1]=%v", args[1])
 	//ev, err := dup.EvalExpressions(args[1:2])
 	ev, err := EvalFunction(env, "evalVar", args[1:2])
-	Q("done with eval, ev=%v / type %T", ev.SexpString(0), ev)
+	Q("done with eval, ev=%v / type %T", ev.SexpString(nil), ev)
 	if err != nil {
-		return SexpNull, fmt.Errorf("bad var declaration, problem with type '%v': %v", args[1].SexpString(0), err)
+		return SexpNull, fmt.Errorf("bad var declaration, problem with type '%v': %v", args[1].SexpString(nil), err)
 	}
 
 	var rt *RegisteredType
@@ -712,13 +712,13 @@ func VarBuilder(env *Glisp, name string,
 	case *RegisteredType:
 		rt = myrt
 	default:
-		return SexpNull, fmt.Errorf("bad var declaration, type '%v' is unknown", rt.SexpString(0))
+		return SexpNull, fmt.Errorf("bad var declaration, type '%v' is unknown", rt.SexpString(nil))
 	}
 
 	val, err := rt.Factory(env)
 	if err != nil {
 		return SexpNull, fmt.Errorf("var declaration error: could not make type '%s': %v",
-			rt.SexpString(0), err)
+			rt.SexpString(nil), err)
 	}
 	var valSexp Sexp
 	Q("val is of type %T", val)
@@ -736,13 +736,13 @@ func VarBuilder(env *Glisp, name string,
 		valSexp = &SexpReflect{Val: reflect.ValueOf(v)}
 	}
 
-	Q("var decl: valSexp is '%v'", valSexp.SexpString(0))
+	Q("var decl: valSexp is '%v'", valSexp.SexpString(nil))
 	err = env.LexicalBindSymbol(symN, valSexp)
 	if err != nil {
 		return SexpNull, fmt.Errorf("var declaration error: could not bind symbol '%s': %v",
 			symN.name, err)
 	}
-	Q("good: var decl bound symbol '%s' to '%s' of type '%s'", symN.SexpString(0), valSexp.SexpString(0), rt.SexpString(0))
+	Q("good: var decl bound symbol '%s' to '%s' of type '%s'", symN.SexpString(nil), valSexp.SexpString(nil), rt.SexpString(nil))
 
 	env.datastack.PushExpr(valSexp)
 
@@ -770,7 +770,7 @@ func ExpectErrorBuilder(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	}
 	Q("expectedError = %v", expectedError)
 	ev, err := dup.EvalExpressions(args[1:2])
-	Q("done with eval, ev=%v / type %T. err = %v", ev.SexpString(0), ev, err)
+	Q("done with eval, ev=%v / type %T. err = %v", ev.SexpString(nil), ev, err)
 	if err != nil {
 		if err.Error() == expectedError.S {
 			return SexpNull, nil
@@ -840,13 +840,13 @@ func CommaBuilder(env *Glisp, name string, args []Sexp) (Sexp, error) {
 }
 
 func commaHelper(a Sexp, res *[]Sexp) {
-	//Q("top of commaHelper with a = '%s'", a.SexpString(0))
+	//Q("top of commaHelper with a = '%s'", a.SexpString(nil))
 	switch x := a.(type) {
 	case *SexpPair:
 		sy, isQuo := isQuotedSymbol(x)
 		if isQuo {
 			symN := sy.(*SexpSymbol)
-			//Q("have quoted symbol symN=%v", symN.SexpString(0))
+			//Q("have quoted symbol symN=%v", symN.SexpString(nil))
 			*res = append(*res, symN)
 			return
 		}
@@ -865,7 +865,7 @@ func commaHelper(a Sexp, res *[]Sexp) {
 					commaHelper(over[i], res)
 				}
 			} else {
-				//Q("have symbol sym = '%v'", sym.SexpString(0))
+				//Q("have symbol sym = '%v'", sym.SexpString(nil))
 				*res = append(*res, a)
 			}
 		default:

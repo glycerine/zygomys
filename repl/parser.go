@@ -436,7 +436,7 @@ func (p *Parser) ParseTokens() ([]Sexp, error) {
 		r := make([]Sexp, 0)
 		for _, k := range out {
 			r = append(r, k.Expr...)
-			Q("\n ParseTokens k.Expr = '%v'\n\n", (&SexpArray{Val: k.Expr, Env: p.env}).SexpString(0))
+			Q("\n ParseTokens k.Expr = '%v'\n\n", (&SexpArray{Val: k.Expr, Env: p.env}).SexpString(nil))
 			if k.Err != nil {
 				return r, k.Err
 			}
@@ -542,7 +542,7 @@ func (parser *Parser) ParseInfix(depth int) (Sexp, error) {
 		if err != nil {
 			return SexpNull, err
 		}
-		Q("debug2: ParseInfix(depth=%v) appending expr = '%v'", depth, expr.SexpString(0))
+		Q("debug2: ParseInfix(depth=%v) appending expr = '%v'", depth, expr.SexpString(nil))
 
 		arr = append(arr, expr)
 	}

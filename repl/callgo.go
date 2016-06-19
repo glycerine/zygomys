@@ -69,7 +69,7 @@ func CallGoMethodFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		if !found {
 			return SexpNull, fmt.Errorf("no such method '%s' on %s. choices are: %s",
 				methodname, obj.TypeName,
-				(obj.GoMethSx).SexpString(0))
+				(obj.GoMethSx).SexpString(nil))
 		}
 		// INVAR: var method holds our call target
 

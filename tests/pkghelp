@@ -1,5 +1,5 @@
 // helper file, used in package.zy to be the contents of a package
-(def a (hash b:42 dog: "bella" f: (fn [] 54) g: (fn [x] (+ x 7))))
-(defn assistor [y] (+ y a.b (a.g 3)))
+(def A (hash B:42 Dog: "bella" F: (fn [] 54) g: (fn [x] (+ x 7))))
+(defn Assistor [y] (+ y A.B (A.g 3)))
 
 

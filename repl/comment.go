@@ -5,7 +5,7 @@ type SexpComment struct {
 	Block   bool
 }
 
-func (p *SexpComment) SexpString(indent int) string {
+func (p *SexpComment) SexpString(ps *PrintState) string {
 	return p.Comment
 }
 

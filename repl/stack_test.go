@@ -22,7 +22,7 @@ func Test020StacksDontAlias(t *testing.T) {
 		t.Push(b)
 
 		show := func(s *Stack, b string) {
-			pr, _ := s.Show(env, 0, b)
+			pr, _ := s.Show(env, nil, b)
 			fmt.Println(pr)
 		}
 		show(t, "t")

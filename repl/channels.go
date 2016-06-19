@@ -10,7 +10,7 @@ type SexpChannel struct {
 	Typ *RegisteredType
 }
 
-func (ch *SexpChannel) SexpString(indent int) string {
+func (ch *SexpChannel) SexpString(ps *PrintState) string {
 	return "[chan]"
 }
 

@@ -30,12 +30,12 @@ func HashExpression(env *Glisp, expr Sexp) (int, error) {
 		// 2nd try
 		hashcode2, isList2, err := hashHelper(res)
 		if err != nil {
-			return 0, fmt.Errorf("evaluated key function to '%s' but could not hash type %T: %s", res.SexpString(0), res, err)
+			return 0, fmt.Errorf("evaluated key function to '%s' but could not hash type %T: %s", res.SexpString(nil), res, err)
 		}
 		if !isList2 {
 			return hashcode2, nil
 		}
-		return 0, fmt.Errorf("list '%s' found where hash key needed", res.SexpString(0))
+		return 0, fmt.Errorf("list '%s' found where hash key needed", res.SexpString(nil))
 	} // end if env == nil
 	return 0, fmt.Errorf("cannot hash type %T", expr)
 }
@@ -58,7 +58,7 @@ func hashHelper(expr Sexp) (hashcode int, isList bool, err error) {
 	case *SexpPair:
 		return 0, true, nil
 	case *SexpArray:
-		return int(Blake2bUint64([]byte(e.SexpString(0)))), false, nil
+		return int(Blake2bUint64([]byte(e.SexpString(nil)))), false, nil
 	}
 	return 0, false, fmt.Errorf("cannot hash type %T", expr)
 }
@@ -66,7 +66,7 @@ func hashHelper(expr Sexp) (hashcode int, isList bool, err error) {
 func MakeHash(args []Sexp, typename string, env *Glisp) (*SexpHash, error) {
 	//	Q("MakeHash called ")
 	//	for i := range args {
-	//		Q("MakeHash args[i=%v] = '%v'", i, args[i].SexpString(0))
+	//		Q("MakeHash args[i=%v] = '%v'", i, args[i].SexpString(nil))
 	//	}
 
 	// when passed for example (hash [0]:12) we see
@@ -189,14 +189,14 @@ func (h *SexpHash) DotPathHashGet(env *Glisp, sym *SexpSymbol) (Sexp, error) {
 }
 
 func (hash *SexpHash) HashGet(env *Glisp, key Sexp) (Sexp, error) {
-	Q("top of HashGet, key = '%v'", key.SexpString(0))
+	Q("top of HashGet, key = '%v'", key.SexpString(nil))
 
 	switch sym := key.(type) {
 	case *SexpSymbol:
 		if sym == nil {
 			panic("cannot have nil symbol for key")
 		}
-		Q("HashGet, sym = '%v'. isDot=%v", sym.SexpString(0), sym.isDot)
+		Q("HashGet, sym = '%v'. isDot=%v", sym.SexpString(nil), sym.isDot)
 		if sym.isDot {
 			return hash.DotPathHashGet(env, sym)
 		}
@@ -212,8 +212,8 @@ func (hash *SexpHash) HashGet(env *Glisp, key Sexp) (Sexp, error) {
 	}
 
 	if val == SexpEnd {
-		return SexpNull, fmt.Errorf("%s has no field '%s' [err 1]", hash.TypeName, key.SexpString(0))
-		//return SexpNull, fmt.Errorf("%s has no field '%s'", hash.UserStructDefn.Name, key.SexpString(0))
+		return SexpNull, fmt.Errorf("%s has no field '%s' [err 1]", hash.TypeName, key.SexpString(nil))
+		//return SexpNull, fmt.Errorf("%s has no field '%s'", hash.UserStructDefn.Name, key.SexpString(nil))
 	}
 	return val, nil
 }
@@ -241,7 +241,7 @@ func (hash *SexpHash) HashGetDefault(env *Glisp, key Sexp, defaultval Sexp) (Sex
 var KeyNotSymbol = fmt.Errorf("key is not a symbol")
 
 func (h *SexpHash) TypeCheckField(key Sexp, val Sexp) error {
-	//Q("in TypeCheckField, key='%v' val='%v'", key.SexpString(0), val.SexpString(0))
+	//Q("in TypeCheckField, key='%v' val='%v'", key.SexpString(nil), val.SexpString(nil))
 
 	var keySym *SexpSymbol
 	wasSym := false
@@ -306,7 +306,7 @@ func (h *SexpHash) TypeCheckField(key Sexp, val Sexp) error {
 			case *SexpSentinel:
 				return nil // okay
 			default:
-				return fmt.Errorf("%v has nil Type", val.SexpString(0))
+				return fmt.Errorf("%v has nil Type", val.SexpString(nil))
 			}
 		}
 
@@ -322,9 +322,9 @@ func (h *SexpHash) TypeCheckField(key Sexp, val Sexp) error {
 			return fmt.Errorf("field %v.%v is %v, cannot assign %v '%v'",
 				p.UserStructDefn.Name,
 				k,
-				declaredTyp.SexpString(0),
-				obsTyp.SexpString(0),
-				val.SexpString(0))
+				declaredTyp.SexpString(nil),
+				obsTyp.SexpString(nil),
+				val.SexpString(nil))
 		}
 	}
 done:
@@ -332,7 +332,7 @@ done:
 }
 
 func (hash *SexpHash) HashSet(key Sexp, val Sexp) error {
-	Q("in HashSet, key='%v' val='%v'", key.SexpString(0), val.SexpString(0))
+	Q("in HashSet, key='%v' val='%v'", key.SexpString(nil), val.SexpString(nil))
 
 	if _, isComment := key.(*SexpComment); isComment {
 		return fmt.Errorf("HashSet: key cannot be comment")
@@ -652,7 +652,7 @@ func (h *SexpHash) FillHashFromShadow(env *Glisp, src interface{}) error {
 		key := env.MakeSymbol(det.FieldJsonTag)
 		err = h.HashSet(key, val)
 		if err != nil {
-			return fmt.Errorf("error on HashSet for key '%s': '%s'", key.SexpString(0), err)
+			return fmt.Errorf("error on HashSet for key '%s': '%s'", key.SexpString(nil), err)
 		}
 	}
 	return nil
@@ -808,7 +808,7 @@ func (h *SexpHash) nestedPathGetSet(env *Glisp, dotpaths []string, setVal *Sexp)
 		}
 		ret, err = askh.HashGet(env, env.MakeSymbol(dotpaths[i][1:]))
 		//P("\n i=%v in nestedPathGet, dotpaths[i][1:]='%v' call to "+
-		//	"HashGet returned '%s'\n", i, dotpaths[i][1:], ret.SexpString(0))
+		//	"HashGet returned '%s'\n", i, dotpaths[i][1:], ret.SexpString(nil))
 		if err != nil {
 			return SexpNull, err
 		}
@@ -840,8 +840,10 @@ func (hash *SexpHash) ShortName() string {
 	return hash.TypeName
 }
 
-func (hash *SexpHash) SexpString(indent int) string {
+func (hash *SexpHash) SexpString(ps *PrintState) string {
 	indInner := ""
+	indent := ps.GetIndent()
+	innerPs := ps.AddIndent(4)
 	inner := indent + 4
 	if hash.env.Pretty {
 		indInner = strings.Repeat(" ", inner)
@@ -859,9 +861,9 @@ func (hash *SexpHash) SexpString(indent int) string {
 			case *SexpSymbol:
 				str += indInner + s.name + ":"
 			default:
-				str += indInner + key.SexpString(inner) + ":"
+				str += indInner + key.SexpString(innerPs) + ":"
 			}
-			str += val.SexpString(inner) + " "
+			str += val.SexpString(innerPs) + " "
 			if hash.env.Pretty {
 				str += "\n"
 			}
@@ -971,13 +973,13 @@ func (h *SexpHash) NewSexpHashSelector(sym *SexpSymbol) *SexpHashSelector {
 	}
 }
 
-func (si *SexpHashSelector) SexpString(indent int) string {
+func (si *SexpHashSelector) SexpString(ps *PrintState) string {
 	rhs, err := si.RHS(si.Container.env)
 	if err != nil {
 		return fmt.Sprintf("SexpHashSelector error: could not get RHS: '%v'",
 			err)
 	}
-	return fmt.Sprintf("%v /*(hashSelector %v %v)*/", rhs.SexpString(indent), si.Container.SexpString(indent), si.Select.SexpString(indent))
+	return fmt.Sprintf("%v /*(hashSelector %v %v)*/", rhs.SexpString(ps), si.Container.SexpString(ps), si.Select.SexpString(ps))
 }
 
 // Type returns the type of the value.
@@ -999,7 +1001,7 @@ func (x *SexpHashSelector) RHS(env *Glisp) (sx Sexp, err error) {
 	case *SexpSymbol:
 		Q("SexpHashSelector.RHS(): x.Select is symbol, t = '%#v'", t)
 		Q("SexpHashSelector.RHS(): x.Container is '%v'",
-			x.Container.SexpString(0))
+			x.Container.SexpString(nil))
 		sx, err = x.Container.DotPathHashGet(x.Container.env, t)
 		if err != nil {
 			Q("SexpHashSelector.RHS() sees err when calling"+
@@ -1014,14 +1016,14 @@ func (x *SexpHashSelector) RHS(env *Glisp) (sx Sexp, err error) {
 				" on x.Container.HashGet: '%v'", err)
 			return SexpNull, err
 		}
-		//return &SexpStr{S: fmt.Sprintf("(hashidx   %s   %s)", x.Container.SexpString(0), x.Select.SexpString(0))}, nil
+		//return &SexpStr{S: fmt.Sprintf("(hashidx   %s   %s)", x.Container.SexpString(nil), x.Select.SexpString(nil))}, nil
 	}
 	Q("SexpHashSelector) RHS() returning sx = '%v'", sx)
 	return sx, nil
 }
 
 func (x *SexpHashSelector) AssignToSelection(env *Glisp, rhs Sexp) error {
-	Q("in SexpHashSelector.AssignToSelection with rhs = '%v' and container = '%v'", rhs.SexpString(0), x.Container.SexpString(0))
+	Q("in SexpHashSelector.AssignToSelection with rhs = '%v' and container = '%v'", rhs.SexpString(nil), x.Container.SexpString(nil))
 	switch sym := x.Select.(type) {
 	case *SexpSymbol:
 		path := DotPartsRegex.FindAllString(sym.name, -1)
@@ -1037,7 +1039,7 @@ func HashIndexFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	Q("in HashIndexFunction, with %v args = '%#v', env=%p",
 		len(args), args, env)
 	for i := range args {
-		Q("in HashIndexFunction, args[%v] = '%v'", i, args[i].SexpString(0))
+		Q("in HashIndexFunction, args[%v] = '%v'", i, args[i].SexpString(nil))
 	}
 	narg := len(args)
 	if narg != 2 {
@@ -1049,7 +1051,7 @@ func HashIndexFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 	}
 	args[0] = tmp[0]
 	Q("HashIndexFunction: past dot resolve, args[0] is now type %T/val='%v'",
-		args[0], args[0].SexpString(0))
+		args[0], args[0].SexpString(nil))
 
 	var hash *SexpHash
 	switch ar0 := args[0].(type) {
@@ -1079,18 +1081,18 @@ func HashIndexFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 			case *SexpHash:
 				hash = xHash2
 			default:
-				return SexpNull, fmt.Errorf("bad (hashidx h2 index) call: h2 was a hashidx itself, but it did not resolve to an hash, instead '%s'/type %T", x.SexpString(0), x)
+				return SexpNull, fmt.Errorf("bad (hashidx h2 index) call: h2 was a hashidx itself, but it did not resolve to an hash, instead '%s'/type %T", x.SexpString(nil), x)
 			}
 		case *SexpArray:
 			Q("HashIndexFunction sees args[0] is Selector"+
-				" that resolved to an array '%v'", xH.SexpString(0))
+				" that resolved to an array '%v'", xH.SexpString(nil))
 			return ArrayIndexFunction(env, name, []Sexp{xH, args[1]})
 		default:
-			return SexpNull, fmt.Errorf("bad (hashidx h index) call: h did not resolve to a hash, instead '%s'/type %T", x.SexpString(0), x) // failing here with x a  *SexpStr
+			return SexpNull, fmt.Errorf("bad (hashidx h index) call: h did not resolve to a hash, instead '%s'/type %T", x.SexpString(nil), x) // failing here with x a  *SexpStr
 		}
 	default:
 		return SexpNull, fmt.Errorf("bad (hashidx h index) call: h was not a hashmap, instead '%s'/type %T",
-			args[0].SexpString(0), args[0])
+			args[0].SexpString(nil), args[0])
 	}
 
 	sel := args[1]
@@ -1115,7 +1117,7 @@ func HashIndexFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		Select:    sel,
 		Container: hash,
 	}
-	Q("HashIndexFunction: returning without error, ret.Select = '%v'", args[1].SexpString(0))
+	Q("HashIndexFunction: returning without error, ret.Select = '%v'", args[1].SexpString(nil))
 	return &ret, nil
 }
 

@@ -14,7 +14,7 @@ func (r *SexpTime) Type() *RegisteredType {
 	return nil // TODO what should this be?
 }
 
-func (t *SexpTime) SexpString(indent int) string {
+func (t *SexpTime) SexpString(ps *PrintState) string {
 	return t.Tm.String()
 }
 

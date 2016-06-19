@@ -8,7 +8,7 @@ type SexpGoroutine struct {
 	env *Glisp
 }
 
-func (goro *SexpGoroutine) SexpString(indent int) string {
+func (goro *SexpGoroutine) SexpString(ps *PrintState) string {
 	return "[coroutine]"
 }
 func (goro *SexpGoroutine) Type() *RegisteredType {
