@@ -763,7 +763,7 @@ func DumpClosureEnvFunction(env *Glisp, name string, args []Sexp) (Sexp, error) 
 }
 
 func ClosureToString(f *SexpFunction, env *Glisp) string {
-	s, err := f.ShowClosing(env, nil,
+	s, err := f.ShowClosing(env, NewPrintState(),
 		fmt.Sprintf("closedOverScopes of '%s'", f.name))
 	if err != nil {
 		return err.Error()

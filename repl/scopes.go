@@ -289,7 +289,13 @@ func (a SymtabSorter) Len() int           { return len(a) }
 func (a SymtabSorter) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a SymtabSorter) Less(i, j int) bool { return a[i].Key < a[j].Key }
 
-func (scop Scope) Show(env *Glisp, ps *PrintState, label string) (s string, err error) {
+func (scop *Scope) Show(env *Glisp, ps *PrintState, label string) (s string, err error) {
+	if ps.GetSeen(scop) {
+		return "already-seen", nil
+	} else {
+		ps.SetSeen(scop)
+	}
+
 	rep := strings.Repeat(" ", ps.Indent)
 	rep4 := strings.Repeat(" ", ps.Indent+4)
 	s += fmt.Sprintf("%s %s  %s\n", rep, label, scop.Name)

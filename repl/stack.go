@@ -22,6 +22,11 @@ type Stack struct {
 }
 
 func (s *Stack) SexpString(ps *PrintState) string {
+	if ps.GetSeen(s) {
+		return "already-seen"
+	} else {
+		ps.SetSeen(s)
+	}
 	var label string
 	head := ""
 	if s.IsPackage {
@@ -145,7 +150,13 @@ func (stack *Stack) PopAndDiscard() {
 
 func (stack *Stack) IsStackElem() {}
 
-func (stack Stack) Show(env *Glisp, ps *PrintState, label string) (string, error) {
+func (stack *Stack) Show(env *Glisp, ps *PrintState, label string) (string, error) {
+	if ps.GetSeen(stack) {
+		return "already-seen", nil
+	} else {
+		ps.SetSeen(stack)
+	}
+
 	s := ""
 	rep := strings.Repeat(" ", ps.GetIndent())
 	s += fmt.Sprintf("%s %s\n", rep, label)
@@ -195,11 +206,6 @@ func (s *Stack) nestedPathGetSet(env *Glisp, dotpaths []string, setVal *Sexp) (S
 			return SexpNull, fmt.Errorf("error locating symbol '%s': current Stack is not a package", curSym.name)
 		}
 
-		err = errIfPrivate(curSym.name, curStack)
-		if err != nil {
-			return SexpNull, err
-		}
-
 		ret, err, scop = curStack.LookupSymbol(curSym, nil)
 		if err != nil {
 			return SexpNull, fmt.Errorf("could not find symbol '%s' in current package '%v'",
@@ -213,12 +219,21 @@ func (s *Stack) nestedPathGetSet(env *Glisp, dotpaths []string, setVal *Sexp) (S
 		}
 
 		if i == lenpath-1 {
+			err = errIfPrivate(curSym.name, curStack)
+			if err != nil {
+				return SexpNull, err
+			}
 			// done with GET
 			return ret, nil
 		}
 		// invar: i < lenpath-1, so go deeper
 		switch x := ret.(type) {
 		case *SexpHash:
+			err = errIfPrivate(curSym.name, curStack)
+			if err != nil {
+				return SexpNull, err
+			}
+
 			//P("\n found hash in x at i=%d, looping to next i\n", i)
 			return x.nestedPathGetSet(env, dotpaths[1:], setVal)
 		case *Stack:

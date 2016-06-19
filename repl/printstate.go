@@ -15,10 +15,16 @@ type PrintState struct {
 }
 
 func (ps *PrintState) SetSeen(x interface{}) {
+	if ps == nil {
+		panic("can't SetSeen on a nil PrintState")
+	}
 	ps.Seen[reflect.ValueOf(x).Pointer()] = struct{}{}
 }
 
 func (ps *PrintState) GetSeen(x interface{}) bool {
+	if ps == nil {
+		return false
+	}
 	_, ok := ps.Seen[reflect.ValueOf(x).Pointer()]
 	return ok
 }
