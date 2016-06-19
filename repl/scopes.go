@@ -169,7 +169,7 @@ func (stack *Stack) LookupSymbolUntilFunction(sym *SexpSymbol, setVal *Sexp) (Se
 					}
 
 					// no luck inside the captured closure scopes.
-					break doneSearching
+					// unreachable: break doneSearching
 				}
 			}
 		}

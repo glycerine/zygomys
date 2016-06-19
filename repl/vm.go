@@ -821,7 +821,7 @@ func (a AssignInstr) Execute(env *Glisp) error {
 			return fmt.Errorf("AssignInstr: don't know how to assign rhs %T `%v` to lhs %T `%v`",
 				rhs, rhs.SexpString(0), lhs, lhs.SexpString(0))
 		}
-		return nil
+		// unreachable: return nil
 	}
 	return fmt.Errorf("AssignInstr: don't know how to assign to lhs %T", lhs)
 }

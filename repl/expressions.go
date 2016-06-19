@@ -487,7 +487,7 @@ func (sym *SexpSymbol) AssignToSelection(env *Glisp, rhs Sexp) error {
 		return err
 	}
 	panic("not implemented yet")
-	return nil
+	//return nil
 }
 
 func (sym *SexpSymbol) SexpString(indent int) string {
