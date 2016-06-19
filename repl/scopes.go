@@ -290,6 +290,8 @@ func (a SymtabSorter) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a SymtabSorter) Less(i, j int) bool { return a[i].Key < a[j].Key }
 
 func (scop *Scope) Show(env *Glisp, ps *PrintState, label string) (s string, err error) {
+	P("scop %p Show() starting", scop)
+
 	if ps.GetSeen(scop) {
 		return "already-seen", nil
 	} else {

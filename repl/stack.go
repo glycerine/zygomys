@@ -151,6 +151,7 @@ func (stack *Stack) PopAndDiscard() {
 func (stack *Stack) IsStackElem() {}
 
 func (stack *Stack) Show(env *Glisp, ps *PrintState, label string) (string, error) {
+	P("stack %p Show() starting", stack)
 	if ps.GetSeen(stack) {
 		return "already-seen", nil
 	} else {
