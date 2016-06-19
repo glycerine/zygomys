@@ -295,17 +295,6 @@ func Repl(env *Glisp, cfg *GlispConfig) {
 					fmt.Printf("%s\n", strconv.Quote(e.S))
 				}
 			default:
-				// experiment with showing dot-symbol dereference automatically
-				// at the repl
-				/*
-					P("repl checking for Selector on expr = %T", expr)
-					_, isSel := expr.(Selector)
-					if isSel {
-						P("repl: expr is selector! expr = %v", expr.SexpString(0))
-					} else {
-						P("repl: expr '%v' is NOT a selector", expr.SexpString(0))
-					}
-				*/
 				switch sym := expr.(type) {
 				case Selector:
 					Q("repl calling RHS() on Selector")
@@ -494,14 +483,4 @@ func ReplMain(cfg *GlispConfig) {
 
 func (env *Glisp) ReplLineInfixWrap(line string) string {
 	return "{" + line + "}"
-	/*
-		Q("ReplLineInfixWrap called on '%v' ", line)
-		s := strings.TrimSpace(line)
-		if len(s) > 0 && s[0] != '(' && s[0] != '{' {
-			r := "{" + s + "}"
-			Q("ReplLineInfixWrap '%v' -> '%v'", line, r)
-			return r
-		}
-		return line
-	*/
 }

@@ -21,18 +21,6 @@ type Stack struct {
 	IsPackage   bool
 }
 
-// SexpString satisfies the Sexp interface, producing a string presentation of the value.
-/*
-func (s *Stack) SexpString(indent int) string {
-	//var label string
-	head := ""
-	if s.IsPackage {
-		return "(package " + s.PackageName + ")"
-	}
-
-	return "(stack)"
-}
-*/
 func (s *Stack) SexpString(indent int) string {
 	var label string
 	head := ""
@@ -121,7 +109,6 @@ var StackUnderFlowErr = fmt.Errorf("invalid stack access: underflow")
 func (stack *Stack) Get(n int) (StackElem, error) {
 	if stack.tos-n < 0 {
 		err := StackUnderFlowErr
-		//panic(err)
 		return nil, err
 	}
 	return stack.elements[stack.tos-n], nil
@@ -171,7 +158,6 @@ func (stack Stack) Show(env *Glisp, indent int, label string) (string, error) {
 		showme, canshow := ele.(Showable)
 		if canshow {
 			r, err := showme.Show(env, indent+4,
-				//fmt.Sprintf("elem %v (%#v) of %s:", i, showme, label))
 				fmt.Sprintf("elem %v of %s:", i, label))
 			if err != nil {
 				return "", err

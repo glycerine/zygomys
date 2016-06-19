@@ -185,7 +185,6 @@ func (stack *Stack) LookupSymbolUntilFunction(sym *SexpSymbol, setVal *Sexp) (Se
 func (stack *Stack) BindSymbol(sym *SexpSymbol, expr Sexp) error {
 	if stack.IsEmpty() {
 		panic("empty stack!!")
-		//return errors.New("no scope available")
 	}
 	cur, already := stack.elements[stack.tos].(*Scope).Map[sym.number]
 	if already {
@@ -318,55 +317,3 @@ func (scop Scope) Show(env *Glisp, indent int, label string) (s string, err erro
 type Showable interface {
 	Show(env *Glisp, indent int, label string) (string, error)
 }
-
-/*
-// nestedPathGetSet does a top-down lookup, as opposed to LexicalLookupSymbol which is bottom up
-func (s *Scope) nestedPathGetSet(env *Glisp, dotpaths []string, setVal *Sexp) (Sexp, error) {
-
-	if len(dotpaths) == 0 {
-		return SexpNull, fmt.Errorf("internal error: in nestedPathGetSet() dotpaths" +
-			" had zero length")
-	}
-
-	curScope := s
-
-	var ret Sexp = SexpNull
-	var ok bool
-	lenpath := len(dotpaths)
-	//P("\n in nestedPathGetSet, dotpaths=%#v\n", dotpaths)
-	for i := range dotpaths {
-		curSym := env.MakeSymbol(stripAnyDotPrefix(dotpaths[i]))
-		if setVal != nil && i == lenpath-1 {
-			// assign now
-			curScope.Map[curSym.number] = *setVal
-			// done with SET
-			return *setVal, nil
-		}
-
-		ret, ok = curScope.Map[curSym.number]
-		if !ok {
-			return SexpNull, fmt.Errorf("could not find symbol '%s' in current Scope '%#v'",
-				curSym.name, curScope)
-		}
-		if i == lenpath-1 {
-			// done with GET
-			return ret, nil
-		}
-		// invar: i < lenpath-1, so go deeper
-		switch h2 := ret.(type) {
-		case *SexpHash:
-			P("\n found hash in h2 at i=%d, looping to next i\n", i)
-			return h2.nestedPathGetSet(env, dotpaths[1:], setVal)
-		case *Scope:
-			curScope = h2
-		case *Stack:
-			return h2.nestedPathGetSet(env, dotpaths[1:], setVal)
-		default:
-			return SexpNull, fmt.Errorf("not a record or scope: cannot get field '%s'"+
-				" out of type %T)", dotpaths[i+1][1:], h2)
-		}
-
-	}
-	return ret, nil
-}
-*/

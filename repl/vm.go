@@ -195,12 +195,6 @@ func (p UpdateInstr) Execute(env *Glisp) error {
 		_, err := dotGetSetHelper(env, p.sym.name, &expr)
 		return err
 	}
-	/*
-		switch p.sym.(type) {
-		case Selector:
-			Q("UpdateInstr: I see Selector '%s'", p.sym.SexpString(0))
-		}
-	*/
 
 	// if found up the stack, we will (set)	expr
 	_, err, _ = env.LexicalLookupSymbol(p.sym, &expr)
@@ -270,7 +264,7 @@ func (c CallInstr) Execute(env *Glisp) error {
 
 			// allow symbols to refer to functions that we then call
 			/*
-				indirectFuncName, err, _ = env.LexicalLookupSymbol(f, false)
+				indirectFuncName, err, _ = env.LexicalLookupSymbol(f, nil)
 				if err != nil {
 					return fmt.Errorf("'%s' refers to symbol '%s', but '%s' could not be resolved: '%s'.",
 						c.sym.name, f.name, f.name, err)
@@ -821,7 +815,6 @@ func (a AssignInstr) Execute(env *Glisp) error {
 			return fmt.Errorf("AssignInstr: don't know how to assign rhs %T `%v` to lhs %T `%v`",
 				rhs, rhs.SexpString(0), lhs, lhs.SexpString(0))
 		}
-		// unreachable: return nil
 	}
 	return fmt.Errorf("AssignInstr: don't know how to assign to lhs %T", lhs)
 }

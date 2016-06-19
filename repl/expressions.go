@@ -40,9 +40,6 @@ func NewSexpPointer(pointedTo Sexp) *SexpPointer {
 
 	var reftarg reflect.Value
 
-	//	if pointedToType.hasShadowStruct {
-	//		reftarg = pointedTo.(*SexpHash).GoShadowStructVa
-	//	} else {
 	Q("NewSexpPointer sees pointedTo of '%#v'", pointedTo)
 	switch e := pointedTo.(type) {
 	case *SexpReflect:
@@ -51,7 +48,6 @@ func NewSexpPointer(pointedTo Sexp) *SexpPointer {
 	default:
 		reftarg = reflect.ValueOf(pointedTo)
 	}
-	//	} // end else
 
 	ptrRt := GoStructRegistry.GetOrCreatePointerType(pointedToType)
 	Q("pointer type is ptrRt = '%#v'", ptrRt)
@@ -487,7 +483,6 @@ func (sym *SexpSymbol) AssignToSelection(env *Glisp, rhs Sexp) error {
 		return err
 	}
 	panic("not implemented yet")
-	//return nil
 }
 
 func (sym *SexpSymbol) SexpString(indent int) string {
