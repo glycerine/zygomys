@@ -3,12 +3,6 @@
    { World := "earth"; (defn Myfun [x] (concat World x)) }
 ))
 
-// confirm printing works
-//(assert (== (str (package "yep")) "(package yep)"))
-
-// (def hi (package "hello"   { World := "earth"; (defn Myfun [x] (concat World x)) }))
-
-
 (assert (== hi.World "earth"))
 (assert (== (hi.Myfun "yes") "earthyes"))
 
