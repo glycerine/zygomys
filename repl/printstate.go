@@ -2,7 +2,6 @@ package zygo
 
 import (
 	"fmt"
-	"reflect"
 )
 
 // begin supporting SexpString structs
@@ -19,21 +18,14 @@ func (ps *PrintState) SetSeen(x interface{}, name string) {
 	if ps == nil {
 		panic("can't SetSeen on a nil PrintState")
 	}
-	//P("SetSeen doing intake of x=%p, under name '%s'", x, name)
-	//ps.Seen[reflect.ValueOf(x).Pointer()] = struct{}{}
-	ps.Seen[reflect.ValueOf(x).Pointer()] = name
+	ps.Seen[x] = struct{}{}
 }
 
 func (ps *PrintState) GetSeen(x interface{}) bool {
 	if ps == nil {
 		return false
 	}
-	up := reflect.ValueOf(x).Pointer()
-	_, ok := ps.Seen[up]
-	// debug
-	if ok {
-		//P("GetSeen reporting we have seen up=%x before", up)
-	}
+	_, ok := ps.Seen[x]
 	return ok
 }
 
@@ -82,19 +74,27 @@ func (ps *PrintState) Dump() {
 		return
 	}
 	for k, v := range ps.Seen {
-		fmt.Printf("ps Dump: %p   -- %s\n", k, v)
+		fmt.Printf("ps Dump: %p   -- %v\n", k, v)
 	}
 	fmt.Printf("\n")
 }
 
 // Seen tracks if a value has already been displayed, to
-// detect and avoid cycles
-//type Seen map[uintptr]struct{}
-type Seen map[uintptr]string
+// detect and avoid cycles.
+//
+/* Q: How to do garbage-collection safe graph traversal in a graph of Go objects?
+
+A: "Instead of converting the pointer to a uintptr, just store the pointer
+itself in a map[interface{}]bool.  If you encounter the same pointer
+again, you will get the same map entry.  The GC must guarantee that
+using pointers as map keys will work even if the pointers move."
+
+- Ian Lance Taylor on golang-nuts (2016 June 20).
+*/
+type Seen map[interface{}]struct{}
 
 func NewSeen() Seen {
-	//return Seen(make(map[uintptr]struct{}))
-	return Seen(make(map[uintptr]string))
+	return Seen(make(map[interface{}]struct{}))
 }
 
 // end supporting SexpString structs
