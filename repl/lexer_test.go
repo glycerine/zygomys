@@ -181,3 +181,26 @@ func Test028FloatingPointRegex(t *testing.T) {
 		cv.So(ans, cv.ShouldEqual, true)
 	})
 }
+
+func Test042ImaginaryFloatingPointRegex(t *testing.T) {
+
+	cv.Convey("our lexer should recognize complex/imaginary floating point numbers and these should not be confused with reals/floating point real-only numbers", t, func() {
+		ans := FloatRegex.MatchString(`-1e-10i`)
+		cv.So(ans, cv.ShouldEqual, false)
+		ans = FloatRegex.MatchString(`-1.i`)
+		cv.So(ans, cv.ShouldEqual, false)
+		ans = FloatRegex.MatchString(`1.2i`)
+		cv.So(ans, cv.ShouldEqual, false)
+		ans = FloatRegex.MatchString(`.2i`)
+		cv.So(ans, cv.ShouldEqual, false)
+
+		ans = ComplexRegex.MatchString(`-1e-10i`)
+		cv.So(ans, cv.ShouldEqual, true)
+		ans = ComplexRegex.MatchString(`-1.i`)
+		cv.So(ans, cv.ShouldEqual, true)
+		ans = ComplexRegex.MatchString(`1.2i`)
+		cv.So(ans, cv.ShouldEqual, true)
+		ans = ComplexRegex.MatchString(`.2i`)
+		cv.So(ans, cv.ShouldEqual, true)
+	})
+}
