@@ -377,8 +377,8 @@ func (a AddScopeInstr) InstrString() string {
 }
 
 func (a AddScopeInstr) Execute(env *Glisp) error {
-	sc := env.NewNamedScope(fmt.Sprintf("runtime add scope Name: '%s', curfunc: '%s', at pc=%v",
-		a.Name, env.curfunc.name, env.pc))
+	sc := env.NewNamedScope(fmt.Sprintf("scope Name: '%s'",
+		a.Name))
 	env.linearstack.Push(sc)
 	env.pc++
 	return nil

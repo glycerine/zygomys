@@ -22,10 +22,8 @@ type Stack struct {
 }
 
 func (s *Stack) SexpString(ps *PrintState) string {
-	if ps.GetSeen(s) {
-		return "already-seen"
-	} else {
-		ps.SetSeen(s)
+	if ps == nil {
+		ps = NewPrintState()
 	}
 	var label string
 	head := ""
@@ -50,8 +48,9 @@ func (s *Stack) Type() *RegisteredType {
 
 func (env *Glisp) NewStack(size int) *Stack {
 	return &Stack{
-		tos:      -1,
-		elements: make([]StackElem, size),
+		tos: -1,
+		//		elements: make([]StackElem, size),
+		elements: make([]StackElem, 0),
 		env:      env,
 	}
 }
@@ -94,6 +93,7 @@ func (stack *Stack) Push(elem StackElem) {
 	if stack.tos == len(stack.elements) {
 		stack.elements = append(stack.elements, elem)
 	} else {
+		panic("should never be re-using stack elements now!!")
 		stack.elements[stack.tos] = elem
 	}
 }
@@ -141,21 +141,22 @@ func (stack *Stack) Pop() (StackElem, error) {
 	return elem, nil
 }
 
-func (stack *Stack) PopAndDiscard() {
-	stack.tos--
-	if stack.tos < -1 {
-		stack.tos = -1
-	}
-}
+// we don't want to re-use frames now.
+//func (stack *Stack) PopAndDiscard() {
+//	stack.tos--
+//	if stack.tos < -1 {
+//		stack.tos = -1
+//	}
+//}
 
 func (stack *Stack) IsStackElem() {}
 
 func (stack *Stack) Show(env *Glisp, ps *PrintState, label string) (string, error) {
-	P("stack %p Show() starting", stack)
+	//P("debug: Stack.Show starting with stack = %p, ps = %p, Package: '%s', IsPkg: %v", stack, ps, stack.PackageName, stack.IsPackage)
 	if ps.GetSeen(stack) {
-		return "already-seen", nil
+		return fmt.Sprintf("already-saw Stack %p in Show", stack), nil
 	} else {
-		ps.SetSeen(stack)
+		ps.SetSeen(stack, "Stack in Show")
 	}
 
 	s := ""
@@ -181,8 +182,11 @@ func (stack *Stack) Show(env *Glisp, ps *PrintState, label string) (string, erro
 }
 
 // set newsize to 0 to truncate everything
-func (s *Stack) TruncateToSize(newsize int) {
-	s.tos = newsize - 1
+func (stack *Stack) TruncateToSize(newsize int) {
+	el := make([]StackElem, newsize)
+	copy(el, stack.elements)
+	stack.elements = el
+	stack.tos = newsize - 1
 }
 
 // nestedPathGetSet does a top-down lookup, as opposed to LexicalLookupSymbol which is bottom up
@@ -234,7 +238,6 @@ func (s *Stack) nestedPathGetSet(env *Glisp, dotpaths []string, setVal *Sexp) (S
 			if err != nil {
 				return SexpNull, err
 			}
-
 			//P("\n found hash in x at i=%d, looping to next i\n", i)
 			return x.nestedPathGetSet(env, dotpaths[1:], setVal)
 		case *Stack:

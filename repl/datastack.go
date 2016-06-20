@@ -43,11 +43,12 @@ func (stack *Stack) GetExpressions(n int) ([]Sexp, error) {
 }
 
 func (stack *Stack) PopExpressions(n int) ([]Sexp, error) {
+	origSz := stack.Size()
 	expressions, err := stack.GetExpressions(n)
 	if err != nil {
 		return nil, err
 	}
-	stack.tos -= n
+	stack.TruncateToSize(origSz - n)
 	return expressions, nil
 }
 

@@ -31,6 +31,9 @@ func (s *Scope) SexpString(ps *PrintState) string {
 		head = "(package " + s.PackageName
 	} else {
 		label = "scope " + s.Name
+		if s.IsGlobal {
+			label += " (global)"
+		}
 	}
 
 	str, err := s.Show(s.env, ps, s.Name)
@@ -290,16 +293,24 @@ func (a SymtabSorter) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a SymtabSorter) Less(i, j int) bool { return a[i].Key < a[j].Key }
 
 func (scop *Scope) Show(env *Glisp, ps *PrintState, label string) (s string, err error) {
-	P("scop %p Show() starting", scop)
-
-	if ps.GetSeen(scop) {
-		return "already-seen", nil
-	} else {
-		ps.SetSeen(scop)
+	//P("scop %p Show() starting, PackageName: '%s'  IsGlobal: %v", scop, scop.PackageName, scop.IsGlobal)
+	if ps == nil {
+		ps = NewPrintState()
 	}
+	if ps.GetSeen(scop) {
+		// This check is critical to prevent infinite looping in a cycle.
+		// Scopes like global are referenced by every package, and
+		// nested scopes refer to their paranets, so nesting
+		// two packages will loop forever without this check.
 
-	rep := strings.Repeat(" ", ps.Indent)
-	rep4 := strings.Repeat(" ", ps.Indent+4)
+		// debug version: return fmt.Sprintf("already-saw Scope %p with scop.PackageName='%s'\n", scop, scop.PackageName), nil
+		return "", nil
+	} else {
+		ps.SetSeen(scop, "Scope")
+	}
+	indent := ps.GetIndent()
+	rep := strings.Repeat(" ", indent)
+	rep4 := strings.Repeat(" ", indent+4)
 	s += fmt.Sprintf("%s %s  %s\n", rep, label, scop.Name)
 	if scop.IsGlobal && !env.showGlobalScope {
 		s += fmt.Sprintf("%s (global scope - omitting content for brevity)\n", rep4)

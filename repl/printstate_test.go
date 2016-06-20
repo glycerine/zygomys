@@ -16,8 +16,8 @@ func Test040SeenMapWorks(t *testing.T) {
 		cv.So(ps.GetSeen(b), cv.ShouldBeFalse)
 		cv.So(ps.GetSeen(d), cv.ShouldBeFalse)
 
-		ps.SetSeen(a)
-		ps.SetSeen(b)
+		ps.SetSeen(a, "a")
+		ps.SetSeen(b, "b")
 
 		cv.So(ps.GetSeen(a), cv.ShouldBeTrue)
 		cv.So(ps.GetSeen(b), cv.ShouldBeTrue)
