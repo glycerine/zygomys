@@ -30,8 +30,8 @@
 (expectError "Error calling '+': Cannot access private member 'privetLane' of package 'helloKit'" (+ k.privetLane 1))
 
 // check that visibility rules apply to imports of imports
- (def outer (package "outerSpace" (def inner (package "innerSpace" (source "tests/prepackage")))))
-(assert (== (outer.inner.Kit "cat")))
+ (def outer (package "outerSpace" (def inner (source "tests/prepackage"))))
+(assert (== outer.inner.Kit "cat"))
 //(expectError "Cannot access private member 'privetLane' of package 'helloKit'" outer.inner.privetLane)
 
 // verify no infinite loop on this...

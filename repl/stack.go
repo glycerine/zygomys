@@ -93,7 +93,7 @@ func (stack *Stack) Push(elem StackElem) {
 	if stack.tos == len(stack.elements) {
 		stack.elements = append(stack.elements, elem)
 	} else {
-		panic("should never be re-using stack elements now!!")
+		panic(fmt.Sprintf("should never be re-using stack elements now!! starting size=%v", stack.tos-1))
 		stack.elements[stack.tos] = elem
 	}
 }
@@ -140,14 +140,6 @@ func (stack *Stack) Pop() (StackElem, error) {
 	stack.tos--
 	return elem, nil
 }
-
-// we don't want to re-use frames now.
-//func (stack *Stack) PopAndDiscard() {
-//	stack.tos--
-//	if stack.tos < -1 {
-//		stack.tos = -1
-//	}
-//}
 
 func (stack *Stack) IsStackElem() {}
 
