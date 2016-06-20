@@ -88,13 +88,32 @@ func (stack *Stack) IsEmpty() bool {
 }
 
 func (stack *Stack) Push(elem StackElem) {
-	stack.tos++
 
-	if stack.tos == len(stack.elements) {
+	// we have to lazily recover from errors here where the stack
+	// didn't get unwound...
+	n := len(stack.elements)
+
+	// n-1 is the last legal entry, which should be top of stack too.
+	switch {
+	case stack.tos == n-1:
+		// normal, 99% of the time.
+		stack.tos++
 		stack.elements = append(stack.elements, elem)
-	} else {
-		panic(fmt.Sprintf("should never be re-using stack elements now!! starting size=%v", stack.tos-1))
-		stack.elements[stack.tos] = elem
+	case stack.tos > n-1:
+		// really irretreivably problematic
+		panic(fmt.Sprintf("stack %p is really messed up! starting size=%v > "+
+			"len(stack.elements)=%v:\n here is stack: '%s'\n",
+			stack, stack.tos-1, n, stack.SexpString(nil)))
+	default:
+		// INVAR stack.tos < n-1
+
+		// We might get here if an error caused the last operation to abort,
+		// resulting in the call stack pop upon returning never happening.
+
+		// So we'll lazily cleanup now and carry on.
+		stack.TruncateToSize(stack.tos + 1)
+		stack.tos++
+		stack.elements = append(stack.elements, elem)
 	}
 }
 
@@ -216,9 +235,18 @@ func (s *Stack) nestedPathGetSet(env *Glisp, dotpaths []string, setVal *Sexp) (S
 		}
 
 		if i == lenpath-1 {
-			err = errIfPrivate(curSym.name, curStack)
-			if err != nil {
-				return SexpNull, err
+			// final element
+			switch ret.(type) {
+			case *Stack:
+				// allow package within package to be inspected.
+				// done with GET
+				return ret, nil
+			default:
+				// don't allow private value within package to be inspected.
+				err = errIfPrivate(curSym.name, curStack)
+				if err != nil {
+					return SexpNull, err
+				}
 			}
 			// done with GET
 			return ret, nil

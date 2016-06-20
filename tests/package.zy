@@ -29,10 +29,17 @@
 // package visibility rules like in Go: lowercase => private, Uppercase => Public.
 (expectError "Error calling '+': Cannot access private member 'privetLane' of package 'helloKit'" (+ k.privetLane 1))
 
-// check that visibility rules apply to imports of imports
- (def outer (package "outerSpace" (def inner (source "tests/prepackage"))))
+// check that visibility rules apply to imports of imports, and that we don't infinite loop:
+(def outer (package "outerSpace" (def inner (source "tests/prepackage"))))
 (assert (== outer.inner.Kit "cat"))
-//(expectError "Cannot access private member 'privetLane' of package 'helloKit'" outer.inner.privetLane)
 
-// verify no infinite loop on this...
-// (def outer (package "outerSpace" (def inner (package "innerSpace" (source "prepackage")))))
+(expectError "Error calling 'concat': Cannot access private member 'privetLane' of package 'helloKit'"
+             (concat "" outer.inner.privetLane))
+
+(expectError "Error calling '+': Cannot access private member 'privetLane' of package 'helloKit'" (printf "the number is %v" (+ 0 outer.inner.privetLane)))
+
+// but that we can inspect package inside package:
+(expectError "" outer.inner)
+
+// verify that functions inside the package can access their own private data
+(assert (== (outer.inner.UsePriv) "my number is 42"))

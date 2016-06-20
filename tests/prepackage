@@ -2,6 +2,7 @@
 (package "helloKit"
    (def Kit "cat")
    (def Rov "erDog")
-   (defn Funky [a] (concat a " rov" Rov " chases " Kit))
    (def privetLane 42)
+   (defn Funky [a] (concat a " rov" Rov " chases " Kit))
+   (defn UsePriv [] (concat "my number is " (str privetLane)))
 )
