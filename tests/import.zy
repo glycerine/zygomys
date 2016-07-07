@@ -1,0 +1,11 @@
+// define import analogously to Go:
+// as a define and sourcing a package from a path
+(import k "tests/prepackage")
+
+(assert (== (k.Funky "yipee") "yipee roverDog chases cat"))
+(assert (== k.Kit "cat"))
+
+(import "tests/prepackage") // default to helloKit package name
+
+(assert (== (helloKit.Funky "yipee") "yipee roverDog chases cat"))
+(assert (== helloKit.Kit "cat"))
