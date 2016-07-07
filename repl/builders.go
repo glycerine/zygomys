@@ -42,6 +42,8 @@ func (env *Glisp) ImportPackageBuilder() {
 	env.AddBuilder("comma", CommaBuilder)
 	//	env.AddBuilder("&", AddressOfBuilder)
 
+	env.AddBuilder("import", ImportPackageBuilder)
+
 	env.AddFunction("sliceOf", SliceOfFunction)
 	env.AddFunction("ptr", PointerToFunction)
 }
