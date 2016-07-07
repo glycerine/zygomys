@@ -3,6 +3,8 @@
    { World := "earth"; (defn Myfun [x] (concat World x)) }
 ))
 
+// but now preferred is to use the (import) functionality, tested in import.zy
+
 (assert (== hi.World "earth"))
 (assert (== (hi.Myfun "yes") "earthyes"))
 
