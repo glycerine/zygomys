@@ -5,4 +5,4 @@
 
  https:github.com/glycerine/zygomys/wiki
 */
-package repl
+package zygo
