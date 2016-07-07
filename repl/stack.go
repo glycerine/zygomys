@@ -228,6 +228,12 @@ func (s *Stack) nestedPathGetSet(env *Glisp, dotpaths []string, setVal *Sexp) (S
 				curSym.name, curStack.PackageName)
 		}
 		if setVal != nil && i == lenpath-1 {
+			// check if private
+			err = errIfPrivate(curSym.name, curStack)
+			if err != nil {
+				return SexpNull, err
+			}
+
 			// assign now
 			scop.Map[curSym.number] = *setVal
 			// done with SET

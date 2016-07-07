@@ -24,6 +24,7 @@
 
 // package visibility rules like in Go: lowercase => private, Uppercase => Public.
 (expectError "Error calling '+': Cannot access private member 'privetLane' of package 'helloKit'" (+ k.privetLane 1))
+(expectError "Error calling 'infix': Cannot access private member 'privetLane' of package 'helloKit'" {k.privetLane = 1 })
 
 // check that visibility rules apply to imports of imports, and that we don't infinite loop:
 (def outer (package "outerSpace" (def inner (source "tests/prepackage"))))
