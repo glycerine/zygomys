@@ -432,6 +432,8 @@ func SexpToGo(sexp Sexp, env *Glisp) interface{} {
 	case *SexpSentinel:
 		// no conversion done
 		return e
+	case *SexpBool:
+		return e.Val
 	default:
 		fmt.Printf("\n error: unknown type: %T in '%#v'\n", e, e)
 	}
@@ -666,6 +668,8 @@ func SexpToGoStructs(sexp Sexp, target interface{}, env *Glisp) (interface{}, er
 		targVa.Elem().Set(reflect.ValueOf(nil))
 	case *SexpTime:
 		targVa.Elem().Set(reflect.ValueOf(src.Tm))
+	case *SexpBool:
+		targVa.Elem().Set(reflect.ValueOf(src.Val))
 	default:
 		fmt.Printf("\n error: unknown type: %T in '%#v'\n", src, src)
 	}

@@ -10,10 +10,11 @@ import (
 //msgp:ignore Plane Wings Snoopy Hornet Hellcat
 
 type Event struct {
-	Id     int      `json:"id" msg:"id"`
-	User   Person   `json:"user" msg:"user"`
-	Flight string   `json:"flight" msg:"flight"`
-	Pilot  []string `json:"pilot" msg:"pilot"`
+	Id        int      `json:"id" msg:"id"`
+	User      Person   `json:"user" msg:"user"`
+	Flight    string   `json:"flight" msg:"flight"`
+	Pilot     []string `json:"pilot" msg:"pilot"`
+	Cancelled bool     `json:"cancelled" msg:"cancelled"`
 }
 
 type Person struct {
