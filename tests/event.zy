@@ -10,7 +10,7 @@
 (def txt (togo ev1))
 
 
-(assert (== txt `&zygo.Event{Id:456, User:zygo.Person{First:"jay", Last:"son"}, Flight:"A", Pilot:[]string{"u", "2"}}`))
+(assert (== txt `&zygo.Event{Id:456, User:zygo.Person{First:"jay", Last:"son"}, Flight:"A", Pilot:[]string{"u", "2"}, Cancelled:false}`))
 
 
 
