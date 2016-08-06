@@ -2,6 +2,12 @@
 
 # zygomys - an embedded scripting language for Go
 
+```
+zygo> x := 3; y := 5; if x + y == 8 { (println "we add up") }
+we add up
+zygo>
+```
+
 ### quickly create a mini-language to drive your project
 
 zygomys is an embeddable scripting language. It is a modernized Lisp with an object-oriented flavor, and
