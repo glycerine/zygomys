@@ -677,7 +677,20 @@ func PrintFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 		} else {
 			ar := make([]interface{}, len(args)-1)
 			for i := 0; i < len(ar); i++ {
-				ar[i] = args[i+1]
+				switch x := args[i+1].(type) {
+				case *SexpInt:
+					ar[i] = x.Val
+				case *SexpBool:
+					ar[i] = x.Val
+				case *SexpFloat:
+					ar[i] = x.Val
+				case *SexpChar:
+					ar[i] = x.Val
+				case *SexpStr:
+					ar[i] = x.S
+				default:
+					ar[i] = args[i+1]
+				}
 			}
 			fmt.Printf(str, ar...)
 		}
