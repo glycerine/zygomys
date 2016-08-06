@@ -3,7 +3,7 @@
 # zygomys - an embedded scripting language for Go
 
 ```
-zygo> x := 3; y := 5; if x + y == 8 { (println "we add up") }
+zygo> x := 3; y := 5; if x + y == 8 { (println "we add up") } else { (println "wat?" ) }
 we add up
 zygo>
 ```
