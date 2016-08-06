@@ -142,6 +142,8 @@ func TypeOf(expr Sexp) *SexpStr {
 	switch e := expr.(type) {
 	case *SexpRaw:
 		v = "raw"
+	case *SexpBool:
+		v = "bool"
 	case *SexpArray:
 		v = "array"
 	case *SexpInt:

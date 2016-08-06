@@ -6,5 +6,4 @@
 (assert (== (type?  []) "array"))
 (assert (== (type?  ()) "nil"))
 (assert (== (type? %(%a \ %b)) "list"))
-
-
+(assert (== (type? true) "bool"))

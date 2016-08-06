@@ -44,7 +44,7 @@ for the whole project when speaking aloud. In writing, the full
 $ go get github.com/glycerine/zygomys/cmd/zygo
 ~~~
 
-### not your average parentheses... features in zygomys 4.8.3 include
+### not your average parentheses... features in zygomys 4.8.4 include
 
  * [x] package mechanism that supports modularity and isolation of scripts/packages/libraries from each other. [See tests/package.zy for examples.](https://github.com/glycerine/zygomys/blob/master/tests/package.zy)
  * [x] struct defintion and type checking. [See `tests/declare.zy` for examples.](https://github.com/glycerine/zygomys/blob/master/tests/declare.zy)
