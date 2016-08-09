@@ -87,6 +87,7 @@ func (p *Parser) InfiniteParsingLoop() {
 			// don't own that memory any more.
 			expressions = make([]Sexp, 0, SliceDefaultCap)
 		} else {
+			// INVAR: err == nil && expr is not SexpEnd
 			expressions = append(expressions, expr)
 		}
 	}
@@ -100,7 +101,7 @@ var ErrMoreInputNeeded = fmt.Errorf("parser needs more input")
 // Listeners on p.ParsedOutput should know the Convention: sending
 // a length 0 []ParserReply on p.ParsedOutput channel means: we need more
 // input! They should send some in on p.AddInput channel; or request
-// and reset and simultaneously give us new input with p.ReqReset channel.
+// a reset and simultaneously give us new input with p.ReqReset channel.
 func (p *Parser) GetMoreInput(deliverThese []Sexp, errorToReport error) error {
 
 	if len(deliverThese) == 0 && errorToReport == nil {
