@@ -17,11 +17,9 @@ type Parser struct {
 	AddInput     chan io.RuneScanner
 	ReqReset     chan io.RuneScanner
 	ParsedOutput chan []ParserReply
-	LastErr      chan error
 
 	mut               sync.Mutex
 	stopped           bool
-	lastError         error
 	sendMe            []ParserReply
 	FlagSendNeedInput bool
 }
@@ -39,7 +37,6 @@ func (env *Glisp) NewParser() *Parser {
 		ReqReset:     make(chan io.RuneScanner),
 		AddInput:     make(chan io.RuneScanner),
 		ParsedOutput: make(chan []ParserReply),
-		LastErr:      make(chan error),
 		sendMe:       make([]ParserReply, 0, 1),
 	}
 	p.lexer = NewLexer(p)
@@ -130,8 +127,6 @@ func (p *Parser) GetMoreInput(deliverThese []Sexp, errorToReport error) error {
 		case p.HaveStuffToSend() <- p.sendMe:
 			p.sendMe = make([]ParserReply, 0, 1)
 			p.FlagSendNeedInput = false
-		case p.LastErr <- p.lastError:
-			p.lastError = nil
 		}
 	}
 }

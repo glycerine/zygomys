@@ -103,7 +103,7 @@ func CallGoMethodFunction(env *Glisp, name string, args []Sexp) (Sexp, error) {
 				va = reflect.New(typ.Elem())
 			default:
 				return SexpNull, fmt.Errorf("error converting %d-th argument to "+
-					"Go: we don't handles double pointers", i-2)
+					"Go: we don't handle double pointers", i-2)
 			}
 			Q("converting to go '%#v' into -> %#v\n", args[i], va.Interface())
 			iface, err := SexpToGoStructs(args[i], va.Interface(), env)
