@@ -53,7 +53,7 @@ https://github.com/glycerine/zygomys
 - d) codegen produces s-expression byte-code
 - e) a virtual machine executes the byte-code
 
-* what specifically changes to make code pause-able?
+* what specifically changes to make code pause-able? And more importantly, resumable?
 
 * original parseArray
 
@@ -75,6 +75,8 @@ https://github.com/glycerine/zygomys
 
 * that begs the question, how does getMoreInput() work...
 
+* getMoreInput is doing the heavy lifting...
+
 * getMoreInput()
 
 .code getmore2.go
@@ -86,7 +88,8 @@ https://github.com/glycerine/zygomys
 - getMoreInput() returns to its caller precisely once the caller can continue
 - and in the meantime, it does the channel work in select to get more input from an asynchronous source
 
-- In my experience, it's unusual in Go: a co-routine pattern
+- In my humble experience, this is rare: a co-routine pattern
+- Caller's code gets to pause and resume. Right where it left off.
 
 * supporting player: a background goroutine running an infinite loop that drives parsing. It also calls getMoreInput() to start top-level parsing.
 
