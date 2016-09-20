@@ -6,7 +6,7 @@ func (parser *Parser) parseArray(depth int) (Sexp, error) {
 				break getTok
 			} else {
 				// we ask for more, and then loop
-				err = parser.getMoreInput(nil, ErrMoreInputNeeded)
+				err = parser.getMoreInput(nil, ErrMoreInputNeeded) <<<<=== key change
 				switch err {
 				case ParserHaltRequested:
 					return SexpNull, err

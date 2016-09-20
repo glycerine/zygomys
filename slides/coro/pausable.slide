@@ -11,9 +11,7 @@ https://github.com/glycerine/zygomys
 
 [[https://github.com/glycerine/zygomys/wiki.]] The wiki has details, examples, and discussion.
 
-* problem
-
-problem: implementating an interpreter efficiently
+* problem: implementating an interpreter efficiently
 
 - suppose your code is running, and deep inside a nested set of possibly mutually recursive calls...
 - and you run out of input.
@@ -22,29 +20,23 @@ problem: implementating an interpreter efficiently
 - you want to save your state, and resume later, exactly where you left off...
 - this is exactly what happens at the interpreter prompt
 
-* start
-
-generally
+* generally
 
 - how to refactor your straight line code...
 - to pause - and - resume gracefully
 - to be interuptable
 - to be lazy
 
-* benefits
-
-benefits of this style
+* benefits of this style
 
 - more coherency: keep the readability of straight-line code
 - insert pause points after the fact
 - easier to read => means easier to maintain, refactor, and extend
 
 
-* context
+* context: zygomys interpreter
 
-context: zygomys
-
-- a scripting language
+- an interpreted scripting language
 - built in Go, for steering Go
 - reflect to invoke compiled Go code
 - zygomys has closures with lexical scope
@@ -53,9 +45,7 @@ context: zygomys
 - readable math: anything inside curly braces {} is infix. example: a = 2 * 5 + 4 / 2
 .link https://github.com/glycerine/zygomys https://github.com/glycerine/zygomys
 
-* context II
-
-context II: architecture / overview of zygomys implementation
+* context II: architecture / overview of zygomys implementation
 
 - a) lexer produces tokens
 - b) parser produces lists and arrays of symbols  <<<== focus of this talk
@@ -63,16 +53,30 @@ context II: architecture / overview of zygomys implementation
 - d) codegen produces s-expression byte-code
 - e) a virtual machine executes the byte-code
 
+* what specifically changes to make code pause-able?
+
 * original parseArray
 
 .code orig.parser1.go
 
-* closeup
+* before, closeup
 
 .code before1.go
 
-* after
+* after, closeup
 
 .code after1.go
+
+* zoom out: after in full context
+
+.code after1full.go
+
+* the key was getMoreInput() call instead of returning io.EOF... simple enough, but...
+
+* that begs the question, how does getMoreInput() work...
+
+* getMoreInput()
+
+.code getmore2.go
 
 
