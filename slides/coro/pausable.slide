@@ -49,24 +49,30 @@ context: zygomys
 - reflect to invoke compiled Go code
 - zygomys has closures with lexical scope
 - for loops
-- higher order functions.
-- eval
-- is sandbox-able
-- anything inside curly braces {} is infix, to make math readable
+- higher order functions
+- readable math: anything inside curly braces {} is infix. example: a = 2 * 5 + 4 / 2
 .link https://github.com/glycerine/zygomys https://github.com/glycerine/zygomys
 
+* context II
 
-
-* solution
-
-* solution 2
-
-* architecture / overview of design
+context II: architecture / overview of zygomys implementation
 
 - a) lexer produces tokens
-- b) parser produces lists and arrays of symbols
+- b) parser produces lists and arrays of symbols  <<<== focus of this talk
 - c) macros run at definition type
 - d) codegen produces s-expression byte-code
-- e) (work in progress) builders create and check types at `run` time. (Builders are a hybrid between a function and a macro.)
-- f) a simple virtual machine executes s-expression byte-code. User's functions run.
+- e) a virtual machine executes the byte-code
+
+* original parseArray
+
+.code orig.parser1.go
+
+* closeup
+
+.code before1.go
+
+* after
+
+.code after1.go
+
 
