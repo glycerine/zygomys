@@ -1,5 +1,5 @@
-Pause-able parsing and elegant interpreters in Go
-Goroutines as Coroutines
+Pause-able Parsing and Elegant Interpreters in Go
+Using Goroutines as Coroutines
 
 20 September 2016
 
@@ -12,51 +12,86 @@ https://github.com/glycerine/zygomys
 
 [[https://github.com/glycerine/zygomys/wiki.]] The wiki has details, examples, and discussion.
 
-* scenario
+* technical points
 
-* Snoopy versus the Red Baron
+- how to refactor your straight line code...
+- to pause - and - resume gracefully
+- to be interuptable
+- to be lazy
 
-.image ../snoopy_ace.png
+* zygomys the scripting language for Go
 
-* What is his cry?
+- supports exploratory data analysis / dynamic reconfiguration with compiled speed.
+- so: interactive, but use reflect to call compiled code.
+- also aim to eventually compile-down to Go
+- blends infix where its more usable (e.g. math readability)
+- retains s-expression uniformity for code that generates code
 
-.image ../curse_you_red_baron.png
+* technically interesting about the zygo implementation:
 
-- imagine Snoopy comes back with friends...
+- using goroutines as coroutines to get pause-able parsing. avoids the O(n^2) trap when reading multi-line user-typed input. Call for more input from many points; inversion of select loop -- exit when you've got another line of input tokens. See repl/parser.go.
+- focus of this talk
+- also: conditional send technique
+
+* benefits of coroutine style organization
+
+- more coherency: keep the readability of straight-line code
+- insert pause points after the fact
+- easier to read means easier to maintain, refactor, and extend
+
+* context: the zygomys scripting language
+
+- reflect based calls to existing Go functions (able to use Go structs).-
+- full closures with lexical scope
+- for-loops, break, continue, optional labels
+- eval
+- sandbox-able / restrict filesystem access
+- higher order functions.
+
+* problem
+
+- suppose your code is running, and deep inside a nested set of possibly recursive calls...
+- you run out of input.
+- ... do you start all over?
+- ... and take O(n^2) time to parse an n line statement?
+- ouch.
+- this is exactly what happens at the interpreter prompt
+
+* solution
 
 * data model for a plane formation, Go structs
 
-.code snoopy1
+.code ../snoopy1
 
 - note slice of interface / embedded elements (we handle these)
 
 * Methods defined on the Snoopy struct
 
-.code snoopy2
+.code ../snoopy2
 
 - anything that can Fly satisfies the Flyer interface. Weather, informs the Fly event:
 
-.code weather
+.code ../weather
 
 * Flyer friends, can be listed in the Friends slice in Plane
 
-.code other.planes
+.code ../other.planes
 
 * with the data model in mind, lets interact with it using zygo...
 
 * Make it rain
 
-.code make.it.rain
+.code ../make.it.rain
 
 * Bring in some planes, in formation
 
-.code make.planes
+.code ../make.planes
 
 - in three lines we've instantiated and configured 3 Go structs in a tree
 
 - call a Go method on a Go struct... Snoopy goes Fly()-ing
 
-.code plane.interact
+.code ../plane.interact
 
 * we've just been interacting/scripting Go data and methods...
 
@@ -82,7 +117,7 @@ The Michoacan pocket gopher is a small animal with short, dense, black, lustrous
 
 See [[https://github.com/glycerine/zygomys/blob/master/cmd/zygo/main.go]]. Just three steps.
 
-.code main.go  /START OMIT/,/END OMIT/
+.code ../main.go  /START OMIT/,/END OMIT/
 
 
 * architecture / overview of design
@@ -101,25 +136,25 @@ See [[https://github.com/glycerine/zygomys/blob/master/cmd/zygo/main.go]]. Just 
 
 - hashmaps can define arbitrary records; with or without attached Go shadow structs
 
-.code sample.run1
+.code ../sample.run1
 we range through the hashmap, `hsh`, like this:
-.code sample.run3
+.code ../sample.run3
 
 
 * records
 
 - records are hash tables with a name. All hash tables preserve key-order.
 
-.code harry.record
+.code ../harry.record
 
 * plain hash maps, without a distinct record TypeName
 
-.code hash.demo
+.code ../hash.demo
 
 
 * arrays (slices)
 
-.code arrays.run
+.code ../arrays.run
 
 
 
@@ -144,7 +179,7 @@ we range through the hashmap, `hsh`, like this:
 
 * classic lisp style - list processing
 
-.code hof.foldr
+.code ../hof.foldr
 
 - see the closure tests in [[https://github.com/glycerine/zygomys/blob/master/tests/closure.zy]]
 
@@ -152,27 +187,11 @@ we range through the hashmap, `hsh`, like this:
 
 - anything inside curly braces is infix parsed. Can mix in function calls. Math becomes more readable. Uses a Pratt parser.
 
-.code infix.session
+.code ../infix.session
 
 * inspect the transformation
 
-.code infix.txt
-
-* Top-down Operator Precedence (Pratt parsing)
-
-- Like quicksort, Pratt's is a short, sharp algorithm; not particularly easy to understand on the first pass. It builds a parse tree so that precedence is decreasing as you go up to the root. Higher precedence means stronger binding, which means being lower in the parse tree.
-- works like magic. Very easy to extend your language with new infix operations, once the core Expression routine is implemented. This is how zygo processes infix syntax.
-- links for learning:
-
-[[https://github.com/glycerine/zygomys/blob/master/repl/pratt.go]] Already written into zygo.
-
-[[https://github.com/glycerine/PrattParserInC/blob/master/Vaughan.Pratt.TDOP.pdf]] original
-
-[[http://javascript.crockford.com/tdop/tdop.html]] Douglas Crockford's article, javascript
-
-example in python: [[http://effbot.org/zone/simple-top-down-parsing.htm]]
-
-blog with discussion/Java: [[http://journal.stuffwithstuff.com/2011/03/19/pratt-parsers-expression-parsing-made-easy/]]
+.code ../infix.txt
 
 * parse tree
 
@@ -189,132 +208,7 @@ blog with discussion/Java: [[http://journal.stuffwithstuff.com/2011/03/19/pratt-
 - Eventually... multi-core friendly scripting. (Channels now, but no select yet).
 - Eventually... leverage Go's multicore strength for exploratory configuration, data analysis and scripting. (I love R for productivity, Go for production).
  
-* the basic Go API: adding compiled functions to zygo
 
-.code first.go /START OMIT/,/END OMIT/
-
-.code use.first
-
-* tour of the insides: major files of `github.com/glycerine/zygomys/repl/`
-
-- repl.go        ..........ReplMain() lives here, toplevel loop
-- expression.go  ..........the core Sexp s-expression definitions
-- environment.go ..........lexical scope, symbol table lookup
-- lexer.go       ..........hand written lexer
-- parser.go      ..........recursive parsing of symbols into lists and arrays
-- generator.go   ..........code-gen: generate Sexp byte code
-- vm.go          ..........virtual machine that executes the byte code
-- builders.go    ..........declarations and type checking
-- gotypereg.go   ..........the type registry for Go/zygo type correspondence
-
-* auxiliary/helper files; also in `github.com/glycerine/zygomys/repl/`
-
-- typeutils.go    ..........runtime type inspection from zygo (type? var)
-- hashutils.go    ..........records (a.k.a hash tables)
-- listutils.go    ..........linked list (*SexpPair) utilities
-- strutils.go     ..........string utilities
-- scope.go        ..........stack of symbol tables
-- stack.go        ..........used by scopes
-- rawutils.go     ..........raw []byte handling
-- numerictower.go  ..........number conversions
-- vprint.go       ..........debug print stuff for development
-
-* custom types: extension example files
-
-- random.go  ..........  (wrap math/rand.Float64() call)
-- regexp.go  ..........  (wrap regexp.Regexp)
-- time.go    ..........  (wrap time.Time)
-- jsonmsgp.go .......... (conversions to/from json and msgpack)
-
-* the fundamental Sexp types
-
-.code exp.txt
-
-- SexpNull (actually a value; an instance of the SexpSentinel type)
-- SexpSymbol (variable and function names; symbol table entries)
-- SexpPair   (linked lists)
-- SexpArray  (slices)
-- SexpHash   (hash table; keys and values are any Sexp, key ordering preserved)
-
-
-* debug tools, at the zygo repl
-- `.dump`  .......... shows the data stack
-- `.debug`   ..........  traces the PC (program counter) through the byte code
-- `.undebug`    .......... turns off traces
-- `.gls`       ..........  global list of all symbols
-- `.ls`        ..........  list of local symbols
-- `(macexpand)`   ..........   show what a macro expands to
-- `(infixExpand {})`   ..........   show the s-expression expansion of an infix expression
-
-- the wiki has a lot of documentation. [[https://github.com/glycerine/zygomys/wiki]]
-
-* json / msgpack support
-
-See the top of `github.com/glycerine/zygomys/repl/jsonmsgp.go` for a guide.
-
-.code msgp.txt
-
-
-* type system
-
-* type system. work in progress...
-
-- always manifestly typed: a variable points to a value that knows its own type.
-- add-on: optional static type system -- enforced at definition time -- is half implemented
-- to follow status, `github.com/glycerine/zygomys/tests/decl_fun.zy`
-- struct declarations done, function type declarations with (func) not yet done.
-- the static typing aims for compatibility with Go types (to enable compile-down)
-
-.code declare.struct
-
-* intro to the mechanism of zygo's static type system: Builders
-
-- A builder is a special kind of function; a hybrid between a function and a macro. I chose the term `builder` to reflect their ability to build structs (i.e. new types), packages, type aliases.
-
-- Like a macro, a builder receives the un-evaluated parse-tree of symbols from its caller. A builder can therefore be used to build new types and declare new functions/methods.
-
-- Like a function, a builder is called at run/evaluation time, not at definition time. (Macros are run at code-gen, which is definition time).
-
-- Since it receives an un-evaluated tree of symbols, a builder must manually eval arguments it wants to find bindings for.
-
-- Used in zygo to define structs. Next planned use: define interfaces, functions, methods, and type aliases. See [[https://github.com/glycerine/zygomys/blob/master/repl/builders.go]] for examples.
-
-
-* If you want to play with type systems
-
-- try out your parametric-polymorphism idea?
-- I don't know if its a good idea but...
-- the sigil-system is setup to let you explore this area
-- sigil prefixed symbols start with `$`, `#`, or `?`
-- makes it easy to define type-variables, for example.
-
-
-* sigil system
-
-symbols with a special prefix
-
-- `mysym` is a regular symbol
-- `$mysym` is a sigil symbol, with sigil '$'. It is distinct from `mysym`.
-- `#mysym` is a sigil symbol, with sigil '#'. It is distinct from `$mysym` and `mysym`.
-- `?mysym` is a sigil symbol, with sigil '?'. It is distinct from the above.
-
-* sigils part 2
-
-- sigil prefixed-symbols evaluate to themselves by default.
-- useful for grammars, symbolic reasoning.
-
-
-* todo
-
-- dataframe
-- matrix / tensor types
-- complex number support
-
-* it's the future ... dream big
-
-- model checking syntax and checker (Ordered-Binary-Decision-Diagram based)
-- port TLA+ model checker to Go, with zygomys interface
-- unification engine for type system experiments
 
 * final thoughts
 
@@ -323,8 +217,3 @@ symbols with a special prefix
 
 
 * credits
-
-The ancestor dialect of zygomys, [[https://github.com/zhemao/glisp]] Glisp, was designed and implemented by Howard Mao [[https://zhehaomao.com/]].
-
-Thanks Howard!
-
