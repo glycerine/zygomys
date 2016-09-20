@@ -113,7 +113,7 @@ https://github.com/glycerine/zygomys
 
 * conclusion
 
-- coroutine patterns are very viable in Go
+- coroutine patterns are viable in Go
 - we can avoid O(n^2) time interpreter parsing
 - other uses: functional programming patterns like (lazy) generators[1]
 
