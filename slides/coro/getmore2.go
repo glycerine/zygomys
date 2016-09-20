@@ -1,4 +1,4 @@
-// getMoreInput is called by the Parser routines mid-parse to get the user's next line
+// getMoreInput does I/O: it is called by the Parser routines mid-parse to get the user's next line
 func (p *Parser) getMoreInput(deliverThese []Sexp, errorToReport error) error {
     if len(deliverThese) == 0 && errorToReport == nil {
         p.FlagSendNeedInput = true

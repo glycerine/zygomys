@@ -81,6 +81,10 @@ https://github.com/glycerine/zygomys
 
 .code getmore2.go
 
+* HaveStuffToSend() is easy...
+
+.code havestuff.go
+
 * what is unusual about getMoreInput()
 
 - it can be called from multiple places
