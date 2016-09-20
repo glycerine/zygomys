@@ -75,7 +75,7 @@ https://github.com/glycerine/zygomys
 
 * that begs the question, how does getMoreInput() work...
 
-* getMoreInput is doing the heavy lifting...
+* apparently the real magic is in getMoreInput(). It must be doing the heavy lifting...
 
 * getMoreInput()
 
@@ -86,11 +86,31 @@ https://github.com/glycerine/zygomys
 - it can be called from multiple places
 - callers get to retain the entire context of their call stack
 - getMoreInput() returns to its caller precisely once the caller can continue
-- and in the meantime, it does the channel work in select to get more input from an asynchronous source
+- and in the meantime, it does the channel work in a select{} to get more input from an asynchronous source
 
 - In my humble experience, this is rare: a co-routine pattern
-- Caller's code gets to pause and resume. Right where it left off.
+- Caller's code gets to pause. And then resume, right where it left off.
 
 * supporting player: a background goroutine running an infinite loop that drives parsing. It also calls getMoreInput() to start top-level parsing.
 
 .code infparse_nocomment.go
+
+* so what does the Parser API look like from the outside?
+
+* here is what the user sees:
+
+* what the Parser API looks like
+
+.code parser_api.go
+
+* conclusion
+
+- coroutine patterns are very viable in Go
+- we can avoid O(n^2) time interpreter parsing
+- other uses: functional programming patterns like (lazy) generators[1]
+
+-
+-
+
+[1] John Hughes, Why Functional Programming Matters
+.link https://www.cs.kent.ac.uk/people/staff/dat/miranda/whyfp90.pdf
