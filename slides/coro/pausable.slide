@@ -88,6 +88,6 @@ https://github.com/glycerine/zygomys
 
 - In my experience, it's unusual in Go: a co-routine pattern
 
-* supporting player: a background goroutine running an infinite loop that drives parsing
+* supporting player: a background goroutine running an infinite loop that drives parsing. It also calls getMoreInput() to start top-level parsing.
 
 .code infparse_nocomment.go

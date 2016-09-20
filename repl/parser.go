@@ -55,40 +55,40 @@ func (p *Parser) Stop() error {
 	return nil
 }
 
+// Starts launches a background goroutine that runs an
+// infinite parsing loop.
 func (p *Parser) Start() {
-	go p.InfiniteParsingLoop()
+	go func() {
+		defer close(p.Done)
+		expressions := make([]Sexp, 0, SliceDefaultCap)
+
+		// maybe we already have input, be optimistic!
+		// no need to call p.GetMoreInput() before staring
+		// our loop.
+
+		for {
+			expr, err := p.ParseExpression(0)
+			if err != nil || expr == SexpEnd {
+				if err == ParserHaltRequested {
+					return
+				}
+				err = p.GetMoreInput(expressions, err)
+				if err == ParserHaltRequested {
+					return
+				}
+				// GetMoreInput will have delivered what we gave them. Reset since we
+				// don't own that memory any more.
+				expressions = make([]Sexp, 0, SliceDefaultCap)
+			} else {
+				// INVAR: err == nil && expr is not SexpEnd
+				expressions = append(expressions, expr)
+			}
+		}
+	}()
 }
 
 var ParserHaltRequested = fmt.Errorf("parser halt requested")
 var ResetRequested = fmt.Errorf("parser reset requested")
-
-func (p *Parser) InfiniteParsingLoop() {
-	defer close(p.Done)
-	expressions := make([]Sexp, 0, SliceDefaultCap)
-
-	// maybe we already have input, be optimistic!
-	// no need to call p.GetMoreInput() before staring
-	// our loop.
-
-	for {
-		expr, err := p.ParseExpression(0)
-		if err != nil || expr == SexpEnd {
-			if err == ParserHaltRequested {
-				return
-			}
-			err = p.GetMoreInput(expressions, err)
-			if err == ParserHaltRequested {
-				return
-			}
-			// GetMoreInput will have delivered what we gave them. Reset since we
-			// don't own that memory any more.
-			expressions = make([]Sexp, 0, SliceDefaultCap)
-		} else {
-			// INVAR: err == nil && expr is not SexpEnd
-			expressions = append(expressions, expr)
-		}
-	}
-}
 
 var ErrMoreInputNeeded = fmt.Errorf("parser needs more input")
 
