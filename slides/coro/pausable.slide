@@ -11,14 +11,33 @@ https://github.com/glycerine/zygomys
 
 [[https://github.com/glycerine/zygomys/wiki.]] The wiki has details, examples, and discussion.
 
+* problem
+
+problem: implementating an interpreter efficiently
+
+- suppose your code is running, and deep inside a nested set of possibly mutually recursive calls...
+- and you run out of input.
+- ... do you start all over?
+- ... and take O(n^2) time to parse an n-line program? Ouch.
+- you want to save your state, and resume later, exactly where you left off...
+- this is exactly what happens at the interpreter prompt
+
 * start
 
-topic
+generally
 
 - how to refactor your straight line code...
 - to pause - and - resume gracefully
 - to be interuptable
 - to be lazy
+
+* benefits
+
+benefits of this style
+
+- more coherency: keep the readability of straight-line code
+- insert pause points after the fact
+- easier to read => means easier to maintain, refactor, and extend
 
 
 * context
@@ -36,21 +55,7 @@ context: zygomys
 - anything inside curly braces {} is infix, to make math readable
 .link https://github.com/glycerine/zygomys https://github.com/glycerine/zygomys
 
-* benefits of coroutine style organization
 
-- more coherency: keep the readability of straight-line code
-- insert pause points after the fact
-- easier to read means easier to maintain, refactor, and extend
-
-* problem
-
-- problem: implementating an interpreter efficiently
-
-- suppose your code is running, and deep inside a nested set of possibly recursive calls...
-- you run out of input.
-- ... do you start all over?
-- ... and take O(n^2) time to parse an n line statement? Ouch.
-- this is exactly what happens at the interpreter prompt
 
 * solution
 
