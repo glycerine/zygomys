@@ -79,4 +79,15 @@ https://github.com/glycerine/zygomys
 
 .code getmore2.go
 
+* what is unusual about getMoreInput()
 
+- it can be called from multiple places
+- callers get to retain the entire context of their call stack
+- getMoreInput() returns to its caller precisely once the caller can continue
+- and in the meantime, it does the channel work in select to get more input from an asynchronous source
+
+- In my experience, it's unusual in Go: a co-routine pattern
+
+* supporting player: a background goroutine running an infinite loop that drives parsing
+
+.code infparse_nocomment.go
