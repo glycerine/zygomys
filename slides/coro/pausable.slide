@@ -99,6 +99,10 @@ https://github.com/glycerine/zygomys
 
 .code infparse_nocomment.go
 
+* call graph
+
+.image coro.png
+
 * so what does the Parser API look like from the outside?
 
 * here is what the user sees:
