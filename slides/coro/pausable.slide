@@ -55,7 +55,7 @@ https://github.com/glycerine/zygomys
 
 * what specifically changes to make code pause-able? And more importantly, resumable?
 
-* original parseArray
+* original parseArray (only 50% shown/fits on a screen)
 
 .code orig.parser1.go
 
@@ -101,7 +101,7 @@ https://github.com/glycerine/zygomys
 
 * call graph
 
-.image coro.png
+.image med2.jpg
 
 * so what does the Parser API look like from the outside?
 
