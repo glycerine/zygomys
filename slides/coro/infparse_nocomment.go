@@ -1,6 +1,6 @@
 // Start() commences the background infinite loop of parsing
 func (p *Parser) Start() {
-    go func() {
+  go func() {
     defer close(p.Done)
     expressions := make([]Sexp, 0, SliceDefaultCap)
     for {
@@ -18,5 +18,6 @@ func (p *Parser) Start() {
             expressions = append(expressions, expr)
         }
     }
+  }()
 }
 
