@@ -347,7 +347,7 @@ func (d DispatchInstr) Execute(env *Glisp) error {
 		_, err := env.CallUserFunction(sxArrayOf, funcobj.SexpString(nil), d.nargs+1)
 		return err
 	}
-	return fmt.Errorf("not a function on top of datastack: '%T/%#v'", funcobj, funcobj)
+	return fmt.Errorf("unbalanced parenthesis in the input? : not a function on top of datastack: '%T/%#v'", funcobj, funcobj)
 }
 
 type ReturnInstr struct {
