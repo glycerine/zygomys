@@ -11,11 +11,15 @@ Traditional lisp style:
 
 ```
 // tail recursion; tail-call optimization works, so this won't overflow the stack.
-(defn factTc [n accum]
-  (cond (== n 0) accum
-    (let [newn (- n 1)
-          newaccum (* accum n)]
-      (factTc newn newaccum))))
+zygo> (defn factTc [n accum]
+        (cond (== n 0) accum
+          (let [newn (- n 1)
+                newaccum (* accum n)]
+            (factTc newn newaccum))))
+zygo> (factTc 11 1) // compute factorial of 11, aka 11! aka 11*10*9*8*7*6*5*4*3*2
+(factTc 11 1)
+39916800
+zygo> 
 ```
 
 An optional infix syntax is layered on top. The infix syntax is similar to Go. Anything inside curly braces is infix. Outer parenthesis are still always used for function calls. The zygo REPL is in infix mode by default to facilitate math.
