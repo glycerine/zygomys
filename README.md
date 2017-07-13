@@ -2,12 +2,15 @@
 
 # zygomys - an embedded scripting language for Go
 
-Quick examples. Parenthesis always indicate a function call or native lisp form.
+Quick examples...
+
+Note that parenthesis always mean a function call or native lisp form, and
+function calls always use outer-parentheses.
 
 Traditional lisp style:
 
 ```
-// testing tail recursion
+// tail recursion; tail-call optimization works, so this won't overflow the stack.
 (defn factTc [n accum]
   (cond (== n 0) accum
     (let [newn (- n 1)
