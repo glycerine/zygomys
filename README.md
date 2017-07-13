@@ -22,7 +22,7 @@ zygo> (factTc 11 1) // compute factorial of 11, aka 11! aka 11*10*9*8*7*6*5*4*3*
 zygo> 
 ```
 
-An optional infix syntax is layered on top. The infix syntax is similar to Go. Anything inside curly braces is infix. Outer parenthesis are still always used for function calls. The zygo REPL is in infix mode by default to facilitate math.
+An optional infix syntax is layered on top. The infix syntax is a subset of Go. Anything inside curly braces is infix. Outer parenthesis are still always used for function calls. The zygo REPL is in infix mode by default to facilitate math.
 
 ```
 // show off the infix parser
