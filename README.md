@@ -2,7 +2,23 @@
 
 # zygomys - an embedded scripting language for Go
 
+Quick examples. Parenthesis always indicate a function call or native lisp form.
+
+Traditional lisp style:
+
 ```
+// testing tail recursion
+(defn factTc [n accum]
+  (cond (== n 0) accum
+    (let [newn (- n 1)
+          newaccum (* accum n)]
+      (factTc newn newaccum))))
+```
+
+Infix is similar to Go. Anything inside curly braces is infix. Outer parenthesis are still always used for function calls.
+
+```
+// show off the infix parser
 zygo> x := 3; y := 5; if x + y == 8 { (println "we add up") } else { (println "wat?" ) }
 we add up
 zygo>
