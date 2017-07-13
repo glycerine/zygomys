@@ -18,7 +18,7 @@ Traditional lisp style:
       (factTc newn newaccum))))
 ```
 
-An optional infix syntax is layered on top. This always syntax similar to Go. Anything inside curly braces is infix. Outer parenthesis are still always used for function calls. The zygo REPL is in infix mode by default to facilitate math.
+An optional infix syntax is layered on top. The infix syntax is similar to Go. Anything inside curly braces is infix. Outer parenthesis are still always used for function calls. The zygo REPL is in infix mode by default to facilitate math.
 
 ```
 // show off the infix parser
