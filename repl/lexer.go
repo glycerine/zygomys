@@ -256,6 +256,13 @@ func DecodeChar(atom string) (string, error) {
 }
 
 func (x *Lexer) DecodeAtom(atom string) (Token, error) {
+
+	endColon := false
+	n := len(atom)
+	if atom[n-1] == ':' {
+		endColon = true
+		atom = atom[:n-1] // remove the colon
+	}
 	if atom == "&" {
 		return x.Token(TokenSymbol, "&"), nil
 	}
@@ -291,8 +298,7 @@ func (x *Lexer) DecodeAtom(atom string) (Token, error) {
 		return x.Token(TokenSymbol, atom), nil
 	} else if SymbolRegex.MatchString(atom) {
 		////Q("matched symbol regex, atom='%v'", atom)
-		n := len(atom)
-		if atom[n-1] == ':' {
+		if endColon {
 			////Q("matched symbol regex with colon, atom[:n-1]='%v'", atom[:n-1])
 			return x.Token(TokenSymbolColon, atom[:n-1]), nil
 		}
@@ -304,6 +310,10 @@ func (x *Lexer) DecodeAtom(atom string) (Token, error) {
 			return x.EmptyToken(), err
 		}
 		return x.Token(TokenChar, char), nil
+	}
+
+	if endColon {
+		return x.Token(TokenColonOperator, ":"), nil
 	}
 
 	return x.EmptyToken(), fmt.Errorf("Unrecognized atom: '%s'", atom)
