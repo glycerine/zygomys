@@ -1,0 +1,3 @@
+// numbers should work as keys in hashes
+(def a (hash 0:4 2:5))
+// avoid: error in __main:13: Error on line 1: Unrecognized atom: '0:'
