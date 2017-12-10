@@ -1,4 +1,4 @@
-package zygo
+package repl
 
 import (
 	"errors"
@@ -189,16 +189,21 @@ func (h *SexpHash) DotPathHashGet(env *Glisp, sym *SexpSymbol) (Sexp, error) {
 }
 
 func (hash *SexpHash) HashGet(env *Glisp, key Sexp) (Sexp, error) {
-	Q("top of HashGet, key = '%v'", key.SexpString(nil))
+	//Q("top of HashGet, key = '%v'", key.SexpString(nil))
 
 	switch sym := key.(type) {
 	case *SexpSymbol:
 		if sym == nil {
 			panic("cannot have nil symbol for key")
 		}
-		Q("HashGet, sym = '%v'. isDot=%v", sym.SexpString(nil), sym.isDot)
+		//Q("HashGet, sym = '%v'. isDot=%v", sym.SexpString(nil), sym.isDot)
 		if sym.isDot {
 			return hash.DotPathHashGet(env, sym)
+		}
+
+	case *SexpArray:
+		if len(sym.Val) == 1 {
+			key = sym.Val[0]
 		}
 	}
 
