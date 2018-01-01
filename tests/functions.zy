@@ -40,8 +40,9 @@
 ((fn [a] (assert (== a 0))) 0)
 
 // function declarations
-(func driveIt [a:int64 b:string] [n:int64 err:error])
+(func driveIt [a:int64 b:string] [n:int64 err:error] { (sprintf "a='%v', b='%s'\n" a b)})
 //{y = (driveIt 1 2)}
+(assert (== (driveIt 54 "hi") "a='54', b='hi'\n"))
 
 // method declarations
 (method [(p *Car)] DriveAway [][s:string] (return "road-road-road"))

@@ -6,7 +6,7 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/glycerine/zygomys/repl"
+	"github.com/glycerine/zygomys/zygo"
 	"os"
 )
 
@@ -17,7 +17,7 @@ func usage(myflags *flag.FlagSet) {
 }
 
 func main() {
-	cfg := zygo.NewGlispConfig("zygo")
+	cfg := zygo.NewZlispConfig("zygo")
 	cfg.DefineFlags()
 	err := cfg.Flags.Parse(os.Args[1:])
 	if err == flag.ErrHelp {

@@ -1,3 +1,4 @@
 // should be okay taking pointer to record
+(registerDemoFunctions)
 (def f (* (* (sliceOf snoopy))))
 (assert (== (str f) `(* (* ([]snoopy)))`))

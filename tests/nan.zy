@@ -1,0 +1,59 @@
+(def a NaN)
+(def b NaN)
+
+// NaN != NaN needs to return true, but
+// NaN == NaN needs to return false.
+//
+// confirmed this is Go:
+// see https://stackoverflow.com/questions/1565164/what-is-the-rationale-for-all-comparisons-returning-false-for-ieee754-nan-values
+//
+//	a := math.NaN()
+//	b := math.NaN()
+//	fmt.Printf("nan != nan = '%v'\n", a != b) // true
+//	fmt.Printf("nan == nan = '%v'\n", a == b) // false
+//
+// match in zygo:
+
+(assert (!= a b))
+(assert (== false (== a b)))
+
+(assert (!= NaN NaN))
+(assert (!= nan nan))
+
+(assert (== false (== NaN NaN)))
+(assert (== false (== NaN nan)))
+(assert (== false (== nan NaN)))
+(assert (== false (== nan nan)))
+
+
+(def c NaN)
+(def d NaN)
+
+
+(assert (!= c d))
+
+// NaN should not equal some other number
+// Match the floating point behavior we see in Go:
+//
+// 	fmt.Printf("nan == 3.0 = '%v'\n", a == 3.0) // false
+//	fmt.Printf("nan != 3.0 = '%v'\n", a != 3.0) // true
+//
+//	fmt.Printf("nan == nan = '%v'\n", a == b) // false
+//
+//	fmt.Printf("nan >  nan = '%v'\n", a > b)  // false
+//	fmt.Printf("nan >= nan = '%v'\n", a >= b) // false
+//
+//	fmt.Printf("nan <  nan = '%v'\n", a < b)  // false
+//	fmt.Printf("nan <= nan = '%v'\n", a <= b) // false
+
+(assert (== false (== 3.0 nan)))
+(assert (!= 3.0 nan))
+(assert (!= nan 4.0))
+
+(assert (== false (== nan nan)))
+
+(assert (== false (>  nan nan)))
+(assert (== false (>= nan nan)))
+
+(assert (== false (<  nan nan)))
+(assert (== false (<= nan nan)))

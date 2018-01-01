@@ -5,4 +5,5 @@
          (methodls s)))
 
 (def f (fieldls s))
-(assert (== f ["Plane zygo.Plane" "Wings zygo.Wings embed-path<Plane>" "SpanCm int embed-path<Plane:Wings>" "Speed int embed-path<Plane>" "Chld zygo.Flyer embed-path<Plane>" "Friends []zygo.Flyer embed-path<Plane>" "Cry string" "Pack []int" "Carrying []zygo.Flyer"]))
+(assert (== f ["Plane zygo.Plane" "Wings zygo.Wings embed-path<Plane>" "SpanCm int embed-path<Plane:Wings>" "ID int embed-path<Plane>" "Speed int embed-path<Plane>" "Chld zygo.Flyer embed-path<Plane>" "Friends []zygo.Flyer embed-path<Plane>" "Cry string" "Pack []int" "Carrying []zygo.Flyer"]))
+

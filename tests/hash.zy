@@ -27,7 +27,8 @@
     2:5 
     c:'c' 
     'a':3 
-    b:13 )`))
+    b:13 )
+`))
 (hdel h (symnum %b))
 // b should still be in there
 (assert (== 13 (hget h %b)))
