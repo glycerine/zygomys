@@ -1,7 +1,6 @@
 *.prof
 *.mprof
 *~
-/zygo
 tests/lines2
 
 
