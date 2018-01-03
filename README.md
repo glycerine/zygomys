@@ -125,6 +125,10 @@ zygomys is a contraction of Zygogeomys, [a genus of pocket gophers. The Michoaca
 
 The term is also descriptive. The stem `zygo` comes from the Greek for yoke, indicating a pair or a union of two things, and `mys` comes from the Greek for mouse. The union of Go and Lisp in a small cute package, that is zygomys.
 
+### users of note
+
+https://github.com/metacurrency/holochain
+
 
 ### license
 
