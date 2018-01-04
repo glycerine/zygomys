@@ -17,7 +17,7 @@ func init() {
 
 func Test007ParentChildRecordsTranslateToGo(t *testing.T) {
 
-	cv.Convey(`Given a tree of three records (hashes in zlisp); a snoopy`+
+	cv.Convey(`Given a tree of three records (hashes in zygo); a snoopy`+
 		` containing a hellcat, then SexpToGoStructs() should translate`+
 		` that parent-child relationship faithfully into a Go Snoopy{}`+
 		` containing a Go Hellcat{}.`, t, func() {

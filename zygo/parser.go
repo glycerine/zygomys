@@ -216,7 +216,7 @@ tokFilled:
 		return SexpNull, err
 	}
 
-	// backslash '\' replaces dot '.' in zlisp
+	// backslash '\' replaces dot '.' in zygo
 	if tok.typ == TokenBackslash {
 		// eat up the backslash
 		_, _ = lexer.GetNextToken()

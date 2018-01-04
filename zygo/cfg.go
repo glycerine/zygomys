@@ -20,7 +20,7 @@ type ZlispConfig struct {
 
 	// liner bombs under emacs, avoid it with this flag.
 	NoLiner bool
-	Prompt  string // default "zlisp> "
+	Prompt  string // default "zygo> "
 
 }
 
@@ -46,7 +46,7 @@ func (c *ZlispConfig) DefineFlags() {
 // call c.ValidateConfig() after myflags.Parse()
 func (c *ZlispConfig) ValidateConfig() error {
 	if c.Prompt == "" {
-		c.Prompt = "zlisp> "
+		c.Prompt = "zygo> "
 	}
 	return nil
 }

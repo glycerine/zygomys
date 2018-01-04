@@ -430,7 +430,7 @@ func SexpToGo(sexp Sexp, env *Zlisp, dedup map[*SexpHash]interface{}) (result in
 			if ok {
 				err := tc.TypeCheck()
 				if err != nil {
-					panic(fmt.Errorf("TypeCheck() error in zlisp.SexpToGo for '%T': '%v'", result, err))
+					panic(fmt.Errorf("TypeCheck() error in zygo.SexpToGo for '%T': '%v'", result, err))
 				}
 			}
 		}
@@ -629,7 +629,7 @@ func SexpToGoStructs(
 			if ok {
 				err := tc.TypeCheck()
 				if err != nil {
-					panic(fmt.Errorf("TypeCheck() error in zlisp.SexpToGoStructs for '%T': '%v'", result, err))
+					panic(fmt.Errorf("TypeCheck() error in zygo.SexpToGoStructs for '%T': '%v'", result, err))
 				}
 			}
 		}
@@ -845,7 +845,7 @@ func SexpToGoStructs(
 			src.GoShadowStructVa = factOutputVal
 
 		} else if factType != targTyp {
-			// factType=*zlisp.NestInner/*reflect.rtype  targTyp = **zlisp.NestInner/*reflect.rtype
+			// factType=*zygo.NestInner/*reflect.rtype  targTyp = **zygo.NestInner/*reflect.rtype
 
 			Q("factType != targTyp. factType=%v/%T  targTyp = %v/%T", factType, factType, targTyp, targTyp)
 
