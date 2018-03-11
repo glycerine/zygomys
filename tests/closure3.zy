@@ -19,5 +19,5 @@
 (def w (mypkg.DoubleAll v))
 //error in __anon276:3: Error calling 'infix': Error calling 'map': symbol `Double` not found
 // assert that we get [6, 8] back.
-(assert (== w[0] 6))
-(assert (== w[1] 8))
+(assert (== (:0 w) 6))
+(assert (== (:1 w) 8))
