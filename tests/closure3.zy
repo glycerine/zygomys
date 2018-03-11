@@ -1,0 +1,23 @@
+// closure3.zy https://github.com/glycerine/zygomys/issues/23
+// anonymous functions as closures.
+//
+(def res (let [x 123] (fn [] ((fn [] x)))))
+
+// error in __anon252:1: Error calling 'infix': symbol `x` not found
+(assert (== (res) 123))
+
+
+
+(def mypkg  (package "mypkg"
+            (defn Double [x]
+                    (+ x x))
+            (defn DoubleAll [xs]
+                       (println (Double 10))
+                       (map (fn [x] (Double x)) xs))))
+
+(def v [3, 4])
+(def w (mypkg.DoubleAll v))
+//error in __anon276:3: Error calling 'infix': Error calling 'map': symbol `Double` not found
+// assert that we get [6, 8] back.
+(assert (== w[0] 6))
+(assert (== w[1] 8))
