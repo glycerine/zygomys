@@ -311,7 +311,7 @@ func (scop *Scope) Show(env *Zlisp, ps *PrintState, label string) (s string, err
 	indent := ps.GetIndent()
 	rep := strings.Repeat(" ", indent)
 	rep4 := strings.Repeat(" ", indent+4)
-	s += fmt.Sprintf("%s %s  %s\n", rep, label, scop.Name)
+	s += fmt.Sprintf("%s %s  %s (%p)\n", rep, label, scop.Name, scop)
 	if scop.IsGlobal && !env.showGlobalScope {
 		s += fmt.Sprintf("%s (global scope - omitting content for brevity)\n", rep4)
 		return

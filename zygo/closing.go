@@ -8,8 +8,21 @@ type Closing struct {
 }
 
 func NewClosing(name string, env *Zlisp) *Closing {
+	stk := env.linearstack.Clone()
+	// be super strict: only store up to our
+	// enclosing function definition, because after
+	// that, the definition time of that function
+	// should be what we use.
+
 	return &Closing{
-		Stack: env.linearstack.Clone(),
+		Stack: stk,
+		Name:  name,
+		env:   env}
+}
+
+func NewEmptyClosing(name string, env *Zlisp) *Closing {
+	return &Closing{
+		Stack: env.NewStack(0),
 		Name:  name,
 		env:   env}
 }

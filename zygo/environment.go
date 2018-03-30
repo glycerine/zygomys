@@ -762,7 +762,7 @@ func (env *Zlisp) LexicalLookupSymbol(sym *SexpSymbol, setVal *Sexp) (Sexp, erro
 	switch err {
 	case nil:
 		//P("LexicalLookupSymbol('%s') found on curfunc.closeScope in scope '%s'\n",
-		//	sym.name, scope.Name)
+		//sym.name, scope.Name)
 		return exp, err, scope
 	case SymNotFound:
 		//P("LexicalLookupSymbol('%s') NOT found in closed over scopes", sym.name)

@@ -574,15 +574,17 @@ func (sf *SexpFunction) Copy() *SexpFunction {
 	return &cp
 }
 
-func (sf *SexpFunction) SetClosing(clos *Closing) {
+func (sf *SexpFunction) SetClosing(clos *Closing, parentFunc *SexpFunction) {
 	ps4 := NewPrintStateWithIndent(4)
 	pre, err := sf.ShowClosing(clos.env, ps4, "prev")
+	_ = pre
 	panicOn(err)
 	newnew, err := sf.ShowClosing(clos.env, ps4, "newnew")
+	_ = newnew
 	panicOn(err)
-	VPrintf("99999 for sfun = %p, in sfun.SetClosing(), prev value is %p = '%s'\n",
-		sf, sf.closingOverScopes, pre)
-	VPrintf("88888 in sfun.SetClosing(), new  value is %p = '%s'\n", clos, newnew)
+	//P("99999 for sfun = %p, in sfun.SetClosing(), prev value is %p = '%s'\n",
+	//	sf, sf.closingOverScopes, pre)
+	//P("88888 in sfun.SetClosing(), new  value is %p = '%s'\n", clos, newnew)
 	sf.closingOverScopes = clos
 }
 

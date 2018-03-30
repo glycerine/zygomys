@@ -746,7 +746,7 @@ func (a CreateClosureInstr) Execute(env *Zlisp) error {
 	env.pc++
 	cls := NewClosing(a.sfun.name, env)
 	myInvok := a.sfun.Copy()
-	myInvok.SetClosing(cls)
+	myInvok.SetClosing(cls, a.sfun)
 
 	ps8 := NewPrintStateWithIndent(8)
 	shown, err := myInvok.ShowClosing(env, ps8,
