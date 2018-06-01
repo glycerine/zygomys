@@ -14,7 +14,7 @@
 
 (defn filter [lst fun]
     (foldl lst
-            (fn [x l]
+            (fn [l x]
                 (cond
                     (fun x) (append l x)
                     l))
@@ -22,7 +22,7 @@
 )
 
 (defn gmap [fun lst]
-	(foldl lst (fn [x l] (fun x)) []))
+	(foldl lst (fn [l x] (fun x)) []))
 
 (defn even? [x]
     (cond
