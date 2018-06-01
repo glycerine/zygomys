@@ -2,7 +2,7 @@
 (defn foldl [lst fun acc]
     (cond
         (empty? lst) acc
-        (foldl (cdr lst) fun (fun (car lst) acc))
+        (foldl (cdr lst) fun (fun acc (car lst)))
 		))
 
 // right-fold preserves order of the lst in the acc output
