@@ -6,7 +6,7 @@ package zygo
 // when we are
 
 import (
-	cv "github.com/glycerine/goconvey/convey"
+	cv "github.com/smartystreets/goconvey/convey"
 	"testing"
 )
 
