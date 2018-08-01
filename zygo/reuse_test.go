@@ -4,7 +4,7 @@ import (
 	"github.com/shurcooL/go-goon"
 	"testing"
 
-	cv "github.com/glycerine/goconvey/convey"
+	cv "github.com/smartystreets/goconvey/convey"
 )
 
 func Test101ConversionToAndFromMsgpackAndJson(t *testing.T) {

@@ -7,7 +7,7 @@ import (
 	"io"
 	"testing"
 
-	cv "github.com/glycerine/goconvey/convey"
+	cv "github.com/smartystreets/goconvey/convey"
 	"github.com/ugorji/go/codec"
 )
 

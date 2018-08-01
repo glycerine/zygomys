@@ -2,7 +2,7 @@ package zygo
 
 import (
 	"fmt"
-	cv "github.com/glycerine/goconvey/convey"
+	cv "github.com/smartystreets/goconvey/convey"
 	"testing"
 )
 

@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"testing"
 
-	cv "github.com/glycerine/goconvey/convey"
+	cv "github.com/smartystreets/goconvey/convey"
 )
 
 func Test001LexerPositionRecordingWorks(t *testing.T) {
