@@ -481,10 +481,16 @@ func ReplMain(cfg *ZlispConfig) {
 		os.Exit(0)
 	}
 
+	runRepl := true
 	args := cfg.Flags.Args()
 	if len(args) > 0 {
+		runRepl = false
 		runScript(env, args[0], cfg)
-	} else {
+		if cfg.AfterScriptDontExit {
+			runRepl = true
+		}
+	}
+	if runRepl {
 		Repl(env, cfg)
 	}
 

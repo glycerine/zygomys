@@ -6,17 +6,18 @@ import (
 
 // configure a glisp repl
 type ZlispConfig struct {
-	CpuProfile        string
-	MemProfile        string
-	ExitOnFailure     bool
-	CountFuncCalls    bool
-	Flags             *flag.FlagSet
-	ExtensionsVersion string
-	Command           string
-	Sandboxed         bool
-	Quiet             bool
-	Trace             bool
-	LoadDemoStructs   bool
+	CpuProfile          string
+	MemProfile          string
+	ExitOnFailure       bool
+	CountFuncCalls      bool
+	Flags               *flag.FlagSet
+	ExtensionsVersion   string
+	Command             string
+	Sandboxed           bool
+	Quiet               bool
+	Trace               bool
+	LoadDemoStructs     bool
+	AfterScriptDontExit bool
 
 	// liner bombs under emacs, avoid it with this flag.
 	NoLiner bool
@@ -37,6 +38,7 @@ func (c *ZlispConfig) DefineFlags() {
 	c.Flags.BoolVar(&c.ExitOnFailure, "exitonfail", false, "exit on failure instead of starting repl")
 	c.Flags.BoolVar(&c.CountFuncCalls, "countcalls", false, "count how many times each function is run")
 	c.Flags.StringVar(&c.Command, "c", "", "expressions to evaluate")
+	c.Flags.BoolVar(&c.AfterScriptDontExit, "i", false, "after running the command line script, remain interactive rather than exiting")
 	c.Flags.BoolVar(&c.Sandboxed, "sandbox", false, "run sandboxed; disallow system/external interaction functions")
 	c.Flags.BoolVar(&c.Quiet, "quiet", false, "start repl without printing the version/mode/help banner")
 	c.Flags.BoolVar(&c.Trace, "trace", false, "trace execution (warning: very verbose and slow)")
