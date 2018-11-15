@@ -20,7 +20,7 @@
       (func)
       (do-in-loop func (- times 1)))))
 
-(let ((a (random-vector (make-vector 1000) 0))
-      (b (random-vector (make-vector 1000) 0)))
-  (do-in-loop (lambda () (mult-vector a b)) 1000))
+(let ((a (random-vector (make-vector 100) 0))
+      (b (random-vector (make-vector 100) 0)))
+  (do-in-loop (lambda () (mult-vector a b)) 200))
 

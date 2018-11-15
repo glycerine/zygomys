@@ -1,27 +1,46 @@
-(defn mult-array-loop [a b res i]
+// this is a straight port of the Scheme code in array-mult.scm
+(defn multArrayLoop [a b res i]
   (cond (== i (len a)) res
     (begin
-      (aset! res i (* (aget a i) (aget b i)))
-      (mult-array-loop a b res (+ i 1)))))
+      (aset res i (* (aget a i) (aget b i)))
+      (multArrayLoop a b res (+ i 1)))))
 
-(defn mult-array [a b]
-  (mult-array-loop a b (make-array (len a)) 0))
+(defn multArray [a b]
+  (multArrayLoop a b (makeArray (len a)) 0))
 
-(defn random-array [arr i]
+(defn randomArray [arr i]
   (cond (== i (len arr))
         arr
         (begin
-          (aset! arr i (random))
-          (random-array arr (+ i 1)))))
+          (aset arr i (random))
+          (randomArray arr (+ i 1)))))
 
-(defn do-in-loop [func times]
-  (cond (== times 0) '()
+(defn doInLoop [fx times]
+  (cond (== times 0) nil
     (begin
-      (func)
-      (do-in-loop func (- times 1)))))
+      (fx)
+      (doInLoop fx (- times 1)))))
 
-(timeit (fn [] (let [a (random-array (make-array 1000) 0)    
-      b (random-array (make-array 1000) 0)]
-  (do-in-loop (fn [] (mult-array a b)) 1000))))
+// 
+(let [
+  a (randomArray (makeArray 100) 0)    
+  b (randomArray (makeArray 100) 0)
+  ]
+  (doInLoop (fn [] (multArray a b)) 200))
 
+/* on my laptop, about 34x slower than Chez scheme.
 
+jaten@jatens-MacBook-Pro ~/go/src/github.com/glycerine/zygomys/benchmarks (master) $ time zygo ./array-mult.zy 
+
+real	0m4.322s
+user	0m5.737s
+sys	0m0.191s
+jaten@jatens-MacBook-Pro ~/go/src/github.com/glycerine/zygomys/benchmarks (master) $ time scheme --script ./array-mult.scm 
+
+real	0m0.169s
+user	0m0.136s
+sys	0m0.021s
+$ gi -q
+gi> = 5.737 / 0.169
+33.94674556213
+*/
