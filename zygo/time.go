@@ -97,8 +97,15 @@ func TimeitFunction(env *Zlisp, name string,
 	return SexpNull, nil
 }
 
+func MillisFunction(env *Zlisp, name string,
+	args []Sexp) (Sexp, error) {
+	millis := time.Now().UnixNano() / 1000000
+	return &SexpInt{Val: int64(millis)}, nil
+}
+
 func (env *Zlisp) ImportTime() {
 	env.AddFunction("now", NowFunction)
 	env.AddFunction("timeit", TimeitFunction)
 	env.AddFunction("astm", AsTmFunction)
+	env.AddFunction("millis", MillisFunction)
 }
