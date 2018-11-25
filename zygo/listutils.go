@@ -61,7 +61,28 @@ func MapList(env *Zlisp, fun *SexpFunction, expr Sexp) (Sexp, error) {
 	return list, nil
 }
 
-func ConcatList(a *SexpPair, b Sexp) (Sexp, error) {
+// O(n^2) for n total nodes in all lists. So this is
+// not super efficient. We have to
+// find the tail of each list in turn by
+// linear search. Avoid lists if possible in favor
+// of arrays.
+func ConcatLists(a *SexpPair, bs []Sexp) (Sexp, error) {
+	result := a
+	for _, b := range bs {
+		res, err := ConcatTwoLists(result, b)
+		if err != nil {
+			return SexpNull, err
+		}
+		x, ok := res.(*SexpPair)
+		if !ok {
+			return SexpNull, NotAList
+		}
+		result = x
+	}
+	return result, nil
+}
+
+func ConcatTwoLists(a *SexpPair, b Sexp) (Sexp, error) {
 	if !IsList(b) {
 		return SexpNull, NotAList
 	}
@@ -72,7 +93,7 @@ func ConcatList(a *SexpPair, b Sexp) (Sexp, error) {
 
 	switch t := a.Tail.(type) {
 	case *SexpPair:
-		newtail, err := ConcatList(t, b)
+		newtail, err := ConcatTwoLists(t, b)
 		if err != nil {
 			return SexpNull, err
 		}

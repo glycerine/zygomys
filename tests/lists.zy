@@ -11,6 +11,8 @@
 
 (assert (== %(1 2 4 5) (concat %(1 2) %(4 5))))
 
+(assert (== %(1 2 4 5 7 8) (concat %(1 2) %(4 5) %(7 8))))
+
 // test not-list pairs
 (assert (== %(1 \ 2) (cons 1 2)))
 (assert (== 2 (rest %(1 \ 2))))

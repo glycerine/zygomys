@@ -521,13 +521,10 @@ func ConcatFunction(env *Zlisp, name string, args []Sexp) (Sexp, error) {
 	case *SexpPair:
 		n := len(args)
 		switch {
-		case n == 2:
-			return ConcatList(t, args[1])
 		case n == 1:
 			return t, nil
 		default:
-			return SexpNull, WrongNargs
-
+			return ConcatLists(t, args[1:])
 		}
 	}
 
