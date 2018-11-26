@@ -310,14 +310,12 @@ func (x *Lexer) DecodeAtom(atom string) (Token, error) {
 		return x.Token(TokenSymbol, atom), nil
 	}
 	if CharRegex.MatchString(atom) {
-		//fmt.Printf("CharRegex matched len %v atom '%s'\n", len(atom), atom)
 		char, err := DecodeChar(atom)
 		if err != nil {
 			return x.EmptyToken(), err
 		}
 		return x.Token(TokenChar, char), nil
 	}
-	//fmt.Printf("CharRegex DID NOT match len %v atom '%s'\n", len(atom), atom)
 
 	if endColon {
 		return x.Token(TokenColonOperator, ":"), nil
@@ -493,18 +491,13 @@ top:
 		return nil
 
 	case LexerRuneLit:
-		//fmt.Printf("in LexerRuneLit state, r='%s', buffer=\"%s\"\n", string(r), lexer.buffer.String())
 		if r == '\\' {
 			lexer.state = LexerRuneEscaped
-			//fmt.Printf("changing to LexerRuneEscaped state\n")
 			return nil
 		}
 		if r == '\'' {
 			// closing single quote
 			lexer.buffer.WriteRune(r)
-
-			//fmt.Printf("in LexerRuneLit state, closing single quote, buffer=\"%s\"\n", lexer.buffer.String())
-
 			lexer.dumpBuffer()
 			lexer.state = LexerNormal
 			return nil
@@ -517,7 +510,6 @@ top:
 		if err != nil {
 			return err
 		}
-		//fmt.Printf("LexerRuneEscaped state sees char: '%v'\n", char)
 		lexer.buffer.WriteRune(char)
 		lexer.state = LexerRuneLit
 		return nil
