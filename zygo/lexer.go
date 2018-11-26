@@ -618,7 +618,8 @@ top:
 				ns := len(s)
 				if ns > 1 {
 					sWithoutE := s[:ns-1]
-					if DecimalRegex.MatchString(sWithoutE) {
+					if DecimalRegex.MatchString(sWithoutE) ||
+						FloatRegex.MatchString(sWithoutE) {
 						goto writeRuneToBuffer
 					}
 				}

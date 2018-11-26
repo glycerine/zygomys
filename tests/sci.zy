@@ -4,3 +4,4 @@
 (def z 1e1)
 (assert (== 1.0 (* a b)))
 (def y 4.5e10)
+(def y 4.5e-10)
