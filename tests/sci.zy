@@ -1,0 +1,6 @@
+// scientific notation recognized and accepted
+(def a 1e-1)
+(def b 1E+1)
+(def z 1e1)
+(assert (== 1.0 (* a b)))
+(def y 4.5e10)

@@ -134,6 +134,9 @@ type Lexer struct {
 	stream        io.RuneScanner
 	next          []io.RuneScanner
 	linenum       int
+
+	priori    int
+	priorRune [20]rune
 }
 
 func (lexer *Lexer) AppendToken(tok Token) {
@@ -144,6 +147,16 @@ func (lexer *Lexer) AppendToken(tok Token) {
 
 func (lexer *Lexer) PrependToken(tok Token) {
 	lexer.tokens = append([]Token{tok}, lexer.tokens...)
+}
+
+//helper
+func (lexer *Lexer) twoback() rune {
+	pen := lexer.priori - 2
+	if pen < 0 {
+		pen = len(lexer.priorRune) + pen
+	}
+	pr := lexer.priorRune[pen]
+	return pr
 }
 
 func NewLexer(p *Parser) *Lexer {
@@ -202,7 +215,7 @@ var (
 	DotSymbolRegex = regexp.MustCompile(`^[.]$|^([.][^'#:;\\~@\[\]{}\^|"()%.0-9,][^'#:;\\~@\[\]{}\^|"()%.,*+\-]*)+$|^[^'#:;\\~@\[\]{}\^|"()%.0-9,][^'#:;\\~@\[\]{}\^|"()%.,*+\-]*([.][^'#:;\\~@\[\]{}\^|"()%.0-9,][^'#:;\\~@\[\]{}\^|"()%.,*+\-]*)+$`)
 	DotPartsRegex  = regexp.MustCompile(`[.]?[^'#:;\\~@\[\]{}\^|"()%.0-9,][^'#:;\\~@\[\]{}\^|"()%.,]*`)
 	CharRegex      = regexp.MustCompile("^'(\\\\?.|\n)'$")
-	FloatRegex     = regexp.MustCompile("^-?([0-9]+\\.[0-9]*)$|-?(\\.[0-9]+)$|-?([0-9]+(\\.[0-9]*)?[eE](-?[0-9]+))$")
+	FloatRegex     = regexp.MustCompile("^-?([0-9]+\\.[0-9]*)$|-?(\\.[0-9]+)$|-?([0-9]+(\\.[0-9]*)?[eE]([-+]?[0-9]+))$")
 	ComplexRegex   = regexp.MustCompile("^-?([0-9]+\\.[0-9]*)i?$|-?(\\.[0-9]+)i?$|-?([0-9]+(\\.[0-9]*)?[eE](-?[0-9]+))i?$")
 	BuiltinOpRegex = regexp.MustCompile(`^(\+\+|\-\-|\+=|\-=|=|==|:=|\+|\-|\*|<|>|<=|>=|<-|->|\*=|/=|\*\*|!|!=|<!)$`)
 )
@@ -257,7 +270,7 @@ func DecodeChar(atom string) (string, error) {
 	return "", errors.New("not a char literal")
 }
 
-func (x *Lexer) DecodeAtom(atom string) (Token, error) {
+func (x *Lexer) DecodeAtom(atom string) (tk Token, err error) {
 
 	endColon := false
 	n := len(atom)
@@ -381,6 +394,12 @@ func (x *Lexer) DecodeBrace(brace rune) Token {
 }
 
 func (lexer *Lexer) LexNextRune(r rune) error {
+
+	// a little look-back ring. To help with scientific
+	// notation recognition
+	lexer.priorRune[lexer.priori] = r
+	lexer.priori = (lexer.priori + 1) % len(lexer.priorRune)
+
 top:
 	switch lexer.state {
 
@@ -588,11 +607,24 @@ top:
 
 	case LexerNormal:
 		switch r {
-		case '*':
-			fallthrough
 		case '+':
 			fallthrough
 		case '-':
+			// 1e-1, 1E+1, 1e1 are allowed, scientific notation for floats.
+			pr := lexer.twoback()
+			if pr == 'e' || pr == 'E' {
+				// scientific notation number?
+				s := lexer.buffer.String()
+				ns := len(s)
+				if ns > 1 {
+					sWithoutE := s[:ns-1]
+					if DecimalRegex.MatchString(sWithoutE) {
+						goto writeRuneToBuffer
+					}
+				}
+			}
+			fallthrough
+		case '*':
 			fallthrough
 		case '<':
 			fallthrough
