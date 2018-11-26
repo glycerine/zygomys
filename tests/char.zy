@@ -1,0 +1,5 @@
+// characters (runes) should be definable.
+(def b '%') // was crashing the lexer
+(def a 'A')
+(def n '\n') // was unrecognized
+(println (append (appendslice `hi ` n) "yoyo"))

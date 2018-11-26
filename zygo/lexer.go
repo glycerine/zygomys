@@ -118,6 +118,8 @@ const (
 	LexerCommentBlock
 	LexerCommentBlockAsterisk // could be end of block comment */
 	LexerBuiltinOperator
+	LexerRuneLit
+	LexerRuneEscaped
 )
 
 type Lexer struct {
@@ -199,7 +201,7 @@ var (
 	// dot symbol non-examples: `.a.`, `..`
 	DotSymbolRegex = regexp.MustCompile(`^[.]$|^([.][^'#:;\\~@\[\]{}\^|"()%.0-9,][^'#:;\\~@\[\]{}\^|"()%.,*+\-]*)+$|^[^'#:;\\~@\[\]{}\^|"()%.0-9,][^'#:;\\~@\[\]{}\^|"()%.,*+\-]*([.][^'#:;\\~@\[\]{}\^|"()%.0-9,][^'#:;\\~@\[\]{}\^|"()%.,*+\-]*)+$`)
 	DotPartsRegex  = regexp.MustCompile(`[.]?[^'#:;\\~@\[\]{}\^|"()%.0-9,][^'#:;\\~@\[\]{}\^|"()%.,]*`)
-	CharRegex      = regexp.MustCompile("^'\\\\?.'$")
+	CharRegex      = regexp.MustCompile("^'(\\\\?.|\n)'$")
 	FloatRegex     = regexp.MustCompile("^-?([0-9]+\\.[0-9]*)$|-?(\\.[0-9]+)$|-?([0-9]+(\\.[0-9]*)?[eE](-?[0-9]+))$")
 	ComplexRegex   = regexp.MustCompile("^-?([0-9]+\\.[0-9]*)i?$|-?(\\.[0-9]+)i?$|-?([0-9]+(\\.[0-9]*)?[eE](-?[0-9]+))i?$")
 	BuiltinOpRegex = regexp.MustCompile(`^(\+\+|\-\-|\+=|\-=|=|==|:=|\+|\-|\*|<|>|<=|>=|<-|->|\*=|/=|\*\*|!|!=|<!)$`)
@@ -308,12 +310,14 @@ func (x *Lexer) DecodeAtom(atom string) (Token, error) {
 		return x.Token(TokenSymbol, atom), nil
 	}
 	if CharRegex.MatchString(atom) {
+		//fmt.Printf("CharRegex matched len %v atom '%s'\n", len(atom), atom)
 		char, err := DecodeChar(atom)
 		if err != nil {
 			return x.EmptyToken(), err
 		}
 		return x.Token(TokenChar, char), nil
 	}
+	//fmt.Printf("CharRegex DID NOT match len %v atom '%s'\n", len(atom), atom)
 
 	if endColon {
 		return x.Token(TokenColonOperator, ":"), nil
@@ -488,6 +492,36 @@ top:
 		lexer.state = LexerStrLit
 		return nil
 
+	case LexerRuneLit:
+		//fmt.Printf("in LexerRuneLit state, r='%s', buffer=\"%s\"\n", string(r), lexer.buffer.String())
+		if r == '\\' {
+			lexer.state = LexerRuneEscaped
+			//fmt.Printf("changing to LexerRuneEscaped state\n")
+			return nil
+		}
+		if r == '\'' {
+			// closing single quote
+			lexer.buffer.WriteRune(r)
+
+			//fmt.Printf("in LexerRuneLit state, closing single quote, buffer=\"%s\"\n", lexer.buffer.String())
+
+			lexer.dumpBuffer()
+			lexer.state = LexerNormal
+			return nil
+		}
+		lexer.buffer.WriteRune(r)
+		return nil
+
+	case LexerRuneEscaped:
+		char, err := EscapeChar(r)
+		if err != nil {
+			return err
+		}
+		//fmt.Printf("LexerRuneEscaped state sees char: '%v'\n", char)
+		lexer.buffer.WriteRune(char)
+		lexer.state = LexerRuneLit
+		return nil
+
 	case LexerUnquote:
 		if r == '@' {
 			lexer.AppendToken(lexer.Token(TokenTildeAt, ""))
@@ -599,6 +633,14 @@ top:
 				return errors.New("Unexpected quote")
 			}
 			lexer.state = LexerStrLit
+			return nil
+
+		case '\'':
+			if lexer.buffer.Len() > 0 {
+				return errors.New("Unexpected single quote")
+			}
+			lexer.buffer.WriteRune(r)
+			lexer.state = LexerRuneLit
 			return nil
 
 		case ';':

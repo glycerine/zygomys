@@ -12,6 +12,8 @@ func ConcatStr(str *SexpStr, rest []Sexp) (*SexpStr, error) {
 		switch t := x.(type) {
 		case *SexpStr:
 			res.S += t.S
+		case *SexpChar:
+			res.S += string(t.Val)
 		default:
 			return &SexpStr{}, fmt.Errorf("ConcatStr error: %d-th argument (0-based) is "+
 				"not a string (was %T)", i, t)
@@ -26,6 +28,8 @@ func AppendStr(str *SexpStr, expr Sexp) (*SexpStr, error) {
 	switch t := expr.(type) {
 	case *SexpChar:
 		chr = t
+	case *SexpStr:
+		return &SexpStr{S: str.S + t.S}, nil
 	default:
 		return &SexpStr{}, errors.New("second argument is not a char")
 	}
