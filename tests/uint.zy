@@ -1,0 +1,2 @@
+// Max uint64 value, will overflow an int64
+(x := 18446744073709551615)
