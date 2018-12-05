@@ -362,24 +362,52 @@ func (parser *Parser) ParseExpression(depth int) (res Sexp, err error) {
 	case TokenDecimal:
 		i, err := strconv.ParseInt(tok.str, 10, SexpIntSize)
 		if err != nil {
+			e := err.(*strconv.NumError)
+			if e.Err == strconv.ErrRange {
+				i, err := strconv.ParseUint(tok.str, 10, 64)
+				if err == nil {
+					return &SexpUint64{Val: i}, nil
+				}
+			}
 			return SexpNull, err
 		}
 		return &SexpInt{Val: i}, nil
 	case TokenHex:
 		i, err := strconv.ParseInt(tok.str, 16, SexpIntSize)
 		if err != nil {
+			e := err.(*strconv.NumError)
+			if e.Err == strconv.ErrRange {
+				i, err := strconv.ParseUint(tok.str, 16, 64)
+				if err == nil {
+					return &SexpUint64{Val: i}, nil
+				}
+			}
 			return SexpNull, err
 		}
 		return &SexpInt{Val: i}, nil
 	case TokenOct:
 		i, err := strconv.ParseInt(tok.str, 8, SexpIntSize)
 		if err != nil {
+			e := err.(*strconv.NumError)
+			if e.Err == strconv.ErrRange {
+				i, err := strconv.ParseUint(tok.str, 8, 64)
+				if err == nil {
+					return &SexpUint64{Val: i}, nil
+				}
+			}
 			return SexpNull, err
 		}
 		return &SexpInt{Val: i}, nil
 	case TokenBinary:
 		i, err := strconv.ParseInt(tok.str, 2, SexpIntSize)
 		if err != nil {
+			e := err.(*strconv.NumError)
+			if e.Err == strconv.ErrRange {
+				i, err := strconv.ParseUint(tok.str, 2, 64)
+				if err == nil {
+					return &SexpUint64{Val: i}, nil
+				}
+			}
 			return SexpNull, err
 		}
 		return &SexpInt{Val: i}, nil

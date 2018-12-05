@@ -73,6 +73,10 @@ type SexpInt struct {
 	Val int64
 	Typ *RegisteredType
 }
+type SexpUint64 struct {
+	Val uint64
+	Typ *RegisteredType
+}
 type SexpBool struct {
 	Val bool
 	Typ *RegisteredType
@@ -97,6 +101,10 @@ func (r SexpStr) Type() *RegisteredType {
 
 func (r *SexpInt) Type() *RegisteredType {
 	return GoStructRegistry.Registry["int64"]
+}
+
+func (r *SexpUint64) Type() *RegisteredType {
+	return GoStructRegistry.Registry["uint64"]
 }
 
 func (r *SexpFloat) Type() *RegisteredType {
@@ -461,6 +469,10 @@ func (i *SexpInt) SexpString(ps *PrintState) string {
 	return strconv.Itoa(int(i.Val))
 }
 
+func (i *SexpUint64) SexpString(ps *PrintState) string {
+	return strconv.FormatUint(i.Val, 10)
+}
+
 func (f *SexpFloat) SexpString(ps *PrintState) string {
 	return strconv.FormatFloat(f.Val, 'f', 2, SexpFloatSize)
 }
@@ -622,6 +634,8 @@ func IsTruthy(expr Sexp) bool {
 	case *SexpBool:
 		return e.Val
 	case *SexpInt:
+		return e.Val != 0
+	case *SexpUint64:
 		return e.Val != 0
 	case *SexpChar:
 		return e.Val != 0
