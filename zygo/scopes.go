@@ -135,7 +135,7 @@ var SymNotFound = errors.New("symbol not found")
 // lookup symbols, but don't go beyond a function boundary -- a user-defined
 // function boundary that is. We certainly have to go up beyond
 // all built-in operators like '+' and '-', '*' and '/'.
-func (stack *Stack) LookupSymbolUntilFunction(sym *SexpSymbol, setVal *Sexp, maximumFuncToSearch int) (Sexp, error, *Scope) {
+func (stack *Stack) LookupSymbolUntilFunction(sym *SexpSymbol, setVal *Sexp, maximumFuncToSearch int, checkCaptures bool) (Sexp, error, *Scope) {
 
 	funcCount := 0
 	if !stack.IsEmpty() {
@@ -159,26 +159,16 @@ func (stack *Stack) LookupSymbolUntilFunction(sym *SexpSymbol, setVal *Sexp, max
 					funcCount++
 					//P("   ...scope '%s' was a function, halting up search and checking captured closures\n", scope.Name)
 
-					/*
-						// then check the captured closure scope stack
+					if checkCaptures {
+						// check the captured closure scope stack
 
 						exp, err, whichScope := scope.MyFunction.ClosingLookupSymbol(sym, setVal)
 						switch err {
 						case nil:
 							P("LookupSymbolUntilFunction('%s') found in scope '%s'\n", sym.name, whichScope.Name)
 							return exp, err, whichScope
-						case SymNotFound:
-							P("LookupSymbolUntilFunction('%s') not found in scope '%s'\n", sym.name, whichScope.Name)
-							if funcCount >= maximumFuncToSearch {
-								break doneSearching
-							}
-						default:
-							//P("unrecognized error '%v'", err)
-							if funcCount >= maximumFuncToSearch {
-								break doneSearching
-							}
 						}
-					*/
+					}
 
 					// no luck inside the captured closure scopes.
 					if funcCount >= maximumFuncToSearch {

@@ -741,16 +741,14 @@ func (env *Zlisp) LexicalLookupSymbol(sym *SexpSymbol, setVal *Sexp) (Sexp, erro
 	//P("LexicalLookupSymbol('%s', with setVal: %v)\n", sym.name, setVal)
 
 	// (1) linearstack
-	exp, err, scope := env.linearstack.LookupSymbolUntilFunction(sym, setVal, 1)
+	exp, err, scope := env.linearstack.LookupSymbolUntilFunction(sym, setVal, 1, false)
 	switch err {
 	case nil:
-		P("LexicalLookupSymbol('%s') found on linearstack in scope '%s'\n",
-			sym.name, scope.Name)
+		//P("LexicalLookupSymbol('%s') found on linearstack in scope '%s'\n",
+		//	sym.name, scope.Name)
 		return exp, err, scope
 	case SymNotFound:
 		break
-	default:
-		panic(fmt.Errorf("unexpected error from symbol lookup: %v", err))
 	}
 
 	//P("LexicalLookupSymbol('%s') past linearstack\n", sym.name)
@@ -760,37 +758,32 @@ func (env *Zlisp) LexicalLookupSymbol(sym *SexpSymbol, setVal *Sexp) (Sexp, erro
 	exp, err, scope = env.curfunc.ClosingLookupSymbol(sym, setVal)
 	switch err {
 	case nil:
-		P("LexicalLookupSymbol('%s') found on curfunc.closeScope in scope '%s'\n",
-			sym.name, scope.Name)
+		//P("LexicalLookupSymbol('%s') found on curfunc.closeScope in scope '%s'\n",
+		//	sym.name, scope.Name)
 		return exp, err, scope
 	case SymNotFound:
 		//P("LexicalLookupSymbol('%s') NOT found in closed over scopes", sym.name)
 		break
-	default:
-		//P("unrecognized error '%v'", err)
-		break
 	}
 
-	// (3) linearstack
-	exp, err, scope = env.linearstack.LookupSymbolUntilFunction(sym, setVal, 2)
+	// runtime environment of the parent function
+	exp, err, scope = env.linearstack.LookupSymbolUntilFunction(sym, setVal, 2, true)
 	switch err {
 	case nil:
-		P("LexicalLookupSymbol('%s') found on linearstack in scope '%s'\n",
-			sym.name, scope.Name)
+		//P("LexicalLookupSymbol('%s') found on linearstack in scope '%s'\n",
+		//	sym.name, scope.Name)
 		return exp, err, scope
 	case SymNotFound:
 		break
-	default:
-		panic(fmt.Errorf("unexpected error from symbol lookup: %v", err))
 	}
 
-	// check the parent function, if avail.
+	// check the parent function lexical captured scopes, if parent available.
 	if env.curfunc.parent != nil {
-		P("checking non-nil parent...")
+		//P("checking non-nil parent...")
 		exp, err, whichScope := env.curfunc.parent.ClosingLookupSymbol(sym, setVal)
 		switch err {
 		case nil:
-			P("LookupSymbolUntilFunction('%s') found in parent scope '%s'\n", sym.name, whichScope.Name)
+			//P("LookupSymbolUntilFunction('%s') found in parent scope '%s'\n", sym.name, whichScope.Name)
 			return exp, err, whichScope
 		}
 	}
