@@ -1019,6 +1019,7 @@ func CoreFunctions() map[string]ZlispUserFunction {
 		".":           DotFunction,
 		"arrayidx":    ArrayIndexFunction,
 		"hashidx":     HashIndexFunction,
+		"asUint64":    AsUint64Function,
 	}
 }
 
@@ -1724,4 +1725,23 @@ func (env *Zlisp) SubstituteRHS(args []Sexp) ([]Sexp, error) {
 func ScriptFacingRegisterDemoStructs(env *Zlisp, name string, args []Sexp) (Sexp, error) {
 	RegisterDemoStructs()
 	return SexpNull, nil
+}
+
+// coerce numbers to uint64
+func AsUint64Function(env *Zlisp, name string, args []Sexp) (Sexp, error) {
+	if len(args) != 1 {
+		return SexpNull, WrongNargs
+	}
+
+	var val uint64
+	switch x := args[0].(type) {
+	case *SexpInt:
+		val = uint64(x.Val)
+	case *SexpFloat:
+		val = uint64(x.Val)
+	default:
+		return SexpNull, fmt.Errorf("Cannot convert %s to uint64", TypeOf(args[0]).SexpString(nil))
+
+	}
+	return &SexpUint64{Val: val}, nil
 }

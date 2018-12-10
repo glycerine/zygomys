@@ -148,6 +148,8 @@ func TypeOf(expr Sexp) *SexpStr {
 		v = "array"
 	case *SexpInt:
 		v = "int64"
+	case *SexpUint64:
+		v = "uint64"
 	case *SexpStr:
 		v = "string"
 	case *SexpChar:

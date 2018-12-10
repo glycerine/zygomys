@@ -2,6 +2,7 @@ package zygo
 
 import (
 	"errors"
+	"fmt"
 	"math"
 )
 
@@ -108,6 +109,7 @@ const (
 )
 
 func NumericFloatDo(op NumericOp, a, b *SexpFloat) Sexp {
+	fmt.Printf("top of NumericFloatDo\n")
 	switch op {
 	case Add:
 		return &SexpFloat{Val: a.Val + b.Val}
@@ -144,6 +146,7 @@ func NumericIntDo(op NumericOp, a, b *SexpInt) Sexp {
 }
 
 func NumericUint64Do(op NumericOp, a, b *SexpUint64) Sexp {
+	fmt.Printf("top of NumericUint64Do\n")
 	switch op {
 	case Add:
 		return &SexpUint64{Val: a.Val + b.Val}

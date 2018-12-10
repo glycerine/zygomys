@@ -378,6 +378,7 @@ func (parser *Parser) ParseExpression(depth int) (res Sexp, err error) {
 			}
 		}
 		u, err := strconv.ParseUint(inp, base, 64)
+		//fmt.Printf("debug: parsed inp='%s' into u=%v\n", inp, u)
 		if err != nil {
 			return SexpNull, err
 		}

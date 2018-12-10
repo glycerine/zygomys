@@ -471,7 +471,7 @@ func (i *SexpInt) SexpString(ps *PrintState) string {
 }
 
 func (i *SexpUint64) SexpString(ps *PrintState) string {
-	return strconv.FormatUint(i.Val, 10)
+	return strconv.FormatUint(i.Val, 10) + "ULL"
 }
 
 func (f *SexpFloat) SexpString(ps *PrintState) string {

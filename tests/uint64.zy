@@ -1,0 +1,32 @@
+// Max uint64 value, will overflow an int64
+{x := 18446744073709551615ULL}
+
+(assert (== 0ULL (+ 1ULL x))) // wrap around
+
+// hex
+{h := 0xffULL } // == 255 decimal
+
+// octal
+{o := 0o70ULL } // == 56 decimal
+
+// equality and addition work
+(assert (== 311ULL (+ h o)))
+
+// subtraction works
+(assert (== 199ULL (- h o)))
+
+// multiplication
+(assert (== 14280ULL (* h o)))
+
+{d := 0o377ULL}
+// asUint64 conversion
+(assert (== d  (asUint64 {3*64 + 7*8 + 7}))) // == 255 decimal
+
+// type
+(assert (== (type? h) "uint64"))
+(assert (== (type? d) "uint64"))
+
+// division
+(assert (== 1ULL (/ h d)))
+
+
