@@ -5,13 +5,7 @@
 
 (def res (let [x 123] (fn [] ((fn [] x)))))
 
-// error in __anon252:1: Error calling 'infix': symbol `x` not found
 (assert (== (res) 123))
-
-/*
-(def y 999)
-(assert (== 777 ((let [x 123] (fn [] (let [y 777] ((fn [] y))))))))
-
 
 (def mypkg  (package "mypkg"
             (defn Double [x]
@@ -28,8 +22,12 @@
 (assert (== (:1 w) 8))
 
 
-// lastly
+// check going through 3 functions
 (defn outer [x] (defn middle [] (defn inner [] x) inner) middle)
-(assert (== 7 (((outer 7))))
-(assert (== 8 (((outer 8))))
-*/
+(assert (== 7 (((outer 7)))))
+(assert (== 8 (((outer 8)))))
+
+// check that the let overrides the global
+//(def y 999)
+//(assert (== 777 ((let [x 123] (fn [] (let [y 777] ((fn [] y))))))))
+
