@@ -48,6 +48,7 @@ const (
 	TokenSemicolon
 	TokenSymbolColon
 	TokenComma
+	TokenUint64
 	TokenEnd
 )
 
@@ -195,6 +196,7 @@ func (lex *Lexer) Token(typ TokenType, str string) Token {
 
 var (
 	BoolRegex    = regexp.MustCompile("^(true|false)$")
+	Uint64Regex  = regexp.MustCompile("^(0x|0o)?[0-9a-fA-F]+ULL$")
 	DecimalRegex = regexp.MustCompile("^-?[0-9]+$")
 	HexRegex     = regexp.MustCompile("^0x[0-9a-fA-F]+$")
 	OctRegex     = regexp.MustCompile("^0o[0-7]+$")
@@ -286,6 +288,9 @@ func (x *Lexer) DecodeAtom(atom string) (tk Token, err error) {
 	}
 	if BoolRegex.MatchString(atom) {
 		return x.Token(TokenBool, atom), nil
+	}
+	if Uint64Regex.MatchString(atom) {
+		return x.Token(TokenUint64, atom), nil
 	}
 	if DecimalRegex.MatchString(atom) {
 		return x.Token(TokenDecimal, atom), nil

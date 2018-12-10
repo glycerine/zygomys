@@ -1,2 +1,12 @@
 // Max uint64 value, will overflow an int64
-(x := 18446744073709551615)
+{x := 18446744073709551615ULL}
+
+// hex
+{h := 0xffULL } // == 255 decimal
+
+// octal
+{o := 0o70 } // == 56 decimal
+
+(assert (== 0ULL (+ 1ULL x))) // wrap around
+
+(assert (== 311ULL (+ h o)))

@@ -6,6 +6,7 @@ import (
 	"io"
 	"math"
 	"strconv"
+	"strings"
 	"sync"
 )
 
@@ -359,55 +360,49 @@ func (parser *Parser) ParseExpression(depth int) (res Sexp, err error) {
 		return env.MakeSymbol(tok.str), nil
 	case TokenBool:
 		return &SexpBool{Val: tok.str == "true"}, nil
+	case TokenUint64:
+		// truncate off the "ULL" suffix
+		inp := tok.str[:len(tok.str)-3]
+
+		// handle hex 0x and octacl 0o
+		n := len(inp)
+		base := 10
+		if n > 2 {
+			switch inp[:2] {
+			case "0o":
+				base = 8
+				inp = inp[2:]
+			case "0x":
+				base = 16
+				inp = inp[2:]
+			}
+		}
+		u, err := strconv.ParseUint(inp, base, 64)
+		if err != nil {
+			return SexpNull, err
+		}
+		return &SexpUint64{Val: u}, nil
 	case TokenDecimal:
 		i, err := strconv.ParseInt(tok.str, 10, SexpIntSize)
 		if err != nil {
-			e := err.(*strconv.NumError)
-			if e.Err == strconv.ErrRange {
-				i, err := strconv.ParseUint(tok.str, 10, 64)
-				if err == nil {
-					return &SexpUint64{Val: i}, nil
-				}
-			}
 			return SexpNull, err
 		}
 		return &SexpInt{Val: i}, nil
 	case TokenHex:
 		i, err := strconv.ParseInt(tok.str, 16, SexpIntSize)
 		if err != nil {
-			e := err.(*strconv.NumError)
-			if e.Err == strconv.ErrRange {
-				i, err := strconv.ParseUint(tok.str, 16, 64)
-				if err == nil {
-					return &SexpUint64{Val: i}, nil
-				}
-			}
 			return SexpNull, err
 		}
 		return &SexpInt{Val: i}, nil
 	case TokenOct:
 		i, err := strconv.ParseInt(tok.str, 8, SexpIntSize)
 		if err != nil {
-			e := err.(*strconv.NumError)
-			if e.Err == strconv.ErrRange {
-				i, err := strconv.ParseUint(tok.str, 8, 64)
-				if err == nil {
-					return &SexpUint64{Val: i}, nil
-				}
-			}
 			return SexpNull, err
 		}
 		return &SexpInt{Val: i}, nil
 	case TokenBinary:
 		i, err := strconv.ParseInt(tok.str, 2, SexpIntSize)
 		if err != nil {
-			e := err.(*strconv.NumError)
-			if e.Err == strconv.ErrRange {
-				i, err := strconv.ParseUint(tok.str, 2, 64)
-				if err == nil {
-					return &SexpUint64{Val: i}, nil
-				}
-			}
 			return SexpNull, err
 		}
 		return &SexpInt{Val: i}, nil
@@ -427,7 +422,12 @@ func (parser *Parser) ParseExpression(depth int) (res Sexp, err error) {
 				return SexpNull, err
 			}
 		}
-		return &SexpFloat{Val: f}, nil
+		r := &SexpFloat{Val: f}
+		if strings.Contains(tok.str, "e") || strings.Contains(tok.str, "E") {
+			r.Scientific = true
+		}
+		return r, nil
+
 	case TokenEnd:
 		return SexpEnd, nil
 	case TokenSymbol:

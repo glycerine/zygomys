@@ -82,8 +82,9 @@ type SexpBool struct {
 	Typ *RegisteredType
 }
 type SexpFloat struct {
-	Val float64
-	Typ *RegisteredType
+	Val        float64
+	Typ        *RegisteredType
+	Scientific bool
 }
 type SexpChar struct {
 	Val rune
@@ -474,7 +475,10 @@ func (i *SexpUint64) SexpString(ps *PrintState) string {
 }
 
 func (f *SexpFloat) SexpString(ps *PrintState) string {
-	return strconv.FormatFloat(f.Val, 'f', 2, SexpFloatSize)
+	if f.Scientific {
+		return strconv.FormatFloat(f.Val, 'e', -1, SexpFloatSize)
+	}
+	return strconv.FormatFloat(f.Val, 'f', -1, SexpFloatSize)
 }
 
 func (c *SexpChar) SexpString(ps *PrintState) string {

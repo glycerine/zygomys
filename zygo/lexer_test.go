@@ -204,3 +204,19 @@ func Test042ImaginaryFloatingPointRegex(t *testing.T) {
 		cv.So(ans, cv.ShouldEqual, true)
 	})
 }
+
+func Test042Uint64Regex(t *testing.T) {
+
+	cv.Convey("our lexer should recognize uint64 by their ULL suffix, and allow the 0x prefix hex and the 0o prefix for octal", t, func() {
+		ans := Uint64Regex.MatchString(`0xffULL`)
+		cv.So(ans, cv.ShouldEqual, true)
+		ans = Uint64Regex.MatchString(`0o777ULL`)
+		cv.So(ans, cv.ShouldEqual, true)
+		ans = Uint64Regex.MatchString(`ULL`)
+		cv.So(ans, cv.ShouldEqual, false)
+		ans = Uint64Regex.MatchString(`-1ULL`)
+		cv.So(ans, cv.ShouldEqual, false)
+		ans = Uint64Regex.MatchString(`0ULL`)
+		cv.So(ans, cv.ShouldEqual, true)
+	})
+}
