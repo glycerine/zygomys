@@ -741,37 +741,10 @@ func (env *Zlisp) LexicalLookupSymbol(sym *SexpSymbol, setVal *Sexp) (Sexp, erro
 	//P("LexicalLookupSymbol('%s', with setVal: %v)\n", sym.name, setVal)
 
 	// (1) linearstack
-	exp, err, scope := env.linearstack.LookupSymbolUntilFunction(sym, setVal, 1, false)
+	exp, err, scope := env.linearstack.LookupSymbolUntilFunction(sym, setVal, 2, false)
 	switch err {
 	case nil:
-		//P("LexicalLookupSymbol('%s') found on linearstack in scope '%s'\n",
-		//	sym.name, scope.Name)
-		return exp, err, scope
-	case SymNotFound:
-		break
-	}
-
-	//P("LexicalLookupSymbol('%s') past linearstack\n", sym.name)
-
-	// (2) env.curfunc.closedOverScope
-	//fmt.Printf(" *** env.curfunc has closure of: %s\n", ClosureToString(env.curfunc, env))
-	exp, err, scope = env.curfunc.ClosingLookupSymbol(sym, setVal)
-	switch err {
-	case nil:
-		//P("LexicalLookupSymbol('%s') found on curfunc.closeScope in scope '%s'\n",
-		//	sym.name, scope.Name)
-		return exp, err, scope
-	case SymNotFound:
-		//P("LexicalLookupSymbol('%s') NOT found in closed over scopes", sym.name)
-		break
-	}
-
-	// runtime environment of the parent function
-	exp, err, scope = env.linearstack.LookupSymbolUntilFunction(sym, setVal, 2, true)
-	switch err {
-	case nil:
-		//P("LexicalLookupSymbol('%s') found on linearstack in scope '%s'\n",
-		//	sym.name, scope.Name)
+		P("LexicalLookupSymbol('%s') found on env.linearstack in scope '%s'\n", sym.name, scope.Name)
 		return exp, err, scope
 	case SymNotFound:
 		break
@@ -783,9 +756,33 @@ func (env *Zlisp) LexicalLookupSymbol(sym *SexpSymbol, setVal *Sexp) (Sexp, erro
 		exp, err, whichScope := env.curfunc.parent.ClosingLookupSymbol(sym, setVal)
 		switch err {
 		case nil:
-			//P("LookupSymbolUntilFunction('%s') found in parent scope '%s'\n", sym.name, whichScope.Name)
+			P("LookupSymbolUntilFunction('%s') found in curfunc.parent.ClosingLookupSymbol() scope '%s'\n", sym.name, whichScope.Name)
 			return exp, err, whichScope
 		}
+	}
+
+	//P("LexicalLookupSymbol('%s') past linearstack\n", sym.name)
+
+	// (2) env.curfunc.closedOverScope
+	//fmt.Printf(" *** env.curfunc has closure of: %s\n", ClosureToString(env.curfunc, env))
+	exp, err, scope = env.curfunc.ClosingLookupSymbol(sym, setVal)
+	switch err {
+	case nil:
+		P("LexicalLookupSymbol('%s') found in env.curfunc.ClosingLookupSymbol() in scope '%s'\n", sym.name, scope.Name)
+		return exp, err, scope
+	case SymNotFound:
+		//P("LexicalLookupSymbol('%s') NOT found in closed over scopes", sym.name)
+		break
+	}
+
+	// runtime environment of the parent function
+	exp, err, scope = env.linearstack.LookupSymbolUntilFunction(sym, setVal, 2, true)
+	switch err {
+	case nil:
+		P("LexicalLookupSymbol('%s') found on linearstack in parent runtime scope '%s'\n", sym.name, scope.Name)
+		return exp, err, scope
+	case SymNotFound:
+		break
 	}
 
 	return SexpNull, fmt.Errorf("symbol `%s` not found", sym.name), nil
