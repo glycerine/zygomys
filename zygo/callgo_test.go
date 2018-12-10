@@ -60,7 +60,7 @@ func Test008CallByReflectionWorksWithoutNesting(t *testing.T) {
 		panicOn(err)
 
 		cv.So(x.SexpString(nil), cv.ShouldEqual,
-			` (hornet speed:567 nickname:"Bob" mass:4.20 SpanCm:8877)`)
+			` (hornet speed:567 nickname:"Bob" mass:4.2 SpanCm:8877)`)
 
 		ho := &Hornet{}
 		res, err := SexpToGoStructs(x, ho, env, nil)
@@ -90,7 +90,7 @@ func Test009CallByReflectionWorksWithoutNestingWithoutEmbeds(t *testing.T) {
 		panicOn(err)
 
 		cv.So(x.SexpString(nil), cv.ShouldEqual,
-			` (hornet nickname:"Bob" mass:4.20)`)
+			` (hornet nickname:"Bob" mass:4.2)`)
 
 		ho := &Hornet{}
 		res, err := SexpToGoStructs(x, ho, env, nil)

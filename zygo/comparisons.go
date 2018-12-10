@@ -243,6 +243,8 @@ func (env *Zlisp) Compare(a Sexp, b Sexp) (int, error) {
 	switch at := a.(type) {
 	case *SexpInt:
 		return compareInt(at, b)
+	case *SexpUint64:
+		return compareUint64(at, b)
 	case *SexpChar:
 		return compareChar(at, b)
 	case *SexpFloat:
@@ -284,4 +286,24 @@ func (env *Zlisp) Compare(a Sexp, b Sexp) (int, error) {
 	}
 	errmsg := fmt.Sprintf("err 100: cannot compare %T to %T", a, b)
 	return 0, errors.New(errmsg)
+}
+
+// only compare uint64 to uint64
+func compareUint64(i *SexpUint64, expr Sexp) (int, error) {
+	switch e := expr.(type) {
+	case *SexpUint64:
+		return signumUint64(i.Val - e.Val), nil
+	}
+	errmsg := fmt.Sprintf("err 101: cannot compare %T to %T", i, expr)
+	return 0, errors.New(errmsg)
+}
+
+func signumUint64(i uint64) int {
+	if i > 0 {
+		return 1
+	}
+	if i < 0 {
+		return -1
+	}
+	return 0
 }
