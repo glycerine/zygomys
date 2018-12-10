@@ -30,3 +30,8 @@
 (def y 999)
 (assert (== 777 ((let [x 123] (fn [] (let [y 777] ((fn [] y))))))))
 
+
+// the let 'x' should override the global 'x'
+(def x 1)
+(assert (== 10 ((let [x 3] (fn [] (let [y 7] ((fn [] (+ y x)))))))))
+
