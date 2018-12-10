@@ -599,7 +599,7 @@ func (sf *SexpFunction) ShowClosing(env *Zlisp, ps *PrintState, label string) (s
 
 func (sf *SexpFunction) ClosingLookupSymbolUntilFunction(sym *SexpSymbol) (Sexp, error, *Scope) {
 	if sf.closingOverScopes != nil {
-		return sf.closingOverScopes.LookupSymbolUntilFunction(sym)
+		return sf.closingOverScopes.LookupSymbolUntilFunction(sym, nil, 1, false)
 	}
 	return SexpNull, SymNotFound, nil
 }
@@ -607,6 +607,14 @@ func (sf *SexpFunction) ClosingLookupSymbolUntilFunction(sym *SexpSymbol) (Sexp,
 func (sf *SexpFunction) ClosingLookupSymbol(sym *SexpSymbol, setVal *Sexp) (Sexp, error, *Scope) {
 	if sf.closingOverScopes != nil {
 		return sf.closingOverScopes.LookupSymbol(sym, setVal)
+	}
+	//P("sf.closingOverScopes was nil, no captured scopes. sf = '%v'", sf.SexpString(nil))
+	return SexpNull, SymNotFound, nil
+}
+
+func (sf *SexpFunction) ClosingLookupSymbolUntilFunc(sym *SexpSymbol, setVal *Sexp, maximumFuncToSearch int, checkCaptures bool) (Sexp, error, *Scope) {
+	if sf.closingOverScopes != nil {
+		return sf.closingOverScopes.LookupSymbolUntilFunction(sym, setVal, maximumFuncToSearch, checkCaptures)
 	}
 	//P("sf.closingOverScopes was nil, no captured scopes. sf = '%v'", sf.SexpString(nil))
 	return SexpNull, SymNotFound, nil
