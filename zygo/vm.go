@@ -380,8 +380,6 @@ func (a AddScopeInstr) Execute(env *Zlisp) error {
 	sc := env.NewNamedScope(fmt.Sprintf("scope Name: '%s'",
 		a.Name))
 	env.linearstack.Push(sc)
-	fmt.Printf("\n we pushed a new scope: '%s'\n", sc.Name)
-
 	env.pc++
 	return nil
 }
@@ -404,9 +402,6 @@ func (a AddFuncScopeInstr) Execute(env *Zlisp) error {
 		env.curfunc.name, env.pc))
 	sc.IsFunction = true
 	sc.MyFunction = a.Helper.MyFunction
-
-	P("AddFuncScopeInstr executing, sc.MyFunction = '%v'", sc.MyFunction.name)
-
 	env.linearstack.Push(sc)
 	env.pc++
 	return nil
@@ -755,7 +750,7 @@ func (a CreateClosureInstr) Execute(env *Zlisp) error {
 	if env.curfunc != nil {
 		a.sfun.parent = env.curfunc
 		myInvok.parent = env.curfunc
-		P("myInvok is copy of a.sfun '%s' with parent = %s", a.sfun.name, myInvok.parent.name)
+		//P("myInvok is copy of a.sfun '%s' with parent = %s", a.sfun.name, myInvok.parent.name)
 	}
 
 	ps8 := NewPrintStateWithIndent(8)
@@ -764,11 +759,10 @@ func (a CreateClosureInstr) Execute(env *Zlisp) error {
 	if err != nil {
 		return err
 	}
-	P("+++ CreateClosure: assign to myInvoke (%p) '%s' the stack:\n\n%s\n\n",
-		myInvok,
+	VPrintf("+++ CreateClosure: assign to '%s' the stack:\n\n%s\n\n",
 		myInvok.SexpString(nil), shown)
 	top := cls.TopScope()
-	P("222 CreateClosure: top of NewClosing Scope has addr %p and is\n",
+	VPrintf("222 CreateClosure: top of NewClosing Scope has addr %p and is\n",
 		top)
 	top.Show(env, ps8, fmt.Sprintf("top of NewClosing at %p", top))
 

@@ -741,14 +741,14 @@ func (env *Zlisp) LexicalLookupSymbol(sym *SexpSymbol, setVal *Sexp) (Sexp, erro
 	//     go up the linearstack until we hit a user defined function boundary,
 	//     which will have captured in its closure a set of relevant
 	//     bindings.
-	P("LexicalLookupSymbol('%s', with setVal: %v)\n", sym.name, setVal)
+	//P("LexicalLookupSymbol('%s', with setVal: %v)\n", sym.name, setVal)
 
 	// (1) linearstack
 	exp, err, scope := env.linearstack.LookupSymbolUntilFunction(sym, setVal)
 	switch err {
 	case nil:
-		P("LexicalLookupSymbol('%s') found on linearstack in scope '%s'\n",
-			sym.name, scope.Name)
+		//P("LexicalLookupSymbol('%s') found on linearstack in scope '%s'\n",
+		//	sym.name, scope.Name)
 		return exp, err, scope
 	case SymNotFound:
 		break
@@ -756,21 +756,21 @@ func (env *Zlisp) LexicalLookupSymbol(sym *SexpSymbol, setVal *Sexp) (Sexp, erro
 		panic(fmt.Errorf("unexpected error from symbol lookup: %v", err))
 	}
 
-	P("LexicalLookupSymbol('%s') past linearstack\n", sym.name)
+	//P("LexicalLookupSymbol('%s') past linearstack\n", sym.name)
 
 	// (2) env.curfunc.closedOverScope
 	fmt.Printf(" *** env.curfunc has closure of: %s\n", ClosureToString(env.curfunc, env))
 	exp, err, scope = env.curfunc.ClosingLookupSymbol(sym, setVal)
 	switch err {
 	case nil:
-		P("LexicalLookupSymbol('%s') found on curfunc.closeScope in scope '%s'\n",
-			sym.name, scope.Name)
+		//P("LexicalLookupSymbol('%s') found on curfunc.closeScope in scope '%s'\n",
+		//	sym.name, scope.Name)
 		return exp, err, scope
 	case SymNotFound:
-		P("LexicalLookupSymbol('%s') NOT found in closed over scopes", sym.name)
+		//P("LexicalLookupSymbol('%s') NOT found in closed over scopes", sym.name)
 		break
 	default:
-		P("unrecognized error '%v'", err)
+		//P("unrecognized error '%v'", err)
 		break
 	}
 

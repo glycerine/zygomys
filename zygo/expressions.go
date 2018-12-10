@@ -587,23 +587,7 @@ func (sf *SexpFunction) SetClosing(clos *Closing) {
 	//	sf, sf.closingOverScopes, pre)
 	//P("88888 in sfun.SetClosing(), new  value is %p = '%s'\n", clos, newnew)
 	sf.closingOverScopes = clos
-	/*
-		top := clos.Stack.GetTop()
-		topScope, isScope := top.(*Scope)
-		if isScope {
-			if topScope.MyFunction != nil {
-				sf.parent = topScope.MyFunction
-
-				P("found parent in SetClosing() for sf='%s', sf.parent.Name = '%s'; parent (%p) closures='%s'", sf.name, sf.parent.name, sf.parent, ClosureToString(sf.parent, topScope.env))
-			} else {
-				P("in SetClosing, topScope.MyFunction is nil!")
-			}
-		} else {
-			P("in SetClosing, top of stack was not Scope, but rather %T", top)
-		}
-	*/
-	P("in SetClosing() for '%s'/%p: my stack is: '%s'", sf.name, sf, clos.Stack.SexpString(nil))
-
+	//P("in SetClosing() for '%s'/%p: my stack is: '%s'", sf.name, sf, clos.Stack.SexpString(nil))
 }
 
 func (sf *SexpFunction) ShowClosing(env *Zlisp, ps *PrintState, label string) (string, error) {
