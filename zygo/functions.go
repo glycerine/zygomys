@@ -25,6 +25,7 @@ func CompareFunction(env *Zlisp, name string, args []Sexp) (Sexp, error) {
 	}
 
 	if res > 1 {
+		//fmt.Printf("CompareFunction, res = %v\n", res)
 		// 2 => one NaN found
 		// 3 => two NaN found
 		// NaN != NaN needs to return true.
@@ -696,6 +697,8 @@ func PrintFunction(env *Zlisp, name string, args []Sexp) (Sexp, error) {
 					ar[i] = x.Val
 				case *SexpStr:
 					ar[i] = x.S
+				case *SexpTime:
+					ar[i] = x.Tm.In(NYC)
 				default:
 					ar[i] = args[i+1]
 				}
@@ -1078,6 +1081,8 @@ func SystemFunctions() map[string]ZlispUserFunction {
 		"_closdump": DumpClosureEnvFunction,
 		"rmsym":     RemoveSymFunction,
 		"typelist":  TypeListFunction,
+		"setenv":    GetEnvFunction,
+		"getenv":    GetEnvFunction,
 		// not done "_call":     CallZMethodOnRecordFunction,
 	}
 }
@@ -1725,6 +1730,41 @@ func (env *Zlisp) SubstituteRHS(args []Sexp) ([]Sexp, error) {
 func ScriptFacingRegisterDemoStructs(env *Zlisp, name string, args []Sexp) (Sexp, error) {
 	RegisterDemoStructs()
 	return SexpNull, nil
+}
+
+func GetEnvFunction(env *Zlisp, name string, args []Sexp) (Sexp, error) {
+	narg := len(args)
+	//fmt.Printf("GetEnv name='%s' called with narg = %v\n", name, narg)
+	if name == "getenv" {
+		if narg != 1 {
+			return SexpNull, WrongNargs
+		}
+	} else {
+		if name != "setenv" {
+			panic("only getenv or setenv allowed here")
+		}
+		if narg != 2 {
+			return SexpNull, WrongNargs
+		}
+	}
+	nm := make([]string, narg)
+	for i := 0; i < narg; i++ {
+		switch x := args[i].(type) {
+		case *SexpSymbol:
+			nm[i] = x.name
+		case *SexpStr:
+			nm[i] = x.S
+		default:
+			return SexpNull, fmt.Errorf("symbol or string required, but saw %T/%v for i=%v arg", args[i], args[i].SexpString(nil), i)
+		}
+	}
+
+	if name == "getenv" {
+		return &SexpStr{S: os.Getenv(nm[0])}, nil
+	}
+
+	//fmt.Printf("calling setenv with nm[0]='%s', nm[1]='%s'\n", nm[0], nm[1])
+	return SexpNull, os.Setenv(nm[0], nm[1])
 }
 
 // coerce numbers to uint64

@@ -54,6 +54,9 @@ func signumInt(i int64) int {
 func compareFloat(f *SexpFloat, expr Sexp) (int, error) {
 	switch e := expr.(type) {
 	case *SexpInt:
+		if math.IsNaN(f.Val) {
+			return 2, nil
+		}
 		return signumFloat(f.Val - float64(e.Val)), nil
 	case *SexpFloat:
 		nanCount := 0
@@ -68,6 +71,9 @@ func compareFloat(f *SexpFloat, expr Sexp) (int, error) {
 		}
 		return signumFloat(f.Val - e.Val), nil
 	case *SexpChar:
+		if math.IsNaN(f.Val) {
+			return 2, nil
+		}
 		return signumFloat(f.Val - float64(e.Val)), nil
 	}
 	errmsg := fmt.Sprintf("err 91: cannot compare %T to %T", f, expr)
@@ -269,6 +275,14 @@ func (env *Zlisp) Compare(a Sexp, b Sexp) (int, error) {
 		if at == SexpNull && b == SexpNull {
 			return 0, nil
 		} else {
+			return -1, nil
+		}
+	case *SexpTime:
+		switch bt := b.(type) {
+		case *SexpTime:
+			if bt.Tm.Unix() == at.Tm.Unix() {
+				return 0, nil
+			}
 			return -1, nil
 		}
 	case *SexpReflect:

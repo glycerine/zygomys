@@ -26,6 +26,42 @@ func Test001LexerPositionRecordingWorks(t *testing.T) {
 	})
 }
 
+func Test002LexingScientificNotationOfFloats(t *testing.T) {
+
+	cv.Convey(`Given a number 8.06e-05 it should be parsed as a single atom, not broken up at the '-' minus sign`, t, func() {
+
+		str := `(def a 8.06e-05)`
+		env := NewZlisp()
+		defer env.parser.Stop()
+
+		stream := bytes.NewBuffer([]byte(str))
+		env.parser.ResetAddNewInput(stream)
+		expressions, err := env.parser.ParseTokens()
+		panicOn(err)
+		//goon.Dump(expressions[0])
+		cv.So(expressions[0].SexpString(nil), cv.ShouldEqual, `(def a 8.06e-05)`)
+
+		str = `(def a 8.06e+05)`
+
+		stream = bytes.NewBuffer([]byte(str))
+		env.parser.ResetAddNewInput(stream)
+		expressions, err = env.parser.ParseTokens()
+		panicOn(err)
+		//goon.Dump(expressions[0])
+		cv.So(expressions[0].SexpString(nil), cv.ShouldEqual, `(def a 8.06e+05)`)
+
+		str = `(def a 8.06e5)`
+
+		stream = bytes.NewBuffer([]byte(str))
+		env.parser.ResetAddNewInput(stream)
+		expressions, err = env.parser.ParseTokens()
+		panicOn(err)
+		//goon.Dump(expressions[0])
+		cv.So(expressions[0].SexpString(nil), cv.ShouldEqual, `(def a 8.06e+05)`)
+
+	})
+}
+
 func Test006LexerAndParsingOfDotInvocations(t *testing.T) {
 
 	cv.Convey(`Given a dot invocation method such as "(. subject method)" or "(.. subject method)", the parser should identify these as tokens. Tokens that start with dot '.' are special and reserved for system functions.`, t, func() {
