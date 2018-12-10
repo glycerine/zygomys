@@ -759,7 +759,7 @@ func (env *Zlisp) LexicalLookupSymbol(sym *SexpSymbol, setVal *Sexp) (Sexp, erro
 	//P("LexicalLookupSymbol('%s') past linearstack\n", sym.name)
 
 	// (2) env.curfunc.closedOverScope
-	fmt.Printf(" *** env.curfunc has closure of: %s\n", ClosureToString(env.curfunc, env))
+	//fmt.Printf(" *** env.curfunc has closure of: %s\n", ClosureToString(env.curfunc, env))
 	exp, err, scope = env.curfunc.ClosingLookupSymbol(sym, setVal)
 	switch err {
 	case nil:

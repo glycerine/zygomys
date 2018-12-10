@@ -608,7 +608,7 @@ func (sf *SexpFunction) ClosingLookupSymbol(sym *SexpSymbol, setVal *Sexp) (Sexp
 	if sf.closingOverScopes != nil {
 		return sf.closingOverScopes.LookupSymbol(sym, setVal)
 	}
-	P("sf.closingOverScopes was nil, no captured scopes. sf = '%v'", sf.SexpString(nil))
+	//P("sf.closingOverScopes was nil, no captured scopes. sf = '%v'", sf.SexpString(nil))
 	return SexpNull, SymNotFound, nil
 }
 

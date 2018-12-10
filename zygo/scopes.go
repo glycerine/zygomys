@@ -155,11 +155,11 @@ func (stack *Stack) LookupSymbolUntilFunction(sym *SexpSymbol, setVal *Sexp) (Se
 					return expr, nil, scope
 				}
 				if scope.IsFunction {
-					P("   ...scope '%s' was a function, halting up search and checking captured closures\n", scope.Name)
+					//P("   ...scope '%s' was a function, halting up search and checking captured closures\n", scope.Name)
 
 					// check the parent function, if avail.
 					if scope.MyFunction.parent != nil {
-						P("checking non-nil parent...")
+						//P("checking non-nil parent...")
 						exp, err, whichScope := scope.MyFunction.parent.ClosingLookupSymbol(sym, setVal)
 						switch err {
 						case nil:
@@ -167,7 +167,7 @@ func (stack *Stack) LookupSymbolUntilFunction(sym *SexpSymbol, setVal *Sexp) (Se
 							return exp, err, whichScope
 						}
 					} else {
-						P("parent of '%s' was nil", scope.MyFunction.name)
+						//P("parent of '%s' was nil", scope.MyFunction.name)
 					}
 
 					// then check the captured closure scope stack
@@ -175,13 +175,13 @@ func (stack *Stack) LookupSymbolUntilFunction(sym *SexpSymbol, setVal *Sexp) (Se
 					exp, err, whichScope := scope.MyFunction.ClosingLookupSymbol(sym, setVal)
 					switch err {
 					case nil:
-						P("LookupSymbolUntilFunction('%s') found in scope '%s'\n", sym.name, whichScope.Name)
+						//P("LookupSymbolUntilFunction('%s') found in scope '%s'\n", sym.name, whichScope.Name)
 						return exp, err, whichScope
 					case SymNotFound:
-						P("LookupSymbolUntilFunction('%s') not found in scope '%s'\n", sym.name, whichScope.Name)
+						//P("LookupSymbolUntilFunction('%s') not found in scope '%s'\n", sym.name, whichScope.Name)
 						break doneSearching
 					default:
-						P("unrecognized error '%v'", err)
+						//P("unrecognized error '%v'", err)
 						break doneSearching
 					}
 
