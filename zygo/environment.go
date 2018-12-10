@@ -757,15 +757,6 @@ func (env *Zlisp) LexicalLookupSymbol(sym *SexpSymbol, setVal *Sexp) (Sexp, erro
 		break
 	}
 
-	//fmt.Printf(" *** env.curfunc has closure of: %s\n", ClosureToString(env.curfunc, env))
-	//exp, err, scope = env.curfunc.ClosingLookupSymbol(sym, setVal)
-	exp, err, scope = env.curfunc.ClosingLookupSymbolUntilFunc(sym, setVal, 1, false)
-	switch err {
-	case nil:
-		//P("LexicalLookupSymbol('%s') found in env.curfunc.ClosingLookupSymbolUnfilFunc(1, false) in scope '%s'\n", sym.name, scope.Name)
-		return exp, err, scope
-	}
-
 	// check the parent function lexical captured scopes, if parent available.
 	if env.curfunc.parent != nil {
 		//P("checking non-nil parent...")
@@ -777,7 +768,17 @@ func (env *Zlisp) LexicalLookupSymbol(sym *SexpSymbol, setVal *Sexp) (Sexp, erro
 			return exp, err, whichScope
 		default:
 			//P("not found  looking via env.curfunc.parent.ClosingLookupSymbol(sym='%s')", sym.name)
-			env.ShowStackStackAndScopeStack()
+			//env.ShowStackStackAndScopeStack()
+		}
+	} else {
+
+		//fmt.Printf(" *** env.curfunc has closure of: %s\n", ClosureToString(env.curfunc, env))
+		//exp, err, scope = env.curfunc.ClosingLookupSymbol(sym, setVal)
+		exp, err, scope = env.curfunc.ClosingLookupSymbolUntilFunc(sym, setVal, 1, false)
+		switch err {
+		case nil:
+			//P("LexicalLookupSymbol('%s') found in env.curfunc.ClosingLookupSymbolUnfilFunc(1, false) in scope '%s'\n", sym.name, scope.Name)
+			return exp, err, scope
 		}
 	}
 
