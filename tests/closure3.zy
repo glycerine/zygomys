@@ -1,7 +1,6 @@
 // closure3.zy https://github.com/glycerine/zygomys/issues/23
 // anonymous functions as closures.
 //
-// comment out until someone has time to fix this.
 
 (def res (let [x 123] (fn [] ((fn [] x)))))
 
@@ -27,7 +26,7 @@
 (assert (== 7 (((outer 7)))))
 (assert (== 8 (((outer 8)))))
 
-// check that the let overrides the global
-//(def y 999)
-//(assert (== 777 ((let [x 123] (fn [] (let [y 777] ((fn [] y))))))))
+// check that the let 'y' overrides the global 'y'.
+(def y 999)
+(assert (== 777 ((let [x 123] (fn [] (let [y 777] ((fn [] y))))))))
 

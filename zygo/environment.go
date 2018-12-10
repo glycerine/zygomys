@@ -737,10 +737,7 @@ func (env *Zlisp) LexicalLookupSymbol(sym *SexpSymbol, setVal *Sexp) (Sexp, erro
 	//     present at closure definition time.
 	// (2) check the env.curfunc.closedOverScopes; it has a full
 	//     copy of the runtime linearstack at definition time.
-	//     If not found there, (say because we're in a '+' function),
-	//     go up the linearstack until we hit a user defined function boundary,
-	//     which will have captured in its closure a set of relevant
-	//     bindings.
+
 	//P("LexicalLookupSymbol('%s', with setVal: %v)\n", sym.name, setVal)
 
 	// (1) linearstack
