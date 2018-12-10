@@ -40,5 +40,5 @@
 (assert (== 7 ((((superOuter 7))))))
 
 // going through lots functions and lets to find 'x99'
-(defn ultimate [x99] (let [stellar -2] (defn superDuper [] (let [z9 60] (defn outer [] (defn middle [] (defn inner [] (+ z9 x99 stellar)) inner) middle) outer)) superDuper))
-(assert (== 65 (((((ultimate 7)))))))
+(defn ultimate [x99] (def ups -10) (let [stellar -2] (defn superDuper [] (let [z9 60] (defn outer [] (defn middle [] (def ups -8) (defn inner [] (+ z9 x99 stellar ups)) inner) middle) outer)) superDuper))
+(assert (== 57 (((((ultimate 7)))))))
