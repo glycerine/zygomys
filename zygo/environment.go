@@ -709,10 +709,24 @@ func (env *Zlisp) showStackHelper(stack *Stack, name string) {
 	}
 }
 
+func (env *Zlisp) dumpParentChain(curfunc *SexpFunction) {
+
+	cur := curfunc
+	par := cur.parent
+	for par != nil {
+		fmt.Printf(" parent chain: cur:%v -> parent:%v\n", cur.name, par.name)
+		fmt.Printf("        cur.closures = %s", ClosureToString(cur, env))
+		cur = par
+		par = par.parent
+	}
+}
+
 func (env *Zlisp) ShowStackStackAndScopeStack() error {
 	env.showStackHelper(env.linearstack, "linearstack")
 	fmt.Println(" --- done with env.linearstack, now here is env.curfunc --- ")
 	fmt.Println(ClosureToString(env.curfunc, env))
+	fmt.Println(" --- done with env.curfunc closure, now here is parent chain: --- ")
+	env.dumpParentChain(env.curfunc)
 	return nil
 }
 
@@ -731,18 +745,9 @@ func (env *Zlisp) LexicalLookupSymbol(sym *SexpSymbol, setVal *Sexp) (Sexp, erro
 		return sym, nil, nil
 	}
 
-	// (1) first go up the linearstack (runtime stack) until
-	//     we get to the first (user-defined) function boundary; this gives
-	//     us actual arg bindings and any lets/newScopes
-	//     present at closure definition time.
-	// (2) check the env.curfunc.closedOverScopes; it has a full
-	//     copy of the runtime linearstack at definition time.
-
 	//P("LexicalLookupSymbol('%s', with setVal: %v)\n", sym.name, setVal)
 
-	// (1) linearstack
 	const maxFuncToScan = 1 // 1 or otherwise tests/{closure.zy, dynprob.zy, dynscope.zy} will fail.
-	// but unless maxFunToScan == 2, we have closure2.zy fail.
 	exp, err, scope := env.linearstack.LookupSymbolUntilFunction(sym, setVal, maxFuncToScan, false)
 	switch err {
 	case nil:
@@ -752,47 +757,35 @@ func (env *Zlisp) LexicalLookupSymbol(sym *SexpSymbol, setVal *Sexp) (Sexp, erro
 		break
 	}
 
-	/*
-		exp, err, scope = env.linearstack.LookupSymbolUntilFunction(sym, setVal, 2, false)
-		switch err {
-		case nil:
-			//P("LexicalLookupSymbol('%s') found on env.linearstack(2, false) in scope '%s'\n", sym.name, scope.Name)
-			return exp, err, scope
-		case SymNotFound:
-			break
-		}
-	*/
-
-	// (2) env.curfunc.closedOverScope
 	//fmt.Printf(" *** env.curfunc has closure of: %s\n", ClosureToString(env.curfunc, env))
+	//exp, err, scope = env.curfunc.ClosingLookupSymbol(sym, setVal)
 	exp, err, scope = env.curfunc.ClosingLookupSymbolUntilFunc(sym, setVal, 1, false)
 	switch err {
 	case nil:
-		//P("LexicalLookupSymbol('%s') found in env.curfunc.ClosingLookupSymbolUnfilFunc(1, false) in scope '%s'\n", sym.name, scope.Name)
+		P("LexicalLookupSymbol('%s') found in env.curfunc.ClosingLookupSymbolUnfilFunc(1, false) in scope '%s'\n", sym.name, scope.Name)
 		return exp, err, scope
-	case SymNotFound:
-		//P("LexicalLookupSymbol('%s') NOT found in closed over scopes", sym.name)
-		break
 	}
 
 	// check the parent function lexical captured scopes, if parent available.
 	if env.curfunc.parent != nil {
-		//P("checking non-nil parent...")
-		exp, err, whichScope := env.curfunc.parent.ClosingLookupSymbol(sym, setVal)
+		P("checking non-nil parent...")
+		//exp, err, whichScope := env.curfunc.parent.ClosingLookupSymbol(sym, setVal)
+		exp, err, whichScope := env.curfunc.LookupSymbolInParentChainOfClosures(sym, setVal, env)
 		switch err {
 		case nil:
-			//P("LookupSymbolUntilFunction('%s') found in curfunc.parent.ClosingLookupSymbol() scope '%s'\n", sym.name, whichScope.Name)
+			P("LookupSymbolUntilFunction('%s') found in curfunc.parent.ClosingLookupSymbol() scope '%s'\n", sym.name, whichScope.Name)
 			return exp, err, whichScope
+		default:
+			P("not found  looking via env.curfunc.parent.ClosingLookupSymbol(sym='%s')", sym.name)
+			env.ShowStackStackAndScopeStack()
 		}
 	}
 
-	//P("LexicalLookupSymbol('%s') past linearstack\n", sym.name)
-
-	// with check captures, tests/package.zy needs this.
+	// with checkCaptures true, as tests/package.zy needs this.
 	exp, err, scope = env.linearstack.LookupSymbolUntilFunction(sym, setVal, 2, true)
 	switch err {
 	case nil:
-		//P("LexicalLookupSymbol('%s') found on linearstack in parent runtime scope '%s'\n", sym.name, scope.Name)
+		//P("LexicalLookupSymbol('%s') found in env.linearstack.LookupSymbolUtilFunction(2, true) in parent runtime scope '%s'\n", sym.name, scope.Name)
 		return exp, err, scope
 	case SymNotFound:
 		break

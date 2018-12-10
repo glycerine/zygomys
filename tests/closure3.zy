@@ -35,3 +35,6 @@
 (def x 1)
 (assert (== 10 ((let [x 3] (fn [] (let [y 7] ((fn [] (+ y x)))))))))
 
+// going through 4 functions to find 'x'
+(defn superOuter [x89] (defn outer [] (defn middle [] (defn inner [] x89) inner) middle) outer)
+(assert (== 7 ((((superOuter 7))))))

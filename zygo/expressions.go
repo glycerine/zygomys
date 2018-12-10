@@ -612,6 +612,27 @@ func (sf *SexpFunction) ClosingLookupSymbol(sym *SexpSymbol, setVal *Sexp) (Sexp
 	return SexpNull, SymNotFound, nil
 }
 
+func (sf *SexpFunction) LookupSymbolInParentChainOfClosures(sym *SexpSymbol, setVal *Sexp, env *Zlisp) (Sexp, error, *Scope) {
+
+	cur := sf
+	par := sf.parent
+	for par != nil {
+		fmt.Printf(" parent chain: cur:%v -> parent:%v\n", cur.name, par.name)
+		fmt.Printf("        cur.closures = %s", ClosureToString(cur, env))
+
+		exp, err, scope := cur.ClosingLookupSymbolUntilFunc(sym, setVal, 1, false)
+		if err == nil {
+			P("LookupSymbolInParentChainOfClosures(sym='%s') found in scope '%s'\n", sym.name, scope.Name)
+			return exp, err, scope
+		}
+
+		cur = par
+		par = par.parent
+	}
+
+	return SexpNull, SymNotFound, nil
+}
+
 func (sf *SexpFunction) ClosingLookupSymbolUntilFunc(sym *SexpSymbol, setVal *Sexp, maximumFuncToSearch int, checkCaptures bool) (Sexp, error, *Scope) {
 	if sf.closingOverScopes != nil {
 		return sf.closingOverScopes.LookupSymbolUntilFunction(sym, setVal, maximumFuncToSearch, checkCaptures)

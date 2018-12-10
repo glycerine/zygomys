@@ -165,7 +165,7 @@ func (stack *Stack) LookupSymbolUntilFunction(sym *SexpSymbol, setVal *Sexp, max
 						exp, err, whichScope := scope.MyFunction.ClosingLookupSymbol(sym, setVal)
 						switch err {
 						case nil:
-							P("LookupSymbolUntilFunction('%s') found in scope '%s'\n", sym.name, whichScope.Name)
+							//P("LookupSymbolUntilFunction('%s') found in scope '%s'\n", sym.name, whichScope.Name)
 							return exp, err, whichScope
 						}
 					}
