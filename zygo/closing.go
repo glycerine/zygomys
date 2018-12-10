@@ -30,7 +30,7 @@ func NewEmptyClosing(name string, env *Zlisp) *Closing {
 func (c *Closing) IsStackElem() {}
 
 func (c *Closing) LookupSymbolUntilFunction(sym *SexpSymbol) (Sexp, error, *Scope) {
-	return c.Stack.LookupSymbolUntilFunction(sym, nil)
+	return c.Stack.LookupSymbolUntilFunction(sym, nil, 1)
 }
 func (c *Closing) LookupSymbol(sym *SexpSymbol, setVal *Sexp) (Sexp, error, *Scope) {
 	return c.Stack.LookupSymbol(sym, setVal)
