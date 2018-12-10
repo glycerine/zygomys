@@ -1,5 +1,7 @@
 package zygo
 
+import "fmt"
+
 // where we store our closure-supporing stack pointers
 type Closing struct {
 	Stack *Stack
@@ -33,6 +35,7 @@ func (c *Closing) LookupSymbolUntilFunction(sym *SexpSymbol) (Sexp, error, *Scop
 	return c.Stack.LookupSymbolUntilFunction(sym, nil)
 }
 func (c *Closing) LookupSymbol(sym *SexpSymbol, setVal *Sexp) (Sexp, error, *Scope) {
+	fmt.Printf("  +++ Closing.LookupSymbol(sym='%s') in c.Stack = '%s'\n", sym.name, c.Stack.SexpString(nil))
 	return c.Stack.LookupSymbol(sym, setVal)
 }
 

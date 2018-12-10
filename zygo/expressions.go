@@ -559,6 +559,7 @@ type SexpFunction struct {
 	userfun           ZlispUserFunction
 	orig              Sexp
 	closingOverScopes *Closing
+	parent            *SexpFunction
 	isBuilder         bool // see defbuild; builders are builtins that receive un-evaluated expressions
 	inputTypes        *SexpHash
 	returnTypes       *SexpHash
@@ -574,7 +575,7 @@ func (sf *SexpFunction) Copy() *SexpFunction {
 	return &cp
 }
 
-func (sf *SexpFunction) SetClosing(clos *Closing, parentFunc *SexpFunction) {
+func (sf *SexpFunction) SetClosing(clos *Closing) {
 	ps4 := NewPrintStateWithIndent(4)
 	pre, err := sf.ShowClosing(clos.env, ps4, "prev")
 	_ = pre
@@ -586,6 +587,23 @@ func (sf *SexpFunction) SetClosing(clos *Closing, parentFunc *SexpFunction) {
 	//	sf, sf.closingOverScopes, pre)
 	//P("88888 in sfun.SetClosing(), new  value is %p = '%s'\n", clos, newnew)
 	sf.closingOverScopes = clos
+	/*
+		top := clos.Stack.GetTop()
+		topScope, isScope := top.(*Scope)
+		if isScope {
+			if topScope.MyFunction != nil {
+				sf.parent = topScope.MyFunction
+
+				P("found parent in SetClosing() for sf='%s', sf.parent.Name = '%s'; parent (%p) closures='%s'", sf.name, sf.parent.name, sf.parent, ClosureToString(sf.parent, topScope.env))
+			} else {
+				P("in SetClosing, topScope.MyFunction is nil!")
+			}
+		} else {
+			P("in SetClosing, top of stack was not Scope, but rather %T", top)
+		}
+	*/
+	P("in SetClosing() for '%s'/%p: my stack is: '%s'", sf.name, sf, clos.Stack.SexpString(nil))
+
 }
 
 func (sf *SexpFunction) ShowClosing(env *Zlisp, ps *PrintState, label string) (string, error) {
@@ -606,7 +624,7 @@ func (sf *SexpFunction) ClosingLookupSymbol(sym *SexpSymbol, setVal *Sexp) (Sexp
 	if sf.closingOverScopes != nil {
 		return sf.closingOverScopes.LookupSymbol(sym, setVal)
 	}
-	//P("sf.closingOverScopes was nil, no captured scopes. sf = '%v'", sf.SexpString(0))
+	P("sf.closingOverScopes was nil, no captured scopes. sf = '%v'", sf.SexpString(nil))
 	return SexpNull, SymNotFound, nil
 }
 

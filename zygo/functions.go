@@ -878,7 +878,7 @@ func (env *Zlisp) MakeFunction(name string, nargs int, varargs bool,
 	sfun.varargs = varargs
 	sfun.fun = fun
 	sfun.orig = orig
-	sfun.SetClosing(NewClosing(name, env), nil) // snapshot the create env as of now.
+	sfun.SetClosing(NewClosing(name, env)) // snapshot the create env as of now.
 	return &sfun
 }
 

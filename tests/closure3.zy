@@ -1,13 +1,16 @@
 // closure3.zy https://github.com/glycerine/zygomys/issues/23
 // anonymous functions as closures.
 //
-/* comment out until someone has time to fix this.
+// comment out until someone has time to fix this.
 
 (def res (let [x 123] (fn [] ((fn [] x)))))
 
 // error in __anon252:1: Error calling 'infix': symbol `x` not found
 (assert (== (res) 123))
 
+/*
+(def y 999)
+(assert (== 777 ((let [x 123] (fn [] (let [y 777] ((fn [] y))))))))
 
 
 (def mypkg  (package "mypkg"
@@ -23,4 +26,10 @@
 // assert that we get [6, 8] back.
 (assert (== (:0 w) 6))
 (assert (== (:1 w) 8))
+
+
+// lastly
+(defn outer [x] (defn middle [] (defn inner [] x) inner) middle)
+(assert (== 7 (((outer 7))))
+(assert (== 8 (((outer 8))))
 */
