@@ -35,6 +35,10 @@
 (def x 1)
 (assert (== 10 ((let [x 3] (fn [] (let [y 7] ((fn [] (+ y x)))))))))
 
-// going through 4 functions to find 'x'
+// going through 4 functions to find 'x89'
 (defn superOuter [x89] (defn outer [] (defn middle [] (defn inner [] x89) inner) middle) outer)
 (assert (== 7 ((((superOuter 7))))))
+
+// going through lots functions and lets to find 'x99'
+(defn ultimate [x99] (let [stellar -2] (defn superDuper [] (let [z9 60] (defn outer [] (defn middle [] (defn inner [] (+ z9 x99 stellar)) inner) middle) outer)) superDuper))
+(assert (== 65 (((((ultimate 7)))))))
