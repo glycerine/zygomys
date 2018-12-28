@@ -30,6 +30,8 @@ type Parser struct {
 	stopped           bool
 	sendMe            []ParserReply
 	FlagSendNeedInput bool
+
+	inBacktick bool
 }
 
 type ParserReply struct {
@@ -302,7 +304,7 @@ func (parser *Parser) ParseArray(depth int) (Sexp, error) {
 func (parser *Parser) ParseExpression(depth int) (res Sexp, err error) {
 	defer func() {
 		if res != nil {
-			//Q("returning from ParseExpression at depth=%v with res='%s'\n", depth, res.SexpString())
+			//Q("returning from ParseExpression at depth=%v with res='%s'\n", depth, res.SexpString(nil))
 		} else {
 			//Q("returning from ParseExpression at depth=%v, res = nil", depth)
 		}
@@ -411,7 +413,11 @@ func (parser *Parser) ParseExpression(depth int) (res Sexp, err error) {
 		return &SexpChar{Val: rune(tok.str[0])}, nil
 	case TokenString:
 		return &SexpStr{S: tok.str}, nil
+	case TokenBeginBacktickString:
+		parser.inBacktick = true
+		return parser.ParseBacktickString(&tok)
 	case TokenBacktickString:
+		parser.inBacktick = false
 		return &SexpStr{S: tok.str, backtick: true}, nil
 	case TokenFloat:
 		var f float64
@@ -538,6 +544,55 @@ func (parser *Parser) ParseBlockComment(start *Token) (sx Sexp, err error) {
 		}
 	}
 	//return block, nil
+}
+
+func (parser *Parser) ParseBacktickString(start *Token) (sx Sexp, err error) {
+	defer func() {
+		if sx != nil {
+			//Q("returning from ParseBlockComment with sx ='%v', err='%v'",
+			//	sx.SexpString(), err)
+		}
+	}()
+	lexer := parser.lexer
+	var tok Token
+
+	for {
+	tokFilled:
+		for {
+			tok, err = lexer.PeekNextToken()
+			if err != nil {
+				return SexpNull, err
+			}
+			if tok.typ != TokenEnd {
+				break tokFilled
+			}
+			err = parser.GetMoreInput(nil, ErrMoreInputNeeded)
+			switch err {
+			case ParserHaltRequested:
+				return SexpNull, err
+			case ResetRequested:
+				return SexpEnd, err
+			}
+			// have to still fill tok, so
+			// loop to the top to PeekNextToken
+		}
+
+		// consume it
+
+		//cons, err := lexer.GetNextToken()
+		_, err := lexer.GetNextToken()
+		if err != nil {
+			return nil, err
+		}
+		//P("parse backtick string is consuming '%v'", cons)
+
+		switch tok.typ {
+		case TokenBacktickString:
+			return &SexpStr{S: tok.str, backtick: true}, nil
+		default:
+			panic("internal error: inside a backtick string, we should only see TokenBacktickString token")
+		}
+	}
 }
 
 func (parser *Parser) ParseInfix(depth int) (Sexp, error) {

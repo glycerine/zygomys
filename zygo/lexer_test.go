@@ -180,6 +180,40 @@ func Test030LexingPauseAndResume(t *testing.T) {
 	})
 }
 
+func Test031LexingPauseAndResumeAroundBacktickString(t *testing.T) {
+
+	cv.Convey(`to enable the repl to properly detect the end of a multiline backtick string, the lexer should be able to pause and resume when more input is available.`, t, func() {
+
+		str := `{a=` + "`\n\n`}"
+		str1 := "{a=`"
+		str2 := "\n\n`}"
+		env := NewZlisp()
+		defer env.parser.Stop()
+		stream := bytes.NewBuffer([]byte(str1))
+		env.parser.ResetAddNewInput(stream)
+		ex, err := env.parser.ParseTokens()
+
+		P("\n In lexer_test, after parsing with incomplete input, we should get 0 expressions back.\n")
+		cv.So(len(ex), cv.ShouldEqual, 0)
+		P("\n In lexer_test, after ParseTokens on incomplete fragment, expressions = '%v' and err = '%v'\n", (&SexpArray{Val: ex, Env: env}).SexpString(nil), err)
+
+		P("\n In lexer_test: calling parser.NewInput() to provide str2='%s'\n", str2)
+		env.parser.NewInput(bytes.NewBuffer([]byte(str2)))
+		P("\n In lexer_test: done with parser.NewInput(), now calling parser.ParseTokens()\n")
+		ex, err = env.parser.ParseTokens()
+		P(`
+ in lexer test: After providing the 2nd half of the input, we returned from env.parser.ParseTokens()
+ with expressions = %v
+ with err = %v
+`, (&SexpArray{Val: ex, Env: env}).SexpString(nil), err)
+
+		cv.So(len(ex), cv.ShouldEqual, 1)
+		panicOn(err)
+
+		P("str=%s\n", str)
+	})
+}
+
 func Test026RegexpSplittingOfDotSymbols(t *testing.T) {
 
 	cv.Convey("our DotPartsRegex should split dot-symbol `.a.b.c` into `.a`, `.b`, and `.c`", t, func() {

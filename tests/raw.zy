@@ -3,3 +3,17 @@
 there 34
  symbols`)
 (assert (== s "hi\nthere 34\n symbols"))
+
+// long, multi-line raw strings, even in at the repl infix.
+// NB it turns out this doesn't actually test the
+//  new feature. But if you entered this by hand
+//  --without the {} curly braces, in the old repl--
+// then you would see the difference. Hard to set
+// without a way to shift into that same mode.
+// Avoid this:
+//
+{ s2 = `
+
+
+`}
+(assert (== s2 "\n\n\n"))

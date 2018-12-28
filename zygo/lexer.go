@@ -41,6 +41,7 @@ const (
 	TokenDollar
 	TokenDotSymbol
 	TokenFreshAssign
+	TokenBeginBacktickString
 	TokenBacktickString
 	TokenComment
 	TokenBeginBlockComment
@@ -656,6 +657,7 @@ top:
 				return errors.New("Unexpected backtick")
 			}
 			lexer.state = LexerBacktickString
+			lexer.AppendToken(lexer.Token(TokenBeginBacktickString, ""))
 			return nil
 
 		case '"':
