@@ -547,12 +547,6 @@ func (parser *Parser) ParseBlockComment(start *Token) (sx Sexp, err error) {
 }
 
 func (parser *Parser) ParseBacktickString(start *Token) (sx Sexp, err error) {
-	defer func() {
-		if sx != nil {
-			//Q("returning from ParseBlockComment with sx ='%v', err='%v'",
-			//	sx.SexpString(), err)
-		}
-	}()
 	lexer := parser.lexer
 	var tok Token
 
@@ -578,13 +572,10 @@ func (parser *Parser) ParseBacktickString(start *Token) (sx Sexp, err error) {
 		}
 
 		// consume it
-
-		//cons, err := lexer.GetNextToken()
 		_, err := lexer.GetNextToken()
 		if err != nil {
 			return nil, err
 		}
-		//P("parse backtick string is consuming '%v'", cons)
 
 		switch tok.typ {
 		case TokenBacktickString:
