@@ -169,9 +169,9 @@ func Repl(env *Zlisp, cfg *ZlispConfig) {
 
 	if !cfg.Quiet {
 		if cfg.Sandboxed {
-			fmt.Printf("zygo [sandbox mode] version %s\n", Version())
+			fmt.Printf("zig [sandbox mode] version %s\n", Version())
 		} else {
-			fmt.Printf("zygo version %s\n", Version())
+			fmt.Printf("zig version %s\n", Version())
 		}
 		fmt.Printf("press tab (repeatedly) to get completion suggestions. Shift-tab goes back. Ctrl-d to exit.\n")
 	}
