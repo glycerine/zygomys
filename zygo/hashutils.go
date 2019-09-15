@@ -582,8 +582,13 @@ func fillJsonMap(json2ptr *map[string]*HashFieldDet, fx *[]Sexp, fl *[]reflect.S
 			(*json2ptr)[fld.Name] = det
 		}
 		*detOrder = append(*detOrder, det)
-		det.EmbedPath = append(embedPath,
-			EmbedPath{ChildName: fld.Name, ChildFieldNum: i})
+
+		// avoid cross talk between paths with a copy.
+		epath := make([]EmbedPath, len(embedPath)+1)
+		copy(epath, embedPath)
+		epath[len(embedPath)] = EmbedPath{ChildName: fld.Name, ChildFieldNum: i}
+		det.EmbedPath = epath
+
 		if fld.Anonymous {
 			// track how to get at embedded struct fields
 			fillJsonMap(json2ptr, fx, fl, det.EmbedPath, fld.Type, detOrder)
