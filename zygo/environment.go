@@ -360,15 +360,15 @@ func (env *Zlisp) CallUserFunction(
 	// protect against bad calls/bad reflection in usercalls
 	var wasPanic bool
 	var recovered interface{}
-	tr := make([]byte, 16384)
-	trace := &tr
+	var trace []byte
 	res, err := func() (Sexp, error) {
 		defer func() {
 			recovered = recover()
 			if recovered != nil {
 				wasPanic = true
-				nbyte := runtime.Stack(*trace, false)
-				*trace = (*trace)[:nbyte]
+				trace = make([]byte, 16384)
+				nbyte := runtime.Stack(trace, false)
+				trace = trace[:nbyte]
 			}
 		}()
 
@@ -382,7 +382,7 @@ func (env *Zlisp) CallUserFunction(
 	if wasPanic {
 		err = fmt.Errorf("CallUserFunction caught panic during call of "+
 			"'%s': '%v'\n stack trace:\n%v\n",
-			name, recovered, string(*trace))
+			name, recovered, string(trace))
 	}
 	if err != nil {
 		return 0, errors.New(
