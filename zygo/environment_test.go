@@ -61,16 +61,15 @@ func Test400SandboxFunctions(t *testing.T) {
 	})
 }
 
-func BenchmarkCallUserFunction(b *testing.B) {
-	env := NewZlisp()
-	env.AddFunction("dosomething", func(*Zlisp, string, []Sexp) (r Sexp, err error) { return })
-	script := fmt.Sprintf(`
-		(for [(def i 0) (< i 1000000) (set i (+ i 1))]
-			(dosomething)
-		)
-	`)
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		env.EvalString(script)
-	}
+func TestCallUserFunction(t *testing.T) {
+	cv.Convey(`It should recover from user-land panics and give stack traces`, t, func() {
+		env := NewZlisp()
+		env.AddFunction("dosomething", func(*Zlisp, string, []Sexp) (r Sexp, err error) {
+			panic("I don't know how to do anything")
+		})
+		_, err := env.EvalString("(dosomething)")
+		cv.So(err, cv.ShouldNotBeNil)
+		cv.So(err.Error(), cv.ShouldContainSubstring, "stack trace:")
+		cv.So(err.Error(), cv.ShouldContainSubstring, "github.com/glycerine/zygomys/zygo.(*Zlisp).CallUserFunction")
+	})
 }
