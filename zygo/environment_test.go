@@ -2,8 +2,9 @@ package zygo
 
 import (
 	"fmt"
-	cv "github.com/glycerine/goconvey/convey"
 	"testing"
+
+	cv "github.com/glycerine/goconvey/convey"
 )
 
 func Test400SandboxFunctions(t *testing.T) {
@@ -58,4 +59,18 @@ func Test400SandboxFunctions(t *testing.T) {
 
 		}
 	})
+}
+
+func BenchmarkCallUserFunction(b *testing.B) {
+	env := NewZlisp()
+	env.AddFunction("dosomething", func(*Zlisp, string, []Sexp) (r Sexp, err error) { return })
+	script := fmt.Sprintf(`
+		(for [(def i 0) (< i 1000000) (set i (+ i 1))]
+			(dosomething)
+		)
+	`)
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		env.EvalString(script)
+	}
 }
