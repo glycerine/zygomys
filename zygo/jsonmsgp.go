@@ -795,6 +795,19 @@ func SexpToGoStructs(
 		case reflect.Ptr:
 			// pointer to struct we know? if we have a factory for it below
 		default:
+
+			if targTyp.Elem().Kind() == reflect.String {
+				// just write the raw sexp to the string -- done to allow non-translation
+				// if a string instead of a Go struct is specified. Allows us to
+				// put sexpressions into a file to record data state
+				// and yet lazily defer translation into Go
+				// structs at a later point, if needed at all.
+				str := sexp.SexpString(nil)
+				//vv("note! not doing Go struct translation, instead just returning the string '%v'", str)
+				targVa.Elem().Set(reflect.ValueOf(str))
+				return target, nil
+			}
+
 			Q("problem! elem kind not recognized: '%#v'/type='%T'", targTyp.Elem().Kind(), targTyp.Elem().Kind())
 			panic(fmt.Errorf("tried to translate from SexpHash record into non-struct/type: %v  / targType.Elem().Kind()=%v", targKind, targTyp.Elem().Kind()))
 		}
