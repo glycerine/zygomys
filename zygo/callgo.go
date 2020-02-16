@@ -111,7 +111,7 @@ func CallGoMethodFunction(env *Zlisp, name string, args []Sexp) (Sexp, error) {
 					"Go: we don't handle double pointers", i-2)
 			}
 			Q("converting to go '%#v' into -> %#v\n", args[i], va.Interface())
-			iface, err := SexpToGoStructs(args[i], va.Interface(), env, nil)
+			iface, err := SexpToGoStructs(args[i], va.Interface(), env, nil, 0, va.Interface())
 			if err != nil {
 				return SexpNull, fmt.Errorf("error converting %d-th "+
 					"argument to Go: '%s'", i-2, err)

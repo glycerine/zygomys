@@ -1641,7 +1641,7 @@ func DerefFunction(env *Zlisp, name string, args []Sexp) (result Sexp, err error
 			Q("good, e2 is SexpReflect with Val='%#v'", payload.Val)
 
 			Q("ptr.Target = '%#v'.  ... trying SexpToGoStructs()", ptr.Target)
-			iface, err := SexpToGoStructs(payload, ptr.Target, env, nil)
+			iface, err := SexpToGoStructs(payload, ptr.Target, env, nil, 0, ptr.Target)
 			if err != nil {
 				return SexpNull, err
 			}

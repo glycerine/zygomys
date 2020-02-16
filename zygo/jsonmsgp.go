@@ -508,17 +508,25 @@ func ToGoFunction(env *Zlisp, name string, args []Sexp) (Sexp, error) {
 	if len(args) != 1 {
 		return SexpNull, WrongNargs
 	}
-	switch asHash := args[0].(type) {
+	return toGoHelper(env, name, args[0])
+}
+
+func toGoHelper(env *Zlisp, name string, arg Sexp) (Sexp, error) {
+	//vv("top of toGoHelper, name'%v'", name)
+
+	switch asHash := arg.(type) {
+	case *SexpReflect:
+		return SexpNull, fmt.Errorf("ToGoFunction (togo) error: value must be a hash or defmap; we see SexpReflect '%[1]T'", asHash.Val.Interface())
 	default:
-		return SexpNull, fmt.Errorf("ToGoFunction (togo) error: value must be a hash or defmap; we see '%T'", args[0])
+		return SexpNull, fmt.Errorf("ToGoFunction (togo) error: value must be a hash or defmap; we see '%[1]T'/val=%#[1]v", arg)
 	case *SexpHash:
 		tn := asHash.TypeName
-		//P("ToGo: SexpHash for tn='%s', shadowSet='%v'", tn, asHash.ShadowSet)
+		//vv("ToGo: SexpHash for tn='%s', shadowSet='%v'", tn, asHash.ShadowSet)
 
 		var err error
 		var newStruct interface{}
 		if asHash.ShadowSet && asHash.GoShadowStructVa.Kind() != reflect.Invalid {
-			//P("ToGo: tn '%s' already has GoShadowStruct, not making a new one", tn)
+			//vv("ToGo: tn '%s' already has GoShadowStruct, not making a new one", tn)
 
 			// don't return early, because we may have updates after changes
 			// from the sexp hashtable side, so just set newStruct to the old
@@ -527,7 +535,7 @@ func ToGoFunction(env *Zlisp, name string, args []Sexp) (Sexp, error) {
 
 			newStruct = asHash.GoShadowStruct
 		} else {
-			//P("ToGo: tn '%s' does not have GoShadowStruct set, making a new one", tn)
+			//vv("ToGo: tn '%s' does not have GoShadowStruct set, making a new one", tn)
 
 			factory, hasMaker := GoStructRegistry.Registry[tn]
 			if !hasMaker {
@@ -539,7 +547,7 @@ func ToGoFunction(env *Zlisp, name string, args []Sexp) (Sexp, error) {
 			}
 		}
 
-		_, err = SexpToGoStructs(asHash, newStruct, env, nil)
+		_, err = SexpToGoStructs(asHash, newStruct, env, nil, 0, newStruct)
 		if err != nil {
 			return SexpNull, err
 		}
@@ -600,13 +608,27 @@ func SexpToGoStructs(
 	target interface{},
 	env *Zlisp,
 	dedup map[*SexpHash]interface{},
+	calldepth int,
+	top interface{},
 
 ) (result interface{}, err error) {
-	Q("top of SexpToGoStructs")
+	//vv("top of SexpToGoStructs, target='%p'/'%#v'", target, target)
+	//defer func() {
+	//vv("returning from SexpToGoStructs, target='%p'/'%#v'", target, target)
+	//}()
 	cacheHit := false
 	if dedup == nil {
 		dedup = make(map[*SexpHash]interface{})
 	}
+
+	// elimintes all the decoding!
+	// add top-level primary target to the dedup cache too
+	//topAsHash, topIsHash := sexp.(*SexpHash)
+	//if topIsHash {
+	//dedup[topAsHash] = target
+	//vv("top target dedup caching in SexpToGoStructs '%T' for hash name='%s'", target, topAsHash.TypeName)
+	//}
+
 	var recordKey string
 
 	defer func() {
@@ -619,7 +641,8 @@ func SexpToGoStructs(
 				// ourselves, but faster to just write again
 				// than to read and compare then write.
 				dedup[asHash] = result
-				//P("dedup caching in SexpToGoStructs '%v' for hash name='%s'", result, asHash.TypeName)
+				//vv("dedup caching in SexpToGoStructs '%v' for hash name='%s'", result, asHash.TypeName)
+				//vv("dedup caching in SexpToGoStructs '%T' for hash name='%s'", result, asHash.TypeName)
 			}
 		}
 		if recov != nil {
@@ -635,16 +658,16 @@ func SexpToGoStructs(
 		}
 	}()
 
-	Q(" 88888 entering SexpToGoStructs() with sexp=%#v and target=%#v of type %s", sexp, target, reflect.ValueOf(target).Type())
-	defer func() {
-		Q(" 99999 leaving SexpToGoStructs() with sexp='%#v' and target=%#v", sexp, target)
-	}()
+	//vv(" 88888 entering SexpToGoStructs() with sexp=%#v and target=%#v of type %s", sexp, target, reflect.ValueOf(target).Type())
+	//defer func() {
+	//	vv(" 99999 leaving SexpToGoStructs() with sexp='%#v' and target=%#v", sexp, target)
+	//}()
 
 	targetIsSinglePtr := IsExactlySinglePointer(target)
 	targetIsDoublePtr := IsExactlyDoublePointer(target)
 
 	if !targetIsSinglePtr && !targetIsDoublePtr {
-		Q("is not exactly single or double  pointer!!")
+		//Q("is not exactly single or double  pointer!!")
 		panic(fmt.Errorf("SexpToGoStructs() got bad target: was not *T single level pointer, but rather %s / %T", reflect.ValueOf(target).Type(), target))
 	}
 
@@ -656,12 +679,13 @@ func SexpToGoStructs(
 	targElemTyp := targTyp.Elem()
 	targElemKind := targElemTyp.Kind()
 
-	Q(" targVa is '%#v'", targVa)
+	//vv(" targVa is p='%p', '%#v'", targVa, targVa) // string, bool, dur, int
 
 	if targKind != reflect.Ptr {
 		//		panic(fmt.Errorf("SexpToGoStructs got non-pointer type! was type %T/val=%#v.  targKind=%#v targTyp=%#v targVa=%#v", target, target, targKind, targTyp, targVa))
 	}
 
+	//vv("sexp = '%v'/Ty=%T", sexp, sexp)
 	switch src := sexp.(type) {
 	case *SexpRaw:
 		targVa.Elem().Set(reflect.ValueOf([]byte(src.Val)))
@@ -680,7 +704,7 @@ func SexpToGoStructs(
 			_ = i
 			goElem := reflect.New(eTyp) // returns pointer to new value
 			//P(" goElem = %#v before filling i=%d", goElem, i)
-			if _, err := SexpToGoStructs(ele, goElem.Interface(), env, dedup); err != nil {
+			if _, err := SexpToGoStructs(ele, goElem.Interface(), env, dedup, calldepth+1, top); err != nil {
 				return nil, err
 			}
 			//P(" goElem = %#v after filling i=%d", goElem, i)
@@ -694,7 +718,7 @@ func SexpToGoStructs(
 	case *SexpInt:
 		// ugorji msgpack will give us int64 not int,
 		// so match that to make the decodings comparable.
-		//P("*SexpInt code src.Val='%#v'.. targVa.Elem()='%#v'/Type: %T", src.Val, targVa.Elem().Interface(), targVa.Elem().Interface())
+		//vv("*SexpInt code src.Val='%#v'.. targVa.Elem()='%#v'/Type: %T", src.Val, targVa.Elem().Interface(), targVa.Elem().Interface())
 		switch targVa.Elem().Interface().(type) {
 		case float64:
 			targVa.Elem().SetFloat(float64(src.Val))
@@ -717,11 +741,11 @@ func SexpToGoStructs(
 			targVa.Elem().SetFloat(float64(src.Val))
 		}
 	case *SexpHash:
-		Q(" ==== found SexpHash")
+		//P(" ==== found SexpHash")
 		// check dedup cache to see if we already generated a Go
 		// struct for this *SexpHash.
 		if alreadyGoStruct, already := dedup[src]; already {
-			Q("SexpToGoStructs dedup cache HIT! woot! alreadyGoStruct = '%v' for src.TypeName='%v'", alreadyGoStruct, src.TypeName)
+			//P("SexpToGoStructs dedup cache HIT! woot! alreadyGoStruct = '%v' for src.TypeName='%v'", alreadyGoStruct, src.TypeName)
 			// already did it. Return alreadyGoStruct.
 			cacheHit = true
 			vo := reflect.ValueOf(alreadyGoStruct).Elem()
@@ -731,7 +755,7 @@ func SexpToGoStructs(
 		}
 
 		tn := src.TypeName
-		Q("tn='%s', target.(type) == %T", tn, target)
+		//P("dedup miss on src='%#v', tn='%s', target.(type) == %T", src, tn, target)
 		if tn == "hash" {
 			//  not done with 'hash' translation to Go, targTyp.Elem().Kind()='map', targTyp.Elem()='map[string]float64'
 			//P(fmt.Sprintf("not done with 'hash' translation to Go, targTyp.Elem().Kind()='%v', targTyp.Elem()='%v'", targTyp.Elem().Kind(), targTyp.Elem()))
@@ -781,7 +805,46 @@ func SexpToGoStructs(
 				targVa.Elem().Set(reflect.ValueOf(m))
 				return target, nil
 			}
-			panic("not done here yet")
+			if targKind == reflect.Ptr && targElemKind == reflect.Map {
+				mapKeyTyp := targElemTyp.Key()
+				mapKeyKind := mapKeyTyp.Kind()
+				mapElemTyp := targElemTyp.Elem()
+				mapElemKind := mapElemTyp.Kind()
+				if mapKeyKind == reflect.String && mapElemKind == reflect.Interface {
+					// we can try these, map[string]someInterface
+
+					pmap := reflect.MakeMap(targElemTyp)
+					//P(" pmap starts out as %v/type = %T", pmap, pmap.Interface())
+					// if targ is *[]int, then targElem is []int, targElem.Elem() is int.
+					for _, arr := range src.Map {
+						for _, pair := range arr {
+							key := SexpToGo(pair.Head, env, dedup)
+							//val := SexpToGo(pair.Tail, env, dedup)
+							keys, isstr := key.(string)
+							if !isstr {
+								panic(fmt.Errorf("key '%v' should have been an string, but was not.", key))
+							}
+							//vv("keys = '%v'", keys)
+
+							goElem := reflect.New(mapElemTyp) // returns pointer to new value
+							//vv(" goElem = %#v before filling keys='%v'", goElem, keys)
+							if _, err := SexpToGoStructs(pair.Tail, goElem.Interface(), env, dedup, calldepth+1, top); err != nil {
+								return nil, err
+							}
+							//P(" goElem = %#v after filling i=%d", goElem, i)
+							//P(" goElem.Elem() = %#v after filling i=%d", goElem.Elem(), i)
+							pmap.SetMapIndex(reflect.ValueOf(keys), goElem.Elem())
+							//vv("pmap after set is now %#v", pmap)
+						}
+					}
+					targVa.Elem().Set(pmap)
+					//vv("target returning = '%#v'", target)
+					return target, nil
+				}
+				//vv("have reflect.Map: target has type = '%T', value='%#v'; targTyp='%v' targKind='%v' targElemTyp='%v' targElemKind='%v' mapElemTyp='%v' mapElemKind='%v' mapKeyTyp='%v' mapKeyKind='%v'", target, target, targTyp, targKind, targElemTyp, targElemKind, mapElemTyp, mapElemKind, mapKeyTyp, mapKeyKind)
+			}
+			panic(fmt.Sprintf("not done here yet, target has type = '%T', value='%#v'; targTyp='%v' targKind='%v' targElemTyp='%v' targElemKind='%v'", target, target, targTyp, targKind, targElemTyp, targElemKind))
+
 			// TODO: don't try to translate into a Go struct,
 			// but instead... what? just a map[string]interface{}
 			//return nil, nil
@@ -795,20 +858,17 @@ func SexpToGoStructs(
 		case reflect.Ptr:
 			// pointer to struct we know? if we have a factory for it below
 		default:
-
+			//Q("problem! elem kind not recognized: '%#v'/type='%T'", targTyp.Elem().Kind(), targTyp.Elem().Kind())
 			if targTyp.Elem().Kind() == reflect.String {
 				// just write the raw sexp to the string -- done to allow non-translation
 				// if a string instead of a Go struct is specified. Allows us to
-				// put sexpressions into a file to record data state
-				// and yet lazily defer translation into Go
+				// put sexpressions into a file and yet lazily defer translation into Go
 				// structs at a later point, if needed at all.
 				str := sexp.SexpString(nil)
 				//vv("note! not doing Go struct translation, instead just returning the string '%v'", str)
 				targVa.Elem().Set(reflect.ValueOf(str))
 				return target, nil
 			}
-
-			Q("problem! elem kind not recognized: '%#v'/type='%T'", targTyp.Elem().Kind(), targTyp.Elem().Kind())
 			panic(fmt.Errorf("tried to translate from SexpHash record into non-struct/type: %v  / targType.Elem().Kind()=%v", targKind, targTyp.Elem().Kind()))
 		}
 
@@ -819,14 +879,22 @@ func SexpToGoStructs(
 			//return nil, fmt.Errorf("type '%s' not registered in GoStructRegistry", tn)
 		}
 		//P("factory = %#v  targTyp.Kind=%s", factory, targTyp.Kind())
-		checkPtrStruct, err := factory.Factory(env, src)
-		if err != nil {
-			return nil, err
+
+		// can we avoid making another top by a simple check that we are at depth 0?
+		var err error
+		var checkPtrStruct interface{}
+		if calldepth == 0 {
+			checkPtrStruct = top
+		} else {
+			checkPtrStruct, err = factory.Factory(env, src)
+			if err != nil {
+				return nil, err
+			}
 		}
 		factOutputVal := reflect.ValueOf(checkPtrStruct)
 		factType := factOutputVal.Type()
 		if targTyp.Kind() == reflect.Ptr && targTyp.Elem().Kind() == reflect.Interface && factType.Implements(targTyp.Elem()) {
-			Q(" accepting type check: %v implements %v", factType, targTyp)
+			//Q(" accepting type check: %v implements %v", factType, targTyp)
 
 			// also here we need to allocate an actual struct in place of
 			// the interface
@@ -844,8 +912,8 @@ func SexpToGoStructs(
 			src.GoShadowStructVa = factOutputVal
 
 		} else if targTyp.Kind() == reflect.Ptr && targTyp.Elem() == factType {
-			Q("we have a double pointer that matches the factory type! factType == targTyp.Elem(). factType=%v/%T  targTyp = %v/%T", factType, factType, targTyp, targTyp)
-			Q(" targTyp.Elem() = %v", targTyp.Elem())
+			//Q("we have a double pointer that matches the factory type! factType == targTyp.Elem(). factType=%v/%T  targTyp = %v/%T", factType, factType, targTyp, targTyp)
+			//Q(" targTyp.Elem() = %v", targTyp.Elem())
 
 			targVa.Elem().Set(factOutputVal) // tell our caller
 
@@ -860,9 +928,9 @@ func SexpToGoStructs(
 		} else if factType != targTyp {
 			// factType=*zygo.NestInner/*reflect.rtype  targTyp = **zygo.NestInner/*reflect.rtype
 
-			Q("factType != targTyp. factType=%v/%T  targTyp = %v/%T", factType, factType, targTyp, targTyp)
+			//Q("factType != targTyp. factType=%v/%T  targTyp = %v/%T", factType, factType, targTyp, targTyp)
 
-			Q(" targTyp.Elem() = %v", targTyp.Elem())
+			//Q(" targTyp.Elem() = %v", targTyp.Elem())
 
 			panic(fmt.Errorf("type checking failed compare the factor associated with SexpHash and the provided target *T: expected '%s' (associated with typename '%s' in the GoStructRegistry) but saw '%s' type in target", tn, factType, targTyp))
 		}
@@ -885,40 +953,40 @@ func SexpToGoStructs(
 				// the json tags for that. Or their
 				// full exact name if they didn't have
 				// a json tag.
-				Q(" JsonTagMap = %#v", src.JsonTagMap)
+				//vv(" JsonTagMap = %#v", src.JsonTagMap)
 				det, found := src.JsonTagMap[recordKey]
+				//vv("found = %v for recordKey = '%v'; det='%#v'", found, recordKey, det)
 				if !found {
 					// try once more, with uppercased version
 					// of record key
 					upperKey := strings.ToUpper(recordKey[:1]) + recordKey[1:]
 					det, found = src.JsonTagMap[upperKey]
+					//vv("upperKey = '%v' from recordKey = '%v'; found=%v; det='%#v'", upperKey, recordKey, found, det)
 					if !found {
 						fmt.Printf(" skipping field '%s' in this hash/which we could not find in the JsonTagMap", recordKey)
-						panic(fmt.Sprintf("unkown field '%s' not allowed; could not find in the JsonTagMap. Fieldnames are case sensitive.", recordKey))
+						panic(fmt.Sprintf("unkown field '%s' not allowed; could not find in the JsonTagMap. Fieldnames are case sensitive. src.JstonTagMap: '%#v'", recordKey, src.JsonTagMap))
 						continue
 					}
 				}
-				Q(" ****  recordKey = '%s'\n", recordKey)
-				Q(" we found in pair.Tail: %T !", pair.Tail)
+				//vv(" ****  recordKey = '%s'\n", recordKey)
+				//vv(" we found in pair.Tail: %T !", pair.Tail)
 
 				dref := targVa.Elem()
-				Q(" deref = %#v / type %T", dref, dref)
-
-				Q(" det = %#v", det)
+				//vv(" deref = %#v / type %T", dref, dref)
 
 				// fld should hold our target when
 				// done recursing through any embedded structs.
 				// TODO: handle embedded pointers to structs too.
 				var fld reflect.Value
-				Q(" we have an det.EmbedPath of '%#v'", det.EmbedPath)
+				//vv(" we have an det.EmbedPath of '%#v'", det.EmbedPath)
 				// drill down to the actual target
 				fld = dref
-				for i, p := range det.EmbedPath {
-					Q("about to call fld.Field(%d) on fld = '%#v'/type=%T", p.ChildFieldNum, fld, fld)
+				for _, p := range det.EmbedPath {
+					//vv("about to call fld.Field(%d) on fld = '%#v'/type=%T", p.ChildFieldNum, fld, fld)
 					fld = fld.Field(p.ChildFieldNum)
-					Q(" dropping down i=%d through EmbedPath at '%s', fld = %#v ", i, p.ChildName, fld)
+					//vv(" dropping down i=%d through EmbedPath at '%s', fld = %#v ", i, p.ChildName, fld)
 				}
-				Q(" fld = %#v ", fld)
+				//vv(" fld = %#v ", fld)
 
 				// INVAR: fld points at our target to fill
 				ptrFld := fld.Addr()
@@ -926,7 +994,7 @@ func SexpToGoStructs(
 				if needed {
 					ptrFld = *tmp
 				}
-				_, err := SexpToGoStructs(pair.Tail, ptrFld.Interface(), env, dedup)
+				_, err := SexpToGoStructs(pair.Tail, ptrFld.Interface(), env, dedup, calldepth+1, top)
 				if err != nil {
 					panic(err)
 					//return nil, err

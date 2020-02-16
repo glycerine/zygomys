@@ -36,7 +36,7 @@ func Test007ParentChildRecordsTranslateToGo(t *testing.T) {
 		cv.So(x.SexpString(nil), cv.ShouldEqual, ` (snoopy chld: (hellcat speed:567))`)
 
 		var sn Snoopy
-		_, err = SexpToGoStructs(x, &sn, env, nil)
+		_, err = SexpToGoStructs(x, &sn, env, nil, 0, &sn)
 		panicOn(err)
 		VPrintf("\n sn = %#v\n", sn)
 		cv.So(sn.Chld, cv.ShouldResemble, &Hellcat{Plane: Plane{Speed: 567}})
@@ -63,7 +63,7 @@ func Test008CallByReflectionWorksWithoutNesting(t *testing.T) {
 			` (hornet speed:567 nickname:"Bob" mass:4.2 SpanCm:8877)`)
 
 		ho := &Hornet{}
-		res, err := SexpToGoStructs(x, ho, env, nil)
+		res, err := SexpToGoStructs(x, ho, env, nil, 0, ho)
 		panicOn(err)
 		VPrintf("\n ho = %#v\n", ho)
 		VPrintf("\n res = %#v\n", res)
@@ -93,7 +93,7 @@ func Test009CallByReflectionWorksWithoutNestingWithoutEmbeds(t *testing.T) {
 			` (hornet nickname:"Bob" mass:4.2)`)
 
 		ho := &Hornet{}
-		res, err := SexpToGoStructs(x, ho, env, nil)
+		res, err := SexpToGoStructs(x, ho, env, nil, 0, ho)
 		panicOn(err)
 		VPrintf("\n ho = %#v\n", ho)
 		VPrintf("\n res = %#v\n", res)
@@ -121,7 +121,7 @@ func Test010WriteIntoSingleInterfaceValueWorks(t *testing.T) {
 		cv.So(x.SexpString(nil), cv.ShouldEqual, ` (snoopy chld: (hellcat speed:567))`)
 
 		var sn Snoopy
-		_, err = SexpToGoStructs(x, &sn, env, nil)
+		_, err = SexpToGoStructs(x, &sn, env, nil, 0, &sn)
 		panicOn(err)
 		VPrintf("\n sn = %#v\n", sn)
 		cv.So(sn.Chld, cv.ShouldResemble, &Hellcat{Plane: Plane{Speed: 567}})
@@ -148,7 +148,7 @@ func Test011TranslationOfArraysWorks(t *testing.T) {
 		cv.So(x.SexpString(nil), cv.ShouldEqual, ` (snoopy pack:[8 9 4])`)
 
 		var sn Snoopy
-		_, err = SexpToGoStructs(x, &sn, env, nil)
+		_, err = SexpToGoStructs(x, &sn, env, nil, 0, &sn)
 		panicOn(err)
 		VPrintf("\n sn = %#v\n", sn)
 		cv.So(&sn, cv.ShouldResemble, &Snoopy{Pack: []int{8, 9, 4}})
@@ -176,7 +176,7 @@ func Test012TranslationOfArraysOfInterfacesWorks(t *testing.T) {
 				` (snoopy carrying:[ (hellcat speed:567)  (hornet SpanCm:12)])`)
 
 			var sn Snoopy
-			_, err = SexpToGoStructs(x, &sn, env, nil)
+			_, err = SexpToGoStructs(x, &sn, env, nil, 0, &sn)
 			panicOn(err)
 			VPrintf("\n sn = %#v\n", sn)
 			cv.So(&sn, cv.ShouldResemble, &Snoopy{
@@ -214,7 +214,7 @@ func Test014TranslationOfArraysOfInterfacesEmbeddedWorks(t *testing.T) {
 			`[ (hellcat speed:567)  (hornet SpanCm:12)])`)
 
 		var sn Snoopy
-		_, err = SexpToGoStructs(x, &sn, env, nil)
+		_, err = SexpToGoStructs(x, &sn, env, nil, 0, &sn)
 		panicOn(err)
 		VPrintf("\n sn = %#v\n", sn)
 		cv.So(&sn, cv.ShouldResemble, &Snoopy{
@@ -254,7 +254,7 @@ func Test016ReflectCallOnGoMethodsZeroArgs(t *testing.T) {
 			`[ (hellcat speed:567)  (hornet SpanCm:12)] cry:"yowza")`)
 
 		var sn Snoopy
-		_, err = SexpToGoStructs(x, &sn, env, nil)
+		_, err = SexpToGoStructs(x, &sn, env, nil, 0, &sn)
 		panicOn(err)
 		VPrintf("\n sn = %#v\n", sn)
 
@@ -297,7 +297,7 @@ func Test017ReflectCallOnGoMethodsOneArg(t *testing.T) {
 				`  (hornet SpanCm:12)] cry:"yowza")`)
 
 		var sn Snoopy
-		_, err = SexpToGoStructs(x, &sn, env, nil)
+		_, err = SexpToGoStructs(x, &sn, env, nil, 0, &sn)
 		panicOn(err)
 		VPrintf("\n sn = %#v\n", sn)
 
@@ -342,7 +342,7 @@ func Test018ReflectCallOnGoMethodsComplexReturnType(t *testing.T) {
 				`[ (hellcat speed:567)  (hornet SpanCm:12)] cry:"yowza")`)
 
 			var sn Snoopy
-			_, err = SexpToGoStructs(x, &sn, env, nil)
+			_, err = SexpToGoStructs(x, &sn, env, nil, 0, &sn)
 			panicOn(err)
 			VPrintf("\n sn = %#v\n", sn)
 

@@ -25,7 +25,7 @@ func Test101ConversionToAndFromMsgpackAndJson(t *testing.T) {
 		P("\n x = %#v /\n\n string: '%s'\n", x, x.SexpString(nil))
 
 		var set SetOfPlanes
-		_, err = SexpToGoStructs(x, &set, env, nil)
+		_, err = SexpToGoStructs(x, &set, env, nil, 0, &set)
 		panicOn(err)
 		P("\n set = %#v\n", set)
 		goon.Dump(set)
