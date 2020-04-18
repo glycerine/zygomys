@@ -53,6 +53,7 @@ func (env *Zlisp) NewParser() *Parser {
 	return p
 }
 
+// Stop stops the parser goroutine at next operand and frees the memory
 func (p *Parser) Stop() error {
 	p.mut.Lock()
 	defer p.mut.Unlock()

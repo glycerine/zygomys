@@ -74,7 +74,7 @@ var ReservedWords = []string{"byte", "defbuild", "builder", "field", "and", "or"
 func NewZlisp() *Zlisp {
 	return NewZlispWithFuncs(AllBuiltinFunctions())
 }
-
+// Stop stops the parser goroutine at next operand and frees the memory
 func (env *Zlisp) Stop() error {
 	return env.parser.Stop()
 }
