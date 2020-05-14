@@ -1,8 +1,11 @@
 package zygo
 
 import (
+	"fmt"
 	"io"
 )
+
+var _ = fmt.Printf
 
 // ParserI is implemented by Parser and LazyParser
 type ParserI interface {
@@ -37,52 +40,63 @@ func (s *LazyParser) cleanupHelper() {
 
 }
 
-func (s *LazyParser) Stop() error {
+func (s *LazyParser) Stop() (err error) {
 	if s.psr != nil {
-		return s.psr.Stop()
+		err = s.psr.Stop()
+		s.psr = nil
 	}
-	return nil
+	return
 }
 
 // Start is lazy, so this is a no-op.
-func (s *LazyParser) Start() {}
+func (s *LazyParser) Start() {
+	s.psr = nil
+}
+
+func (s *LazyParser) refresh() {
+	if s.psr == nil {
+		s.psr = s.env.NewParser()
+		s.psr.EagerlyRetireParserGoro = true
+		s.psr.Start()
+	}
+}
 
 func (s *LazyParser) Reset() {
 	if s.psr != nil {
-		//s.psr.Stop()
-		s.psr.Reset()
+		s.psr.Stop()
+		s.psr = nil
+		//s.psr.Reset()
 	}
 }
 func (s *LazyParser) NewInput(sc io.RuneScanner) {
-	if s.psr == nil {
-		s.psr = s.env.NewParser()
-		s.psr.Start()
-	}
+	s.refresh()
 	s.psr.NewInput(sc)
 }
 func (s *LazyParser) ResetAddNewInput(sc io.RuneScanner) {
-	if s.psr == nil {
-		s.psr = s.env.NewParser()
-		s.psr.Start()
-	}
+	s.refresh()
 	s.psr.ResetAddNewInput(sc)
 }
 
 func (s *LazyParser) ParseExpression(depth int) (res Sexp, err error) {
-	if s.psr == nil {
-		s.psr = s.env.NewParser()
-		s.psr.Start()
-	}
+	s.refresh()
 	res, err = s.psr.ParseExpression(depth)
+	if err != nil {
+		fmt.Printf("err in lazy ParseExpression is '%v'", err)
+	}
 	s.cleanupHelper()
 	return
 }
 func (s *LazyParser) ParseTokens() (sx []Sexp, err error) {
-	if s.psr == nil {
-		s.psr = s.env.NewParser()
-		s.psr.Start()
-	}
+	s.refresh()
 	sx, err = s.psr.ParseTokens()
+	if err != nil {
+		//fmt.Printf("err in lazy ParseTokens is '%v'", err)
+		if err == ErrParserTimeout {
+			s.psr = nil
+			s.refresh()
+			sx, err = s.psr.ParseTokens()
+		}
+	}
 	s.cleanupHelper()
 	return
 }
