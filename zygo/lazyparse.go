@@ -56,7 +56,8 @@ func (s *LazyParser) Start() {
 func (s *LazyParser) refresh() {
 	if s.psr == nil {
 		s.psr = s.env.NewParser()
-		s.psr.EagerlyRetireParserGoro = true
+		// shut it off for now, while still work in progress.
+		//s.psr.EagerlyRetireParserGoro = true
 		s.psr.Start()
 	}
 }
