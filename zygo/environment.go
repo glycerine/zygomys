@@ -15,7 +15,7 @@ type PreHook func(*Zlisp, string, []Sexp)
 type PostHook func(*Zlisp, string, Sexp)
 
 type Zlisp struct {
-	parser    *Parser
+	parser    ParserI
 	datastack *Stack
 	addrstack *Stack
 
@@ -89,7 +89,7 @@ func NewZlispSandbox() *Zlisp {
 func NewZlispWithFuncs(funcs map[string]ZlispUserFunction) *Zlisp {
 	env := new(Zlisp)
 	env.baseTypeCtor = MakeUserFunction("__basetype_ctor", BaseTypeConstructorFunction)
-	env.parser = env.NewParser()
+	env.parser = env.NewLazyParser()
 	env.parser.Start()
 	env.datastack = env.NewStack(DataStackSize)
 	env.linearstack = env.NewStack(ScopeStackSize)
@@ -440,7 +440,7 @@ func (env *Zlisp) ParseFile(file string) ([]Sexp, error) {
 	env.parser.NewInput(bufio.NewReader(in))
 	exp, err = env.parser.ParseTokens()
 	if err != nil {
-		return nil, fmt.Errorf("Error on line %d: %v\n", env.parser.lexer.Linenum(), err)
+		return nil, fmt.Errorf("Error on line %d: %v\n", env.parser.Linenum(), err)
 	}
 
 	in.Close()
@@ -452,7 +452,7 @@ func (env *Zlisp) LoadStream(stream io.RuneScanner) error {
 	env.parser.ResetAddNewInput(stream)
 	expressions, err := env.parser.ParseTokens()
 	if err != nil {
-		return fmt.Errorf("Error on line %d: %v\n", env.parser.lexer.Linenum(), err)
+		return fmt.Errorf("Error on line %d: %v\n", env.parser.Linenum(), err)
 	}
 	return env.LoadExpressions(expressions)
 }

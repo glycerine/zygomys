@@ -84,7 +84,7 @@ func (env *Zlisp) SourceStream(stream io.RuneScanner) error {
 	expressions, err := env.parser.ParseTokens()
 	if err != nil {
 		return errors.New(fmt.Sprintf(
-			"Error parsing on line %d: %v\n", env.parser.lexer.Linenum(), err))
+			"Error parsing on line %d: %v\n", env.parser.Linenum(), err))
 	}
 
 	return env.SourceExpressions(expressions)

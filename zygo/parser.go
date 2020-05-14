@@ -640,3 +640,7 @@ func (parser *Parser) ParseInfix(depth int) (Sexp, error) {
 	return &list, nil
 	//return &SexpArray{Val: arr, Infix: true, Env: env}, nil
 }
+
+func (parser *Parser) Linenum() int {
+	return parser.lexer.Linenum()
+}

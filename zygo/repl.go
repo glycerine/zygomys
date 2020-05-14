@@ -137,7 +137,7 @@ func (pr *Prompter) getExpressionWithLiner(env *Zlisp, reader *bufio.Reader, noL
 		case ErrMoreInputNeeded:
 			continue
 		default:
-			return "", nil, fmt.Errorf("Error on line %d: %v\n", env.parser.lexer.Linenum(), err)
+			return "", nil, fmt.Errorf("Error on line %d: %v\n", env.parser.Linenum(), err)
 		}
 	}
 	return line, xs, nil
