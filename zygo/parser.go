@@ -160,7 +160,7 @@ func (p *Parser) GetMoreInput(deliverThese []Sexp, errorToReport error) error {
 		case <-chTimeout:
 			recur := atomic.LoadInt64(&p.recur)
 			if recur == 0 {
-				vv("recur == 0, timing out. num goro = %v", runtime.NumGoroutine())
+				//vv("recur == 0, timing out. num goro = %v", runtime.NumGoroutine())
 				//fmt.Printf("timing out\n")
 				close(p.timeout)
 				return ErrParserTimeout
@@ -340,13 +340,13 @@ func (parser *Parser) ParseExpression(depth int) (res Sexp, err error) {
 	atomic.AddInt64(&parser.recur, 1)
 	defer atomic.AddInt64(&parser.recur, -1)
 
-	defer func() {
-		if res != nil {
-			//Q("returning from ParseExpression at depth=%v with res='%s'\n", depth, res.SexpString(nil))
-		} else {
-			//Q("returning from ParseExpression at depth=%v, res = nil", depth)
-		}
-	}()
+	// defer func() {
+	// 	if res != nil {
+	// 		//Q("returning from ParseExpression at depth=%v with res='%s'\n", depth, res.SexpString(nil))
+	// 	} else {
+	// 		//Q("returning from ParseExpression at depth=%v, res = nil", depth)
+	// 	}
+	// }()
 
 	lexer := parser.lexer
 	env := parser.env
@@ -513,11 +513,11 @@ func (parser *Parser) ParseExpression(depth int) (res Sexp, err error) {
 func (p *Parser) ParseTokens() ([]Sexp, error) {
 	select {
 	case out := <-p.ParsedOutput:
-		Q("ParseTokens got p.ParsedOutput out: '%#v'", out)
+		//Q("ParseTokens got p.ParsedOutput out: '%#v'", out)
 		r := make([]Sexp, 0)
 		for _, k := range out {
 			r = append(r, k.Expr...)
-			Q("\n ParseTokens k.Expr = '%v'\n\n", (&SexpArray{Val: k.Expr, Env: p.env}).SexpString(nil))
+			//Q("\n ParseTokens k.Expr = '%v'\n\n", (&SexpArray{Val: k.Expr, Env: p.env}).SexpString(nil))
 			if k.Err != nil {
 				return r, k.Err
 			}
@@ -664,12 +664,12 @@ func (parser *Parser) ParseInfix(depth int) (Sexp, error) {
 			break
 		}
 
-		Q("debug: ParseInfix(depth=%v) calling ParseExpression", depth)
+		//Q("debug: ParseInfix(depth=%v) calling ParseExpression", depth)
 		expr, err := parser.ParseExpression(depth + 1)
 		if err != nil {
 			return SexpNull, err
 		}
-		Q("debug2: ParseInfix(depth=%v) appending expr = '%v'", depth, expr.SexpString(nil))
+		//Q("debug2: ParseInfix(depth=%v) appending expr = '%v'", depth, expr.SexpString(nil))
 
 		arr = append(arr, expr)
 	}

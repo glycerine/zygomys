@@ -38,7 +38,7 @@ func Test007ParentChildRecordsTranslateToGo(t *testing.T) {
 		var sn Snoopy
 		_, err = SexpToGoStructs(x, &sn, env, nil, 0, &sn)
 		panicOn(err)
-		VPrintf("\n sn = %#v\n", sn)
+		//VPrintf("\n sn = %#v\n", sn)
 		cv.So(sn.Chld, cv.ShouldResemble, &Hellcat{Plane: Plane{Speed: 567}})
 	})
 }
@@ -64,9 +64,10 @@ func Test008CallByReflectionWorksWithoutNesting(t *testing.T) {
 
 		ho := &Hornet{}
 		res, err := SexpToGoStructs(x, ho, env, nil, 0, ho)
+		_ = res
 		panicOn(err)
-		VPrintf("\n ho = %#v\n", ho)
-		VPrintf("\n res = %#v\n", res)
+		//VPrintf("\n ho = %#v\n", ho)
+		//VPrintf("\n res = %#v\n", res)
 		cv.So(ho, cv.ShouldResemble, &Hornet{Plane: Plane{
 			Wings: Wings{SpanCm: 8877}, Speed: 567},
 			Nickname: "Bob", Mass: 4.2})
@@ -94,9 +95,10 @@ func Test009CallByReflectionWorksWithoutNestingWithoutEmbeds(t *testing.T) {
 
 		ho := &Hornet{}
 		res, err := SexpToGoStructs(x, ho, env, nil, 0, ho)
+		_ = res
 		panicOn(err)
-		VPrintf("\n ho = %#v\n", ho)
-		VPrintf("\n res = %#v\n", res)
+		//VPrintf("\n ho = %#v\n", ho)
+		//VPrintf("\n res = %#v\n", res)
 		cv.So(ho, cv.ShouldResemble, &Hornet{Nickname: "Bob", Mass: 4.2})
 	})
 }
@@ -123,7 +125,7 @@ func Test010WriteIntoSingleInterfaceValueWorks(t *testing.T) {
 		var sn Snoopy
 		_, err = SexpToGoStructs(x, &sn, env, nil, 0, &sn)
 		panicOn(err)
-		VPrintf("\n sn = %#v\n", sn)
+		//VPrintf("\n sn = %#v\n", sn)
 		cv.So(sn.Chld, cv.ShouldResemble, &Hellcat{Plane: Plane{Speed: 567}})
 
 	})
@@ -150,7 +152,7 @@ func Test011TranslationOfArraysWorks(t *testing.T) {
 		var sn Snoopy
 		_, err = SexpToGoStructs(x, &sn, env, nil, 0, &sn)
 		panicOn(err)
-		VPrintf("\n sn = %#v\n", sn)
+		//VPrintf("\n sn = %#v\n", sn)
 		cv.So(&sn, cv.ShouldResemble, &Snoopy{Pack: []int{8, 9, 4}})
 	})
 }
@@ -178,7 +180,7 @@ func Test012TranslationOfArraysOfInterfacesWorks(t *testing.T) {
 			var sn Snoopy
 			_, err = SexpToGoStructs(x, &sn, env, nil, 0, &sn)
 			panicOn(err)
-			VPrintf("\n sn = %#v\n", sn)
+			//VPrintf("\n sn = %#v\n", sn)
 			cv.So(&sn, cv.ShouldResemble, &Snoopy{
 				Carrying: []Flyer{
 					&Hellcat{
@@ -216,7 +218,7 @@ func Test014TranslationOfArraysOfInterfacesEmbeddedWorks(t *testing.T) {
 		var sn Snoopy
 		_, err = SexpToGoStructs(x, &sn, env, nil, 0, &sn)
 		panicOn(err)
-		VPrintf("\n sn = %#v\n", sn)
+		//VPrintf("\n sn = %#v\n", sn)
 		cv.So(&sn, cv.ShouldResemble, &Snoopy{
 			Plane: Plane{
 				Friends: []Flyer{
@@ -256,20 +258,20 @@ func Test016ReflectCallOnGoMethodsZeroArgs(t *testing.T) {
 		var sn Snoopy
 		_, err = SexpToGoStructs(x, &sn, env, nil, 0, &sn)
 		panicOn(err)
-		VPrintf("\n sn = %#v\n", sn)
+		//VPrintf("\n sn = %#v\n", sn)
 
 		invok, err := env.EvalString(`
 		   (_method snoop GetCry: )
 		   `)
 		panicOn(err)
-		VPrintf("got invoke =  %T/val=%#v\n", invok, invok)
+		//VPrintf("got invoke =  %T/val=%#v\n", invok, invok)
 
 		switch arr := invok.(type) {
 		case *SexpArray:
 			// arr[0] should be string
 			cv.So(arr.Val[0].(*SexpStr).S, cv.ShouldEqual, "yowza")
 		default:
-			VPrintf("got %T/val=%#v\n", arr, arr)
+			//VPrintf("got %T/val=%#v\n", arr, arr)
 			panic("expected array back from _method")
 		}
 
@@ -299,14 +301,14 @@ func Test017ReflectCallOnGoMethodsOneArg(t *testing.T) {
 		var sn Snoopy
 		_, err = SexpToGoStructs(x, &sn, env, nil, 0, &sn)
 		panicOn(err)
-		VPrintf("\n sn = %#v\n", sn)
+		//VPrintf("\n sn = %#v\n", sn)
 
 		invok, err := env.EvalString(`
 			   (_method snoop Fly: (weather time:(now) size:12 ` +
 			`type:"sunny" details:(raw "123")))
 			   `)
 		panicOn(err)
-		VPrintf("got invoke =  %T/val=%#v\n", invok, invok)
+		//VPrintf("got invoke =  %T/val=%#v\n", invok, invok)
 
 		switch arr := invok.(type) {
 		case *SexpArray:
@@ -314,7 +316,7 @@ func Test017ReflectCallOnGoMethodsOneArg(t *testing.T) {
 			cv.So(arr.Val[0].(*SexpStr).S, cv.ShouldEqual,
 				`Snoopy sees weather 'VERY sunny', cries 'yowza'`)
 		default:
-			VPrintf("got %T/val=%#v\n", arr, arr)
+			//VPrintf("got %T/val=%#v\n", arr, arr)
 			panic("expected array back from _method")
 		}
 
@@ -344,14 +346,14 @@ func Test018ReflectCallOnGoMethodsComplexReturnType(t *testing.T) {
 			var sn Snoopy
 			_, err = SexpToGoStructs(x, &sn, env, nil, 0, &sn)
 			panicOn(err)
-			VPrintf("\n sn = %#v\n", sn)
+			//VPrintf("\n sn = %#v\n", sn)
 
 			invok, err := env.EvalString(`
 			   (_method snoop EchoWeather: (weather time:(now) size:12 ` +
 				`type:"sunny" details:(raw "123")))
 			   `)
 			panicOn(err)
-			VPrintf("got invoke = '%s'\n", invok.SexpString(nil))
+			//VPrintf("got invoke = '%s'\n", invok.SexpString(nil))
 			cv.So(invok.SexpString(nil), cv.ShouldEqual, `[ (weather time:nil`+
 				` size:12 type:"sunny" details:[]byte{0x31, 0x32, 0x33})]`)
 		})
