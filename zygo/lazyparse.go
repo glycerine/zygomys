@@ -57,7 +57,7 @@ func (s *LazyParser) refresh() {
 	if s.psr == nil {
 		s.psr = s.env.NewParser()
 		// shut it off for now, while still work in progress.
-		//s.psr.EagerlyRetireParserGoro = true
+		s.psr.EagerlyRetireParserGoro = true
 		s.psr.Start()
 	}
 }
@@ -91,7 +91,7 @@ func (s *LazyParser) ParseTokens() (sx []Sexp, err error) {
 	s.refresh()
 	sx, err = s.psr.ParseTokens()
 	if err != nil {
-		//fmt.Printf("err in lazy ParseTokens is '%v'", err)
+		//fmt.Printf("err in lazy ParseTokens is '%v'\n", err)
 		if err == ErrParserTimeout {
 			s.psr = nil
 			s.refresh()
