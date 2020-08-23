@@ -124,8 +124,8 @@ func (g EnvToStackInstr) InstrString() string {
 }
 
 func (g EnvToStackInstr) Execute(env *Zlisp) error {
-	VPrintf("in EnvToStackInstr\n")
-	defer VPrintf("leaving EnvToStackInstr env.pc =%v\n", env.pc)
+	//VPrintf("in EnvToStackInstr\n")
+	//defer VPrintf("leaving EnvToStackInstr env.pc =%v\n", env.pc)
 
 	macxpr, isMacro := env.macros[g.sym.number]
 	if isMacro {
@@ -608,7 +608,7 @@ func (s ContinueInstr) InstrString() string {
 }
 
 func (s *ContinueInstr) Execute(env *Zlisp) error {
-	VPrintf("\n executing ContinueInstr with loop: '%#v'\n", s.loop)
+	//VPrintf("\n executing ContinueInstr with loop: '%#v'\n", s.loop)
 	if s.pos == 0 {
 		pos, err := env.FindLoop(s.loop)
 		if err != nil {
@@ -617,7 +617,7 @@ func (s *ContinueInstr) Execute(env *Zlisp) error {
 		s.pos = pos
 	}
 	env.pc = s.pos + s.loop.continueOffset
-	VPrintf("\n  more detail ContinueInstr pos=%d, setting pc = %d\n", s.pos, env.pc)
+	//VPrintf("\n  more detail ContinueInstr pos=%d, setting pc = %d\n", s.pos, env.pc)
 	return nil
 }
 
@@ -754,16 +754,14 @@ func (a CreateClosureInstr) Execute(env *Zlisp) error {
 	}
 
 	ps8 := NewPrintStateWithIndent(8)
-	shown, err := myInvok.ShowClosing(env, ps8,
-		fmt.Sprintf("closedOverScopes of '%s'", myInvok.name))
+	shown, err := myInvok.ShowClosing(env, ps8, fmt.Sprintf("closedOverScopes of '%s'", myInvok.name))
+	_ = shown
 	if err != nil {
 		return err
 	}
-	VPrintf("+++ CreateClosure: assign to '%s' the stack:\n\n%s\n\n",
-		myInvok.SexpString(nil), shown)
+	//VPrintf("+++ CreateClosure: assign to '%s' the stack:\n\n%s\n\n",		myInvok.SexpString(nil), shown)
 	top := cls.TopScope()
-	VPrintf("222 CreateClosure: top of NewClosing Scope has addr %p and is\n",
-		top)
+	//VPrintf("222 CreateClosure: top of NewClosing Scope has addr %p and is\n",		top)
 	top.Show(env, ps8, fmt.Sprintf("top of NewClosing at %p", top))
 
 	env.datastack.PushExpr(myInvok)

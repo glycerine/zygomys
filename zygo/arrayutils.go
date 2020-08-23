@@ -40,7 +40,7 @@ func ConcatArray(arr *SexpArray, rest []Sexp) (Sexp, error) {
 
 // (arrayidx ar [0 1])
 func ArrayIndexFunction(env *Zlisp, name string, args []Sexp) (Sexp, error) {
-	Q("in ArrayIndexFunction, args = '%#v'", args)
+	//Q("in ArrayIndexFunction, args = '%#v'", args)
 	narg := len(args)
 	if narg != 2 {
 		return SexpNull, WrongNargs
@@ -72,7 +72,7 @@ func ArrayIndexFunction(env *Zlisp, name string, args []Sexp) (Sexp, error) {
 	case *SexpHash:
 		return HashIndexFunction(env, name, args)
 	case *SexpHashSelector:
-		Q("ArrayIndexFunction sees args[0] is a hashSelector")
+		//Q("ArrayIndexFunction sees args[0] is a hashSelector")
 		return HashIndexFunction(env, name, args)
 	default:
 		return SexpNull, fmt.Errorf("bad (arrayidx ar index) call: ar was not an array, instead '%s'/type %T",
@@ -145,15 +145,15 @@ type SexpArraySelector struct {
 }
 
 func (si *SexpArraySelector) SexpString(ps *PrintState) string {
-	Q("in SexpArraySelector.SexpString(), si.Container.Env = %p", si.Container.Env)
+	//Q("in SexpArraySelector.SexpString(), si.Container.Env = %p", si.Container.Env)
 	rhs, err := si.RHS(si.Container.Env)
 	if err != nil {
 		return fmt.Sprintf("(arraySelector %v %v)", si.Container.SexpString(ps), si.Select.SexpString(ps))
 	}
 
-	Q("in SexpArraySelector.SexpString(), rhs = %v", rhs.SexpString(ps))
-	Q("in SexpArraySelector.SexpString(), si.Container = %v", si.Container.SexpString(ps))
-	Q("in SexpArraySelector.SexpString(), si.Select = %v", si.Select.SexpString(ps))
+	//Q("in SexpArraySelector.SexpString(), rhs = %v", rhs.SexpString(ps))
+	//Q("in SexpArraySelector.SexpString(), si.Container = %v", si.Container.SexpString(ps))
+	//Q("in SexpArraySelector.SexpString(), si.Select = %v", si.Select.SexpString(ps))
 
 	return fmt.Sprintf("%v /*(arraySelector %v %v)*/", rhs.SexpString(ps), si.Container.SexpString(ps), si.Select.SexpString(ps))
 }
@@ -187,7 +187,7 @@ func (x *SexpArraySelector) RHS(env *Zlisp) (Sexp, error) {
 			"%v is out-of-bounds; length is %v", i, len(x.Container.Val))
 	}
 	ret := x.Container.Val[i]
-	Q("arraySelector returning ret = %#v", ret)
+	//Q("arraySelector returning ret = %#v", ret)
 	return ret, nil
 }
 

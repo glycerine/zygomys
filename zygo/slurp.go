@@ -57,7 +57,7 @@ func SlurpfileFunction(env *Zlisp, name string, args []Sexp) (Sexp, error) {
 		}
 	}
 
-	VPrintf("read %d lines\n", lineNum)
+	//VPrintf("read %d lines\n", lineNum)
 	return env.NewSexpArray(a), nil
 }
 

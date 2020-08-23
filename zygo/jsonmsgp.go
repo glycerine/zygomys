@@ -131,7 +131,7 @@ func (hash *SexpHash) jsonHashHelper() string {
 	}
 	str += "]}"
 
-	VPrintf("\n\n final ToJson() str = '%s'\n", str)
+	//VPrintf("\n\n final ToJson() str = '%s'\n", str)
 	return str
 }
 
@@ -203,8 +203,8 @@ func JsonToGo(json []byte) (interface{}, error) {
 	if err != nil {
 		panic(err)
 	}
-	VPrintf("\n decoded type : %T\n", iface)
-	VPrintf("\n decoded value: %#v\n", iface)
+	//VPrintf("\n decoded type : %T\n", iface)
+	//VPrintf("\n decoded value: %#v\n", iface)
 	return iface, nil
 }
 
@@ -265,7 +265,7 @@ func GoToSexp(iface interface{}, env *Zlisp) (Sexp, error) {
 
 func decodeGoToSexpHelper(r interface{}, depth int, env *Zlisp, preferSym bool) (s Sexp) {
 
-	VPrintf("decodeHelper() at depth %d, decoded type is %T\n", depth, r)
+	//VPrintf("decodeHelper() at depth %d, decoded type is %T\n", depth, r)
 	switch val := r.(type) {
 	case string:
 		//VPrintf("depth %d found string case: val = %#v\n", depth, val)
@@ -275,23 +275,23 @@ func decodeGoToSexpHelper(r interface{}, depth int, env *Zlisp, preferSym bool) 
 		return &SexpStr{S: val}
 
 	case int:
-		VPrintf("depth %d found int case: val = %#v\n", depth, val)
+		//VPrintf("depth %d found int case: val = %#v\n", depth, val)
 		return &SexpInt{Val: int64(val)}
 
 	case int32:
-		VPrintf("depth %d found int32 case: val = %#v\n", depth, val)
+		//VPrintf("depth %d found int32 case: val = %#v\n", depth, val)
 		return &SexpInt{Val: int64(val)}
 
 	case int64:
-		VPrintf("depth %d found int64 case: val = %#v\n", depth, val)
+		//VPrintf("depth %d found int64 case: val = %#v\n", depth, val)
 		return &SexpInt{Val: val}
 
 	case float64:
-		VPrintf("depth %d found float64 case: val = %#v\n", depth, val)
+		//VPrintf("depth %d found float64 case: val = %#v\n", depth, val)
 		return &SexpFloat{Val: val}
 
 	case []interface{}:
-		VPrintf("depth %d found []interface{} case: val = %#v\n", depth, val)
+		//VPrintf("depth %d found []interface{} case: val = %#v\n", depth, val)
 
 		slice := []Sexp{}
 		for i := range val {
@@ -301,7 +301,7 @@ func decodeGoToSexpHelper(r interface{}, depth int, env *Zlisp, preferSym bool) 
 
 	case map[string]interface{}:
 
-		VPrintf("depth %d found map[string]interface case: val = %#v\n", depth, val)
+		//VPrintf("depth %d found map[string]interface case: val = %#v\n", depth, val)
 		sortedMapKey, sortedMapVal := makeSortedSlicesFromMap(val)
 
 		pairs := make([]Sexp, 0)
@@ -311,8 +311,8 @@ func decodeGoToSexpHelper(r interface{}, depth int, env *Zlisp, preferSym bool) 
 		foundzKeyOrder := false
 		for i := range sortedMapKey {
 			// special field storing the name of our record (defmap) type.
-			VPrintf("\n i=%d sortedMapVal type %T, value=%v\n", i, sortedMapVal[i], sortedMapVal[i])
-			VPrintf("\n i=%d sortedMapKey type %T, value=%v\n", i, sortedMapKey[i], sortedMapKey[i])
+			//VPrintf("\n i=%d sortedMapVal type %T, value=%v\n", i, sortedMapVal[i], sortedMapVal[i])
+			//VPrintf("\n i=%d sortedMapKey type %T, value=%v\n", i, sortedMapKey[i], sortedMapKey[i])
 			if sortedMapKey[i] == "zKeyOrder" {
 				keyOrd = decodeGoToSexpHelper(sortedMapVal[i], depth+1, env, true)
 				foundzKeyOrder = true
@@ -337,7 +337,7 @@ func decodeGoToSexpHelper(r interface{}, depth int, env *Zlisp, preferSym bool) 
 		return hash
 
 	case []byte:
-		VPrintf("depth %d found []byte case: val = %#v\n", depth, val)
+		//VPrintf("depth %d found []byte case: val = %#v\n", depth, val)
 
 		return &SexpRaw{Val: val}
 

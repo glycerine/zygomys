@@ -335,7 +335,7 @@ func (env *Zlisp) ReturnFromFunction() error {
 
 func (env *Zlisp) CallUserFunction(
 	function *SexpFunction, name string, nargs int) (nargReturned int, err error) {
-	Q("CallUserFunction calling name '%s' with nargs=%v", name, nargs)
+	//Q("CallUserFunction calling name '%s' with nargs=%v", name, nargs)
 	for _, prehook := range env.before {
 		expressions, err := env.datastack.GetExpressions(nargs)
 		if err != nil {
@@ -462,7 +462,7 @@ func (env *Zlisp) EvalString(str string) (Sexp, error) {
 	if err != nil {
 		return SexpNull, err
 	}
-	VPrintf("\n EvalString: LoadString() done, now to Run():\n")
+	//VPrintf("\n EvalString: LoadString() done, now to Run():\n")
 	return env.Run()
 }
 
@@ -598,7 +598,7 @@ func (env *Zlisp) FindObject(name string) (Sexp, bool) {
 }
 
 func (env *Zlisp) Apply(fun *SexpFunction, args []Sexp) (Sexp, error) {
-	VPrintf("\n\n debug Apply not working on user funcs: fun = '%#v'   and args = '%#v'\n\n", fun, args)
+	//VPrintf("\n\n debug Apply not working on user funcs: fun = '%#v'   and args = '%#v'\n\n", fun, args)
 	if fun.user {
 		return fun.userfun(env, fun.name, args)
 	}

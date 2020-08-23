@@ -155,6 +155,8 @@ func processDumpCommand(env *Zlisp, args []string) {
 }
 
 func Repl(env *Zlisp, cfg *ZlispConfig) {
+	vv("Repl top 888888888888")
+
 	var reader *bufio.Reader
 	if cfg.NoLiner {
 		// reader is used if one wishes to drop the liner library.

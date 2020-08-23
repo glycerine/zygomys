@@ -760,7 +760,7 @@ func MapFunction(env *Zlisp, name string, args []Sexp) (Sexp, error) {
 	}
 	var fun *SexpFunction
 
-	VPrintf("\n debug Map: args = '%#v'\n", args)
+	//VPrintf("\n debug Map: args = '%#v'\n", args)
 
 	switch e := args[0].(type) {
 	case *SexpFunction:
@@ -819,13 +819,13 @@ func ConstructorFunction(env *Zlisp, name string, args []Sexp) (Sexp, error) {
 	case "raw":
 		return MakeRaw(args)
 	case "field":
-		Q("making hash for field")
+		//Q("making hash for field")
 		h, err := MakeHash(args, "field", env)
 		if err != nil {
 			return SexpNull, err
 		}
 		fld := (*SexpField)(h)
-		Q("hash for field is: '%v'", fld.SexpString(nil))
+		//Q("hash for field is: '%v'", fld.SexpString(nil))
 		return fld, nil
 	case "struct":
 		return MakeHash(args, "struct", env)
@@ -1232,8 +1232,7 @@ func StopFunction(env *Zlisp, name string, args []Sexp) (Sexp, error) {
 
 // the assignment function, =
 func AssignmentFunction(env *Zlisp, name string, args []Sexp) (Sexp, error) {
-	Q("\n AssignmentFunction called with name ='%s'. args='%s'\n", name,
-		env.NewSexpArray(args).SexpString(nil))
+	//Q("\n AssignmentFunction called with name ='%s'. args='%s'\n", name, env.NewSexpArray(args).SexpString(nil))
 
 	narg := len(args)
 	if narg != 2 {
@@ -1254,8 +1253,7 @@ func AssignmentFunction(env *Zlisp, name string, args []Sexp) (Sexp, error) {
 	}
 
 	if !sym.isDot {
-		Q("assignment sees LHS symbol but is not dot, binding '%s' to '%s'\n",
-			sym.name, args[1].SexpString(nil))
+		//Q("assignment sees LHS symbol but is not dot, binding '%s' to '%s'\n", sym.name, args[1].SexpString(nil))
 		err := env.LexicalBindSymbol(sym, args[1])
 		if err != nil {
 			return SexpNull, err
@@ -1263,7 +1261,7 @@ func AssignmentFunction(env *Zlisp, name string, args []Sexp) (Sexp, error) {
 		return args[1], nil
 	}
 
-	Q("assignment calling dotGetSetHelper()\n")
+	//Q("assignment calling dotGetSetHelper()\n")
 	return dotGetSetHelper(env, sym.name, &args[1])
 }
 
@@ -1595,11 +1593,11 @@ func DerefFunction(env *Zlisp, name string, args []Sexp) (result Sexp, err error
 		//P("args[0] has ptr.ReflectTarget = '%#v'", ptr.ReflectTarget)
 		switch payload := args[1].(type) {
 		case *SexpInt:
-			Q("ptr = '%#v'", ptr)
-			Q("ptr.ReflectTarget = '%#v'", ptr.ReflectTarget)
-			Q("ptr.ReflectTarget.CanAddr() = '%#v'", ptr.ReflectTarget.Elem().CanAddr())
-			Q("ptr.ReflectTarget.CanSet() = '%#v'", ptr.ReflectTarget.Elem().CanSet())
-			Q("*SexpInt case: payload = '%#v'", payload)
+			//Q("ptr = '%#v'", ptr)
+			//Q("ptr.ReflectTarget = '%#v'", ptr.ReflectTarget)
+			//Q("ptr.ReflectTarget.CanAddr() = '%#v'", ptr.ReflectTarget.Elem().CanAddr())
+			//Q("ptr.ReflectTarget.CanSet() = '%#v'", ptr.ReflectTarget.Elem().CanSet())
+			//Q("*SexpInt case: payload = '%#v'", payload)
 			vo := reflect.ValueOf(payload.Val)
 			vot := vo.Type()
 			if !vot.AssignableTo(ptr.ReflectTarget.Elem().Type()) {
@@ -1638,14 +1636,15 @@ func DerefFunction(env *Zlisp, name string, args []Sexp) (result Sexp, err error
 			}
 
 		case *SexpReflect:
-			Q("good, e2 is SexpReflect with Val='%#v'", payload.Val)
+			//Q("good, e2 is SexpReflect with Val='%#v'", payload.Val)
 
-			Q("ptr.Target = '%#v'.  ... trying SexpToGoStructs()", ptr.Target)
+			//Q("ptr.Target = '%#v'.  ... trying SexpToGoStructs()", ptr.Target)
 			iface, err := SexpToGoStructs(payload, ptr.Target, env, nil, 0, ptr.Target)
+			_ = iface
 			if err != nil {
 				return SexpNull, err
 			}
-			Q("got back iface = '%#v'", iface)
+			//Q("got back iface = '%#v'", iface)
 			panic("not done yet with this implementation of args[1] of type *SexpReflect")
 		}
 		return SexpNull, fmt.Errorf("derefSet doesn't handle assignment of type %T at present", args[1])
@@ -1696,7 +1695,7 @@ func DotFunction(env *Zlisp, name string, args []Sexp) (Sexp, error) {
 		//Q("\n in dotGetSetHelper(), looking up '%s'\n", key)
 		ret, err, _ = env.LexicalLookupSymbol(env.MakeSymbol(key), false)
 		if err != nil {
-			Q("\n in dotGetSetHelper(), '%s' not found\n", key)
+			//Q("\n in dotGetSetHelper(), '%s' not found\n", key)
 			return SexpNull, err
 		}
 		return ret, err

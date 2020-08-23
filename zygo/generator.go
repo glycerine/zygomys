@@ -78,7 +78,7 @@ func buildSexpFun(
 	funcbody []Sexp,
 	orig Sexp) (*SexpFunction, error) {
 
-	defer func() { VPrintf("exiting buildSexpFun()\n") }()
+	//defer func() { //VPrintf("exiting buildSexpFun()\n") }()
 
 	gen := NewGenerator(env)
 	gen.Tail = true
@@ -114,8 +114,7 @@ func buildSexpFun(
 		nargs = len(argsyms) - 1
 	}
 
-	VPrintf("\n in buildSexpFun(): DumpFunction just before %v args go onto stack\n",
-		len(argsyms))
+	//VPrintf("\n in buildSexpFun(): DumpFunction just before %v args go onto stack\n", len(argsyms))
 	if Working {
 		DumpFunction(ZlispFunction(gen.instructions), -1)
 	}
@@ -155,14 +154,14 @@ func (gen *Generator) GenerateFn(args []Sexp, orig Sexp) error {
 		return fmt.Errorf("function arguments must be in vector")
 	}
 
-	VPrintf("GenerateFn() about to call buildSexpFun\n")
+	//VPrintf("GenerateFn() about to call buildSexpFun\n")
 	funcbody := args[1:]
 	sfun, err := buildSexpFun(gen.env, "", funcargs, funcbody, orig)
 	if err != nil {
 		return err
 	}
 
-	VPrintf("in GenerateFn(): gen of sfun:\n")
+	//VPrintf("in GenerateFn(): gen of sfun:\n")
 	if Working {
 		DumpFunction(sfun.fun, -1)
 	}
@@ -249,14 +248,14 @@ func (gen *Generator) GenerateDefn(args []Sexp, orig Sexp) error {
 			" to define function of same name.", sym.name)
 	}
 
-	VPrintf("GenerateDefn() about to call buildSexpFun\n")
+	//VPrintf("GenerateDefn() about to call buildSexpFun\n")
 
 	sfun, err := buildSexpFun(gen.env, sym.name, funcargs, args[2:], orig)
 	if err != nil {
 		return err
 	}
 
-	VPrintf("in GenerateDefn(): gen of sfun:\n")
+	//VPrintf("in GenerateDefn(): gen of sfun:\n")
 	if Working {
 		DumpFunction(sfun.fun, -1)
 	}
@@ -978,8 +977,7 @@ func (gen *Generator) GenerateForLoop(args []Sexp) error {
 	loop.breakOffset = bottomPos - startPos // previously loop.loopLen
 	loop.continueOffset = continuePos - startPos
 
-	VPrintf("\n debug at end of for loop generation, loop = %#v at address %p\n",
-		loop, loop)
+	//VPrintf("\n debug at end of for loop generation, loop = %#v at address %p\n", loop, loop)
 
 	return nil
 }
@@ -1148,7 +1146,7 @@ func (gen *Generator) generateSyntaxQuoteList(arg Sexp) error {
 		}
 		if issymbol {
 			if sym.name == "unquote" {
-				VPrintf("detected unquote with quotebody[1]='%#v'   arg='%#v'\n", quotebody[1], arg)
+				//VPrintf("detected unquote with quotebody[1]='%#v'   arg='%#v'\n", quotebody[1], arg)
 				gen.Generate(quotebody[1])
 				return nil
 			} else if sym.name == "unquote-splicing" {
@@ -1171,7 +1169,7 @@ func (gen *Generator) generateSyntaxQuoteList(arg Sexp) error {
 }
 
 func (gen *Generator) generateSyntaxQuoteArray(arg Sexp) error {
-	VPrintf("\n GenerateSyntaxQuoteArray() called with arg='%#v'\n", arg)
+	//VPrintf("\n GenerateSyntaxQuoteArray() called with arg='%#v'\n", arg)
 
 	var arr *SexpArray
 	switch a := arg.(type) {
@@ -1194,7 +1192,7 @@ func (gen *Generator) generateSyntaxQuoteArray(arg Sexp) error {
 }
 
 func (gen *Generator) generateSyntaxQuoteHash(arg Sexp) error {
-	VPrintf("\n GenerateSyntaxQuoteHash() called with arg='%#v'\n", arg)
+	//VPrintf("\n GenerateSyntaxQuoteHash() called with arg='%#v'\n", arg)
 
 	var hash *SexpHash
 	switch a := arg.(type) {
@@ -1291,8 +1289,7 @@ scanUpTheLoops:
 			labelsym.name, labelsym.name)
 	}
 
-	myPos := len(gen.instructions)
-	VPrintf("\n debug GenerateContinue() : myPos =%d  loop=%#v\n", myPos, loop)
+	//VPrintf("\n debug GenerateContinue() : myPos =%d  loop=%#v\n", len(gen.instructions), loop)
 	gen.AddInstruction(&ContinueInstr{loop: loop})
 	return nil
 }
@@ -1360,7 +1357,7 @@ scanUpTheLoops:
 			labelsym.name, labelsym.name)
 	}
 
-	VPrintf("\n debug GenerateBreak() : loop=%#v\n", loop)
+	//VPrintf("\n debug GenerateBreak() : loop=%#v\n", loop)
 	gen.AddInstruction(&BreakInstr{loop: loop})
 
 	return nil

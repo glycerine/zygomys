@@ -41,7 +41,9 @@ func (s *LazyParser) cleanupHelper() {
 }
 
 func (s *LazyParser) Stop() (err error) {
+	vv("LazyParser.Stop()")
 	if s.psr != nil {
+		vv("LazyParser.Stop() calling psr.Stop()")
 		err = s.psr.Stop()
 		s.psr = nil
 	}
@@ -50,10 +52,12 @@ func (s *LazyParser) Stop() (err error) {
 
 // Start is lazy, so this is a no-op.
 func (s *LazyParser) Start() {
+	vv("LazyParser.Start()")
 	s.psr = nil
 }
 
 func (s *LazyParser) refresh() {
+	vv("LazyParser.refresh()")
 	if s.psr == nil {
 		s.psr = s.env.NewParser()
 		// shut it off for now, while still work in progress.
@@ -63,6 +67,7 @@ func (s *LazyParser) refresh() {
 }
 
 func (s *LazyParser) Reset() {
+	vv("LazyParser.Reset()")
 	if s.psr != nil {
 		s.psr.Stop()
 		s.psr = nil

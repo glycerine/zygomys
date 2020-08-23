@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"math"
+	"runtime"
 	"strconv"
 	"strings"
 	"sync"
@@ -13,6 +14,7 @@ import (
 )
 
 var NaN float64
+var _ = runtime.NumGoroutine
 
 func init() {
 	NaN = math.NaN()
@@ -158,6 +160,7 @@ func (p *Parser) GetMoreInput(deliverThese []Sexp, errorToReport error) error {
 		case <-chTimeout:
 			recur := atomic.LoadInt64(&p.recur)
 			if recur == 0 {
+				vv("recur == 0, timing out. num goro = %v", runtime.NumGoroutine())
 				//fmt.Printf("timing out\n")
 				close(p.timeout)
 				return ErrParserTimeout

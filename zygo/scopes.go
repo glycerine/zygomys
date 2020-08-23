@@ -147,7 +147,7 @@ func (stack *Stack) LookupSymbolUntilFunction(sym *SexpSymbol, setVal *Sexp, max
 			}
 			switch scope := elem.(type) {
 			case (*Scope):
-				VPrintf("   ...looking up in scope '%s'\n", scope.Name)
+				//VPrintf("   ...looking up in scope '%s'\n", scope.Name)
 				expr, ok := scope.Map[sym.number]
 				if ok {
 					if setVal != nil {

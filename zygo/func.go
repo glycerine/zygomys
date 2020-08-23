@@ -25,6 +25,7 @@ func FuncBuilder(env *Zlisp, name string,
 	returnsLoc := 2
 	bodyLoc := 3
 	isAnon := false
+	_ = isAnon
 
 	var symN *SexpSymbol
 	switch b := args[0].(type) {
@@ -59,7 +60,7 @@ func FuncBuilder(env *Zlisp, name string,
 	default:
 		return SexpNull, fmt.Errorf("bad func name: symbol required")
 	}
-	Q("good: have func name '%v'", symN.name)
+	//Q("good: have func name '%v'", symN.name)
 	funcName := symN.name
 
 	builtin, builtTyp := env.IsBuiltinSym(symN)
@@ -104,30 +105,30 @@ func FuncBuilder(env *Zlisp, name string,
 
 	body := args[bodyLoc:]
 
-	Q("in func builder, args = ")
-	for i := range args {
-		Q("args[%v] = '%s'", i, args[i].SexpString(nil))
-	}
-	Q("in func builder, isAnon = %v", isAnon)
-	Q("in func builder, inputs = %v", inputs.SexpString(nil))
-	Q("in func builder, returns = %v", returns.SexpString(nil))
-	Q("in func builder, body = %v", (&SexpArray{Val: body, Env: env}).SexpString(nil))
+	//Q("in func builder, args = ")
+	//for i := range args {
+	//Q("args[%v] = '%s'", i, args[i].SexpString(nil))
+	//}
+	//Q("in func builder, isAnon = %v", isAnon)
+	//Q("in func builder, inputs = %v", inputs.SexpString(nil))
+	//Q("in func builder, returns = %v", returns.SexpString(nil))
+	//Q("in func builder, body = %v", (&SexpArray{Val: body, Env: env}).SexpString(nil))
 
 	inHash, err := GetFuncArgArray(inputs, env, "inputs")
 	if err != nil {
 		return SexpNull, fmt.Errorf("inputs array parsing error: %v", err)
 	}
-	Q("inHash = '%v'", inHash.SexpString(nil))
+	//Q("inHash = '%v'", inHash.SexpString(nil))
 
 	retHash, err := GetFuncArgArray(returns, env, "returns")
 	if err != nil {
 		return SexpNull, fmt.Errorf("returns array parsing error: %v", err)
 	}
-	Q("retHash = '%v'", retHash.SexpString(nil))
+	//Q("retHash = '%v'", retHash.SexpString(nil))
 
 	env.datastack.PushExpr(SexpNull)
 
-	Q("FuncBuilder() about to call buildSexpFun")
+	//Q("FuncBuilder() about to call buildSexpFun")
 
 	// ===================================
 	// ===================================
@@ -173,8 +174,7 @@ func FuncBuilder(env *Zlisp, name string,
 		nargs = len(argsyms) - 1
 	}
 
-	VPrintf("\n in buildSexpFun(): DumpFunction just before %v args go onto stack\n",
-		len(argsyms))
+	//VPrintf("\n in buildSexpFun(): DumpFunction just before %v args go onto stack\n", len(argsyms))
 	if Working {
 		DumpFunction(ZlispFunction(gen.instructions), -1)
 	}

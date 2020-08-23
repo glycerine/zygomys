@@ -40,17 +40,17 @@ func NewSexpPointer(pointedTo Sexp) *SexpPointer {
 
 	var reftarg reflect.Value
 
-	Q("NewSexpPointer sees pointedTo of '%#v'", pointedTo)
+	//Q("NewSexpPointer sees pointedTo of '%#v'", pointedTo)
 	switch e := pointedTo.(type) {
 	case *SexpReflect:
-		Q("SexpReflect.Val = '%#v'", e.Val)
+		//Q("SexpReflect.Val = '%#v'", e.Val)
 		reftarg = e.Val
 	default:
 		reftarg = reflect.ValueOf(pointedTo)
 	}
 
 	ptrRt := GoStructRegistry.GetOrCreatePointerType(pointedToType)
-	Q("pointer type is ptrRt = '%#v'", ptrRt)
+	//Q("pointer type is ptrRt = '%#v'", ptrRt)
 	p := &SexpPointer{
 		ReflectTarget: reftarg,
 		Target:        pointedTo,
@@ -139,13 +139,13 @@ type SexpReflect struct {
 
 func (r *SexpReflect) Type() *RegisteredType {
 	k := reflectName(reflect.Value(r.Val))
-	Q("SexpReflect.Type() looking up type named '%s'", k)
+	//Q("SexpReflect.Type() looking up type named '%s'", k)
 	ty, ok := GoStructRegistry.Registry[k]
 	if !ok {
-		Q("SexpReflect.Type(): type named '%s' not found", k)
+		//Q("SexpReflect.Type(): type named '%s' not found", k)
 		return nil
 	}
-	Q("SexpReflect.Type(): type named '%s' found as regtype '%v'", k, ty.SexpString(nil))
+	//Q("SexpReflect.Type(): type named '%s' found as regtype '%v'", k, ty.SexpString(nil))
 	return ty
 }
 
@@ -441,7 +441,7 @@ var SexpIntSize = 64
 var SexpFloatSize = 64
 
 func (r *SexpReflect) SexpString(ps *PrintState) string {
-	Q("in SexpReflect.SexpString(indent); top; type = %T", r)
+	//Q("in SexpReflect.SexpString(indent); top; type = %T", r)
 	if reflect.Value(r.Val).Type().Kind() == reflect.Ptr {
 		iface := reflect.Value(r.Val).Interface()
 		switch iface.(type) {
@@ -452,7 +452,7 @@ func (r *SexpReflect) SexpString(ps *PrintState) string {
 		}
 	}
 	iface := reflect.Value(r.Val).Interface()
-	Q("in SexpReflect.SexpString(indent); type = %T", iface)
+	//Q("in SexpReflect.SexpString(indent); type = %T", iface)
 	switch iface.(type) {
 	default:
 		return fmt.Sprintf("%v", iface)
