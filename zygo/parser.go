@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"math"
-	"runtime"
 	"strconv"
 	"strings"
 	"sync"
@@ -14,7 +13,6 @@ import (
 )
 
 var NaN float64
-var _ = runtime.NumGoroutine
 
 func init() {
 	NaN = math.NaN()
