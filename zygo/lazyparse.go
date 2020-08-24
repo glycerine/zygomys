@@ -60,7 +60,7 @@ func (s *LazyParser) refresh() {
 	//vv("LazyParser.refresh()")
 	if s.psr == nil {
 		s.psr = s.env.NewParser()
-		s.psr.EagerlyRetireParserGoro = true
+		//s.psr.EagerlyRetireParserGoro = true
 		s.psr.Start()
 	}
 }

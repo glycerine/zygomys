@@ -11,7 +11,7 @@ func Test020StacksDontAlias(t *testing.T) {
 
 	cv.Convey(`stack.Clone() should avoid all aliasing, as should Pop()`, t, func() {
 		env := NewZlisp()
-		defer env.parser.Stop()
+		defer env.Close()
 
 		t := env.NewStack(5)
 		a := env.NewScope()

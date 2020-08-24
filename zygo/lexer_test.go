@@ -15,7 +15,7 @@ func Test001LexerPositionRecordingWorks(t *testing.T) {
 
 		str := `(defn hello [] "greetings!")`
 		env := NewZlisp()
-		defer env.parser.Stop()
+		defer env.Close()
 
 		stream := bytes.NewBuffer([]byte(str))
 		env.parser.ResetAddNewInput(stream)
@@ -32,7 +32,7 @@ func Test002LexingScientificNotationOfFloats(t *testing.T) {
 
 		str := `(def a 8.06e-05)`
 		env := NewZlisp()
-		defer env.parser.Stop()
+		defer env.Close()
 
 		stream := bytes.NewBuffer([]byte(str))
 		env.parser.ResetAddNewInput(stream)
@@ -68,7 +68,7 @@ func Test006LexerAndParsingOfDotInvocations(t *testing.T) {
 
 		str := `(. subject method)`
 		env := NewZlisp()
-		defer env.parser.Stop()
+		defer env.Close()
 
 		stream := bytes.NewBuffer([]byte(str))
 		env.parser.ResetAddNewInput(stream)
@@ -154,7 +154,7 @@ func Test030LexingPauseAndResume(t *testing.T) {
 		str1 := `(defn hel`
 		str2 := `lo [] "greetings!(((")`
 		env := NewZlisp()
-		defer env.parser.Stop()
+		defer env.Close()
 		stream := bytes.NewBuffer([]byte(str1))
 		env.parser.ResetAddNewInput(stream)
 		ex, err := env.parser.ParseTokens()
@@ -188,7 +188,7 @@ func Test031LexingPauseAndResumeAroundBacktickString(t *testing.T) {
 		str1 := "{a=`"
 		str2 := "\n\n`}"
 		env := NewZlisp()
-		defer env.parser.Stop()
+		defer env.Close()
 		stream := bytes.NewBuffer([]byte(str1))
 		env.parser.ResetAddNewInput(stream)
 		ex, err := env.parser.ParseTokens()

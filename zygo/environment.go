@@ -74,8 +74,14 @@ var ReservedWords = []string{"byte", "defbuild", "builder", "field", "and", "or"
 func NewZlisp() *Zlisp {
 	return NewZlispWithFuncs(AllBuiltinFunctions())
 }
-// Stop stops the parser goroutine at next operand and frees the memory
-func (env *Zlisp) Stop() error {
+
+// Close cleans up the allocated env resources;
+// it stops the parser goroutine
+// ands frees it. Close should
+// be called when you are done using the env
+// to avoid having the parser goroutine hang around
+// until process end.
+func (env *Zlisp) Close() error {
 	return env.parser.Stop()
 }
 

@@ -37,6 +37,19 @@ type Parser struct {
 	inBacktick bool
 	recur      int64
 
+	// EagerlyRetireParserGoro will
+	// kill the parser goroutine, causing it
+	// to loose state of the parse if nothing has
+	// come through after 60 seconds.
+	// This could be problematic at a REPL that
+	// is expected to wait forever for the next
+	// user input; or if you are
+	// running a server that only gets messages
+	// every couple minutes -- so it is off by
+	// default. However for programs that don't
+	// remember to call env.Close() when they
+	// are done with the parsing environemnt,
+	// it can be helpful to avoid goroutine leaks.
 	EagerlyRetireParserGoro bool
 }
 

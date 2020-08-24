@@ -30,7 +30,7 @@ type Event struct {
  Event{}, and fill in its fields`, t, func() {
 		event := `(eventdemo id:123 user: (persondemo first:"Liz" last:"C") flight:"AZD234"  pilot:["Roger" "Ernie"] cancelled:true)`
 		env := NewZlisp()
-		defer env.parser.Stop()
+		defer env.Close()
 
 		env.StandardSetup()
 
@@ -162,7 +162,7 @@ type NestInner struct {
 `, t, func() {
 
 		env := NewZlisp()
-		defer env.parser.Stop()
+		defer env.Close()
 
 		env.StandardSetup()
 		env.ImportDemoData()

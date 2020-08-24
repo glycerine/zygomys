@@ -15,7 +15,7 @@ func Test101ConversionToAndFromMsgpackAndJson(t *testing.T) {
 `, t, func() {
 		event := `(def reUseMe (snoopy id:123));(def dad (hornet id:8 friends:[reUseMe])); (def mom (hellcat id:7 friends:[reUseMe]));(setOfPlanes flyers:[mom dad])`
 		env := NewZlisp()
-		defer env.parser.Stop()
+		defer env.Close()
 
 		env.StandardSetup()
 		env.ImportDemoData()

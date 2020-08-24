@@ -23,7 +23,7 @@ func Test007ParentChildRecordsTranslateToGo(t *testing.T) {
 		` containing a Go Hellcat{}.`, t, func() {
 
 		env := NewZlisp()
-		defer env.parser.Stop()
+		defer env.Close()
 
 		env.StandardSetup()
 
@@ -50,7 +50,7 @@ func Test008CallByReflectionWorksWithoutNesting(t *testing.T) {
 		` struct correctly`, t, func() {
 
 		env := NewZlisp()
-		defer env.parser.Stop()
+		defer env.Close()
 
 		env.StandardSetup()
 
@@ -81,7 +81,7 @@ func Test009CallByReflectionWorksWithoutNestingWithoutEmbeds(t *testing.T) {
 		` from record to Go struct correctly`, t, func() {
 
 		env := NewZlisp()
-		defer env.parser.Stop()
+		defer env.Close()
 
 		env.StandardSetup()
 
@@ -109,7 +109,7 @@ func Test010WriteIntoSingleInterfaceValueWorks(t *testing.T) {
 		` value, this should translate from Sexp to Go correctly.`, t, func() {
 
 		env := NewZlisp()
-		defer env.parser.Stop()
+		defer env.Close()
 
 		env.StandardSetup()
 
@@ -138,7 +138,7 @@ func Test011TranslationOfArraysWorks(t *testing.T) {
 		` correctly.`, t, func() {
 
 		env := NewZlisp()
-		defer env.parser.Stop()
+		defer env.Close()
 
 		env.StandardSetup()
 
@@ -164,7 +164,7 @@ func Test012TranslationOfArraysOfInterfacesWorks(t *testing.T) {
 		t, func() {
 
 			env := NewZlisp()
-			defer env.parser.Stop()
+			defer env.Close()
 
 			env.StandardSetup()
 
@@ -202,7 +202,7 @@ func Test014TranslationOfArraysOfInterfacesEmbeddedWorks(t *testing.T) {
 		` translated from Sexp correctly.`, t, func() {
 
 		env := NewZlisp()
-		defer env.parser.Stop()
+		defer env.Close()
 
 		env.StandardSetup()
 
@@ -242,7 +242,7 @@ func Test016ReflectCallOnGoMethodsZeroArgs(t *testing.T) {
 		` to invoke methods (zero in arguments) on them`, t, func() {
 
 		env := NewZlisp()
-		defer env.parser.Stop()
+		defer env.Close()
 
 		env.StandardSetup()
 
@@ -284,7 +284,7 @@ func Test017ReflectCallOnGoMethodsOneArg(t *testing.T) {
 		` invoke methods (with >= 1 in argument) on them`, t, func() {
 
 		env := NewZlisp()
-		defer env.parser.Stop()
+		defer env.Close()
 
 		env.StandardSetup()
 
@@ -330,7 +330,7 @@ func Test018ReflectCallOnGoMethodsComplexReturnType(t *testing.T) {
 		t, func() {
 
 			env := NewZlisp()
-			defer env.parser.Stop()
+			defer env.Close()
 
 			env.StandardSetup()
 
