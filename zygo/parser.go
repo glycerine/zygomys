@@ -136,7 +136,7 @@ func (p *Parser) GetMoreInput(deliverThese []Sexp, errorToReport error) error {
 	var chTimeout <-chan time.Time
 	for {
 		if p.EagerlyRetireParserGoro {
-			chTimeout = time.After(2 * time.Second)
+			chTimeout = time.After(60 * time.Second)
 		} else {
 			chTimeout = nil
 		}

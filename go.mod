@@ -13,4 +13,5 @@ require (
 	github.com/shurcooL/go-goon v0.0.0-20170922171312-37c2f522c041
 	github.com/tinylib/msgp v1.1.2
 	github.com/ugorji/go/codec v1.1.7
+	golang.org/x/tools v0.0.0-20200822203824-307de81be3f4 // indirect
 )
