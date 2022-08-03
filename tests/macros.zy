@@ -22,3 +22,9 @@
 
 // this shouldn't give an error, but it was: error in __main:5: Error on line 1: Unexpected end of input
 (defn greet [name] ^(hello ~name))
+
+// zygomys/issues/54 (gensym) in defmac giving same symbol
+(assert (!= (gensym) (gensym)))
+(defmac aaa [] (gensym) ^())
+(aaa) // was causing gensym not to increment env.nextsymbol
+(assert (!= (gensym) (gensym)))
