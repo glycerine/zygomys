@@ -632,8 +632,14 @@ func (gen *Generator) GenerateCallBySymbol(sym *SexpSymbol, args []Sexp, orig Se
 	if found {
 		// calling Apply on the current environment will screw up
 		// the stack, creating a duplicate environment is safer
-		env := gen.env.Duplicate()
-		expr, err := env.Apply(macro, args)
+		//env := gen.env.Duplicate()
+		//expr, err := env.Apply(macro, args)
+
+		// try without the env.Duplicate. Issue 54 user wants macros
+		// to be able to arbitrarily alter the current environment,
+		// and have those side effects be visible.
+		expr, err := gen.env.Apply(macro, args)
+
 		if err != nil {
 			return err
 		}

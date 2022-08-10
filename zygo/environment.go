@@ -251,11 +251,6 @@ func (env *Zlisp) MakeSymbol(name string) *SexpSymbol {
 }
 
 func (env *Zlisp) GenSymbol(prefix string) *SexpSymbol {
-	// force a new symbol, since that is the whole point of (gensym)
-	// When we didn't do increment nextsymbol here, we got
-	// zygomys/issues/54 weird interaction with defmac.
-	env.nextsymbol++
-
 	symname := prefix + strconv.Itoa(env.nextsymbol)
 	return env.MakeSymbol(symname)
 }
