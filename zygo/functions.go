@@ -14,92 +14,98 @@ var WrongNargs error = fmt.Errorf("wrong number of arguments")
 type ZlispFunction []Instruction
 type ZlispUserFunction func(*Zlisp, string, []Sexp) (Sexp, error)
 
-func CompareFunction(env *Zlisp, name string, args []Sexp) (Sexp, error) {
-	if len(args) != 2 {
-		return SexpNull, WrongNargs
-	}
-
-	res, err := env.Compare(args[0], args[1])
-	if err != nil {
-		return SexpNull, err
-	}
-
-	if res > 1 {
-		//fmt.Printf("CompareFunction, res = %v\n", res)
-		// 2 => one NaN found
-		// 3 => two NaN found
-		// NaN != NaN needs to return true.
-		// NaN != 3.0 needs to return true.
-		if name == "!=" {
-			return &SexpBool{Val: true}, nil
+func CompareFunction(name string) ZlispUserFunction {
+	return func(env *Zlisp, _ string, args []Sexp) (Sexp, error) {
+		if len(args) != 2 {
+			return SexpNull, WrongNargs
 		}
-		return &SexpBool{Val: false}, nil
-	}
 
-	cond := false
-	switch name {
-	case "<":
-		cond = res < 0
-	case ">":
-		cond = res > 0
-	case "<=":
-		cond = res <= 0
-	case ">=":
-		cond = res >= 0
-	case "==":
-		cond = res == 0
-	case "!=":
-		cond = res != 0
-	}
-
-	return &SexpBool{Val: cond}, nil
-}
-
-func BinaryIntFunction(env *Zlisp, name string, args []Sexp) (Sexp, error) {
-	if len(args) != 2 {
-		return SexpNull, WrongNargs
-	}
-
-	var op IntegerOp
-	switch name {
-	case "sll":
-		op = ShiftLeft
-	case "sra":
-		op = ShiftRightArith
-	case "srl":
-		op = ShiftRightLog
-	case "mod":
-		op = Modulo
-	}
-
-	return IntegerDo(op, args[0], args[1])
-}
-
-func BitwiseFunction(env *Zlisp, name string, args []Sexp) (Sexp, error) {
-	if len(args) != 2 {
-		return SexpNull, WrongNargs
-	}
-
-	var op IntegerOp
-	switch name {
-	case "bitAnd":
-		op = BitAnd
-	case "bitOr":
-		op = BitOr
-	case "bitXor":
-		op = BitXor
-	}
-
-	accum := args[0]
-	var err error
-
-	for _, expr := range args[1:] {
-		accum, err = IntegerDo(op, accum, expr)
+		res, err := env.Compare(args[0], args[1])
 		if err != nil {
 			return SexpNull, err
 		}
+
+		if res > 1 {
+			//fmt.Printf("CompareFunction, res = %v\n", res)
+			// 2 => one NaN found
+			// 3 => two NaN found
+			// NaN != NaN needs to return true.
+			// NaN != 3.0 needs to return true.
+			if name == "!=" {
+				return &SexpBool{Val: true}, nil
+			}
+			return &SexpBool{Val: false}, nil
+		}
+
+		cond := false
+		switch name {
+		case "<":
+			cond = res < 0
+		case ">":
+			cond = res > 0
+		case "<=":
+			cond = res <= 0
+		case ">=":
+			cond = res >= 0
+		case "==":
+			cond = res == 0
+		case "!=":
+			cond = res != 0
+		}
+
+		return &SexpBool{Val: cond}, nil
 	}
-	return accum, nil
+}
+
+func BinaryIntFunction(name string) ZlispUserFunction {
+	return func(env *Zlisp, _ string, args []Sexp) (Sexp, error) {
+		if len(args) != 2 {
+			return SexpNull, WrongNargs
+		}
+
+		var op IntegerOp
+		switch name {
+		case "sll":
+			op = ShiftLeft
+		case "sra":
+			op = ShiftRightArith
+		case "srl":
+			op = ShiftRightLog
+		case "mod":
+			op = Modulo
+		}
+
+		return IntegerDo(op, args[0], args[1])
+	}
+}
+
+func BitwiseFunction(name string) ZlispUserFunction {
+	return func(env *Zlisp, _ string, args []Sexp) (Sexp, error) {
+		if len(args) != 2 {
+			return SexpNull, WrongNargs
+		}
+
+		var op IntegerOp
+		switch name {
+		case "bitAnd":
+			op = BitAnd
+		case "bitOr":
+			op = BitOr
+		case "bitXor":
+			op = BitXor
+		}
+
+		accum := args[0]
+		var err error
+
+		for _, expr := range args[1:] {
+			accum, err = IntegerDo(op, accum, expr)
+			if err != nil {
+				return SexpNull, err
+			}
+		}
+		return accum, nil
+	}
 }
 
 func ComplementFunction(env *Zlisp, name string, args []Sexp) (Sexp, error) {
@@ -117,48 +123,53 @@ func ComplementFunction(env *Zlisp, name string, args []Sexp) (Sexp, error) {
 	return SexpNull, fmt.Errorf("Argument to bitNot should be integer")
 }
 
-func PointerOrNumericFunction(env *Zlisp, name string, args []Sexp) (Sexp, error) {
-	n := len(args)
-	if n == 0 {
-		return SexpNull, WrongNargs
+func PointerOrNumericFunction(name string) ZlispUserFunction {
+	return func(env *Zlisp, _ string, args []Sexp) (Sexp, error) {
+		n := len(args)
+		if n == 0 {
+			return SexpNull, WrongNargs
+		}
+		if n >= 2 {
+			return NumericFunction(name)(env, name, args)
+		}
+		return PointerToFunction(env, name, args)
 	}
-	if n >= 2 {
-		return NumericFunction(env, name, args)
-	}
-	return PointerToFunction(env, name, args)
 }
-func NumericFunction(env *Zlisp, name string, args []Sexp) (Sexp, error) {
-	if len(args) < 1 {
-		return SexpNull, WrongNargs
-	}
-	var err error
-	args, err = env.SubstituteRHS(args)
-	if err != nil {
-		return SexpNull, err
-	}
 
-	accum := args[0]
-	var op NumericOp
-	switch name {
-	case "+":
-		op = Add
-	case "-":
-		op = Sub
-	case "*":
-		op = Mult
-	case "/":
-		op = Div
-	case "**":
-		op = Pow
-	}
-
-	for _, expr := range args[1:] {
-		accum, err = NumericDo(op, accum, expr)
+func NumericFunction(name string) ZlispUserFunction {
+	return func(env *Zlisp, _ string, args []Sexp) (Sexp, error) {
+		if len(args) < 1 {
+			return SexpNull, WrongNargs
+		}
+		var err error
+		args, err = env.SubstituteRHS(args)
 		if err != nil {
 			return SexpNull, err
 		}
+
+		accum := args[0]
+		var op NumericOp
+		switch name {
+		case "+":
+			op = Add
+		case "-":
+			op = Sub
+		case "*":
+			op = Mult
+		case "/":
+			op = Div
+		case "**":
+			op = Pow
+		}
+
+		for _, expr := range args[1:] {
+			accum, err = NumericDo(op, accum, expr)
+			if err != nil {
+				return SexpNull, err
+			}
+		}
+		return accum, nil
 	}
-	return accum, nil
 }
 
 func ConsFunction(env *Zlisp, name string, args []Sexp) (Sexp, error) {
@@ -229,63 +240,65 @@ func SecondFunction(env *Zlisp, name string, args []Sexp) (Sexp, error) {
 	return SexpNull, WrongType
 }
 
-func ArrayAccessFunction(env *Zlisp, name string, args []Sexp) (Sexp, error) {
-	narg := len(args)
-	if narg < 2 || narg > 3 {
-		return SexpNull, WrongNargs
-	}
-
-	var arr *SexpArray
-	switch t := args[0].(type) {
-	case *SexpArray:
-		arr = t
-	default:
-		return SexpNull, fmt.Errorf("First argument of aget must be array")
-	}
-
-	var i int
-	switch t := args[1].(type) {
-	case *SexpInt:
-		i = int(t.Val)
-	case *SexpChar:
-		i = int(t.Val)
-	default:
-		// can we evaluate it?
-		res, err := EvalFunction(env, "eval-aget-index", []Sexp{args[1]})
-		if err != nil {
-			return SexpNull, fmt.Errorf("error during eval of "+
-				"array-access position argument: %s", err)
-		}
-		switch j := res.(type) {
-		case *SexpInt:
-			i = int(j.Val)
-		default:
-			return SexpNull, fmt.Errorf("Second argument of aget could not be evaluated to integer; got j = '%#v'/type = %T", j, j)
-		}
-	}
-
-	switch name {
-	case "hget":
-		fallthrough
-	case "aget":
-		if i < 0 || i >= len(arr.Val) {
-			// out of bounds -- do we have a default?
-			if narg == 3 {
-				return args[2], nil
-			}
-			return SexpNull, fmt.Errorf("Array index out of bounds")
-		}
-		return arr.Val[i], nil
-	case "aset":
-		if len(args) != 3 {
+func ArrayAccessFunction(name string) ZlispUserFunction {
+	return func(env *Zlisp, _ string, args []Sexp) (Sexp, error) {
+		narg := len(args)
+		if narg < 2 || narg > 3 {
 			return SexpNull, WrongNargs
 		}
-		if i < 0 || i >= len(arr.Val) {
-			return SexpNull, fmt.Errorf("Array index out of bounds")
+
+		var arr *SexpArray
+		switch t := args[0].(type) {
+		case *SexpArray:
+			arr = t
+		default:
+			return SexpNull, fmt.Errorf("First argument of aget must be array")
 		}
-		arr.Val[i] = args[2]
+
+		var i int
+		switch t := args[1].(type) {
+		case *SexpInt:
+			i = int(t.Val)
+		case *SexpChar:
+			i = int(t.Val)
+		default:
+			// can we evaluate it?
+			res, err := EvalFunction(env, "eval-aget-index", []Sexp{args[1]})
+			if err != nil {
+				return SexpNull, fmt.Errorf("error during eval of "+
+					"array-access position argument: %s", err)
+			}
+			switch j := res.(type) {
+			case *SexpInt:
+				i = int(j.Val)
+			default:
+				return SexpNull, fmt.Errorf("Second argument of aget could not be evaluated to integer; got j = '%#v'/type = %T", j, j)
+			}
+		}
+
+		switch name {
+		case "hget":
+			fallthrough
+		case "aget":
+			if i < 0 || i >= len(arr.Val) {
+				// out of bounds -- do we have a default?
+				if narg == 3 {
+					return args[2], nil
+				}
+				return SexpNull, fmt.Errorf("Array index out of bounds")
+			}
+			return arr.Val[i], nil
+		case "aset":
+			if len(args) != 3 {
+				return SexpNull, WrongNargs
+			}
+			if i < 0 || i >= len(arr.Val) {
+				return SexpNull, fmt.Errorf("Array index out of bounds")
+			}
+			arr.Val[i] = args[2]
+		}
+		return SexpNull, nil
 	}
-	return SexpNull, nil
 }
 
 func SgetFunction(env *Zlisp, name string, args []Sexp) (Sexp, error) {
@@ -314,81 +327,83 @@ func SgetFunction(env *Zlisp, name string, args []Sexp) (Sexp, error) {
 	return &SexpChar{Val: rune(str.S[i])}, nil
 }
 
-func HashAccessFunction(env *Zlisp, name string, args []Sexp) (Sexp, error) {
-	if len(args) < 1 || len(args) > 3 {
-		return SexpNull, WrongNargs
-	}
-
-	// handle *SexpSelector
-	container := args[0]
-	var err error
-	if ptr, isPtrLike := container.(Selector); isPtrLike {
-		container, err = ptr.RHS(env)
-		if err != nil {
-			return SexpNull, err
-		}
-	}
-
-	var hash *SexpHash
-	switch e := container.(type) {
-	case *SexpHash:
-		hash = e
-	default:
-		return SexpNull, fmt.Errorf("first argument to h* function must be hash")
-	}
-
-	switch name {
-	case "hget":
-		if len(args) == 3 {
-			return hash.HashGetDefault(env, args[1], args[2])
-		}
-		return hash.HashGet(env, args[1])
-	case "hset":
-		if len(args) != 3 {
+func HashAccessFunction(name string) ZlispUserFunction {
+	return func(env *Zlisp, _ string, args []Sexp) (Sexp, error) {
+		if len(args) < 1 || len(args) > 3 {
 			return SexpNull, WrongNargs
 		}
-		err := hash.HashSet(args[1], args[2])
-		return SexpNull, err
-	case "hdel":
-		if len(args) != 2 {
-			return SexpNull, WrongNargs
-		}
-		err := hash.HashDelete(args[1])
-		return SexpNull, err
-	case "keys":
-		if len(args) != 1 {
-			return SexpNull, WrongNargs
-		}
-		keys := make([]Sexp, 0)
-		n := len(hash.KeyOrder)
-		arr := &SexpArray{Env: env}
-		for i := 0; i < n; i++ {
-			keys = append(keys, (hash.KeyOrder)[i])
 
-			// try to get a .Typ value going too... from the first available.
-			if arr.Typ == nil {
-				arr.Typ = (hash.KeyOrder)[i].Type()
+		// handle *SexpSelector
+		container := args[0]
+		var err error
+		if ptr, isPtrLike := container.(Selector); isPtrLike {
+			container, err = ptr.RHS(env)
+			if err != nil {
+				return SexpNull, err
 			}
 		}
-		arr.Val = keys
-		return arr, nil
-	case "hpair":
-		if len(args) != 2 {
-			return SexpNull, WrongNargs
-		}
-		switch posreq := args[1].(type) {
-		case *SexpInt:
-			pos := int(posreq.Val)
-			if pos < 0 || pos >= len(hash.KeyOrder) {
-				return SexpNull, fmt.Errorf("hpair position request %d out of bounds", pos)
-			}
-			return hash.HashPairi(pos)
+
+		var hash *SexpHash
+		switch e := container.(type) {
+		case *SexpHash:
+			hash = e
 		default:
-			return SexpNull, fmt.Errorf("hpair position request must be an integer")
+			return SexpNull, fmt.Errorf("first argument to h* function must be hash")
 		}
-	}
 
-	return SexpNull, nil
+		switch name {
+		case "hget":
+			if len(args) == 3 {
+				return hash.HashGetDefault(env, args[1], args[2])
+			}
+			return hash.HashGet(env, args[1])
+		case "hset":
+			if len(args) != 3 {
+				return SexpNull, WrongNargs
+			}
+			err := hash.HashSet(args[1], args[2])
+			return SexpNull, err
+		case "hdel":
+			if len(args) != 2 {
+				return SexpNull, WrongNargs
+			}
+			err := hash.HashDelete(args[1])
+			return SexpNull, err
+		case "keys":
+			if len(args) != 1 {
+				return SexpNull, WrongNargs
+			}
+			keys := make([]Sexp, 0)
+			n := len(hash.KeyOrder)
+			arr := &SexpArray{Env: env}
+			for i := 0; i < n; i++ {
+				keys = append(keys, (hash.KeyOrder)[i])
+
+				// try to get a .Typ value going too... from the first available.
+				if arr.Typ == nil {
+					arr.Typ = (hash.KeyOrder)[i].Type()
+				}
+			}
+			arr.Val = keys
+			return arr, nil
+		case "hpair":
+			if len(args) != 2 {
+				return SexpNull, WrongNargs
+			}
+			switch posreq := args[1].(type) {
+			case *SexpInt:
+				pos := int(posreq.Val)
+				if pos < 0 || pos >= len(hash.KeyOrder) {
+					return SexpNull, fmt.Errorf("hpair position request %d out of bounds", pos)
+				}
+				return hash.HashPairi(pos)
+			default:
+				return SexpNull, fmt.Errorf("hpair position request must be an integer")
+			}
+		}
+
+		return SexpNull, nil
+	}
 }
 
 func HashColonFunction(env *Zlisp, name string, args []Sexp) (Sexp, error) {
@@ -477,31 +492,33 @@ func LenFunction(env *Zlisp, name string, args []Sexp) (Sexp, error) {
 	return &SexpInt{}, fmt.Errorf("argument must be string, list, hash, or array")
 }
 
-func AppendFunction(env *Zlisp, name string, args []Sexp) (Sexp, error) {
-	if len(args) != 2 {
-		return SexpNull, WrongNargs
-	}
-
-	switch t := args[0].(type) {
-	case *SexpArray:
-		switch name {
-		case "append":
-			return &SexpArray{Val: append(t.Val, args[1]), Env: env, Typ: t.Typ}, nil
-		case "appendslice":
-			switch sl := args[1].(type) {
-			case *SexpArray:
-				return &SexpArray{Val: append(t.Val, sl.Val...), Env: env, Typ: t.Typ}, nil
-			default:
-				return SexpNull, fmt.Errorf("Second argument of appendslice must be slice")
-			}
-		default:
-			return SexpNull, fmt.Errorf("unrecognized append variant: '%s'", name)
+func AppendFunction(name string) ZlispUserFunction {
+	return func(env *Zlisp, _ string, args []Sexp) (Sexp, error) {
+		if len(args) != 2 {
+			return SexpNull, WrongNargs
 		}
-	case *SexpStr:
-		return AppendStr(t, args[1])
-	}
 
-	return SexpNull, fmt.Errorf("First argument of append must be array or string")
+		switch t := args[0].(type) {
+		case *SexpArray:
+			switch name {
+			case "append":
+				return &SexpArray{Val: append(t.Val, args[1]), Env: env, Typ: t.Typ}, nil
+			case "appendslice":
+				switch sl := args[1].(type) {
+				case *SexpArray:
+					return &SexpArray{Val: append(t.Val, sl.Val...), Env: env, Typ: t.Typ}, nil
+				default:
+					return SexpNull, fmt.Errorf("Second argument of appendslice must be slice")
+				}
+			default:
+				return SexpNull, fmt.Errorf("unrecognized append variant: '%s'", name)
+			}
+		case *SexpStr:
+			return AppendStr(t, args[1])
+		}
+
+		return SexpNull, fmt.Errorf("First argument of append must be array or string")
+	}
 }
 
 func ConcatFunction(env *Zlisp, name string, args []Sexp) (Sexp, error) {
@@ -620,99 +637,103 @@ func EvalFunction(env *Zlisp, name string, args []Sexp) (Sexp, error) {
 	return resultSexp, err
 }
 
-func TypeQueryFunction(env *Zlisp, name string, args []Sexp) (Sexp, error) {
-	if len(args) != 1 {
-		return SexpNull, WrongNargs
+func TypeQueryFunction(name string) ZlispUserFunction {
+	return func(env *Zlisp, _ string, args []Sexp) (Sexp, error) {
+		if len(args) != 1 {
+			return SexpNull, WrongNargs
+		}
+
+		var result bool
+
+		switch name {
+		case "type?":
+			return TypeOf(args[0]), nil
+		case "list?":
+			result = IsList(args[0])
+		case "null?":
+			result = (args[0] == SexpNull)
+		case "array?":
+			result = IsArray(args[0])
+		case "number?":
+			result = IsNumber(args[0])
+		case "float?":
+			result = IsFloat(args[0])
+		case "int?":
+			result = IsInt(args[0])
+		case "char?":
+			result = IsChar(args[0])
+		case "symbol?":
+			result = IsSymbol(args[0])
+		case "string?":
+			result = IsString(args[0])
+		case "hash?":
+			result = IsHash(args[0])
+		case "zero?":
+			result = IsZero(args[0])
+		case "empty?":
+			result = IsEmpty(args[0])
+		case "func?":
+			result = IsFunc(args[0])
+		}
+
+		return &SexpBool{Val: result}, nil
 	}
-
-	var result bool
-
-	switch name {
-	case "type?":
-		return TypeOf(args[0]), nil
-	case "list?":
-		result = IsList(args[0])
-	case "null?":
-		result = (args[0] == SexpNull)
-	case "array?":
-		result = IsArray(args[0])
-	case "number?":
-		result = IsNumber(args[0])
-	case "float?":
-		result = IsFloat(args[0])
-	case "int?":
-		result = IsInt(args[0])
-	case "char?":
-		result = IsChar(args[0])
-	case "symbol?":
-		result = IsSymbol(args[0])
-	case "string?":
-		result = IsString(args[0])
-	case "hash?":
-		result = IsHash(args[0])
-	case "zero?":
-		result = IsZero(args[0])
-	case "empty?":
-		result = IsEmpty(args[0])
-	case "func?":
-		result = IsFunc(args[0])
-	}
-
-	return &SexpBool{Val: result}, nil
 }
 
-func PrintFunction(env *Zlisp, name string, args []Sexp) (Sexp, error) {
-	if len(args) < 1 {
-		return SexpNull, WrongNargs
-	}
+func PrintFunction(name string) ZlispUserFunction {
+	return func(env *Zlisp, _ string, args []Sexp) (Sexp, error) {
+		if len(args) < 1 {
+			return SexpNull, WrongNargs
+		}
 
-	var str string
+		var str string
 
-	switch expr := args[0].(type) {
-	case *SexpStr:
-		str = expr.S
-	default:
-		str = expr.SexpString(nil)
-	}
+		switch expr := args[0].(type) {
+		case *SexpStr:
+			str = expr.S
+		default:
+			str = expr.SexpString(nil)
+		}
 
-	switch name {
-	case "println":
-		fmt.Println(str)
-	case "print":
-		fmt.Print(str)
-	case "printf", "sprintf":
-		if len(args) == 1 && name == "printf" {
-			fmt.Printf(str)
-		} else {
-			ar := make([]interface{}, len(args)-1)
-			for i := 0; i < len(ar); i++ {
-				switch x := args[i+1].(type) {
-				case *SexpInt:
-					ar[i] = x.Val
-				case *SexpBool:
-					ar[i] = x.Val
-				case *SexpFloat:
-					ar[i] = x.Val
-				case *SexpChar:
-					ar[i] = x.Val
-				case *SexpStr:
-					ar[i] = x.S
-				case *SexpTime:
-					ar[i] = x.Tm.In(NYC)
-				default:
-					ar[i] = args[i+1]
+		switch name {
+		case "println":
+			fmt.Println(str)
+		case "print":
+			fmt.Print(str)
+		case "printf", "sprintf":
+			if len(args) == 1 && name == "printf" {
+				fmt.Printf(str)
+			} else {
+				ar := make([]interface{}, len(args)-1)
+				for i := 0; i < len(ar); i++ {
+					switch x := args[i+1].(type) {
+					case *SexpInt:
+						ar[i] = x.Val
+					case *SexpBool:
+						ar[i] = x.Val
+					case *SexpFloat:
+						ar[i] = x.Val
+					case *SexpChar:
+						ar[i] = x.Val
+					case *SexpStr:
+						ar[i] = x.S
+					case *SexpTime:
+						ar[i] = x.Tm.In(NYC)
+					default:
+						ar[i] = args[i+1]
+					}
+				}
+				if name == "printf" {
+					fmt.Printf(str, ar...)
+				} else {
+					// sprintf
+					return &SexpStr{S: fmt.Sprintf(str, ar...)}, nil
 				}
 			}
-			if name == "printf" {
-				fmt.Printf(str, ar...)
-			} else {
-				// sprintf
-				return &SexpStr{S: fmt.Sprintf(str, ar...)}, nil
-			}
 		}
-	}
 
-	return SexpNull, nil
+		return SexpNull, nil
+	}
 }
 
 func NotFunction(env *Zlisp, name string, args []Sexp) (Sexp, error) {
@@ -808,54 +829,56 @@ func MakeArrayFunction(env *Zlisp, name string, args []Sexp) (Sexp, error) {
 	return env.NewSexpArray(arr), nil
 }
 
-func ConstructorFunction(env *Zlisp, name string, args []Sexp) (Sexp, error) {
-	switch name {
-	case "array":
-		return env.NewSexpArray(args), nil
-	case "list":
-		return MakeList(args), nil
-	case "hash":
-		return MakeHash(args, "hash", env)
-	case "raw":
-		return MakeRaw(args)
-	case "field":
-		//Q("making hash for field")
-		h, err := MakeHash(args, "field", env)
-		if err != nil {
-			return SexpNull, err
-		}
-		fld := (*SexpField)(h)
-		//Q("hash for field is: '%v'", fld.SexpString(nil))
-		return fld, nil
-	case "struct":
-		return MakeHash(args, "struct", env)
-	case "msgmap":
-		switch len(args) {
-		case 0:
-			return MakeHash(args, name, env)
-		default:
-			var arr []Sexp
-			var err error
-			if len(args) > 1 {
-				arr, err = ListToArray(args[1])
-				if err != nil {
-					return SexpNull, fmt.Errorf("error converting "+
-						"'%s' arguments to an array: '%v'", name, err)
-				}
-			} else {
-				arr = args[1:]
+func ConstructorFunction(name string) ZlispUserFunction {
+	return func(env *Zlisp, _ string, args []Sexp) (Sexp, error) {
+		switch name {
+		case "array":
+			return env.NewSexpArray(args), nil
+		case "list":
+			return MakeList(args), nil
+		case "hash":
+			return MakeHash(args, "hash", env)
+		case "raw":
+			return MakeRaw(args)
+		case "field":
+			//Q("making hash for field")
+			h, err := MakeHash(args, "field", env)
+			if err != nil {
+				return SexpNull, err
 			}
-			switch nm := args[0].(type) {
-			case *SexpStr:
-				return MakeHash(arr, nm.S, env)
-			case *SexpSymbol:
-				return MakeHash(arr, nm.name, env)
+			fld := (*SexpField)(h)
+			//Q("hash for field is: '%v'", fld.SexpString(nil))
+			return fld, nil
+		case "struct":
+			return MakeHash(args, "struct", env)
+		case "msgmap":
+			switch len(args) {
+			case 0:
+				return MakeHash(args, name, env)
 			default:
-				return MakeHash(arr, name, env)
+				var arr []Sexp
+				var err error
+				if len(args) > 1 {
+					arr, err = ListToArray(args[1])
+					if err != nil {
+						return SexpNull, fmt.Errorf("error converting "+
+							"'%s' arguments to an array: '%v'", name, err)
+					}
+				} else {
+					arr = args[1:]
+				}
+				switch nm := args[0].(type) {
+				case *SexpStr:
+					return MakeHash(arr, nm.S, env)
+				case *SexpSymbol:
+					return MakeHash(arr, nm.name, env)
+				default:
+					return MakeHash(arr, name, env)
+				}
 			}
 		}
+		return SexpNull, fmt.Errorf("invalid constructor")
 	}
-	return SexpNull, fmt.Errorf("invalid constructor")
 }
 
 func SymnumFunction(env *Zlisp, name string, args []Sexp) (Sexp, error) {
@@ -939,26 +962,26 @@ func AllBuiltinFunctions() map[string]ZlispUserFunction {
 func CoreFunctions() map[string]ZlispUserFunction {
 	return map[string]ZlispUserFunction{
 		"pretty":    SetPrettyPrintFlag,
-		"<":         CompareFunction,
-		">":         CompareFunction,
-		"<=":        CompareFunction,
-		">=":        CompareFunction,
-		"==":        CompareFunction,
-		"!=":        CompareFunction,
-		"isnan":     IsNaNFunction,
-		"isNaN":     IsNaNFunction,
-		"sll":       BinaryIntFunction,
-		"sra":       BinaryIntFunction,
-		"srl":       BinaryIntFunction,
-		"mod":       BinaryIntFunction,
-		"+":         NumericFunction,
-		"-":         NumericFunction,
-		"*":         PointerOrNumericFunction,
-		"**":        NumericFunction,
-		"/":         NumericFunction,
-		"bitAnd":    BitwiseFunction,
-		"bitOr":     BitwiseFunction,
-		"bitXor":    BitwiseFunction,
+		"<":         CompareFunction("<"),
+		">":         CompareFunction(">"),
+		"<=":        CompareFunction("<="),
+		">=":        CompareFunction(">="),
+		"==":        CompareFunction("=="),
+		"!=":        CompareFunction("!="),
+		"isnan":     IsNaNFunction("isnan"),
+		"isNaN":     IsNaNFunction("isNaN"),
+		"sll":       BinaryIntFunction("sll"),
+		"sra":       BinaryIntFunction("sra"),
+		"srl":       BinaryIntFunction("srl"),
+		"mod":       BinaryIntFunction("mod"),
+		"+":         NumericFunction("+"),
+		"-":         NumericFunction("-"),
+		"*":         PointerOrNumericFunction("*"),
+		"**":        NumericFunction("**"),
+		"/":         NumericFunction("/"),
+		"bitAnd":    BitwiseFunction("bitAnd"),
+		"bitOr":     BitwiseFunction("bitOr"),
+		"bitXor":    BitwiseFunction("bitXor"),
 		"bitNot":    ComplementFunction,
 		"read":      ReadFunction,
 		"cons":      ConsFunction,
@@ -967,44 +990,44 @@ func CoreFunctions() map[string]ZlispUserFunction {
 		"rest":      RestFunction,
 		"car":       FirstFunction,
 		"cdr":       RestFunction,
-		"type?":     TypeQueryFunction,
-		"list?":     TypeQueryFunction,
-		"null?":     TypeQueryFunction,
-		"array?":    TypeQueryFunction,
-		"hash?":     TypeQueryFunction,
-		"number?":   TypeQueryFunction,
-		"int?":      TypeQueryFunction,
-		"float?":    TypeQueryFunction,
-		"char?":     TypeQueryFunction,
-		"symbol?":   TypeQueryFunction,
-		"string?":   TypeQueryFunction,
-		"zero?":     TypeQueryFunction,
-		"empty?":    TypeQueryFunction,
-		"func?":     TypeQueryFunction,
+		"type?":     TypeQueryFunction("type?"),
+		"list?":     TypeQueryFunction("list?"),
+		"null?":     TypeQueryFunction("null?"),
+		"array?":    TypeQueryFunction("array?"),
+		"hash?":     TypeQueryFunction("hash?"),
+		"number?":   TypeQueryFunction("number?"),
+		"int?":      TypeQueryFunction("int?"),
+		"float?":    TypeQueryFunction("float?"),
+		"char?":     TypeQueryFunction("char?"),
+		"symbol?":   TypeQueryFunction("symbol?"),
+		"string?":   TypeQueryFunction("string?"),
+		"zero?":     TypeQueryFunction("zero?"),
+		"empty?":    TypeQueryFunction("empty?"),
+		"func?":     TypeQueryFunction("func?"),
 		"not":       NotFunction,
 		"apply":     ApplyFunction,
 		"map":       MapFunction,
 		"makeArray": MakeArrayFunction,
-		"aget":      ArrayAccessFunction,
-		"aset":      ArrayAccessFunction,
+		"aget":      ArrayAccessFunction("aget"),
+		"aset":      ArrayAccessFunction("aset"),
 		"sget":      SgetFunction,
 		"hget":      GenericAccessFunction, // handles arrays or hashes
 		//":":          ColonAccessFunction,
-		"hset":        HashAccessFunction,
-		"hdel":        HashAccessFunction,
-		"keys":        HashAccessFunction,
+		"hset":        HashAccessFunction("hset"),
+		"hdel":        HashAccessFunction("hdel"),
+		"keys":        HashAccessFunction("keys"),
 		"hpair":       GenericHpairFunction,
 		"slice":       SliceFunction,
 		"len":         LenFunction,
-		"append":      AppendFunction,
-		"appendslice": AppendFunction,
+		"append":      AppendFunction("append"),
+		"appendslice": AppendFunction("appendslice"),
 		"concat":      ConcatFunction,
-		"field":       ConstructorFunction,
-		"struct":      ConstructorFunction,
-		"array":       ConstructorFunction,
-		"list":        ConstructorFunction,
-		"hash":        ConstructorFunction,
-		"raw":         ConstructorFunction,
+		"field":       ConstructorFunction("field"),
+		"struct":      ConstructorFunction("struct"),
+		"array":       ConstructorFunction("array"),
+		"list":        ConstructorFunction("list"),
+		"hash":        ConstructorFunction("hash"),
+		"raw":         ConstructorFunction("raw"),
 		"str":         StringifyFunction,
 		"->":          ThreadMapFunction,
 		"flatten":     FlattenToWordsFunction,
@@ -1017,8 +1040,8 @@ func CoreFunctions() map[string]ZlispUserFunction {
 		"joinsym":     JoinSymFunction,
 		"GOOS":        GOOSFunction,
 		"&":           AddressOfFunction,
-		"derefSet":    DerefFunction,
-		"deref":       DerefFunction,
+		"derefSet":    DerefFunction("derefSet"),
+		"deref":       DerefFunction("deref"),
 		".":           DotFunction,
 		"arrayidx":    ArrayIndexFunction,
 		"hashidx":     HashIndexFunction,
@@ -1029,12 +1052,12 @@ func CoreFunctions() map[string]ZlispUserFunction {
 func StrFunctions() map[string]ZlispUserFunction {
 	return map[string]ZlispUserFunction{
 		"nsplit": SplitStringOnNewlinesFunction, "split": SplitStringFunction,
-		"chomp":   StringUtilFunction,
-		"trim":    StringUtilFunction,
-		"println": PrintFunction,
-		"print":   PrintFunction,
-		"printf":  PrintFunction,
-		"sprintf": PrintFunction,
+		"chomp":   StringUtilFunction("chomp"),
+		"trim":    StringUtilFunction("trim"),
+		"println": PrintFunction("println"),
+		"print":   PrintFunction("print"),
+		"printf":  PrintFunction("printf"),
+		"sprintf": PrintFunction("sprintf"),
 		"raw2str": RawToStringFunction,
 		"str2sym": Str2SymFunction,
 		"sym2str": Sym2StrFunction,
@@ -1046,12 +1069,12 @@ func StrFunctions() map[string]ZlispUserFunction {
 
 func EncodingFunctions() map[string]ZlispUserFunction {
 	return map[string]ZlispUserFunction{
-		"json":      JsonFunction,
-		"unjson":    JsonFunction,
-		"msgpack":   JsonFunction,
-		"unmsgpack": JsonFunction,
+		"json":      JsonFunction("json"),
+		"unjson":    JsonFunction("unjson"),
+		"msgpack":   JsonFunction("msgpack"),
+		"unmsgpack": JsonFunction("unmsgpack"),
 		"gob":       GobEncodeFunction,
-		"msgmap":    ConstructorFunction,
+		"msgmap":    ConstructorFunction("msgmap"),
 	}
 }
 
@@ -1070,19 +1093,19 @@ func SystemFunctions() map[string]ZlispUserFunction {
 		"fromgo":    FromGoFunction,
 		"dump":      GoonDumpFunction,
 		"slurpf":    SlurpfileFunction,
-		"writef":    WriteToFileFunction,
-		"save":      WriteToFileFunction,
+		"writef":    WriteToFileFunction("writef"),
+		"save":      WriteToFileFunction("save"),
 		"bload":     ReadGreenpackFromFileFunction,
-		"bsave":     WriteShadowGreenpackToFileFunction,
-		"greenpack": WriteShadowGreenpackToFileFunction,
-		"owritef":   WriteToFileFunction,
+		"bsave":     WriteShadowGreenpackToFileFunction("bsave"),
+		"greenpack": WriteShadowGreenpackToFileFunction("greenpack"),
+		"owritef":   WriteToFileFunction("owritef"),
 		"system":    SystemFunction,
 		"exit":      ExitFunction,
 		"_closdump": DumpClosureEnvFunction,
 		"rmsym":     RemoveSymFunction,
 		"typelist":  TypeListFunction,
-		"setenv":    GetEnvFunction,
-		"getenv":    GetEnvFunction,
+		"setenv":    GetEnvFunction("setenv"),
+		"getenv":    GetEnvFunction("getenv"),
 		// not done "_call":     CallZMethodOnRecordFunction,
 	}
 }
@@ -1204,9 +1227,9 @@ func GenericAccessFunction(env *Zlisp, name string, args []Sexp) (Sexp, error) {
 
 	switch container.(type) {
 	case *SexpHash:
-		return HashAccessFunction(env, name, args)
+		return HashAccessFunction(name)(env, name, args)
 	case *SexpArray:
-		return ArrayAccessFunction(env, name, args)
+		return ArrayAccessFunction(name)(env, name, args)
 	}
 	return SexpNull, fmt.Errorf("first argument to hget function must be hash or array")
 }
@@ -1527,130 +1550,132 @@ func AddressOfFunction(env *Zlisp, name string, args []Sexp) (Sexp, error) {
 	return NewSexpPointer(args[0]), nil
 }
 
-func DerefFunction(env *Zlisp, name string, args []Sexp) (result Sexp, err error) {
-	result = SexpNull
+func DerefFunction(name string) ZlispUserFunction {
+	return func(env *Zlisp, _ string, args []Sexp) (result Sexp, err error) {
+		result = SexpNull
 
-	defer func() {
-		e := recover()
-		if e != nil {
-			//Q("in recover() of DerefFunction, e = '%#v'", e)
-			switch ve := e.(type) {
-			case *reflect.ValueError:
-				err = ve
-			default:
-				err = fmt.Errorf("unknown typecheck error during %s: %v", name, ve)
+		defer func() {
+			e := recover()
+			if e != nil {
+				//Q("in recover() of DerefFunction, e = '%#v'", e)
+				switch ve := e.(type) {
+				case *reflect.ValueError:
+					err = ve
+				default:
+					err = fmt.Errorf("unknown typecheck error during %s: %v", name, ve)
+				}
 			}
-		}
-	}()
+		}()
 
-	narg := len(args)
-	if narg != 1 && narg != 2 {
-		return SexpNull, WrongNargs
-	}
-	var ptr *SexpPointer
-	switch e := args[0].(type) {
-	case *SexpPointer:
-		ptr = e
-	case *SexpReflect:
-		ptr = NewSexpPointer(e)
-	default:
-		return SexpNull, fmt.Errorf("%s only operates on pointers (*SexpPointer); we saw %T instead", name, e)
-	}
-
-	switch name {
-	case "deref":
-		if narg != 1 {
+		narg := len(args)
+		if narg != 1 && narg != 2 {
 			return SexpNull, WrongNargs
 		}
-		return ptr.Target, nil
-
-	case "derefSet":
-		if narg != 2 {
-			return SexpNull, WrongNargs
-		}
-
-		// delegate as much as we can to the Go type system
-		// and reflection
-		rhs := reflect.ValueOf(args[1])
-		rhstype := rhs.Type()
-		lhstype := ptr.ReflectTarget.Type()
-		//P("rhstype = %#v, lhstype = %#v", rhstype, lhstype)
-		if lhstype == rhstype {
-			// have to exclude *SexpHash and *SexpReflect from this
-			switch args[1].(type) {
-			case *SexpHash:
-				// handle below
-			//case *SexpReflect:
-			// handle here or below?
-			default:
-				//P("we have a reflection capable type match!")
-				ptr.ReflectTarget.Elem().Set(rhs.Elem())
-				return
-			}
-		}
-
-		//P("derefSet: arg0 is %T and arg1 is %T,   ptr.Target = %#v", args[0], args[1], ptr.Target)
-		//P("args[0] has ptr.ReflectTarget = '%#v'", ptr.ReflectTarget)
-		switch payload := args[1].(type) {
-		case *SexpInt:
-			//Q("ptr = '%#v'", ptr)
-			//Q("ptr.ReflectTarget = '%#v'", ptr.ReflectTarget)
-			//Q("ptr.ReflectTarget.CanAddr() = '%#v'", ptr.ReflectTarget.Elem().CanAddr())
-			//Q("ptr.ReflectTarget.CanSet() = '%#v'", ptr.ReflectTarget.Elem().CanSet())
-			//Q("*SexpInt case: payload = '%#v'", payload)
-			vo := reflect.ValueOf(payload.Val)
-			vot := vo.Type()
-			if !vot.AssignableTo(ptr.ReflectTarget.Elem().Type()) {
-				return SexpNull, fmt.Errorf("type mismatch: value of type '%s' is not assignable to type '%v'",
-					vot, ptr.ReflectTarget.Elem().Type())
-			}
-			ptr.ReflectTarget.Elem().Set(vo)
-			return
-		case *SexpStr:
-			vo := reflect.ValueOf(payload.S)
-			vot := vo.Type()
-			//P("payload is *SexpStr")
-			//tele := ptr.ReflectTarget.Elem()
-			//P("ptr = %#v", ptr)
-			tele := ptr.ReflectTarget
-			//P("got past tele : %#v", tele)
-			if !reflect.PtrTo(vot).AssignableTo(tele.Type()) {
-				return SexpNull, fmt.Errorf("type mismatch: value of type '%v' is not assignable to '%v'",
-					vot, ptr.PointedToType.RegisteredName) // tele.Type())
-			}
-			//P("payload is *SexpStr, got past type check")
-			ptr.ReflectTarget.Elem().Set(vo)
-			return
-		case *SexpHash:
-			//P("ptr.PointedToType = '%#v'", ptr.PointedToType)
-			pt := payload.Type()
-			tt := ptr.PointedToType
-			if tt == pt && tt.RegisteredName == pt.RegisteredName {
-				//P("have matching type!: %v", tt.RegisteredName)
-				ptr.Target.(*SexpHash).CloneFrom(payload)
-				return
-			} else {
-				return SexpNull, fmt.Errorf("cannot assign type '%v' to type '%v'",
-					payload.Type().RegisteredName,
-					ptr.PointedToType.RegisteredName)
-			}
-
+		var ptr *SexpPointer
+		switch e := args[0].(type) {
+		case *SexpPointer:
+			ptr = e
 		case *SexpReflect:
-			//Q("good, e2 is SexpReflect with Val='%#v'", payload.Val)
-
-			//Q("ptr.Target = '%#v'.  ... trying SexpToGoStructs()", ptr.Target)
-			iface, err := SexpToGoStructs(payload, ptr.Target, env, nil, 0, ptr.Target)
-			_ = iface
-			if err != nil {
-				return SexpNull, err
-			}
-			//Q("got back iface = '%#v'", iface)
-			panic("not done yet with this implementation of args[1] of type *SexpReflect")
+			ptr = NewSexpPointer(e)
+		default:
+			return SexpNull, fmt.Errorf("%s only operates on pointers (*SexpPointer); we saw %T instead", name, e)
 		}
-		return SexpNull, fmt.Errorf("derefSet doesn't handle assignment of type %T at present", args[1])
 
-	default:
-		return SexpNull, fmt.Errorf("unimplemented operation '%s' in DerefFunction", name)
+		switch name {
+		case "deref":
+			if narg != 1 {
+				return SexpNull, WrongNargs
+			}
+			return ptr.Target, nil
+
+		case "derefSet":
+			if narg != 2 {
+				return SexpNull, WrongNargs
+			}
+
+			// delegate as much as we can to the Go type system
+			// and reflection
+			rhs := reflect.ValueOf(args[1])
+			rhstype := rhs.Type()
+			lhstype := ptr.ReflectTarget.Type()
+			//P("rhstype = %#v, lhstype = %#v", rhstype, lhstype)
+			if lhstype == rhstype {
+				// have to exclude *SexpHash and *SexpReflect from this
+				switch args[1].(type) {
+				case *SexpHash:
+					// handle below
+				//case *SexpReflect:
+				// handle here or below?
+				default:
+					//P("we have a reflection capable type match!")
+					ptr.ReflectTarget.Elem().Set(rhs.Elem())
+					return
+				}
+			}
+
+			//P("derefSet: arg0 is %T and arg1 is %T,   ptr.Target = %#v", args[0], args[1], ptr.Target)
+			//P("args[0] has ptr.ReflectTarget = '%#v'", ptr.ReflectTarget)
+			switch payload := args[1].(type) {
+			case *SexpInt:
+				//Q("ptr = '%#v'", ptr)
+				//Q("ptr.ReflectTarget = '%#v'", ptr.ReflectTarget)
+				//Q("ptr.ReflectTarget.CanAddr() = '%#v'", ptr.ReflectTarget.Elem().CanAddr())
+				//Q("ptr.ReflectTarget.CanSet() = '%#v'", ptr.ReflectTarget.Elem().CanSet())
+				//Q("*SexpInt case: payload = '%#v'", payload)
+				vo := reflect.ValueOf(payload.Val)
+				vot := vo.Type()
+				if !vot.AssignableTo(ptr.ReflectTarget.Elem().Type()) {
+					return SexpNull, fmt.Errorf("type mismatch: value of type '%s' is not assignable to type '%v'",
+						vot, ptr.ReflectTarget.Elem().Type())
+				}
+				ptr.ReflectTarget.Elem().Set(vo)
+				return
+			case *SexpStr:
+				vo := reflect.ValueOf(payload.S)
+				vot := vo.Type()
+				//P("payload is *SexpStr")
+				//tele := ptr.ReflectTarget.Elem()
+				//P("ptr = %#v", ptr)
+				tele := ptr.ReflectTarget
+				//P("got past tele : %#v", tele)
+				if !reflect.PtrTo(vot).AssignableTo(tele.Type()) {
+					return SexpNull, fmt.Errorf("type mismatch: value of type '%v' is not assignable to '%v'",
+						vot, ptr.PointedToType.RegisteredName) // tele.Type())
+				}
+				//P("payload is *SexpStr, got past type check")
+				ptr.ReflectTarget.Elem().Set(vo)
+				return
+			case *SexpHash:
+				//P("ptr.PointedToType = '%#v'", ptr.PointedToType)
+				pt := payload.Type()
+				tt := ptr.PointedToType
+				if tt == pt && tt.RegisteredName == pt.RegisteredName {
+					//P("have matching type!: %v", tt.RegisteredName)
+					ptr.Target.(*SexpHash).CloneFrom(payload)
+					return
+				} else {
+					return SexpNull, fmt.Errorf("cannot assign type '%v' to type '%v'",
+						payload.Type().RegisteredName,
+						ptr.PointedToType.RegisteredName)
+				}
+
+			case *SexpReflect:
+				//Q("good, e2 is SexpReflect with Val='%#v'", payload.Val)
+
+				//Q("ptr.Target = '%#v'.  ... trying SexpToGoStructs()", ptr.Target)
+				iface, err := SexpToGoStructs(payload, ptr.Target, env, nil, 0, ptr.Target)
+				_ = iface
+				if err != nil {
+					return SexpNull, err
+				}
+				//Q("got back iface = '%#v'", iface)
+				panic("not done yet with this implementation of args[1] of type *SexpReflect")
+			}
+			return SexpNull, fmt.Errorf("derefSet doesn't handle assignment of type %T at present", args[1])
+
+		default:
+			return SexpNull, fmt.Errorf("unimplemented operation '%s' in DerefFunction", name)
+		}
 	}
 }
 
@@ -1731,39 +1756,41 @@ func ScriptFacingRegisterDemoStructs(env *Zlisp, name string, args []Sexp) (Sexp
 	return SexpNull, nil
 }
 
-func GetEnvFunction(env *Zlisp, name string, args []Sexp) (Sexp, error) {
-	narg := len(args)
-	//fmt.Printf("GetEnv name='%s' called with narg = %v\n", name, narg)
-	if name == "getenv" {
-		if narg != 1 {
-			return SexpNull, WrongNargs
+func GetEnvFunction(name string) ZlispUserFunction {
+	return func(env *Zlisp, _ string, args []Sexp) (Sexp, error) {
+		narg := len(args)
+		//fmt.Printf("GetEnv name='%s' called with narg = %v\n", name, narg)
+		if name == "getenv" {
+			if narg != 1 {
+				return SexpNull, WrongNargs
+			}
+		} else {
+			if name != "setenv" {
+				panic("only getenv or setenv allowed here")
+			}
+			if narg != 2 {
+				return SexpNull, WrongNargs
+			}
 		}
-	} else {
-		if name != "setenv" {
-			panic("only getenv or setenv allowed here")
+		nm := make([]string, narg)
+		for i := 0; i < narg; i++ {
+			switch x := args[i].(type) {
+			case *SexpSymbol:
+				nm[i] = x.name
+			case *SexpStr:
+				nm[i] = x.S
+			default:
+				return SexpNull, fmt.Errorf("symbol or string required, but saw %T/%v for i=%v arg", args[i], args[i].SexpString(nil), i)
+			}
 		}
-		if narg != 2 {
-			return SexpNull, WrongNargs
-		}
-	}
-	nm := make([]string, narg)
-	for i := 0; i < narg; i++ {
-		switch x := args[i].(type) {
-		case *SexpSymbol:
-			nm[i] = x.name
-		case *SexpStr:
-			nm[i] = x.S
-		default:
-			return SexpNull, fmt.Errorf("symbol or string required, but saw %T/%v for i=%v arg", args[i], args[i].SexpString(nil), i)
-		}
-	}
 
-	if name == "getenv" {
-		return &SexpStr{S: os.Getenv(nm[0])}, nil
-	}
+		if name == "getenv" {
+			return &SexpStr{S: os.Getenv(nm[0])}, nil
+		}
 
-	//fmt.Printf("calling setenv with nm[0]='%s', nm[1]='%s'\n", nm[0], nm[1])
-	return SexpNull, os.Setenv(nm[0], nm[1])
+		//fmt.Printf("calling setenv with nm[0]='%s', nm[1]='%s'\n", nm[0], nm[1])
+		return SexpNull, os.Setenv(nm[0], nm[1])
+	}
 }
 
 // coerce numbers to uint64

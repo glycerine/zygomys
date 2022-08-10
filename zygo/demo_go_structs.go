@@ -144,6 +144,6 @@ func DemoNestInnerOuterFunction(env *Zlisp, name string, args []Sexp) (Sexp, err
 		return SexpNull, WrongNargs
 	default:
 		// many parameters, treat as key:value pairs in the hash/record.
-		return ConstructorFunction(env, "msgmap", append([]Sexp{&SexpStr{S: name}}, MakeList(args)))
+		return ConstructorFunction("msgmap")(env, "msgmap", append([]Sexp{&SexpStr{S: name}}, MakeList(args)))
 	}
 }

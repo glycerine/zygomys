@@ -37,27 +37,29 @@ func AppendStr(str *SexpStr, expr Sexp) (*SexpStr, error) {
 	return &SexpStr{S: str.S + string(chr.Val)}, nil
 }
 
-func StringUtilFunction(env *Zlisp, name string, args []Sexp) (Sexp, error) {
-	if len(args) != 1 {
-		return SexpNull, WrongNargs
-	}
-	var s string
-	switch str := args[0].(type) {
-	case *SexpStr:
-		s = str.S
-	default:
-		return SexpNull, fmt.Errorf("string required, got %T", s)
-	}
-
-	switch name {
-	case "chomp":
-		n := len(s)
-		if n > 0 && s[n-1] == '\n' {
-			return &SexpStr{S: s[:n-1]}, nil
+func StringUtilFunction(name string) ZlispUserFunction {
+	return func(env *Zlisp, _ string, args []Sexp) (Sexp, error) {
+		if len(args) != 1 {
+			return SexpNull, WrongNargs
 		}
-		return &SexpStr{S: s}, nil
-	case "trim":
-		return &SexpStr{S: strings.TrimSpace(s)}, nil
+		var s string
+		switch str := args[0].(type) {
+		case *SexpStr:
+			s = str.S
+		default:
+			return SexpNull, fmt.Errorf("string required, got %T", s)
+		}
+
+		switch name {
+		case "chomp":
+			n := len(s)
+			if n > 0 && s[n-1] == '\n' {
+				return &SexpStr{S: s[:n-1]}, nil
+			}
+			return &SexpStr{S: s}, nil
+		case "trim":
+			return &SexpStr{S: strings.TrimSpace(s)}, nil
+		}
+		return SexpNull, fmt.Errorf("unrecognized command '%s'", name)
 	}
-	return SexpNull, fmt.Errorf("unrecognized command '%s'", name)
 }
