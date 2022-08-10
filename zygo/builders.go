@@ -817,9 +817,9 @@ func ColonAccessBuilder(env *Zlisp, name string, args []Sexp) (Sexp, error) {
 
 	switch sx := collec.(type) {
 	case *SexpHash:
-		return HashAccessFunction(env, name, swapped)
+		return HashAccessFunction(name)(env, name, swapped)
 	case *SexpArray:
-		return ArrayAccessFunction(env, name, swapped)
+		return ArrayAccessFunction(name)(env, name, swapped)
 	case *SexpArraySelector:
 		//Q("*SexpSelector seen in : operator form.")
 		return sx.RHS(env)

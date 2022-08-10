@@ -8,27 +8,29 @@ import (
 	"reflect"
 )
 
-func IsNaNFunction(env *Zlisp, name string, args []Sexp) (Sexp, error) {
-	if len(args) != 1 {
-		return SexpNull, WrongNargs
-	}
-
-	var err error
-	a := args[0]
-	if sel, isSel := a.(Selector); isSel {
-		a, err = sel.RHS(env)
-		if err != nil {
-			return SexpNull, err
+func IsNaNFunction(name string) ZlispUserFunction {
+	return func(env *Zlisp, _ string, args []Sexp) (Sexp, error) {
+		if len(args) != 1 {
+			return SexpNull, WrongNargs
 		}
-	}
 
-	switch at := a.(type) {
-	case *SexpFloat:
-		if math.IsNaN(at.Val) {
-			return &SexpBool{Val: true}, nil
+		var err error
+		a := args[0]
+		if sel, isSel := a.(Selector); isSel {
+			a, err = sel.RHS(env)
+			if err != nil {
+				return SexpNull, err
+			}
 		}
+
+		switch at := a.(type) {
+		case *SexpFloat:
+			if math.IsNaN(at.Val) {
+				return &SexpBool{Val: true}, nil
+			}
+		}
+		return &SexpBool{Val: false}, nil
 	}
-	return &SexpBool{Val: false}, nil
 }
 
 func signumFloat(f float64) int {

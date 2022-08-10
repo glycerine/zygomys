@@ -49,32 +49,34 @@ type TypeCheckable interface {
     a 'shadow' Go-struct whose data matches
     that configured in the record.
 */
-func JsonFunction(env *Zlisp, name string, args []Sexp) (Sexp, error) {
-	if len(args) != 1 {
-		return SexpNull, WrongNargs
-	}
+func JsonFunction(name string) ZlispUserFunction {
+	return func(env *Zlisp, _ string, args []Sexp) (Sexp, error) {
+		if len(args) != 1 {
+			return SexpNull, WrongNargs
+		}
 
-	switch name {
-	case "json":
-		str := SexpToJson(args[0])
-		return &SexpRaw{Val: []byte(str)}, nil
-	case "unjson":
-		raw, isRaw := args[0].(*SexpRaw)
-		if !isRaw {
-			return SexpNull, fmt.Errorf("unjson error: SexpRaw required, but we got %T instead.", args[0])
+		switch name {
+		case "json":
+			str := SexpToJson(args[0])
+			return &SexpRaw{Val: []byte(str)}, nil
+		case "unjson":
+			raw, isRaw := args[0].(*SexpRaw)
+			if !isRaw {
+				return SexpNull, fmt.Errorf("unjson error: SexpRaw required, but we got %T instead.", args[0])
+			}
+			return JsonToSexp([]byte(raw.Val), env)
+		case "msgpack":
+			by, _ := SexpToMsgpack(args[0])
+			return &SexpRaw{Val: []byte(by)}, nil
+		case "unmsgpack":
+			raw, isRaw := args[0].(*SexpRaw)
+			if !isRaw {
+				return SexpNull, fmt.Errorf("unmsgpack error: SexpRaw required, but we got %T instead.", args[0])
+			}
+			return MsgpackToSexp([]byte(raw.Val), env)
+		default:
+			return SexpNull, fmt.Errorf("JsonFunction error: unrecognized function name: '%s'", name)
 		}
-		return JsonToSexp([]byte(raw.Val), env)
-	case "msgpack":
-		by, _ := SexpToMsgpack(args[0])
-		return &SexpRaw{Val: []byte(by)}, nil
-	case "unmsgpack":
-		raw, isRaw := args[0].(*SexpRaw)
-		if !isRaw {
-			return SexpNull, fmt.Errorf("unmsgpack error: SexpRaw required, but we got %T instead.", args[0])
-		}
-		return MsgpackToSexp([]byte(raw.Val), env)
-	default:
-		return SexpNull, fmt.Errorf("JsonFunction error: unrecognized function name: '%s'", name)
 	}
 }
 
