@@ -843,3 +843,66 @@ func (a PopScopeTransferToDataStackInstr) Execute(env *Zlisp) error {
 	env.datastack.PushExpr(stackClone)
 	return nil
 }
+
+type PrepareCallInstr struct {
+	sym   *SexpSymbol
+	nargs int
+}
+
+func (c PrepareCallInstr) InstrString() string {
+	return fmt.Sprintf("pre-call %s %d", c.sym.name, c.nargs)
+}
+
+func (c PrepareCallInstr) Execute(env *Zlisp) error {
+	if err := c.execute(env); err != nil {
+		return err
+	}
+	env.pc++
+	return nil
+}
+
+func (c PrepareCallInstr) execute(env *Zlisp) error {
+	_, ok := env.builtins[c.sym.number]
+	if ok {
+		return nil
+	}
+	var funcobj, indirectFuncName Sexp
+	var err error
+
+	funcobj, err, _ = env.LexicalLookupSymbol(c.sym, nil)
+
+	if err != nil {
+		return err
+	}
+	switch f := funcobj.(type) {
+	case *SexpSymbol:
+		if c.sym.isDot {
+
+			dotSymRef, dotLookupErr := dotGetSetHelper(env, c.sym.name, nil)
+			if dotLookupErr != nil {
+				return dotLookupErr
+			}
+			indirectFuncName = dotSymRef
+		} else {
+			indirectFuncName, err = dotGetSetHelper(env, f.name, nil)
+			if err != nil {
+				return fmt.Errorf("'%s' refers to symbol '%s', but '%s' could not be resolved: '%s'.",
+					c.sym.name, f.name, f.name, err)
+			}
+		}
+
+		switch g := indirectFuncName.(type) {
+		case *SexpFunction:
+			if !g.user && g.varargs {
+				return env.wrangleOptargs(g.nargs, c.nargs)
+			}
+			return nil
+		}
+
+	case *SexpFunction:
+		if !f.user && f.varargs {
+			return env.wrangleOptargs(f.nargs, c.nargs)
+		}
+	}
+	return nil
+}

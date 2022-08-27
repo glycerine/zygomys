@@ -659,6 +659,7 @@ func (gen *Generator) GenerateCallBySymbol(sym *SexpSymbol, args []Sexp, orig Se
 		for i := 0; i < gen.scopes; i++ {
 			gen.AddInstruction(RemoveScopeInstr{})
 		}
+		gen.AddInstruction(PrepareCallInstr{sym, len(args)})
 		gen.AddInstruction(GotoInstr{1}) // goto 1 instead of 0 to avoid adding a new scope
 	} else {
 		gen.AddInstruction(CallInstr{sym, len(args)})

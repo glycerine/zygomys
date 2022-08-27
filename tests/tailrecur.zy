@@ -11,3 +11,8 @@
 (foldl %(a b c d e f g h i j) f 0) 
 
 
+(defn recursivecall [a & b]
+  (cond (null? b) a (recursivecall a)))
+
+(assert (== 100 (recursivecall 100)))
+(assert (== 100 (recursivecall 100 "any")))
