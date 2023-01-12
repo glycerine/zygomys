@@ -1,4 +1,4 @@
-module github.com/glycerine/zygomys
+module github.com/glycerine/zygomys/v6
 
 go 1.14
 
