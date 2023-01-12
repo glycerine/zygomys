@@ -70,6 +70,7 @@ func TestCallUserFunction(t *testing.T) {
 		_, err := env.EvalString("(dosomething)")
 		cv.So(err, cv.ShouldNotBeNil)
 		cv.So(err.Error(), cv.ShouldContainSubstring, "stack trace:")
-		cv.So(err.Error(), cv.ShouldContainSubstring, "github.com/glycerine/zygomys/zygo.(*Zlisp).CallUserFunction")
+		cv.So(err.Error(), cv.ShouldContainSubstring, "github.com/glycerine/zygomys")
+		cv.So(err.Error(), cv.ShouldContainSubstring, "zygo.(*Zlisp).CallUserFunction")
 	})
 }
