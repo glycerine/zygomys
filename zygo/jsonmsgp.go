@@ -782,6 +782,29 @@ func SexpToGoStructs(
 				targVa.Elem().Set(reflect.ValueOf(m))
 				return target, nil
 
+			case *map[string]float64:
+				m := make(map[string]float64)
+				for _, arr := range src.Map {
+					for _, pair := range arr {
+						key := SexpToGo(pair.Head, env, dedup)
+						val := SexpToGo(pair.Tail, env, dedup)
+						keys, isstr := key.(string)
+						if !isstr {
+							panic(fmt.Errorf("key '%v' should have been an string, but was not.", key))
+						}
+						switch x := val.(type) {
+						case float64:
+							m[keys] = x
+						case int64:
+							m[keys] = float64(x)
+						default:
+							panic(fmt.Errorf("val '%v' should have been an float64, but was not.", val))
+						}
+					}
+				}
+				targVa.Elem().Set(reflect.ValueOf(m))
+				return target, nil
+
 			case *map[int64]float64:
 				//P("target is a map[int64]float64")
 
