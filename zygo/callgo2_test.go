@@ -42,14 +42,8 @@ func Test019_ScriptCreatesData_GoReadsIt(t *testing.T) {
 		code := `
         // A defmap is needed to define the table struct inside env.
         // The registry doesn't know about env(s), so it 
-        // can't do it for us automatically. The extra {}
-        // around the (defmap table) work around a macros-are-corrupting-the-
-        // stack bug that I don't know how to fix at the moment. I
-        // thought it was fixed when I turned off the duplicated env for #54,
-        // but I was wrong, and now a number of other features depend on 
-        // not duplicating the env. So this is the workaround for now: wrap
-        // macros in infix curly braces.
-        {(defmap table)}
+        // can't do it for us automatically.
+        (defmap table)
 
         // Create an instance of table, with some data in it.
         (def t 
@@ -57,6 +51,7 @@ func Test019_ScriptCreatesData_GoReadsIt(t *testing.T) {
                   rows:    [["oak"  "silver"]
                             ["pine" "tin"   ]]))`
 
+		//env.debugExec = true
 		x, err := env.EvalString(code)
 		panicOn(err)
 
