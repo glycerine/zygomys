@@ -435,6 +435,7 @@ func (parser *Parser) ParseExpression(depth int) (res Sexp, err error) {
 		}
 		return &SexpUint64{Val: u}, nil
 	case TokenDecimal:
+		tok.str = strings.ReplaceAll(tok.str, "_", "")
 		i, err := strconv.ParseInt(tok.str, 10, SexpIntSize)
 		if err != nil {
 			return SexpNull, err

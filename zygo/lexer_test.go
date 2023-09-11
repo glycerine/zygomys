@@ -252,6 +252,23 @@ func Test028FloatingPointRegex(t *testing.T) {
 	})
 }
 
+func Test029DecimalRegex(t *testing.T) {
+
+	// Go 1.13:
+	// Digit separators: The digits of any number literal may now be separated
+	// (grouped) using underscores, such as in 1_000_000, 0b_1010_0110, or
+	// 3.1415_9265. An underscore may appear between any two digits or the
+	// literal prefix and the first digit.
+	//
+	// We don't support all of that. For now, just in integers, and just in
+	// decimal integers at that.
+
+	cv.Convey("our lexer should recognize 100_000_000 numbers with _ underscores for readability, as in Go 1.13", t, func() {
+		ans := DecimalRegex.MatchString(`100_000_000`)
+		cv.So(ans, cv.ShouldEqual, true)
+	})
+}
+
 func Test042ImaginaryFloatingPointRegex(t *testing.T) {
 
 	cv.Convey("our lexer should recognize complex/imaginary floating point numbers and these should not be confused with reals/floating point real-only numbers", t, func() {

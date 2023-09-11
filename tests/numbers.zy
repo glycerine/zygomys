@@ -31,3 +31,6 @@
 // exponentiation
 (assert (== 16 (** 2 4)))
 (assert (== 1024.0 (** 2.0 10.0)))
+
+// 1_000 underscores
+(assert (== 1_000 1000))

@@ -151,7 +151,7 @@ func (lexer *Lexer) PrependToken(tok Token) {
 	lexer.tokens = append([]Token{tok}, lexer.tokens...)
 }
 
-//helper
+// helper
 func (lexer *Lexer) twoback() rune {
 	pen := lexer.priori - 2
 	if pen < 0 {
@@ -198,7 +198,7 @@ func (lex *Lexer) Token(typ TokenType, str string) Token {
 var (
 	BoolRegex    = regexp.MustCompile("^(true|false)$")
 	Uint64Regex  = regexp.MustCompile("^(0x|0o)?[0-9a-fA-F]+ULL$")
-	DecimalRegex = regexp.MustCompile("^-?[0-9]+$")
+	DecimalRegex = regexp.MustCompile("^-?[0-9][_0-9]*$") // allow underscores now, like go1.13
 	HexRegex     = regexp.MustCompile("^0x[0-9a-fA-F]+$")
 	OctRegex     = regexp.MustCompile("^0o[0-7]+$")
 	BinaryRegex  = regexp.MustCompile("^0b[01]+$")
