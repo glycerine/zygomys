@@ -114,7 +114,7 @@ $ go get github.com/glycerine/zygomys/cmd/zygo
  * [x] Syntax quoting -- with caret `^()` instead of backtick.
  * [x] Backticks used for raw multiline strings, as in Go.
  * [x] Lisp-expression quoting uses `%` (not `'`; which delimits runes as in Go).
- * [x] Channel and goroutine support
+ * [x] Channel and goroutine support. (Deprecated now in v6.0.7, as it is data race-y).
  * [x] Full closures with lexical scope.
 
 [See the wiki for lots of details and a full description of the zygomys language.](https://github.com/glycerine/zygomys/wiki).
