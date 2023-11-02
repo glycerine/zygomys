@@ -266,6 +266,43 @@ func Test029DecimalRegex(t *testing.T) {
 	cv.Convey("our lexer should recognize 100_000_000 numbers with _ underscores for readability, as in Go 1.13", t, func() {
 		ans := DecimalRegex.MatchString(`100_000_000`)
 		cv.So(ans, cv.ShouldEqual, true)
+		ans = DecimalRegex.MatchString(`_1`)
+		cv.So(ans, cv.ShouldEqual, false)
+	})
+}
+
+func Test029_UnderscoresInFloatRegex(t *testing.T) {
+
+	cv.Convey("our lexer should recognize 99_99.00_000_001 and -1_2.3_4e-100_0 floating point numbers with _ underscores for readability, as in Go 1.13", t, func() {
+		ans := FloatRegex.MatchString(`99_99.00_000_001`)
+		cv.So(ans, cv.ShouldEqual, true)
+		ans = FloatRegex.MatchString(`.9_1`)
+		cv.So(ans, cv.ShouldEqual, true)
+		ans = FloatRegex.MatchString(`-1_2.3_4e-1_0`)
+		cv.So(ans, cv.ShouldEqual, true)
+		// should not match: (cannot start with _ )
+		ans = FloatRegex.MatchString(`_99_99.00_000_001`)
+		cv.So(ans, cv.ShouldEqual, false)
+		ans = FloatRegex.MatchString(`_1.`)
+		cv.So(ans, cv.ShouldEqual, false)
+		ans = FloatRegex.MatchString(`_1`)
+		cv.So(ans, cv.ShouldEqual, false)
+
+		// same for Complex
+		ans = ComplexRegex.MatchString(`99_99.00_000_001i`)
+		cv.So(ans, cv.ShouldEqual, true)
+		ans = ComplexRegex.MatchString(`.9_1i`)
+		cv.So(ans, cv.ShouldEqual, true)
+		ans = ComplexRegex.MatchString(`-1_2.3_4e-1_0i`)
+		cv.So(ans, cv.ShouldEqual, true)
+		// should not match: (cannot start with _ )
+		ans = ComplexRegex.MatchString(`_99_99.00_000_001i`)
+		cv.So(ans, cv.ShouldEqual, false)
+		ans = ComplexRegex.MatchString(`_1.i`)
+		cv.So(ans, cv.ShouldEqual, false)
+		ans = ComplexRegex.MatchString(`_1i`)
+		cv.So(ans, cv.ShouldEqual, false)
+
 	})
 }
 
