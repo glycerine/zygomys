@@ -462,7 +462,10 @@ func ReplMain(cfg *ZlispConfig) {
 			fmt.Println(err)
 			os.Exit(-1)
 		}
-		defer pprof.StopCPUProfile()
+		defer func() {
+			pprof.StopCPUProfile()
+			f.Close()
+		}()
 	}
 
 	precounts = make(map[string]int)
