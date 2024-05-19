@@ -360,6 +360,23 @@ func (parser *Parser) ParseExpression(depth int) (res Sexp, err error) {
 		if err != nil {
 			return SexpNull, err
 		}
+		// hash shortcut:
+		// %{ ... } gets translated into (hash ...).
+		// This is a syntactic sugar to
+		// get an anonymous hashmap, usually written
+		// with (hash), using a syntax similar to {} in JSON.
+		switch pair := expr.(type) {
+		case *SexpPair:
+			if pair.Head != nil {
+				sym, isSymbol := pair.Head.(*SexpSymbol)
+				if isSymbol && sym != nil && sym.name == "infix" {
+					arr := pair.Tail.(*SexpPair).Head.(*SexpArray).Val
+					
+					return MakeList(append([]Sexp{env.MakeSymbol("hash")}, arr...)), nil
+				}
+			}
+		}
+
 		return MakeList([]Sexp{env.MakeSymbol("quote"), expr}), nil
 	case TokenCaret:
 		// '^' is now our syntax-quote symbol, not TokenBacktick, to allow go-style `string literals`.
