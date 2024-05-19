@@ -483,7 +483,7 @@ func (parser *Parser) ParseExpression(depth int) (res Sexp, err error) {
 		return SexpEnd, nil
 	case TokenSymbol:
 		if tok.str == "-" || tok.str == "+" {
-			// are we -Inf
+			// are we -Inf ?
 			tok2, err := parser.ParserPeekNextToken()
 			if err != nil {
 				return SexpEnd, err

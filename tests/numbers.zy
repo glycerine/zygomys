@@ -38,3 +38,5 @@
 // +Inf, -Inf, and even - Inf with a space after the minus.
 (assert (== Inf (* -Inf - Inf)))
 (assert (== +Inf (* -Inf - Inf)))
+(assert (== inf (* -inf - inf)))
+(assert (== +inf (* -inf - inf)))

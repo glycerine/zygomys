@@ -6,6 +6,7 @@ import (
 	"os"
 	"path"
 	"runtime"
+	"runtime/debug"
 	"sync"
 	"time"
 )
@@ -93,4 +94,8 @@ func Caller(upStack int) string {
 		}
 	}
 	return f.Function
+}
+
+func stack() string {
+	return string(debug.Stack())
 }
