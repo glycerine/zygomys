@@ -340,13 +340,19 @@ done:
 }
 
 func (hash *SexpHash) HashSet(key Sexp, val Sexp) error {
-	Q("in HashSet, key='%v' val='%v'", key.SexpString(nil), val.SexpString(nil))
+	//vv("in HashSet, key='%v' val='%v'", key.SexpString(nil), val.SexpString(nil))
 
 	if _, isComment := key.(*SexpComment); isComment {
 		return fmt.Errorf("HashSet: key cannot be comment")
 	}
 	if _, isComment := val.(*SexpComment); isComment {
 		return fmt.Errorf("HashSet: val cannot be comment")
+	}
+	if arr, isArray := key.(*SexpArray); isArray {
+		na := len(arr.Val)
+		if na == 1 {
+			key = arr.Val[0] // let single number keys work: h[6]=10
+		}
 	}
 
 	err := hash.TypeCheckField(key, val)
@@ -877,7 +883,7 @@ func (hash *SexpHash) SexpString(ps *PrintState) string {
 		if err == nil {
 			switch s := key.(type) {
 			case *SexpStr:
-				str += indInner + s.S + ":"
+				str += indInner + `"` + s.S + `":`
 			case *SexpSymbol:
 				str += indInner + s.name + ":"
 			default:

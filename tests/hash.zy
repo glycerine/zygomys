@@ -25,7 +25,7 @@
 (assert (== (str h)            
 ` (hash 
     2:5 
-    c:'c' 
+    "c":'c' 
     'a':3 
     b:13 )
 `))
@@ -72,6 +72,8 @@ h
 (hset h [1 0] %c)
 (hset h [1 1] %d)
 (assert (== {h[0 0]} %a))
+(hset h [6] %e)
+(assert (== {h[6] } %e))
 
 {h2=(hash [4 4]:%slicekey)}
 (hash [4 4]:%slicekey)
