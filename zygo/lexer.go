@@ -77,7 +77,7 @@ func (t Token) String() string {
 	case TokenDot:
 		return t.str
 	case TokenQuote:
-		return "'"
+		return "%"
 	case TokenBacktick:
 		return "`"
 	case TokenCaret:
