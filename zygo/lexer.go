@@ -202,6 +202,7 @@ var (
 	HexRegex     = regexp.MustCompile("^0x[0-9a-fA-F]+$")
 	OctRegex     = regexp.MustCompile("^0o[0-7]+$")
 	BinaryRegex  = regexp.MustCompile("^0b[01]+$")
+	InfRegex     = regexp.MustCompile(`^(-|\+)?[Ii]nf$`)
 
 	// SymbolRegex = regexp.MustCompile("^[^'#]+$")
 	// (Sigil) symbols can begin with #, $, ?, but
@@ -313,6 +314,10 @@ func (x *Lexer) DecodeAtom(atom string) (tk Token, err error) {
 	}
 	if atom == "NaN" || atom == "nan" {
 		return x.Token(TokenFloat, "NaN"), nil
+	}
+	if InfRegex.MatchString(atom) {
+		//vv("InfRegex has matched atom = '%v'", atom)
+		return x.Token(TokenFloat, atom), nil
 	}
 	if DotSymbolRegex.MatchString(atom) {
 		//Q("matched DotSymbolRegex '%v'", atom)
@@ -589,7 +594,7 @@ top:
 		// three cases: negative number, one rune operator, two rune operator
 		first := string(lexer.prevrune)
 		atom := fmt.Sprintf("%c%c", lexer.prevrune, r)
-		//Q("in LexerBuiltinOperator, first='%s', atom='%s'", first, atom)
+		//vv("in LexerBuiltinOperator, first='%s', atom='%s', lexer.prevrune='%c'", first, atom, lexer.prevrune)
 		// are we a negative number -1 or -.1 rather than  ->, --, -= operator?
 		if lexer.prevrune == '-' {
 			if FloatRegex.MatchString(atom) || DecimalRegex.MatchString(atom) {

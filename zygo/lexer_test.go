@@ -344,3 +344,23 @@ func Test042Uint64Regex(t *testing.T) {
 		cv.So(ans, cv.ShouldEqual, true)
 	})
 }
+
+func Test042InfRegex(t *testing.T) {
+
+	cv.Convey("our lexer should recognize +/-Inf for infinity as a float64", t, func() {
+		ans := InfRegex.MatchString(`inf`)
+		cv.So(ans, cv.ShouldEqual, true)
+		ans = InfRegex.MatchString(`-inf`)
+		cv.So(ans, cv.ShouldEqual, true)
+		ans = InfRegex.MatchString(`+inf`)
+		cv.So(ans, cv.ShouldEqual, true)
+		ans = InfRegex.MatchString(`Inf`)
+		cv.So(ans, cv.ShouldEqual, true)
+		ans = InfRegex.MatchString(`-Inf`)
+		cv.So(ans, cv.ShouldEqual, true)
+		ans = InfRegex.MatchString(`+Inf`)
+		cv.So(ans, cv.ShouldEqual, true)
+		ans = InfRegex.MatchString(`in`)
+		cv.So(ans, cv.ShouldEqual, false)
+	})
+}

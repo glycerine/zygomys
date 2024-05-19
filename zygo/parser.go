@@ -371,7 +371,7 @@ func (parser *Parser) ParseExpression(depth int) (res Sexp, err error) {
 				sym, isSymbol := pair.Head.(*SexpSymbol)
 				if isSymbol && sym != nil && sym.name == "infix" {
 					arr := pair.Tail.(*SexpPair).Head.(*SexpArray).Val
-					
+
 					return MakeList(append([]Sexp{env.MakeSymbol("hash")}, arr...)), nil
 				}
 			}
@@ -482,6 +482,25 @@ func (parser *Parser) ParseExpression(depth int) (res Sexp, err error) {
 	case TokenEnd:
 		return SexpEnd, nil
 	case TokenSymbol:
+		if tok.str == "-" || tok.str == "+" {
+			// are we -Inf
+			tok2, err := parser.ParserPeekNextToken()
+			if err != nil {
+				return SexpEnd, err
+			}
+			if tok2.typ == TokenFloat {
+				if tok2.str == "Inf" || tok2.str == "inf" {
+					_, _ = lexer.GetNextToken() // dicard inf, since we consume
+					var f float64
+					f, err = strconv.ParseFloat(tok.str+"Inf", SexpFloatSize)
+					if err != nil {
+						return SexpNull, err
+					}
+					r := &SexpFloat{Val: f}
+					return r, nil
+				}
+			}
+		}
 		return env.MakeSymbol(tok.str), nil
 	case TokenSymbolColon:
 		sym := env.MakeSymbol(tok.str)
@@ -689,4 +708,34 @@ func (parser *Parser) ParseInfix(depth int) (Sexp, error) {
 
 func (parser *Parser) Linenum() int {
 	return parser.lexer.Linenum()
+}
+
+func (parser *Parser) ParserPeekNextToken() (tok Token, err error) {
+
+	lexer := parser.lexer
+
+	for {
+		tok, err = lexer.PeekNextToken()
+		if err != nil {
+			return
+		}
+		if tok.typ != TokenEnd {
+			return
+		} else {
+			//instead of return SexpEnd, UnexpectedEnd
+			// we ask for more, and then loop
+			err = parser.GetMoreInput(nil, ErrMoreInputNeeded)
+			if err == nil {
+				continue
+			}
+			switch err {
+			case ParserHaltRequested:
+				return
+			case ResetRequested:
+				return
+			}
+			// otherwise, loop
+		}
+	}
+	return
 }

@@ -608,7 +608,7 @@ func (p *Pratt) IsEOF() bool {
 func (env *Zlisp) LeftBindingPower(sx Sexp) (int, error) {
 	//Q("LeftBindingPower: sx is '%v'", sx.SexpString(nil))
 	switch x := sx.(type) {
-	case *SexpInt:
+	case *SexpInt, *SexpFloat:
 		return 0, nil
 	case *SexpBool:
 		return 0, nil
