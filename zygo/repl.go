@@ -457,7 +457,7 @@ func ReplMain(cfg *ZlispConfig) {
 			fmt.Println(err)
 			os.Exit(-1)
 		}
-    defer f.Close()
+    		defer f.Close()
 		err = pprof.StartCPUProfile(f)
 		if err != nil {
 			fmt.Println(err)
