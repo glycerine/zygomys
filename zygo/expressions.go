@@ -293,6 +293,7 @@ func (arr *SexpArray) SexpString(ps *PrintState) string {
 
 	opn := "["
 	cls := "]"
+
 	if arr.Infix {
 		opn = "{"
 		cls = "}"
@@ -307,16 +308,25 @@ func (arr *SexpArray) SexpString(ps *PrintState) string {
 	}
 	ta := arr.IsFuncDeclTypeArray
 	str := opn
+
 	for i, sexp := range arr.Val {
 		str += indInner + sexp.SexpString(ps)
 		if ta && i%2 == 0 {
 			str += ":"
 		} else {
-			str += " "
+			if pretty {
+				str += "\n"
+			} else {
+				str += " "
+			}
 		}
 	}
 	m := len(str)
-	str = str[:m-1] + indInner + cls
+	if pretty {
+		str = str[:m-1] + "\n" + indInner + cls
+	} else {
+		str = str[:m-1] + indInner + cls
+	}
 	return str
 }
 

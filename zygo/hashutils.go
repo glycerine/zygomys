@@ -872,18 +872,22 @@ func (hash *SexpHash) SexpString(ps *PrintState) string {
 	innerPs := ps.AddIndent(4) // generates a fresh new PrintState
 	inner := indent + 4
 	prettyEnd := ""
+	origIndInner := ""
 	if hash.Env.Pretty {
 		prettyEnd = "\n"
 		indInner = strings.Repeat(" ", inner)
+		origIndInner = strings.Repeat(" ", indent)
 	}
 	str := " (" + hash.TypeName + " " + prettyEnd
 
 	displayHashInCurly := false
+
 	if hash.TypeName == "hash" {
 		displayHashInCurly = true
 		str = "{" + prettyEnd
 	}
 
+	//lastKey := hash.NumKeys
 	for _, key := range hash.KeyOrder {
 		val, err := hash.HashGet(hash.Env, key)
 		if err == nil {
@@ -904,9 +908,9 @@ func (hash *SexpHash) SexpString(ps *PrintState) string {
 	}
 	if displayHashInCurly {
 		if len(hash.Map) > 0 {
-			return str[:len(str)-1] + "}" + prettyEnd
+			return str[:len(str)-1] + prettyEnd + origIndInner + "}"
 		}
-		return str + "}" + prettyEnd
+		return str + prettyEnd + origIndInner + "}"
 	}
 	if len(hash.Map) > 0 {
 		return str[:len(str)-1] + ")" + prettyEnd
