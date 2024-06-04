@@ -1,5 +1,5 @@
 // infix will be contained within {}
-(assert (== "list" (type? (macexpand {}))))
+(assert (== "hash" (type? (macexpand {}))))
 (assert (== "nil" (str (infix))))
 
 (assert (== {3 + 4} 7))

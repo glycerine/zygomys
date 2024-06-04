@@ -309,9 +309,12 @@ func InfixBuilder(env *Zlisp, name string, args []Sexp) (Sexp, error) {
 				return SexpNull, fmt.Errorf("infixExpand expects (infix []) as its argument; instead we saw '%T'", v.Tail)
 			}
 		}
-		return SexpNull, fmt.Errorf("InfixBuilder must receive an SexpArray")
+		return SexpNull, fmt.Errorf("InfixBuilder must receive an SexpArray. Saw: name='%v' / args[0]='%#v'", name, args[0])
+	case *SexpHash:
+		// an empty basic block {} that turned into an empty hash.
+		return SexpNull, nil
 	default:
-		return SexpNull, fmt.Errorf("InfixBuilder must receive an SexpArray")
+		return SexpNull, fmt.Errorf("InfixBuilder (default) must receive an SexpArray. Saw: name='%v' / args[0]='%#v'", name, args[0])
 	}
 	//Q("InfixBuilder, name='%s', arr = ", name)
 	//for i := range arr.Val {
@@ -653,7 +656,11 @@ func (env *Zlisp) LeftBindingPower(sx Sexp) (int, error) {
 			}
 		}
 		return 0, nil
+	case *SexpHash:
+		// an empty {} block that became an empty hash. no-op.
+		return 0, nil
 	}
+
 	return 0, fmt.Errorf("LeftBindingPower: unhandled sx :%#v", sx)
 }
 

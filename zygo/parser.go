@@ -359,7 +359,8 @@ func (parser *Parser) ParseExpression(depth int) (res Sexp, err error) {
 		if err != nil {
 			return SexpNull, err
 		}
-		if tok2.typ == TokenSymbolColon {
+		switch tok2.typ {
+		case TokenSymbolColon:
 			//vv("saw TokenLCurly followed by TokenSymbolColon, tok2 = '%v', typ='%v'", tok2.String(), tok2.typ)
 			lexer.tokens = append([]Token{Token{typ: TokenSymbol, str: "hash"}}, lexer.tokens...)
 			exp, err := parser.ParseList(depth+1, TokenRCurly)
@@ -367,6 +368,9 @@ func (parser *Parser) ParseExpression(depth int) (res Sexp, err error) {
 				return SexpNull, err
 			}
 			return exp, err
+		case TokenRCurly:
+			_, _ = lexer.GetNextToken()       // dicard '}'
+			return MakeHash(nil, "hash", env) // return empty hash
 		}
 
 		exp, err := parser.ParseInfix(depth + 1)
@@ -528,7 +532,7 @@ func (parser *Parser) ParseExpression(depth int) (res Sexp, err error) {
 	case TokenSemicolon:
 		return &SexpSemicolon{}, nil
 	}
-	return SexpNull, fmt.Errorf("Invalid syntax, don't know what to do with %v '%v'", tok.typ, tok)
+	return SexpNull, fmt.Errorf("Invalid syntax, don't know what to do with '%v' (TokenType: %v)", tok, tok.typ)
 }
 
 // ParseTokens is the main service the Parser provides.
