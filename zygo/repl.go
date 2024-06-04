@@ -137,7 +137,7 @@ func (pr *Prompter) getExpressionWithLiner(env *Zlisp, reader *bufio.Reader, noL
 		case ErrMoreInputNeeded:
 			continue
 		default:
-			return "", nil, fmt.Errorf("Error on line %d: %v\n", env.parser.Linenum(), err)
+			return "", nil, fmt.Errorf("Error on line %d: %v (repl err: %#v)\n", env.parser.Linenum(), err, err)
 		}
 	}
 	return line, xs, err
@@ -288,8 +288,12 @@ func Repl(env *Zlisp, cfg *ZlispConfig) {
 			infixWrappedSexp := MakeList([]Sexp{infixSym, &SexpArray{Val: exprsInput, Env: env}})
 			expr, err = env.EvalExpressions([]Sexp{infixWrappedSexp})
 		} else {
-			line = env.ReplLineInfixWrap(line)
-			expr, err = env.EvalString(line + " ") // print standalone variables
+			if line == "" || strings.TrimSpace(line) != "" {
+				continue
+			} else {
+				line = env.ReplLineInfixWrap(line)
+				expr, err = env.EvalString(line + " ") // print standalone variables
+			}
 		}
 		switch err {
 		case nil:

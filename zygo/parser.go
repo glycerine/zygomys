@@ -113,7 +113,13 @@ func (p *Parser) Start() {
 var ParserHaltRequested = fmt.Errorf("parser halt requested")
 var ResetRequested = fmt.Errorf("parser reset requested")
 
-var ErrMoreInputNeeded = fmt.Errorf("parser needs more input")
+type MoreInputError struct{}
+
+func (e *MoreInputError) Error() string {
+	return "parser needs more input"
+}
+
+var ErrMoreInputNeeded = &MoreInputError{}
 
 // This function should *return* when it has more input
 // for the parser/lexer, which will call it when they get wedged.
@@ -199,7 +205,7 @@ func (parser *Parser) ParseList(depth int, endTokenTyp TokenType) (sx Sexp, err 
 
 tokFilled:
 	for {
-		tok, err = lexer.PeekNextToken()
+		tok, err = lexer.PeekNextToken(0)
 		//Q("\n ParseList(depth=%d) got lexer.PeekNextToken() -> tok='%v' err='%v'\n", depth, tok, err)
 		if err != nil {
 			return SexpNull, err
@@ -235,7 +241,7 @@ tokFilled:
 
 	start.Head = expr
 
-	tok, err = lexer.PeekNextToken()
+	tok, err = lexer.PeekNextToken(0)
 	if err != nil {
 		return SexpNull, err
 	}
@@ -283,7 +289,7 @@ func (parser *Parser) ParseArray(depth int) (Sexp, error) {
 	for {
 	getTok:
 		for {
-			tok, err = lexer.PeekNextToken()
+			tok, err = lexer.PeekNextToken(0)
 			if err != nil {
 				return SexpEnd, err
 			}
@@ -355,7 +361,7 @@ func (parser *Parser) ParseExpression(depth int) (res Sexp, err error) {
 		return exp, err
 	case TokenLCurly:
 		// allow `{ symbol: ` to initiate a `(hash symbol:` so we can parse JSON type {} hashmaps.
-		tok2, err := parser.ParserPeekNextToken()
+		tok2, err := parser.ParserPeekNextToken(0)
 		if err != nil {
 			return SexpNull, err
 		}
@@ -371,6 +377,20 @@ func (parser *Parser) ParseExpression(depth int) (res Sexp, err error) {
 		case TokenRCurly:
 			_, _ = lexer.GetNextToken()       // dicard '}'
 			return MakeHash(nil, "hash", env) // return empty hash
+		case TokenString:
+			// peek ahead past the string to see if we have ':' TokenColonOperator
+			_, _ = parser.ParserPeekNextToken(1)
+
+			// are we { "name": value }, as in JSON?
+			if lexer.tokens[1].typ == TokenColonOperator {
+				//vv(`we see { "%v" : `, tok2.str)
+				lexer.tokens = append([]Token{Token{typ: TokenSymbol, str: "hash"}}, lexer.tokens...)
+				exp, err := parser.ParseList(depth+1, TokenRCurly)
+				if err != nil {
+					return SexpNull, err
+				}
+				return exp, err
+			}
 		}
 
 		exp, err := parser.ParseInfix(depth + 1)
@@ -487,7 +507,7 @@ func (parser *Parser) ParseExpression(depth int) (res Sexp, err error) {
 	case TokenSymbol:
 		if tok.str == "-" || tok.str == "+" {
 			// are we -Inf ?
-			tok2, err := parser.ParserPeekNextToken()
+			tok2, err := parser.ParserPeekNextToken(0)
 			if err != nil {
 				return SexpEnd, err
 			}
@@ -572,7 +592,7 @@ func (parser *Parser) ParseBlockComment(start *Token) (sx Sexp, err error) {
 	for {
 	tokFilled:
 		for {
-			tok, err = lexer.PeekNextToken()
+			tok, err = lexer.PeekNextToken(0)
 			if err != nil {
 				return SexpNull, err
 			}
@@ -619,7 +639,7 @@ func (parser *Parser) ParseBacktickString(start *Token) (sx Sexp, err error) {
 	for {
 	tokFilled:
 		for {
-			tok, err = lexer.PeekNextToken()
+			tok, err = lexer.PeekNextToken(0)
 			if err != nil {
 				return SexpNull, err
 			}
@@ -663,7 +683,7 @@ func (parser *Parser) ParseInfix(depth int) (Sexp, error) {
 	for {
 	getTok:
 		for {
-			tok, err = lexer.PeekNextToken()
+			tok, err = lexer.PeekNextToken(0)
 			if err != nil {
 				return SexpEnd, err
 			}
@@ -713,12 +733,12 @@ func (parser *Parser) Linenum() int {
 	return parser.lexer.Linenum()
 }
 
-func (parser *Parser) ParserPeekNextToken() (tok Token, err error) {
+func (parser *Parser) ParserPeekNextToken(extra int) (tok Token, err error) {
 
 	lexer := parser.lexer
 
 	for {
-		tok, err = lexer.PeekNextToken()
+		tok, err = lexer.PeekNextToken(extra)
 		if err != nil {
 			return
 		}

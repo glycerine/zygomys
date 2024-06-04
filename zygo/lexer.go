@@ -782,7 +782,9 @@ writeRuneToBuffer:
 	return nil
 }
 
-func (lexer *Lexer) PeekNextToken() (tok Token, err error) {
+// extra should be 0 for 1 token lookahead;
+// extra can be 1 to load at least 2 tokens.
+func (lexer *Lexer) PeekNextToken(extra int) (tok Token, err error) {
 	/*
 		Q("\n in PeekNextToken()\n")
 		defer func() {
@@ -796,7 +798,7 @@ func (lexer *Lexer) PeekNextToken() (tok Token, err error) {
 		}
 	}
 
-	for len(lexer.tokens) == 0 {
+	for len(lexer.tokens) <= extra {
 		r, _, err := lexer.stream.ReadRune()
 		if err != nil {
 			if lexer.PromoteNextStream() {
@@ -824,7 +826,7 @@ func (lexer *Lexer) GetNextToken() (tok Token, err error) {
 				tok, err, lexer.buffer.String())
 		}()
 	*/
-	tok, err = lexer.PeekNextToken()
+	tok, err = lexer.PeekNextToken(0)
 	if err != nil || tok.typ == TokenEnd {
 		return EndTk, err
 	}

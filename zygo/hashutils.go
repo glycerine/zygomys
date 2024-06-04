@@ -878,6 +878,12 @@ func (hash *SexpHash) SexpString(ps *PrintState) string {
 	}
 	str := " (" + hash.TypeName + " " + prettyEnd
 
+	displayHashInCurly := false
+	if hash.TypeName == "hash" {
+		displayHashInCurly = true
+		str = "{" + prettyEnd
+	}
+
 	for _, key := range hash.KeyOrder {
 		val, err := hash.HashGet(hash.Env, key)
 		if err == nil {
@@ -895,6 +901,12 @@ func (hash *SexpHash) SexpString(ps *PrintState) string {
 			// ignore deleted keys
 			// don't panic(err)
 		}
+	}
+	if displayHashInCurly {
+		if len(hash.Map) > 0 {
+			return str[:len(str)-1] + "}" + prettyEnd
+		}
+		return str + "}" + prettyEnd
 	}
 	if len(hash.Map) > 0 {
 		return str[:len(str)-1] + ")" + prettyEnd

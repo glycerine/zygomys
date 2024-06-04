@@ -446,7 +446,7 @@ func (env *Zlisp) ParseFile(file string) ([]Sexp, error) {
 	env.parser.NewInput(bufio.NewReader(in))
 	exp, err = env.parser.ParseTokens()
 	if err != nil {
-		return nil, fmt.Errorf("Error on line %d: %v\n", env.parser.Linenum(), err)
+		return nil, fmt.Errorf("Error on line %d: %v (ParseFile err = '%#v')\n", env.parser.Linenum(), err, err)
 	}
 
 	in.Close()
@@ -458,7 +458,10 @@ func (env *Zlisp) LoadStream(stream io.RuneScanner) error {
 	env.parser.ResetAddNewInput(stream)
 	expressions, err := env.parser.ParseTokens()
 	if err != nil {
-		return fmt.Errorf("Error on line %d: %v\n", env.parser.Linenum(), err)
+		if err == ErrMoreInputNeeded {
+			panic("where?")
+		}
+		return fmt.Errorf("Error on line %d: %v (LoadStream err='%#v')\n", env.parser.Linenum(), err, err)
 	}
 	return env.LoadExpressions(expressions)
 }
