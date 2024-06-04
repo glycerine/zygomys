@@ -100,7 +100,7 @@ func (pr *Prompter) getExpressionWithLiner(env *Zlisp, reader *bufio.Reader, noL
 	// test parse, but don't load or generate bytecode
 	env.parser.ResetAddNewInput(bytes.NewBuffer([]byte(line + "\n")))
 	x, err = env.parser.ParseTokens()
-	//P("\n after ResetAddNewInput, err = %v. x = '%s'\n", err, SexpArray(x).SexpString())
+	//vv("\n after ResetAddNewInput, err = %v. x = '%s'\n", err, (&SexpArray{Val: x, Env: env}).SexpString(nil))
 
 	if len(x) > 0 {
 		xs = append(xs, x...)
@@ -140,7 +140,7 @@ func (pr *Prompter) getExpressionWithLiner(env *Zlisp, reader *bufio.Reader, noL
 			return "", nil, fmt.Errorf("Error on line %d: %v\n", env.parser.Linenum(), err)
 		}
 	}
-	return line, xs, nil
+	return line, xs, err
 }
 
 func processDumpCommand(env *Zlisp, args []string) {

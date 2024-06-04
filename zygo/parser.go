@@ -190,7 +190,7 @@ func (p *Parser) getRecur() int64 {
 	return p.recur
 }
 
-func (parser *Parser) ParseList(depth int) (sx Sexp, err error) {
+func (parser *Parser) ParseList(depth int, endTokenTyp TokenType) (sx Sexp, err error) {
 	parser.recur++
 	defer func() { parser.recur-- }()
 
@@ -220,7 +220,8 @@ tokFilled:
 		// loop to the top to PeekNextToken
 	}
 
-	if tok.typ == TokenRParen {
+	// allow TokenRCurly to end a list too, for the JSON {} style hashes.
+	if tok.typ == endTokenTyp {
 		_, _ = lexer.GetNextToken()
 		return SexpNull, nil
 	}
@@ -261,7 +262,7 @@ tokFilled:
 		return start, nil
 	}
 
-	expr, err = parser.ParseList(depth + 1)
+	expr, err = parser.ParseList(depth+1, endTokenTyp)
 	if err != nil {
 		return start, err
 	}
@@ -347,12 +348,27 @@ func (parser *Parser) ParseExpression(depth int) (res Sexp, err error) {
 
 	switch tok.typ {
 	case TokenLParen:
-		exp, err := parser.ParseList(depth + 1)
+		exp, err := parser.ParseList(depth+1, TokenRParen)
 		return exp, err
 	case TokenLSquare:
 		exp, err := parser.ParseArray(depth + 1)
 		return exp, err
 	case TokenLCurly:
+		// allow `{ symbol: ` to initiate a `(hash symbol:` so we can parse JSON type {} hashmaps.
+		tok2, err := parser.ParserPeekNextToken()
+		if err != nil {
+			return SexpNull, err
+		}
+		if tok2.typ == TokenSymbolColon {
+			//vv("saw TokenLCurly followed by TokenSymbolColon, tok2 = '%v', typ='%v'", tok2.String(), tok2.typ)
+			lexer.tokens = append([]Token{Token{typ: TokenSymbol, str: "hash"}}, lexer.tokens...)
+			exp, err := parser.ParseList(depth+1, TokenRCurly)
+			if err != nil {
+				return SexpNull, err
+			}
+			return exp, err
+		}
+
 		exp, err := parser.ParseInfix(depth + 1)
 		return exp, err
 	case TokenQuote:
@@ -360,23 +376,6 @@ func (parser *Parser) ParseExpression(depth int) (res Sexp, err error) {
 		if err != nil {
 			return SexpNull, err
 		}
-		// hash shortcut:
-		// %{ ... } gets translated into (hash ...).
-		// This is a syntactic sugar to
-		// get an anonymous hashmap, usually written
-		// with (hash), using a syntax similar to {} in JSON.
-		switch pair := expr.(type) {
-		case *SexpPair:
-			if pair.Head != nil {
-				sym, isSymbol := pair.Head.(*SexpSymbol)
-				if isSymbol && sym != nil && sym.name == "infix" {
-					arr := pair.Tail.(*SexpPair).Head.(*SexpArray).Val
-
-					return MakeList(append([]Sexp{env.MakeSymbol("hash")}, arr...)), nil
-				}
-			}
-		}
-
 		return MakeList([]Sexp{env.MakeSymbol("quote"), expr}), nil
 	case TokenCaret:
 		// '^' is now our syntax-quote symbol, not TokenBacktick, to allow go-style `string literals`.

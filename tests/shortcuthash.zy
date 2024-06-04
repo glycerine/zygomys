@@ -1,12 +1,13 @@
 
-// %{} should create a (hash ), it is simply a
+// { symbol: ... } should create a (hash ), it is simply a
 // syntax shortcut that is similar to
 // JSON anonymous {} objects (aka hash maps).
+// Like Ruby, we allow {} to mean both basic block in infix, or hash map.
 
 // test nesting inside other structs/records/named maps
 (defmap castle)
 
-(def shortcut %{ a:10 b:12 c:14 d:771819 g:(castle h:7 j:10 q:(castle again:45)) })
+(def shortcut { a:10 b:12 c:14 d:771819 g:(castle h:7 j:10 q:(castle again:45)) })
 
 (assert (hash? shortcut))
 
@@ -16,4 +17,4 @@
 (assert (== 45 shortcut.g.q.again))
 
 
-// %{ a:10 b:12 c:14 d:771819 g:(castle h:7 j:10 q:(castle again:45)) }
+// { a:10 b:12 c:14 d:771819 g:(castle h:7 j:10 q:(castle again:45)) }
