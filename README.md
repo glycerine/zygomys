@@ -88,6 +88,7 @@ $ go get github.com/glycerine/zygomys/cmd/zygo
  * [x] Clojure-like threading `(-> hash field1: field2:)` and `(:field hash)` selection. 
  * [x] Lisp-style macros for your DSL.
  * [x] optional infix notation within `{}` curly braces. Expressions typed at the REPL are assumed to be infix (wrapped in {} implicitly), enhancing the REPL experience for dealing with math.
+ * [x] To ease parsing of JSON, anonymous hash maps can be declared using curly brace syntax (as of v8.0.0). docs: https://github.com/glycerine/zygomys/wiki/Language#new-anonymous-hash-map-syntax-
 
 ### obligatory XKCD
 
