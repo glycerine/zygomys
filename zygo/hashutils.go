@@ -882,11 +882,13 @@ func (hash *SexpHash) SexpString(ps *PrintState) string {
 
 	displayHashInCurly := false
 	comma := ""
+	asJSON := false
 	if hash.TypeName == "hash" {
 		displayHashInCurly = true
 		str = "{" + prettyEnd
 		if ps != nil && ps.PrintJSON {
 			comma = "," // be valid JSON
+			asJSON = true
 		}
 	}
 
@@ -900,7 +902,11 @@ func (hash *SexpHash) SexpString(ps *PrintState) string {
 			case *SexpStr:
 				str += indInner + `"` + s.S + `":`
 			case *SexpSymbol:
-				str += indInner + s.name + ":"
+				if asJSON {
+					str += indInner + `"` + s.name + `":`
+				} else {
+					str += indInner + s.name + ":"
+				}
 			default:
 				str += indInner + key.SexpString(innerPs) + ":"
 			}
