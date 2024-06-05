@@ -1,0 +1,13 @@
+// the simple (json2) function displays
+// hashes in json, whereas the first (json) function returns
+// a raw byte stream with some meta data (field order, name of hash record) included.
+//
+// Our expressions lack commas, a deliberate, clean design choice.
+// JSON needs perfectly placed commas to parse (and no trailing commas) to parse.
+//
+(def j (source "tests/sample.json"))
+
+(def s (json2 j))
+
+(assert (== s "{\"glossary\":{\"title\":\"example glossary\", \"GlossDiv\":{\"title\":\"S\", \"GlossList\":{\"GlossEntry\":{\"ID\":\"SGML\", \"SortAs\":\"SGML\", \"GlossTerm\":\"Standard Generalized Markup Language\", \"Acronym\":\"SGML\", \"Abbrev\":\"ISO 8879:1986\", \"GlossDef\":{\"para\":\"A meta-markup language, used to create markup languages such as DocBook.\", \"GlossSeeAlso\":[\"GML\", \"XML\"]}, \"GlossSee\":\"markup\"}}}}}"))
+

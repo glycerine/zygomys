@@ -10,8 +10,9 @@ import (
 // to give pretty-printing indentation and to avoid infinite looping on
 // cyclic data structures.
 type PrintState struct {
-	Indent int
-	Seen   Seen
+	Indent    int
+	Seen      Seen
+	PrintJSON bool
 }
 
 func (ps *PrintState) SetSeen(x interface{}, name string) {
@@ -44,8 +45,9 @@ func (ps *PrintState) AddIndent(addme int) *PrintState {
 		}
 	}
 	return &PrintState{
-		Indent: ps.Indent + addme,
-		Seen:   ps.Seen,
+		Indent:    ps.Indent + addme,
+		Seen:      ps.Seen,
+		PrintJSON: ps.PrintJSON,
 	}
 }
 

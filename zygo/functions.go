@@ -1063,6 +1063,7 @@ func StrFunctions() map[string]ZlispUserFunction {
 		"sym2str": Sym2StrFunction,
 		"gensym":  GensymFunction,
 		"symnum":  SymnumFunction,
+		"json2":   SimpleJSONStringFunction,
 	}
 
 }
@@ -1180,6 +1181,17 @@ func Str2SymFunction(env *Zlisp, name string, args []Sexp) (Sexp, error) {
 		return env.MakeSymbol(t.S), nil
 	}
 	return SexpNull, fmt.Errorf("argument must be string")
+}
+
+// the (json2 objectToDisplayAsJSON) function
+func SimpleJSONStringFunction(env *Zlisp, name string, args []Sexp) (Sexp, error) {
+	if len(args) != 1 {
+		return SexpNull, WrongNargs
+	}
+	ps := NewPrintState()
+	ps.PrintJSON = true
+	s := args[0].SexpString(ps)
+	return &SexpStr{S: s}, nil
 }
 
 func GensymFunction(env *Zlisp, name string, args []Sexp) (Sexp, error) {

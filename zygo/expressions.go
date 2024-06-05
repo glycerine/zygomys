@@ -291,6 +291,11 @@ func (arr *SexpArray) SexpString(ps *PrintState) string {
 		ps = innerPs
 	}
 
+	comma := ""
+	if ps != nil && ps.PrintJSON {
+		comma = "," // be valid JSON
+	}
+
 	opn := "["
 	cls := "]"
 
@@ -303,21 +308,32 @@ func (arr *SexpArray) SexpString(ps *PrintState) string {
 		indInner = strings.Repeat(" ", inner)
 	}
 
-	if len(arr.Val) == 0 {
+	n := len(arr.Val)
+	if n == 0 {
 		return opn + cls
 	}
 	ta := arr.IsFuncDeclTypeArray
 	str := opn
 
+	last := n - 1
+	var comma2 string
 	for i, sexp := range arr.Val {
 		str += indInner + sexp.SexpString(ps)
-		if ta && i%2 == 0 {
-			str += ":"
+		comma2 = comma
+		if i == last {
+			comma2 = ""
+		}
+		if ta {
+			if i%2 == 0 {
+				str += ":"
+			} else {
+				str += comma2 + " "
+			}
 		} else {
 			if pretty {
-				str += "\n"
+				str += comma2 + "\n"
 			} else {
-				str += " "
+				str += comma2 + " "
 			}
 		}
 	}

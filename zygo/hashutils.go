@@ -881,16 +881,21 @@ func (hash *SexpHash) SexpString(ps *PrintState) string {
 	str := " (" + hash.TypeName + " " + prettyEnd
 
 	displayHashInCurly := false
-
+	comma := ""
 	if hash.TypeName == "hash" {
 		displayHashInCurly = true
 		str = "{" + prettyEnd
+		if ps != nil && ps.PrintJSON {
+			comma = "," // be valid JSON
+		}
 	}
 
-	//lastKey := hash.NumKeys
+	lastKey := hash.NumKeys
+	onKey := 0
 	for _, key := range hash.KeyOrder {
 		val, err := hash.HashGet(hash.Env, key)
 		if err == nil {
+			onKey++
 			switch s := key.(type) {
 			case *SexpStr:
 				str += indInner + `"` + s.S + `":`
@@ -899,7 +904,11 @@ func (hash *SexpHash) SexpString(ps *PrintState) string {
 			default:
 				str += indInner + key.SexpString(innerPs) + ":"
 			}
-			str += val.SexpString(innerPs) + " " + prettyEnd
+			comma2 := comma
+			if onKey == lastKey {
+				comma2 = ""
+			}
+			str += val.SexpString(innerPs) + comma2 + " " + prettyEnd
 
 		} else {
 			// ignore deleted keys
