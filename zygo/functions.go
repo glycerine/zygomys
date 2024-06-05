@@ -16,6 +16,10 @@ type ZlispUserFunction func(*Zlisp, string, []Sexp) (Sexp, error)
 
 func CompareFunction(name string) ZlispUserFunction {
 	return func(env *Zlisp, _ string, args []Sexp) (Sexp, error) {
+		//vv("CompareFunction sees len(args) = %v", len(args))
+		//for i := range args {
+		//	vv("arg i=%v   is: '%v'", i, args[i].SexpString(nil))
+		//}
 		if len(args) != 2 {
 			return SexpNull, WrongNargs
 		}

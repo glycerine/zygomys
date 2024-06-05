@@ -16,5 +16,7 @@
 
 (assert (== 45 shortcut.g.q.again))
 
+(def g { `quotedstring`: 10 })
 
-// { a:10 b:12 c:14 d:771819 g:(castle h:7 j:10 q:(castle again:45)) }
+(assert (== {g["quotedstring"]} 10))
+

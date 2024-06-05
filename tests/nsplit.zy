@@ -1,2 +1,2 @@
-(assert (== "append.zy" (first (nsplit (sys "ls tests/")))))
+(assert (== "anonhash.zy" (first (nsplit (sys "ls tests/")))))
 

@@ -289,6 +289,7 @@ func Repl(env *Zlisp, cfg *ZlispConfig) {
 			expr, err = env.EvalExpressions([]Sexp{infixWrappedSexp})
 		} else {
 			if line == "" || strings.TrimSpace(line) != "" {
+				env.Clear()
 				continue
 			} else {
 				line = env.ReplLineInfixWrap(line)
