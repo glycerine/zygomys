@@ -458,9 +458,6 @@ func (env *Zlisp) LoadStream(stream io.RuneScanner) error {
 	env.parser.ResetAddNewInput(stream)
 	expressions, err := env.parser.ParseTokens()
 	if err != nil {
-		if err == ErrMoreInputNeeded {
-			panic("where?")
-		}
 		return fmt.Errorf("Error on line %d: %v (LoadStream err='%#v')\n", env.parser.Linenum(), err, err)
 	}
 	return env.LoadExpressions(expressions)
