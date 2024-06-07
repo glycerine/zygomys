@@ -63,19 +63,15 @@ func (env *Zlisp) NewParser() *Parser {
 
 // Stop stops the parser goroutine at next operand and frees the memory
 func (p *Parser) Stop() error {
-	p.stopNoWait()
-	<-p.Done
-	return nil
-}
-
-func (p *Parser) stopNoWait() {
 	p.mut.Lock()
 	defer p.mut.Unlock()
 	if p.stopped {
-		return
+		return nil
 	}
 	p.stopped = true
 	close(p.reqStop)
+	<-p.Done
+	return nil
 }
 
 // Starts launches a background goroutine that runs an

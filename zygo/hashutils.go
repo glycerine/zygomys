@@ -277,14 +277,14 @@ func (h *SexpHash) TypeCheckField(key Sexp, val Sexp) error {
 		// was it found? If so, use it!
 		if rt != nil && rt.UserStructDefn != nil {
 			if rt.UserStructDefn.FieldType != nil {
-				Q("")
-				Q("we have a type for hash.TypeName = '%s', using it by "+
-					"replacing the hash.GoStructFactory with rt", h.TypeName)
-				Q("")
-				Q("old: h.GoStructFactory = '%#v'", h.GoStructFactory)
-				Q("")
-				Q("new: rt = '%#v'", rt)
-				Q("new rt.UserStructDefn.FieldType = '%#v'", rt.UserStructDefn.FieldType)
+				//Q("")
+				//Q("we have a type for hash.TypeName = '%s', using it by "+
+				//	"replacing the hash.GoStructFactory with rt", h.TypeName)
+				//Q("")
+				//Q("old: h.GoStructFactory = '%#v'", h.GoStructFactory)
+				//Q("")
+				//Q("new: rt = '%#v'", rt)
+				//Q("new rt.UserStructDefn.FieldType = '%#v'", rt.UserStructDefn.FieldType)
 				//p.UserStructDefn = rt.UserStructDefn
 				h.GoStructFactory = rt
 				p = h.GoStructFactory
@@ -298,7 +298,7 @@ func (h *SexpHash) TypeCheckField(key Sexp, val Sexp) error {
 	// registered type associated.
 	if wasSym && h.TypeName != "hash" && h.TypeName != "field" && p != nil {
 		k := keySym.name
-		Q("is key '%s' defined?", k)
+		//Q("is key '%s' defined?", k)
 		declaredTyp, ok := p.UserStructDefn.FieldType[k]
 		if !ok {
 			return fmt.Errorf("%s has no field '%s' [err 2]", p.UserStructDefn.Name, k)
@@ -318,8 +318,8 @@ func (h *SexpHash) TypeCheckField(key Sexp, val Sexp) error {
 			}
 		}
 
-		Q("obsTyp is %T / val = %#v", obsTyp, obsTyp)
-		Q("declaredTyp is %T / val = %#v", declaredTyp, declaredTyp)
+		//Q("obsTyp is %T / val = %#v", obsTyp, obsTyp)
+		//Q("declaredTyp is %T / val = %#v", declaredTyp, declaredTyp)
 		if obsTyp != declaredTyp {
 			if obsTyp.RegisteredName == "[]" {
 				if strings.HasPrefix(declaredTyp.RegisteredName, "[]") {
@@ -372,7 +372,7 @@ func (hash *SexpHash) HashSet(key Sexp, val Sexp) error {
 		hash.Map[hashval] = []*SexpPair{Cons(key, val)}
 		hash.KeyOrder = append(hash.KeyOrder, key)
 		hash.NumKeys++
-		Q("in HashSet, added key to KeyOrder: '%v'", key)
+		//Q("in HashSet, added key to KeyOrder: '%v'", key)
 		return nil
 	}
 
@@ -508,7 +508,7 @@ func GoMethodListFunction(env *Zlisp, name string, args []Sexp) (Sexp, error) {
 }
 
 func (h *SexpHash) SetMethodList(env *Zlisp) error {
-	Q("hash.SetMethodList() called.\n")
+	//Q("hash.SetMethodList() called.\n")
 
 	if !h.GoStructFactory.hasShadowStruct {
 		return NoAttachedGoStruct
@@ -524,7 +524,7 @@ func (h *SexpHash) SetMethodList(env *Zlisp) error {
 	ty := va.Type()
 	n := ty.NumMethod()
 
-	Q("hash.SetMethodList() sees %d methods on type %v\n", n, ty)
+	//Q("hash.SetMethodList() sees %d methods on type %v\n", n, ty)
 	h.NumMethod = n
 	h.GoType = ty
 
@@ -655,21 +655,22 @@ func GenericHpairFunction(env *Zlisp, name string, args []Sexp) (Sexp, error) {
 }
 
 func (h *SexpHash) FillHashFromShadow(env *Zlisp, src interface{}) error {
-	Q("in FillHashFromShadow, with src = %#v", src)
+	//Q("in FillHashFromShadow, with src = %#v", src)
 	h.GoShadowStruct = src
 	h.ShadowSet = true
 	vaSrc := reflect.ValueOf(src).Elem()
 
 	for i, det := range h.DetOrder {
-		Q("\n looking at det for %s; %v-th entry in h.DetOrder\n", det.FieldJsonTag, i)
+		_ = i
+		//Q("\n looking at det for %s; %v-th entry in h.DetOrder\n", det.FieldJsonTag, i)
 		goField := vaSrc.Field(det.FieldNum)
 		val, err := fillHashHelper(goField.Interface(), 0, env, false)
 		if err != nil {
-			Q("got err='%s' back from fillHashhelper", err)
+			//Q("got err='%s' back from fillHashhelper", err)
 			return fmt.Errorf("error on GoToSexp for field '%s': '%s'",
 				det.FieldJsonTag, err)
 		}
-		Q("got err==nil back from fillHashhelper; key=%#v, val=%#v", det.FieldJsonTag, val)
+		//Q("got err==nil back from fillHashhelper; key=%#v, val=%#v", det.FieldJsonTag, val)
 		key := env.MakeSymbol(det.FieldJsonTag)
 		err = h.HashSet(key, val)
 		if err != nil {
@@ -682,7 +683,7 @@ func (h *SexpHash) FillHashFromShadow(env *Zlisp, src interface{}) error {
 // translate Go -> Sexp, assuming hard *T{} struct pointers
 // for all Go structs
 func fillHashHelper(r interface{}, depth int, env *Zlisp, preferSym bool) (Sexp, error) {
-	Q("fillHashHelper() at depth %d, decoded type is %T\n", depth, r)
+	//Q("fillHashHelper() at depth %d, decoded type is %T\n", depth, r)
 
 	// check for one of our registered structs
 
@@ -694,7 +695,7 @@ func fillHashHelper(r interface{}, depth int, env *Zlisp, preferSym bool) (Sexp,
 			return SexpNull, err
 		}
 		if reflect.ValueOf(st).Type() == reflect.ValueOf(r).Type() {
-			Q("we have a registered struct match for st=%T and r=%T", st, r)
+			//Q("we have a registered struct match for st=%T and r=%T", st, r)
 			retHash, err := MakeHash([]Sexp{}, hashName, env)
 			if err != nil {
 				return SexpNull, fmt.Errorf("MakeHash '%s' problem: %s",
@@ -705,42 +706,42 @@ func fillHashHelper(r interface{}, depth int, env *Zlisp, preferSym bool) (Sexp,
 			if err != nil {
 				return SexpNull, err
 			}
-			Q("retHash = %#v\n", retHash)
+			//Q("retHash = %#v\n", retHash)
 			return retHash, nil // or return sx?
 		} else {
-			Q("fillHashHelper: no match for st=%T and r=%T", st, r)
+			//Q("fillHashHelper: no match for st=%T and r=%T", st, r)
 		}
 	}
 
-	Q("fillHashHelper: trying basic non-struct types for r=%T", r)
+	//Q("fillHashHelper: trying basic non-struct types for r=%T", r)
 
 	// now handle basic non struct types:
 	switch val := r.(type) {
 	case string:
-		Q("depth %d found string case: val = %#v\n", depth, val)
+		//Q("depth %d found string case: val = %#v\n", depth, val)
 		if preferSym {
 			return env.MakeSymbol(val), nil
 		}
 		return &SexpStr{S: val}, nil
 
 	case int:
-		Q("depth %d found int case: val = %#v\n", depth, val)
+		//Q("depth %d found int case: val = %#v\n", depth, val)
 		return &SexpInt{Val: int64(val)}, nil
 
 	case int32:
-		Q("depth %d found int32 case: val = %#v\n", depth, val)
+		//Q("depth %d found int32 case: val = %#v\n", depth, val)
 		return &SexpInt{Val: int64(val)}, nil
 
 	case int64:
-		Q("depth %d found int64 case: val = %#v\n", depth, val)
+		//Q("depth %d found int64 case: val = %#v\n", depth, val)
 		return &SexpInt{Val: int64(val)}, nil
 
 	case float64:
-		Q("depth %d found float64 case: val = %#v\n", depth, val)
+		//Q("depth %d found float64 case: val = %#v\n", depth, val)
 		return &SexpFloat{Val: val}, nil
 
 	case []interface{}:
-		Q("depth %d found []interface{} case: val = %#v\n", depth, val)
+		//Q("depth %d found []interface{} case: val = %#v\n", depth, val)
 
 		slice := []Sexp{}
 		for i := range val {
@@ -754,7 +755,7 @@ func fillHashHelper(r interface{}, depth int, env *Zlisp, preferSym bool) (Sexp,
 
 	case map[string]interface{}:
 
-		Q("depth %d found map[string]interface case: val = %#v\n", depth, val)
+		//Q("depth %d found map[string]interface case: val = %#v\n", depth, val)
 		sortedMapKey, sortedMapVal := makeSortedSlicesFromMap(val)
 
 		pairs := make([]Sexp, 0)
@@ -764,8 +765,8 @@ func fillHashHelper(r interface{}, depth int, env *Zlisp, preferSym bool) (Sexp,
 		foundzKeyOrder := false
 		for i := range sortedMapKey {
 			// special field storing the name of our record (defmap) type.
-			Q("\n i=%d sortedMapVal type %T, value=%v\n", i, sortedMapVal[i], sortedMapVal[i])
-			Q("\n i=%d sortedMapKey type %T, value=%v\n", i, sortedMapKey[i], sortedMapKey[i])
+			//Q("\n i=%d sortedMapVal type %T, value=%v\n", i, sortedMapVal[i], sortedMapVal[i])
+			//Q("\n i=%d sortedMapKey type %T, value=%v\n", i, sortedMapKey[i], sortedMapKey[i])
 			if sortedMapKey[i] == "zKeyOrder" {
 				keyOrd = decodeGoToSexpHelper(sortedMapVal[i], depth+1, env, true)
 				foundzKeyOrder = true
@@ -790,7 +791,7 @@ func fillHashHelper(r interface{}, depth int, env *Zlisp, preferSym bool) (Sexp,
 		return hash, nil
 
 	case []byte:
-		Q("depth %d found []byte case: val = %#v\n", depth, val)
+		//Q("depth %d found []byte case: val = %#v\n", depth, val)
 
 		return &SexpRaw{Val: val}, nil
 
@@ -801,7 +802,7 @@ func fillHashHelper(r interface{}, depth int, env *Zlisp, preferSym bool) (Sexp,
 		return &SexpBool{Val: val}, nil
 
 	default:
-		Q("unknown type in type switch, val = %#v.  type = %T.\n", val, val)
+		//Q("unknown type in type switch, val = %#v.  type = %T.\n", val, val)
 	}
 
 	return SexpNull, nil
@@ -1052,34 +1053,34 @@ func (x *SexpHashSelector) RHS(env *Zlisp) (sx Sexp, err error) {
 	if x.Select == nil {
 		panic("cannot call RHS on hash selector with nil Select")
 	}
-	Q("SexpHashSelector.RHS(): x.Select is '%#v'", x.Select)
+	//Q("SexpHashSelector.RHS(): x.Select is '%#v'", x.Select)
 	switch t := x.Select.(type) {
 	case *SexpSymbol:
-		Q("SexpHashSelector.RHS(): x.Select is symbol, t = '%#v'", t)
-		Q("SexpHashSelector.RHS(): x.Container is '%v'",
-			x.Container.SexpString(nil))
+		//Q("SexpHashSelector.RHS(): x.Select is symbol, t = '%#v'", t)
+		//Q("SexpHashSelector.RHS(): x.Container is '%v'",
+		//	x.Container.SexpString(nil))
 		sx, err = x.Container.DotPathHashGet(x.Container.Env, t)
 		if err != nil {
-			Q("SexpHashSelector.RHS() sees err when calling"+
-				" on x.Container.DotPathHashGet: with query t='%#v' err='%v'", t, err)
+			//Q("SexpHashSelector.RHS() sees err when calling"+
+			//	" on x.Container.DotPathHashGet: with query t='%#v' err='%v'", t, err)
 			return SexpNull, err
 		}
 	default:
-		Q("SexpHashSelector.RHS() selector is not a symbol, x= '%#v'", x)
+		//Q("SexpHashSelector.RHS() selector is not a symbol, x= '%#v'", x)
 		sx, err = x.Container.HashGet(x.Container.Env, x.Select)
 		if err != nil {
-			Q("SexpHashSelector.RHS() sees err when calling"+
-				" on x.Container.HashGet: '%v'", err)
+			//Q("SexpHashSelector.RHS() sees err when calling"+
+			//	" on x.Container.HashGet: '%v'", err)
 			return SexpNull, err
 		}
 		//return &SexpStr{S: fmt.Sprintf("(hashidx   %s   %s)", x.Container.SexpString(nil), x.Select.SexpString(nil))}, nil
 	}
-	Q("SexpHashSelector) RHS() returning sx = '%v'", sx)
+	//Q("SexpHashSelector) RHS() returning sx = '%v'", sx)
 	return sx, nil
 }
 
 func (x *SexpHashSelector) AssignToSelection(env *Zlisp, rhs Sexp) error {
-	Q("in SexpHashSelector.AssignToSelection with rhs = '%v' and container = '%v'", rhs.SexpString(nil), x.Container.SexpString(nil))
+	//Q("in SexpHashSelector.AssignToSelection with rhs = '%v' and container = '%v'", rhs.SexpString(nil), x.Container.SexpString(nil))
 	switch sym := x.Select.(type) {
 	case *SexpSymbol:
 		path := DotPartsRegex.FindAllString(sym.name, -1)
@@ -1092,11 +1093,10 @@ func (x *SexpHashSelector) AssignToSelection(env *Zlisp, rhs Sexp) error {
 
 // (arrayidx ar [0 1]) refers here
 func HashIndexFunction(env *Zlisp, name string, args []Sexp) (Sexp, error) {
-	Q("in HashIndexFunction, with %v args = '%#v', env=%p",
-		len(args), args, env)
-	for i := range args {
-		Q("in HashIndexFunction, args[%v] = '%v'", i, args[i].SexpString(nil))
-	}
+	//Q("in HashIndexFunction, with %v args = '%#v', env=%p",	len(args), args, env)
+	//for i := range args {
+	//	Q("in HashIndexFunction, args[%v] = '%v'", i, args[i].SexpString(nil))
+	//}
 	narg := len(args)
 	if narg != 2 {
 		return SexpNull, WrongNargs
@@ -1106,21 +1106,20 @@ func HashIndexFunction(env *Zlisp, name string, args []Sexp) (Sexp, error) {
 		return SexpNull, err
 	}
 	args[0] = tmp[0]
-	Q("HashIndexFunction: past dot resolve, args[0] is now type %T/val='%v'",
-		args[0], args[0].SexpString(nil))
+	//Q("HashIndexFunction: past dot resolve, args[0] is now type %T/val='%v'",	args[0], args[0].SexpString(nil))
 
 	var hash *SexpHash
 	switch ar0 := args[0].(type) {
 	case *SexpHash:
 		hash = ar0
 	case *SexpArray:
-		Q("HashIndexFunction: args[0] is an array, defering to ArrayIndexFunction")
+		//Q("HashIndexFunction: args[0] is an array, defering to ArrayIndexFunction")
 		return ArrayIndexFunction(env, name, args)
 	case Selector:
 		x, err := ar0.RHS(env)
-		Q("ar0.RHS() returned x = %#v", x)
+		//Q("ar0.RHS() returned x = %#v", x)
 		if err != nil {
-			Q("HashIndexFunction: Selector error: '%v'", err)
+			//Q("HashIndexFunction: Selector error: '%v'", err)
 			return SexpNull, err
 		}
 		switch xH := x.(type) {
@@ -1129,8 +1128,8 @@ func HashIndexFunction(env *Zlisp, name string, args []Sexp) (Sexp, error) {
 		case *SexpHashSelector:
 			x, err := xH.RHS(env)
 			if err != nil {
-				Q("HashIndexFunction: hash retreival from "+
-					"SexpHashSelector gave error: '%v'", err)
+				//Q("HashIndexFunction: hash retreival from "+
+				//	"SexpHashSelector gave error: '%v'", err)
 				return SexpNull, err
 			}
 			switch xHash2 := x.(type) {
@@ -1140,8 +1139,8 @@ func HashIndexFunction(env *Zlisp, name string, args []Sexp) (Sexp, error) {
 				return SexpNull, fmt.Errorf("bad (hashidx h2 index) call: h2 was a hashidx itself, but it did not resolve to an hash, instead '%s'/type %T", x.SexpString(nil), x)
 			}
 		case *SexpArray:
-			Q("HashIndexFunction sees args[0] is Selector"+
-				" that resolved to an array '%v'", xH.SexpString(nil))
+			//Q("HashIndexFunction sees args[0] is Selector"+
+			//	" that resolved to an array '%v'", xH.SexpString(nil))
 			return ArrayIndexFunction(env, name, []Sexp{xH, args[1]})
 		default:
 			return SexpNull, fmt.Errorf("bad (hashidx h index) call: h did not resolve to a hash, instead '%s'/type %T", x.SexpString(nil), x) // failing here with x a  *SexpStr
@@ -1173,7 +1172,7 @@ func HashIndexFunction(env *Zlisp, name string, args []Sexp) (Sexp, error) {
 		Select:    sel,
 		Container: hash,
 	}
-	Q("HashIndexFunction: returning without error, ret.Select = '%v'", args[1].SexpString(nil))
+	//Q("HashIndexFunction: returning without error, ret.Select = '%v'", args[1].SexpString(nil))
 	return &ret, nil
 }
 
