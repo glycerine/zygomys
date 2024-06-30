@@ -1,6 +1,6 @@
-{ // comment
-    "glossary": /*block-comment-1*/ { /*block-comment-2*/
-	"title": "example glossary", /*block comment 3*/ // with comment 2
+{ // line comment 0
+    "glossary": /*block-comment-1*/ {  /*block-comment-2*/ /*block-comment-3*/ // line comment 5
+	"title": "example glossary", /*block comment 6*/ // line comment 7
 	"GlossDiv": {
 	    "title": "S",
 	    "GlossList": {

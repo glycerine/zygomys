@@ -364,28 +364,28 @@ func (parser *Parser) ParseExpression(depth int) (res Sexp, err error) {
 
 		extra := 1
 		// skip past comments
-		if tok2.typ == TokenBeginBlockComment {
+		for tok2.typ == TokenBeginBlockComment {
 
-			_, err = parser.ParserPeekNextToken(3)
+			_, err = parser.ParserPeekNextToken(extra + 2)
 			if err != nil {
 				return SexpNull, err
 			}
 			// to discern the pattern:
-			tok2 = lexer.tokens[1] // TokenComment
-			//tok3 := lexer.tokens[2] // TokenEndBlockComment
-			//vv("tok2 = '%v' / '%#v'", tok2.String(), tok2)
+			//tok2 = lexer.tokens[extra]    // TokenComment
+			//tok3 := lexer.tokens[extra+1] // TokenEndBlockComment
+			//vv("tok2 = '%v' / '%#v' (extra=%v)", tok2.String(), tok2, extra)
 			//vv("tok3 = '%v' / '%#v'", tok3.String(), tok3)
 
-			tok2 = lexer.tokens[3]
+			tok2 = lexer.tokens[extra+2]
 			extra += 3
-
-		} else if tok2.typ == TokenComment {
-			_, err = parser.ParserPeekNextToken(1)
+		}
+		if tok2.typ == TokenComment {
+			_, err = parser.ParserPeekNextToken(extra)
 			if err != nil {
 				return SexpNull, err
 			}
 			//vv("tok2 = '%v' / '%#v'", tok2.String(), tok2)
-			tok2 = lexer.tokens[1]
+			tok2 = lexer.tokens[extra]
 			extra++
 		}
 
