@@ -364,29 +364,30 @@ func (parser *Parser) ParseExpression(depth int) (res Sexp, err error) {
 
 		extra := 1
 		// skip past comments
-		for tok2.typ == TokenBeginBlockComment {
+		for tok2.typ == TokenBeginBlockComment || tok2.typ == TokenComment {
+			if tok2.typ == TokenBeginBlockComment {
+				_, err = parser.ParserPeekNextToken(extra + 2)
+				if err != nil {
+					return SexpNull, err
+				}
+				// to discern the pattern:
+				//tok2 = lexer.tokens[extra]    // TokenComment
+				//tok3 := lexer.tokens[extra+1] // TokenEndBlockComment
+				//vv("tok2 = '%v' / '%#v' (extra=%v)", tok2.String(), tok2, extra)
+				//vv("tok3 = '%v' / '%#v'", tok3.String(), tok3)
 
-			_, err = parser.ParserPeekNextToken(extra + 2)
-			if err != nil {
-				return SexpNull, err
+				tok2 = lexer.tokens[extra+2]
+				extra += 3
 			}
-			// to discern the pattern:
-			//tok2 = lexer.tokens[extra]    // TokenComment
-			//tok3 := lexer.tokens[extra+1] // TokenEndBlockComment
-			//vv("tok2 = '%v' / '%#v' (extra=%v)", tok2.String(), tok2, extra)
-			//vv("tok3 = '%v' / '%#v'", tok3.String(), tok3)
-
-			tok2 = lexer.tokens[extra+2]
-			extra += 3
-		}
-		if tok2.typ == TokenComment {
-			_, err = parser.ParserPeekNextToken(extra)
-			if err != nil {
-				return SexpNull, err
+			if tok2.typ == TokenComment {
+				_, err = parser.ParserPeekNextToken(extra)
+				if err != nil {
+					return SexpNull, err
+				}
+				//vv("tok2 = '%v' / '%#v'", tok2.String(), tok2)
+				tok2 = lexer.tokens[extra]
+				extra++
 			}
-			//vv("tok2 = '%v' / '%#v'", tok2.String(), tok2)
-			tok2 = lexer.tokens[extra]
-			extra++
 		}
 
 		switch tok2.typ {
