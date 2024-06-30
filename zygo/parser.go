@@ -362,34 +362,34 @@ func (parser *Parser) ParseExpression(depth int) (res Sexp, err error) {
 			return SexpNull, err
 		}
 
-                extra := 1
- 		// skip past comments
+		extra := 1
+		// skip past comments
 		if tok2.typ == TokenBeginBlockComment {
 
-		   _, err = parser.ParserPeekNextToken(3)
-		   if err != nil {
-			return SexpNull, err
-		   }
-		   // to discern the pattern:
-		  tok2 = lexer.tokens[1] // TokenComment
-		   //tok3 := lexer.tokens[2] // TokenEndBlockComment
-		  //vv("tok2 = '%v' / '%#v'", tok2.String(), tok2)
-		   //vv("tok3 = '%v' / '%#v'", tok3.String(), tok3)
+			_, err = parser.ParserPeekNextToken(3)
+			if err != nil {
+				return SexpNull, err
+			}
+			// to discern the pattern:
+			tok2 = lexer.tokens[1] // TokenComment
+			//tok3 := lexer.tokens[2] // TokenEndBlockComment
+			//vv("tok2 = '%v' / '%#v'", tok2.String(), tok2)
+			//vv("tok3 = '%v' / '%#v'", tok3.String(), tok3)
 
-		   tok2 = lexer.tokens[3]
-		   extra += 3
-		   
-		} else if tok2.typ ==  TokenComment {
-		    _, err = parser.ParserPeekNextToken(1)
-		    if err != nil {
-			return SexpNull, err
-		    }
-		    //vv("tok2 = '%v' / '%#v'", tok2.String(), tok2)
-		    tok2 = lexer.tokens[1]
-		    extra++
+			tok2 = lexer.tokens[3]
+			extra += 3
+
+		} else if tok2.typ == TokenComment {
+			_, err = parser.ParserPeekNextToken(1)
+			if err != nil {
+				return SexpNull, err
+			}
+			//vv("tok2 = '%v' / '%#v'", tok2.String(), tok2)
+			tok2 = lexer.tokens[1]
+			extra++
 		}
 
-		switch tok2.typ {		    
+		switch tok2.typ {
 		case TokenSymbolColon:
 			//vv("saw TokenLCurly followed by TokenSymbolColon, tok2 = '%v', typ='%v'", tok2.String(), tok2.typ)
 			lexer.tokens = append([]Token{Token{typ: TokenSymbol, str: "hash"}}, lexer.tokens...)
@@ -419,7 +419,7 @@ func (parser *Parser) ParseExpression(depth int) (res Sexp, err error) {
 
 		case TokenBeginBacktickString:
 			// peek ahead past the string to see if we have ':' TokenColonOperator
-			_, _ = parser.ParserPeekNextToken(extra+1)
+			_, _ = parser.ParserPeekNextToken(extra + 1)
 
 			// are we { `name`: value }, as in JSON but with backtick quoted string this time?
 			second := lexer.tokens[extra]
