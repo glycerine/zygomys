@@ -87,6 +87,9 @@ func (env *Zlisp) SourceStream(stream io.RuneScanner) error {
 			"Error parsing on line %d: %v\n", env.parser.Linenum(), err))
 	}
 
+	// like LoadExpressions in environment.go, remove comments.
+	expressions = env.FilterArray(expressions, RemoveCommentsFilter)
+	
 	return env.SourceExpressions(expressions)
 }
 

@@ -1,6 +1,6 @@
-{
-    "glossary": {
-	"title": "example glossary",
+{ 
+    "glossary": { 
+	"title": "example glossary", /*comment 1*/ // with comment 2
 	"GlossDiv": {
 	    "title": "S",
 	    "GlossList": {
