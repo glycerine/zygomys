@@ -102,6 +102,12 @@ func (t Token) String() string {
 		return "\\"
 	case TokenDollar:
 		return "$"
+	case TokenComment:
+		return t.str
+	case TokenBeginBlockComment:
+		return "/*"
+	case TokenEndBlockComment:
+		return "*/"
 	}
 	return t.str
 }
