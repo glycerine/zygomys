@@ -159,7 +159,7 @@ rather than a background goroutine stack.
 
 Let's measure the performance difference, if any:
 
-On go version go1.24.1 darwin/amd64:
+On Go version go1.24.1 darwin/amd64:
 
 Benchmark with a background goroutines keeping parsing state,
 zygomys v8.1.0, parsing a 5MB json file into memory. The
@@ -194,6 +194,7 @@ Conclusion: it is only 0.3% slower using an iterator
 (coroutine) instead of a background goroutine, 
 and this allowed me to eliminate a mutex and five 
 channels from the parser implementation.
+
 And, on Linux, I see the coroutine version 
 actually being 12% faster on go1.23.5 and go1.24.1.
 
