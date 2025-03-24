@@ -1015,6 +1015,22 @@ func SetPrettyPrintFlag(env *Zlisp, name string, args []Sexp) (Sexp, error) {
 	return SexpNull, nil
 }
 
+// allow invisible operations, useful when
+// loading big json files at the cmd line.
+func SetEchoPrintFlag(env *Zlisp, name string, args []Sexp) (Sexp, error) {
+	narg := len(args)
+	if narg != 1 {
+		return SexpNull, WrongNargs
+	}
+	b, isBool := args[0].(*SexpBool)
+	if !isBool {
+		return SexpNull, fmt.Errorf("argument to echo must be a bool")
+	}
+
+	env.Echo = b.Val
+	return SexpNull, nil
+}
+
 // selectors for hash tables
 
 // SexpHashSelector: reference to a symbol in a hash table.

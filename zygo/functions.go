@@ -961,6 +961,7 @@ func AllBuiltinFunctions() map[string]ZlispUserFunction {
 // CoreFunctions returns all of the core logic
 func CoreFunctions() map[string]ZlispUserFunction {
 	return map[string]ZlispUserFunction{
+		"echo":      SetEchoPrintFlag,
 		"pretty":    SetPrettyPrintFlag,
 		"<":         CompareFunction("<"),
 		">":         CompareFunction(">"),

@@ -60,7 +60,8 @@ func AsTmFunction(env *Zlisp, name string,
 
 func TimeitFunction(env *Zlisp, name string,
 	args []Sexp) (Sexp, error) {
-	if len(args) != 1 {
+	nargs := len(args)
+	if nargs != 1 && nargs != 2 {
 		return SexpNull, WrongNargs
 	}
 
@@ -70,25 +71,41 @@ func TimeitFunction(env *Zlisp, name string,
 		fun = t
 	default:
 		return SexpNull,
-			errors.New("argument of timeit should be function")
+			errors.New("1st argument of timeit should be function")
 	}
 
 	starttime := time.Now()
-	elapsed := time.Since(starttime)
 	maxseconds := 10.0
-	var iterations int
-
-	for iterations = 0; iterations < 10000; iterations++ {
+	iterations := int64(1)
+	if nargs == 2 {
+		switch t := args[1].(type) {
+		case *SexpInt:
+			iterations = t.Val
+		case *SexpUint64:
+			iterations = int64(t.Val)
+		case *SexpFloat:
+			iterations = int64(t.Val)
+		default:
+			return SexpNull,
+				fmt.Errorf("2nd argument to timeit should be the iteration count (default 1); got type '%T'", args[1])
+		}
+	}
+	//fmt.Printf("nargs = %v; iterations = %v\n", nargs, iterations)
+	for i := int64(0); i < iterations; i++ {
 		_, err := env.Apply(fun, []Sexp{})
 		if err != nil {
 			return SexpNull, err
 		}
-		elapsed = time.Since(starttime)
-		if elapsed.Seconds() > maxseconds {
-			break
+		if nargs == 1 {
+			// only limit to 10 seconds if using default iteration count.
+			elapsed := time.Since(starttime)
+			if elapsed.Seconds() > maxseconds {
+				break
+			}
 		}
 	}
 
+	elapsed := time.Since(starttime)
 	fmt.Printf("ran %d iterations in %f seconds\n",
 		iterations, elapsed.Seconds())
 	fmt.Printf("average %f seconds per run\n",

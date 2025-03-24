@@ -45,6 +45,7 @@ type Zlisp struct {
 
 	infixOps map[string]*InfixOp
 	Pretty   bool
+	Echo     bool
 
 	booter Booter
 
@@ -99,6 +100,7 @@ func NewZlispWithFuncs(funcs map[string]ZlispUserFunction) *Zlisp {
 	env.parser.Start()
 	env.datastack = env.NewStack(DataStackSize)
 	env.linearstack = env.NewStack(ScopeStackSize)
+	env.Echo = true
 
 	glob := env.NewNamedScope("global")
 	glob.IsGlobal = true
