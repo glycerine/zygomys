@@ -67,8 +67,9 @@ for the whole project when speaking aloud. In writing, the full
 $ go get github.com/glycerine/zygomys/cmd/zygo
 ~~~
 
-### not your average parentheses... features in zygomys 8.0.0 include
+### not your average parentheses... features in zygomys 9.0.0 include
 
+ * [x] version 9 uses the iter package to avoid needing a background parsing goroutine.
  * [x] package mechanism that supports modularity and isolation of scripts/packages/libraries from each other. [See tests/package.zy for examples.](https://github.com/glycerine/zygomys/blob/master/tests/package.zy)
  * [x] NaN handing that matches typical expectations/Go's answers.
  * [x] struct defintion and type checking. [See `tests/declare.zy` for examples.](https://github.com/glycerine/zygomys/blob/master/tests/declare.zy)
