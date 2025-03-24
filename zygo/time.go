@@ -76,7 +76,7 @@ func TimeitFunction(env *Zlisp, name string,
 
 	starttime := time.Now()
 	maxseconds := 10.0
-	iterations := int64(10_000)
+	iterations := int64(1)
 	if nargs == 2 {
 		switch t := args[1].(type) {
 		case *SexpInt:
@@ -87,7 +87,7 @@ func TimeitFunction(env *Zlisp, name string,
 			iterations = int64(t.Val)
 		default:
 			return SexpNull,
-				fmt.Errorf("2nd argument to timeit should be the iteration count (default 10_000); got type '%T'", args[1])
+				fmt.Errorf("2nd argument to timeit should be the iteration count (default 1); got type '%T'", args[1])
 		}
 	}
 	//fmt.Printf("nargs = %v; iterations = %v\n", nargs, iterations)
