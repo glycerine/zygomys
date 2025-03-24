@@ -149,3 +149,50 @@ The design is licensed under the Creative Commons 3.0 Attributions license.
 Read this article for more details: https://blog.golang.org/gopher
 
 [XKCD https://xkcd.com/297/](https://xkcd.com/297/) licensed under a Creative Commons Attribution-NonCommercial 2.5 License(https://xkcd.com/license.html).
+
+### v9 release notes (using iterator instead of a goroutine for parser state)
+
+In this latest version v9, I have replaced the
+background parsing goroutine with an iterator, holding
+the resumable parsing state on a coroutine stack
+rather than a background goroutine stack.
+
+Let's measure the performance difference, if any:
+
+On go version go1.24.1 darwin/amd64:
+
+Benchmark with a background goroutines keeping parsing state,
+zygomys v8.1.0, parsing a 5MB json file into memory. The
+average of 10 runs is shown.
+
+~~~
+$ git checkout v8.1.0
+
+zygo> (timeit (fn [] (echo false) (source "5MB.json")) 10)
+(timeit (fn [] (echo false) (source "5MB.json")) 10)
+ran 10 iterations in 18.414136 seconds
+average 1.841414 seconds per run
+zygo>
+~~~
+
+Versus: benchmark the new version that uses an iterator (implicit coroutine)
+to hold parsing state, in v9.0.4:
+
+~~~
+$ git checkout v9.0.4
+
+zygo> (timeit (fn [] (echo false) (source "5MB.json")) 10)
+(timeit (fn [] (echo false) (source "5MB.json")) 10)
+ran 10 iterations in 18.485201 seconds
+average 1.848520 seconds per run
+
+zygo> {1.848520 - 1.841414}/1.841414
+0.003858990971068882
+~~~
+
+Conclusion: it is only 0.3% slower using an iterator 
+(coroutine) instead of a background goroutine, 
+and this allowed me to eliminate a mutex and five 
+channels from the parser implementation.
+
+I call it a win for more re-usable zygomys library code.
