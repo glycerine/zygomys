@@ -194,5 +194,9 @@ Conclusion: it is only 0.3% slower using an iterator
 (coroutine) instead of a background goroutine, 
 and this allowed me to eliminate a mutex and five 
 channels from the parser implementation.
+And, on Linux, I see the coroutine version 
+actually being 12% faster on go1.23.5 and go1.24.1.
 
-I call it a win for more re-usable zygomys library code.
+I call it a win for more re-usable zygomys library code
+either way.
+
