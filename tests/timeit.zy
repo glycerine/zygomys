@@ -1,0 +1,12 @@
+// timeit shows time to execute
+// a function 10_000 times (up to 10 seconds) by
+// default; or 2nd argument can
+// specify iteration count with no timeout.
+(timeit (fn [] (def a 0)
+   (for [(def i 0) (< i 100) (def i (+ i 1))] {
+      a = a + 1
+   }))
+   1 // iteration count
+   )
+   
+
