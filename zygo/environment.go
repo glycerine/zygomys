@@ -15,7 +15,7 @@ type PreHook func(*Zlisp, string, []Sexp)
 type PostHook func(*Zlisp, string, Sexp)
 
 type Zlisp struct {
-	parser    ParserI
+	parser    *Parser
 	datastack *Stack
 	addrstack *Stack
 
@@ -95,8 +95,7 @@ func NewZlispSandbox() *Zlisp {
 func NewZlispWithFuncs(funcs map[string]ZlispUserFunction) *Zlisp {
 	env := new(Zlisp)
 	env.baseTypeCtor = MakeUserFunction("__basetype_ctor", BaseTypeConstructorFunction)
-	env.parser = env.NewLazyParser()
-	env.parser.Start()
+	env.parser = env.NewParser()
 	env.datastack = env.NewStack(DataStackSize)
 	env.linearstack = env.NewStack(ScopeStackSize)
 

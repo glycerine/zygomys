@@ -69,7 +69,7 @@ func (pr *Prompter) getExpressionOrig(reader *bufio.Reader) (readin string, err 
 	}
 
 	for !isBalanced(line) {
-		fmt.Printf(continuationPrompt)
+		fmt.Print(continuationPrompt)
 		nextline, err := getLine(reader)
 		if err != nil {
 			return "", err
@@ -85,7 +85,7 @@ func (pr *Prompter) getExpressionWithLiner(env *Zlisp, reader *bufio.Reader, noL
 	var line, nextline string
 
 	if noLiner {
-		fmt.Printf(pr.prompt)
+		fmt.Print(pr.prompt)
 		line, err = getLine(reader)
 	} else {
 		line, err = pr.Getline(nil)
@@ -99,46 +99,40 @@ func (pr *Prompter) getExpressionWithLiner(env *Zlisp, reader *bufio.Reader, noL
 
 	// test parse, but don't load or generate bytecode
 	env.parser.ResetAddNewInput(bytes.NewBuffer([]byte(line + "\n")))
-	x, err = env.parser.ParseTokens()
-	//vv("\n after ResetAddNewInput, err = %v. x = '%s'\n", err, (&SexpArray{Val: x, Env: env}).SexpString(nil))
+	for reply := range env.parser.ParsingIter() {
+		//vv("\n after ResetAddNewInput, err = %v. x = '%s'\n", err, (&SexpArray{Val: x, Env: env}).SexpString(nil))
 
-	if len(x) > 0 {
-		xs = append(xs, x...)
-	}
+		x, err = reply.Expr, reply.Err
 
-	for err == ErrMoreInputNeeded || err == UnexpectedEnd || err == ResetRequested {
-		if noLiner {
-			fmt.Printf(continuationPrompt)
-			nextline, err = getLine(reader)
-		} else {
-			nextline, err = pr.Getline(&continuationPrompt)
-		}
-		if err != nil {
-			return "", nil, err
-		}
-		env.parser.NewInput(bytes.NewBuffer([]byte(nextline + "\n")))
-		x, err = env.parser.ParseTokens()
 		if len(x) > 0 {
 			for i := range x {
 				if x[i] == SexpEnd {
-					P("found an SexpEnd token, omitting it")
+					//P("found an SexpEnd token, omitting it")
 					continue
 				}
 				xs = append(xs, x[i])
 			}
 		}
-		switch err {
-		case nil:
+		if err == nil {
 			line += "\n" + nextline
-			Q("no problem parsing line '%s' into '%s', proceeding...\n", line, (&SexpArray{Val: x, Env: env}).SexpString(nil))
+			//Q("no problem parsing line '%s' into '%s', proceeding...\n", line, (&SexpArray{Val: x, Env: env}).SexpString(nil))
 			return line, xs, nil
-		case ResetRequested:
-			continue
-		case ErrMoreInputNeeded:
-			continue
-		default:
-			return "", nil, fmt.Errorf("Error on line %d: %v (repl err: %#v)\n", env.parser.Linenum(), err, err)
 		}
+
+		if err == ErrMoreInputNeeded || err == UnexpectedEnd || err == ResetRequested {
+			if noLiner {
+				fmt.Print(continuationPrompt)
+				nextline, err = getLine(reader)
+			} else {
+				nextline, err = pr.Getline(&continuationPrompt)
+			}
+			if err != nil {
+				return "", nil, err
+			}
+			env.parser.NewInput(bytes.NewBuffer([]byte(nextline + "\n")))
+			continue
+		}
+		return "", nil, fmt.Errorf("Error on line %d: %v (repl err: %#v)\n", env.parser.Linenum(), err, err)
 	}
 	return line, xs, err
 }

@@ -4,10 +4,10 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"iter"
 	"math"
 	"strconv"
 	"strings"
-	"sync"
 )
 
 var NaN float64
@@ -20,26 +20,13 @@ type Parser struct {
 	lexer *Lexer
 	env   *Zlisp
 
-	Done         chan bool
-	reqStop      chan bool
-	AddInput     chan io.RuneScanner
-	ReqReset     chan io.RuneScanner
-	ParsedOutput chan []ParserReply
-
-	mut               sync.Mutex
-	stopped           bool
-	sendMe            []ParserReply
-	FlagSendNeedInput bool
+	yield  func(reply *ParserReply) bool
+	sendMe *ParserReply
+	next   func() (reply *ParserReply, ok bool)
+	stop   func()
 
 	inBacktick bool
 	recur      int64
-
-	// EagerlyRetireParserGoro is now done
-	// automatically by the LazyParser in
-	// lazyparse.go and clients no longer
-	// need to care about setting it. Any client that was
-	// setting it can simply delete those references
-	// to EagerlyRetireParserGoro.
 }
 
 type ParserReply struct {
@@ -49,61 +36,11 @@ type ParserReply struct {
 
 func (env *Zlisp) NewParser() *Parser {
 	p := &Parser{
-		env:          env,
-		Done:         make(chan bool),
-		reqStop:      make(chan bool),
-		ReqReset:     make(chan io.RuneScanner),
-		AddInput:     make(chan io.RuneScanner),
-		ParsedOutput: make(chan []ParserReply),
-		sendMe:       make([]ParserReply, 0, 1),
+		env:    env,
+		sendMe: &ParserReply{},
 	}
 	p.lexer = NewLexer(p)
 	return p
-}
-
-// Stop stops the parser goroutine at next operand and frees the memory
-func (p *Parser) Stop() error {
-	p.mut.Lock()
-	defer p.mut.Unlock()
-	if p.stopped {
-		return nil
-	}
-	p.stopped = true
-	close(p.reqStop)
-	<-p.Done
-	return nil
-}
-
-// Starts launches a background goroutine that runs an
-// infinite parsing loop.
-func (p *Parser) Start() {
-	go func() {
-		defer close(p.Done)
-		expressions := make([]Sexp, 0, SliceDefaultCap)
-
-		// maybe we already have input, be optimistic!
-		// no need to call p.GetMoreInput() before staring
-		// our loop.
-
-		for {
-			expr, err := p.ParseExpression(0)
-			if err != nil || expr == SexpEnd {
-				if err == ParserHaltRequested {
-					return
-				}
-				err = p.GetMoreInput(expressions, err)
-				if err == ParserHaltRequested {
-					return
-				}
-				// GetMoreInput will have delivered what we gave them. Reset since we
-				// don't own that memory any more.
-				expressions = make([]Sexp, 0, SliceDefaultCap)
-			} else {
-				// INVAR: err == nil && expr is not SexpEnd
-				expressions = append(expressions, expr)
-			}
-		}
-	}()
 }
 
 var ParserHaltRequested = fmt.Errorf("parser halt requested")
@@ -117,71 +54,45 @@ func (e *MoreInputError) Error() string {
 
 var ErrMoreInputNeeded = &MoreInputError{}
 
-// This function should *return* when it has more input
-// for the parser/lexer, which will call it when they get wedged.
-//
-// Listeners on p.ParsedOutput should know the Convention: sending
-// a length 0 []ParserReply on p.ParsedOutput channel means: we need more
-// input! They should send some in on p.AddInput channel; or request
-// a reset and simultaneously give us new input with p.ReqReset channel.
-func (p *Parser) GetMoreInput(deliverThese []Sexp, errorToReport error) error {
-
-	if len(deliverThese) == 0 && errorToReport == nil {
-		p.FlagSendNeedInput = true
-	} else {
-		p.sendMe = append(p.sendMe,
-			ParserReply{
-				Expr: deliverThese,
-				Err:  errorToReport,
-			})
-	}
-
-	for {
-		select {
-		case <-p.reqStop:
-			return ParserHaltRequested
-		case input := <-p.AddInput:
-			p.lexer.AddNextStream(input)
-			p.FlagSendNeedInput = false
-			return nil
-		case input := <-p.ReqReset:
-			p.lexer.Reset()
-			p.lexer.AddNextStream(input)
-			p.FlagSendNeedInput = false
-			return ResetRequested
-		case p.HaveStuffToSend() <- p.sendMe:
-			p.sendMe = make([]ParserReply, 0, 1)
-			p.FlagSendNeedInput = false
-		}
-	}
-}
-
-func (p *Parser) HaveStuffToSend() chan []ParserReply {
-	if len(p.sendMe) > 0 || p.FlagSendNeedInput {
-		return p.ParsedOutput
-	}
-	return nil
+func (p *Parser) Start() {
+	// no-op, here for backwards compatability.
 }
 
 func (p *Parser) Reset() {
-	select {
-	case p.ReqReset <- nil:
-	case <-p.reqStop:
+	p.next = nil
+	if p.stop != nil {
+		p.stop()
+		p.stop = nil
 	}
+	p.sendMe = &ParserReply{}
+	p.yield = nil
+	p.lexer.Reset()
+}
+
+func (p *Parser) Stop() error {
+	if p.stop != nil {
+		p.stop()
+		p.stop = nil
+	}
+	p.next = nil
+	p.yield = nil
+	return nil
 }
 
 func (p *Parser) NewInput(s io.RuneScanner) {
-	select {
-	case p.AddInput <- s:
-	case <-p.reqStop:
-	}
+	p.lexer.AddNextStream(s)
 }
 
 func (p *Parser) ResetAddNewInput(s io.RuneScanner) {
-	select {
-	case p.ReqReset <- s:
-	case <-p.reqStop:
+	p.next = nil
+	if p.stop != nil {
+		p.stop()
+		p.stop = nil
 	}
+	p.yield = nil
+	p.sendMe = &ParserReply{}
+	p.lexer.Reset()
+	p.lexer.AddNextStream(s)
 }
 
 var UnexpectedEnd error = errors.New("Unexpected end of input")
@@ -210,14 +121,13 @@ tokFilled:
 			break tokFilled
 		}
 		// instead of returning UnexpectedEnd, we:
-		err = parser.GetMoreInput(nil, ErrMoreInputNeeded)
-		//Q("\n ParseList(depth=%d) got back from parser.GetMoreInput(): '%v'\n", depth, err)
-		switch err {
-		case ParserHaltRequested:
-			return SexpNull, err
-		case ResetRequested:
-			return SexpEnd, err
+		parser.sendMe.Err = ErrMoreInputNeeded
+		ok := parser.yield(parser.sendMe)
+		if !ok {
+			return SexpEnd, nil
 		}
+		//Q("\n ParseList(depth=%d) got back from parser.GetMoreInput(): '%v'\n", depth, err)
+
 		// have to still fill tok, so
 		// loop to the top to PeekNextToken
 	}
@@ -301,12 +211,10 @@ func (parser *Parser) ParseArray(depth int) (Sexp, error) {
 			} else {
 				//instead of return SexpEnd, UnexpectedEnd
 				// we ask for more, and then loop
-				err = parser.GetMoreInput(nil, ErrMoreInputNeeded)
-				switch err {
-				case ParserHaltRequested:
-					return SexpNull, err
-				case ResetRequested:
-					return SexpEnd, err
+				parser.sendMe.Err = ErrMoreInputNeeded
+				ok := parser.yield(parser.sendMe)
+				if !ok {
+					return SexpEnd, nil
 				}
 			}
 		}
@@ -585,12 +493,11 @@ func (parser *Parser) ParseExpression(depth int) (res Sexp, err error) {
 		//Q("parser making SexpComment from '%s'", tok.str)
 		return &SexpComment{Comment: tok.str}, nil
 		// parser skips comments
-		//goto getAnother
+
 	case TokenBeginBlockComment:
 		// parser skips comments
 		return parser.ParseBlockComment(&tok)
-		//parser.ParseBlockComment(&tok)
-		//goto getAnother
+
 	case TokenComma:
 		return &SexpComma{}, nil
 	case TokenSemicolon:
@@ -602,21 +509,65 @@ func (parser *Parser) ParseExpression(depth int) (res Sexp, err error) {
 // ParseTokens is the main service the Parser provides.
 // Currently returns first error encountered, ignoring
 // any expressions after that.
-func (p *Parser) ParseTokens() ([]Sexp, error) {
-	select {
-	case out := <-p.ParsedOutput:
-		//Q("ParseTokens got p.ParsedOutput out: '%#v'", out)
-		r := make([]Sexp, 0)
-		for _, k := range out {
-			r = append(r, k.Expr...)
-			//Q("\n ParseTokens k.Expr = '%v'\n\n", (&SexpArray{Val: k.Expr, Env: p.env}).SexpString(nil))
-			if k.Err != nil {
-				return r, k.Err
+func (p *Parser) ParseTokens() (sx []Sexp, err error) {
+
+	// allow us to start again, as in 030 lexer_test.go;
+	// p.next will still be set on 2nd attempt after more input,
+	// and so we will not start a new iteration, picking up
+	// in the stack of the parser where we left off.
+	if p.next == nil {
+		p.next, p.stop = iter.Pull(p.ParsingIter())
+	}
+
+	var reply *ParserReply
+	ok := true
+	for ok {
+		reply, ok = p.next()
+		if !ok {
+			// must start again
+			p.next = nil
+			p.stop()
+			p.stop = nil
+		}
+
+		if reply != nil {
+			err = reply.Err
+			for _, x := range reply.Expr {
+				if x != SexpEnd {
+					sx = append(sx, x)
+				}
+			}
+			if err != nil {
+				return
 			}
 		}
-		return r, nil
-	case <-p.reqStop:
-		return nil, ErrShuttingDown
+	}
+
+	return
+}
+
+func (p *Parser) ParsingIter() iter.Seq[*ParserReply] {
+
+	return func(yield func(reply *ParserReply) bool) {
+
+		// allow ParseExpression to yield when deep
+		// down the stack (half way through a parse)
+		// and we need more input.
+		p.yield = yield
+
+		var expr Sexp
+		var err error
+		const depth0 int = 0
+		for {
+			expr, err = p.ParseExpression(depth0)
+			if err != nil || expr == SexpEnd {
+				p.sendMe.Err = err
+				yield(p.sendMe)
+				return
+			}
+			p.sendMe.Expr = append(p.sendMe.Expr, expr)
+		}
+		// never reached.
 	}
 }
 
@@ -643,12 +594,10 @@ func (parser *Parser) ParseBlockComment(start *Token) (sx Sexp, err error) {
 			if tok.typ != TokenEnd {
 				break tokFilled
 			}
-			err = parser.GetMoreInput(nil, ErrMoreInputNeeded)
-			switch err {
-			case ParserHaltRequested:
-				return SexpNull, err
-			case ResetRequested:
-				return SexpEnd, err
+			parser.sendMe.Err = ErrMoreInputNeeded
+			ok := parser.yield(parser.sendMe)
+			if !ok {
+				return SexpEnd, nil
 			}
 			// have to still fill tok, so
 			// loop to the top to PeekNextToken
@@ -690,12 +639,10 @@ func (parser *Parser) ParseBacktickString(start *Token) (sx Sexp, err error) {
 			if tok.typ != TokenEnd {
 				break tokFilled
 			}
-			err = parser.GetMoreInput(nil, ErrMoreInputNeeded)
-			switch err {
-			case ParserHaltRequested:
-				return SexpNull, err
-			case ResetRequested:
-				return SexpEnd, err
+			parser.sendMe.Err = ErrMoreInputNeeded
+			ok := parser.yield(parser.sendMe)
+			if !ok {
+				return SexpEnd, nil
 			}
 			// have to still fill tok, so
 			// loop to the top to PeekNextToken
@@ -737,12 +684,10 @@ func (parser *Parser) ParseInfix(depth int) (Sexp, error) {
 			} else {
 				//instead of return SexpEnd, UnexpectedEnd
 				// we ask for more, and then loop
-				err = parser.GetMoreInput(nil, ErrMoreInputNeeded)
-				switch err {
-				case ParserHaltRequested:
-					return SexpNull, err
-				case ResetRequested:
-					return SexpEnd, err
+				parser.sendMe.Err = ErrMoreInputNeeded
+				ok := parser.yield(parser.sendMe)
+				if !ok {
+					return SexpEnd, nil
 				}
 			}
 		}
@@ -791,14 +736,11 @@ func (parser *Parser) ParserPeekNextToken(extra int) (tok Token, err error) {
 		} else {
 			//instead of return SexpEnd, UnexpectedEnd
 			// we ask for more, and then loop
-			err = parser.GetMoreInput(nil, ErrMoreInputNeeded)
-			if err == nil {
-				continue
-			}
-			switch err {
-			case ParserHaltRequested:
-				return
-			case ResetRequested:
+
+			parser.sendMe.Err = ErrMoreInputNeeded
+			ok := parser.yield(parser.sendMe)
+			if !ok {
+				err = ParserHaltRequested
 				return
 			}
 			// otherwise, loop

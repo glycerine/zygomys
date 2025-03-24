@@ -549,7 +549,7 @@ func ConcatFunction(env *Zlisp, name string, args []Sexp) (Sexp, error) {
 	return SexpNull, fmt.Errorf("expected strings, lists or arrays")
 }
 
-func ReadFunction(env *Zlisp, name string, args []Sexp) (Sexp, error) {
+func ReadFunction(env *Zlisp, name string, args []Sexp) (sx Sexp, err error) {
 	if len(args) != 1 {
 		return SexpNull, WrongNargs
 	}
@@ -561,8 +561,16 @@ func ReadFunction(env *Zlisp, name string, args []Sexp) (Sexp, error) {
 		return SexpNull, WrongType
 	}
 	env.parser.ResetAddNewInput(bytes.NewBuffer([]byte(str)))
-	exp, err := env.parser.ParseExpression(0)
-	return exp, err
+	//exp, err := env.parser.ParseExpression(0)
+	// have to use the iter interface...once.
+	for reply := range env.parser.ParsingIter() {
+		err = reply.Err
+		if len(reply.Expr) > 0 {
+			sx = reply.Expr[0]
+		}
+		break
+	}
+	return
 }
 
 func OldEvalFunction(env *Zlisp, name string, args []Sexp) (Sexp, error) {
@@ -702,7 +710,7 @@ func PrintFunction(name string) ZlispUserFunction {
 			fmt.Print(str)
 		case "printf", "sprintf":
 			if len(args) == 1 && name == "printf" {
-				fmt.Printf(str)
+				fmt.Print(str)
 			} else {
 				ar := make([]interface{}, len(args)-1)
 				for i := 0; i < len(ar); i++ {
@@ -1260,7 +1268,7 @@ func StopFunction(env *Zlisp, name string, args []Sexp) (Sexp, error) {
 
 	switch s := args[0].(type) {
 	case *SexpStr:
-		return SexpNull, fmt.Errorf(s.S)
+		return SexpNull, fmt.Errorf("%v", s.S)
 	}
 	return SexpNull, stopErr
 }

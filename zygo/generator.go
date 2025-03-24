@@ -515,7 +515,7 @@ func (gen *Generator) GenerateAssert(args []Sexp) error {
 	reterrmsg := fmt.Sprintf("Assertion failed: %s\n",
 		args[0].SexpString(nil))
 	gen.AddInstruction(BranchInstr{true, 2})
-	gen.AddInstruction(ReturnInstr{fmt.Errorf(reterrmsg)})
+	gen.AddInstruction(ReturnInstr{fmt.Errorf("%v", reterrmsg)})
 	gen.AddInstruction(PushInstr{SexpNull})
 	return nil
 }
