@@ -45,6 +45,7 @@ type Zlisp struct {
 
 	infixOps map[string]*InfixOp
 	Pretty   bool
+	Echo     bool // should the repl print the last value
 
 	booter Booter
 
@@ -98,6 +99,7 @@ func NewZlispWithFuncs(funcs map[string]ZlispUserFunction) *Zlisp {
 	env.parser = env.NewParser()
 	env.datastack = env.NewStack(DataStackSize)
 	env.linearstack = env.NewStack(ScopeStackSize)
+	env.Echo = true
 
 	glob := env.NewNamedScope("global")
 	glob.IsGlobal = true

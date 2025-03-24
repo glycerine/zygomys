@@ -302,6 +302,10 @@ func Repl(env *Zlisp, cfg *ZlispConfig) {
 		}
 
 		if expr != SexpNull {
+			if !env.Echo {
+				// user requested no echo of values
+				continue
+			}
 			// try to print strings more elegantly!
 			switch e := expr.(type) {
 			case *SexpStr:
