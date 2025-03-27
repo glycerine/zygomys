@@ -1,0 +1,4 @@
+(package foo
+    (def B "I am a Public string")
+)
+    
