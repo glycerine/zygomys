@@ -44,8 +44,14 @@ func AsTmFunction(env *Zlisp, name string,
 
 	var str *SexpStr
 	switch t := args[0].(type) {
+	case *SexpInt:
+		tm := time.Unix(0, int64(t.Val)).In(NYC)
+		return &SexpTime{Tm: tm}, nil
 	case *SexpStr:
 		str = t
+	case *SexpDate:
+		return &SexpTime{Tm: t.Date.ToGoTimeNYC()}, nil
+
 	default:
 		return SexpNull,
 			errors.New("argument of astm should be a string RFC3999Nano timestamp that we want to convert to time.Time")
@@ -125,4 +131,106 @@ func (env *Zlisp) ImportTime() {
 	env.AddFunction("timeit", TimeitFunction)
 	env.AddFunction("astm", AsTmFunction)
 	env.AddFunction("millis", MillisFunction)
+	env.AddFunction("date", AsDateFunction)
+	env.AddFunction("nextBusinessDay", NextBusinessDayFunction)
+	env.AddFunction("dur", AsDurationFunction)
+}
+
+// Date
+
+type SexpDate struct {
+	Date Date
+}
+
+func (r *SexpDate) Type() *RegisteredType {
+	return nil // TODO what should this be?
+}
+
+func (t *SexpDate) SexpString(ps *PrintState) string {
+	return t.Date.String()
+}
+
+// string -> date
+func AsDateFunction(env *Zlisp, name string,
+	args []Sexp) (Sexp, error) {
+
+	if len(args) != 1 {
+		return SexpNull, WrongNargs
+	}
+
+	var str *SexpStr
+	switch t := args[0].(type) {
+	case *SexpStr:
+		str = t
+	default:
+		return SexpNull,
+			errors.New(`argument of (date "YYYY/MM/DD") constructor should be a YYYY/MM/DD string such as "2017/12/25"`)
+	}
+
+	dt, err := ParseDate(str.S, "/")
+	if err != nil {
+		return SexpNull, err
+	}
+	return &SexpDate{Date: *dt}, nil
+}
+
+func NextBusinessDayFunction(env *Zlisp, name string,
+	args []Sexp) (Sexp, error) {
+
+	if len(args) != 1 {
+		return SexpNull, WrongNargs
+	}
+
+	var d *SexpDate
+	switch t := args[0].(type) {
+	case *SexpDate:
+		d = t
+	default:
+		return SexpNull,
+			errors.New(`argument of (nextBusinessDay) must be a date.`)
+	}
+
+	return &SexpDate{Date: *d.Date.NextBusinessDate()}, nil
+}
+
+// time.Duration
+
+type SexpDur struct {
+	Dur time.Duration
+}
+
+func (r *SexpDur) Type() *RegisteredType {
+	return nil // TODO what should this be?
+}
+
+func (t *SexpDur) SexpString(ps *PrintState) string {
+	//return t.Dur.String() // can give "-1ns"; hard to parse
+	return fmt.Sprintf("%v", int(t.Dur))
+}
+
+// int/string -> time.Duration
+func AsDurationFunction(env *Zlisp, name string,
+	args []Sexp) (Sexp, error) {
+
+	narg := len(args)
+	if narg == 0 {
+		// return the zero duration
+		return &SexpDur{}, nil
+	}
+
+	if len(args) != 1 {
+		return SexpNull, WrongNargs
+	}
+
+	switch t := args[0].(type) {
+	case *SexpInt:
+		return &SexpDur{Dur: time.Duration(t.Val)}, nil
+	case *SexpStr:
+		dur, err := time.ParseDuration(t.S)
+		panicOn(err)
+		return &SexpDur{Dur: dur}, nil
+	default:
+		return SexpNull,
+			errors.New("argument of dur must be string or int")
+	}
 }

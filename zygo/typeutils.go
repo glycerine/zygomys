@@ -198,6 +198,8 @@ func TypeOf(expr Sexp) *SexpStr {
 		} else {
 			v = "stack"
 		}
+	case *SexpDur:
+		v = "time.Duration"
 	default:
 		fmt.Printf("\n error: unknown type: %T in '%#v'\n", e, e)
 	}

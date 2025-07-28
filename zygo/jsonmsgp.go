@@ -17,37 +17,46 @@ type TypeCheckable interface {
 }
 
 /*
- Conversion map
+	Conversion map
 
- Go map[string]interface{}  <--(1)--> lisp
-   ^                                  ^ |
-   |                                 /  |
-  (2)   ------------ (4) -----------/  (5)
-   |   /                                |
-   V  V                                 V
- msgpack <--(3)--> go struct, strongly typed
+	Go map[string]interface{}  <--(1)--> lisp
+	  ^                                  ^ |
+	  |                                 /  |
+	 (2)   ------------ (4) -----------/  (5)
+	  |   /                                |
+	  V  V                                 V
+	msgpack <--(3)--> go struct, strongly typed
 
 (1) we provide these herein; see jsonmsgp_test.go too.
-     (a) SexpToGo()
-     (b) GoToSexp()
+
+	(a) SexpToGo()
+	(b) GoToSexp()
+
 (2) provided by ugorji/go/codec; see examples also herein
-     (a) MsgpackToGo() / JsonToGo()
-     (b) GoToMsgpack() / GoToJson()
+
+	(a) MsgpackToGo() / JsonToGo()
+	(b) GoToMsgpack() / GoToJson()
+
 (3) provided by tinylib/msgp, and by ugorji/go/codec
-     by using pre-compiled or just decoding into an instance
-     of the struct.
+
+	by using pre-compiled or just decoding into an instance
+	of the struct.
+
 (4) see herein
-     (a) SexpToMsgpack() and SexpToJson()
-     (b) MsgpackToSexp(); uses (4) = (2) + (1)
+
+	(a) SexpToMsgpack() and SexpToJson()
+	(b) MsgpackToSexp(); uses (4) = (2) + (1)
+
 (5) The SexpToGoStructs() and ToGoFunction() in this
-    file provide the capability of marshaling an
-    s-expression to a Go-struct that has been
-    registered to be associated with a named
-    hash map using (defmap). See repl/gotypereg.go
-    to add your Go-struct constructor. From
-    the prompt, the (togo) function instantiates
-    a 'shadow' Go-struct whose data matches
-    that configured in the record.
+
+	file provide the capability of marshaling an
+	s-expression to a Go-struct that has been
+	registered to be associated with a named
+	hash map using (defmap). See repl/gotypereg.go
+	to add your Go-struct constructor. From
+	the prompt, the (togo) function instantiates
+	a 'shadow' Go-struct whose data matches
+	that configured in the record.
 */
 func JsonFunction(name string) ZlispUserFunction {
 	return func(env *Zlisp, _ string, args []Sexp) (Sexp, error) {
@@ -404,8 +413,8 @@ func makeSortedSlicesFromMap(m map[string]interface{}) ([]string, []interface{})
 // This is mostly just an exercise in type conversion.
 //
 // on first entry, dedup can be nil. We use it to write the
-//  same pointer for a SexpHash used in more than one place.
 //
+//	same pointer for a SexpHash used in more than one place.
 func SexpToGo(sexp Sexp, env *Zlisp, dedup map[*SexpHash]interface{}) (result interface{}) {
 
 	cacheHit := false
@@ -1041,6 +1050,8 @@ func SexpToGoStructs(
 		targVa.Elem().Set(reflect.Zero(targVa.Type().Elem()))
 	case *SexpTime:
 		targVa.Elem().Set(reflect.ValueOf(src.Tm))
+	case *SexpDur:
+		targVa.Elem().Set(reflect.ValueOf(src.Dur))
 	case *SexpBool:
 		targVa.Elem().Set(reflect.ValueOf(src.Val))
 	default:
@@ -1051,9 +1062,12 @@ func SexpToGoStructs(
 
 /*
 if accessing unexported fields, we'll recover from
-   panic: reflect.Value.Interface: cannot return value obtained from unexported field or method
+
+	panic: reflect.Value.Interface: cannot return value obtained from unexported field or method
+
 and use this technique
-   https://stackoverflow.com/questions/42664837/access-unexported-fields-in-golang-reflect
+
+	https://stackoverflow.com/questions/42664837/access-unexported-fields-in-golang-reflect
 */
 func unexportHelper(ptrFld *reflect.Value, fld *reflect.Value) (r *reflect.Value, needed bool) {
 	defer func() {
