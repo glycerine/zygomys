@@ -17,3 +17,33 @@ there 34
 
 `}
 (assert (== s2 "\n\n\n"))
+
+// base64 display and back
+(def binary (base64 (raw `hi`))) // binary bytes, with base64 display
+(assert (== (raw2str binary) "hi"))
+(assert (== (str binary) "(raw64 \"aGk=\")")) // base64
+
+// if we have a base64 string, we should be able to get it back
+// to raw bytes
+(def r2 (unbase64 "aGk="))
+(assert (== binary r2))
+
+(def binary3 (raw `there`)) // binary bytes, regular bytes display format
+(assert (== (raw2str binary3) "there"))
+(assert (== (str binary3) "[]byte{0x74, 0x68, 0x65, 0x72, 0x65}")) // non-base64 display "regular".
+
+(def bin2 (copyraw binary))
+
+(assert (isbase64 binary))
+(assert (isbase64 bin2))
+
+(assert (== (isbase64 (raw "not raw64")) false))
+
+// copyraw duplicates, not by reference. Rarely
+// needed because raw is immutable anyway. But
+// we can use it to verify the change in base64
+// display.
+(flipbase64 bin2)
+(assert (== (isbase64 bin2) false))
+(assert (== (isbase64 binary) true))
+

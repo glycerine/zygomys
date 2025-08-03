@@ -125,8 +125,9 @@ func (r *RegisteredType) Type() *RegisteredType {
 }
 
 type SexpRaw struct {
-	Val []byte
-	Typ *RegisteredType
+	Val    []byte
+	Typ    *RegisteredType
+	Base64 bool
 }
 
 func (r *SexpRaw) Type() *RegisteredType {
@@ -518,9 +519,9 @@ func (s *SexpStr) SexpString(ps *PrintState) string {
 	return strconv.Quote(string(s.S))
 }
 
-func (r *SexpRaw) SexpString(ps *PrintState) string {
-	return fmt.Sprintf("%#v", []byte(r.Val))
-}
+//func (r *SexpRaw) SexpString(ps *PrintState) string {
+//	return fmt.Sprintf("%#v", []byte(r.Val))
+//}
 
 type SexpSymbol struct {
 	name      string

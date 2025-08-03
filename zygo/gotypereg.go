@@ -25,7 +25,6 @@ import (
 // The repl will automatically do a (defmap record)
 // for each record defined in the registry. e.g.
 // for snoopy, hornet, hellcat, etc.
-//
 var GoStructRegistry GoStructRegistryType
 
 // the registry type
@@ -38,6 +37,9 @@ type GoStructRegistryType struct {
 
 	// later, user-defined types
 	Userdef map[string]*RegisteredType
+
+	// lazily added functions
+	LazyFunc map[string]ZlispUserFunction
 }
 
 // consistently ordered list of all registered types (created at init time).
@@ -140,6 +142,25 @@ func (r *GoStructRegistryType) Lookup(name string) *RegisteredType {
 	return r.Registry[name]
 }
 
+// wait to AddFunction until EnvAvail()
+func (r *GoStructRegistryType) LazyAddFunction(name string, function ZlispUserFunction) {
+	if r.LazyFunc == nil {
+		r.LazyFunc = make(map[string]ZlispUserFunction)
+	}
+	r.LazyFunc[name] = function
+}
+
+func (r *GoStructRegistryType) EnvAvail(env *Zlisp) {
+	if len(r.LazyFunc) == 0 {
+		return
+	}
+	for nm, fn := range r.LazyFunc {
+		env.AddFunction(nm, fn)
+	}
+	// clear it out, all added.
+	r.LazyFunc = make(map[string]ZlispUserFunction)
+}
+
 // the type of all maker functions
 
 type MakeGoStructFunc func(env *Zlisp, h *SexpHash) (interface{}, error)
@@ -222,8 +243,8 @@ func NewRegisteredType(f MakeGoStructFunc) *RegisteredType {
 
 // builtin known Go Structs
 // NB these are used to test the functionality of the
-//    Go integration.
 //
+//	Go integration.
 func init() {
 	GoStructRegistry = GoStructRegistryType{
 		Registry: make(map[string]*RegisteredType),

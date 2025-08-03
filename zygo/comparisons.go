@@ -298,7 +298,11 @@ func (env *Zlisp) Compare(a Sexp, b Sexp) (int, error) {
 		case *string:
 			return compareString(&SexpStr{S: *z}, b)
 		}
-
+	case *SexpRaw:
+		switch bt := b.(type) {
+		case *SexpRaw:
+			return bytes.Compare(at.Val, bt.Val), nil
+		}
 	}
 	errmsg := fmt.Sprintf("err 100: cannot compare %T to %T", a, b)
 	return 0, errors.New(errmsg)

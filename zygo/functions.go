@@ -838,6 +838,12 @@ func MakeArrayFunction(env *Zlisp, name string, args []Sexp) (Sexp, error) {
 }
 
 func ConstructorFunction(name string) ZlispUserFunction {
+
+	switch name {
+	case "unbase64", "base64", "flipbase64":
+		return MakeRawUnbase64(name)
+	}
+
 	return func(env *Zlisp, _ string, args []Sexp) (Sexp, error) {
 		switch name {
 		case "array":
@@ -1037,24 +1043,32 @@ func CoreFunctions() map[string]ZlispUserFunction {
 		"list":        ConstructorFunction("list"),
 		"hash":        ConstructorFunction("hash"),
 		"raw":         ConstructorFunction("raw"),
-		"str":         StringifyFunction,
-		"->":          ThreadMapFunction,
-		"flatten":     FlattenToWordsFunction,
-		"quotelist":   QuoteListFunction,
-		"=":           AssignmentFunction,
-		":=":          AssignmentFunction,
-		"fieldls":     GoFieldListFunction,
-		"defined?":    DefinedFunction,
-		"stop":        StopFunction,
-		"joinsym":     JoinSymFunction,
-		"GOOS":        GOOSFunction,
-		"&":           AddressOfFunction,
-		"derefSet":    DerefFunction("derefSet"),
-		"deref":       DerefFunction("deref"),
-		".":           DotFunction,
-		"arrayidx":    ArrayIndexFunction,
-		"hashidx":     HashIndexFunction,
-		"asUint64":    AsUint64Function,
+
+		"raw64":      ConstructorFunction("raw64"),
+		"unbase64":   ConstructorFunction("unbase64"),
+		"base64":     ConstructorFunction("base64"),
+		"flipbase64": ConstructorFunction("flipbase64"),
+		"isbase64":   IsBase64Function,
+		"copyraw":    CopyRawFunction,
+
+		"str":       StringifyFunction,
+		"->":        ThreadMapFunction,
+		"flatten":   FlattenToWordsFunction,
+		"quotelist": QuoteListFunction,
+		"=":         AssignmentFunction,
+		":=":        AssignmentFunction,
+		"fieldls":   GoFieldListFunction,
+		"defined?":  DefinedFunction,
+		"stop":      StopFunction,
+		"joinsym":   JoinSymFunction,
+		"GOOS":      GOOSFunction,
+		"&":         AddressOfFunction,
+		"derefSet":  DerefFunction("derefSet"),
+		"deref":     DerefFunction("deref"),
+		".":         DotFunction,
+		"arrayidx":  ArrayIndexFunction,
+		"hashidx":   HashIndexFunction,
+		"asUint64":  AsUint64Function,
 	}
 }
 

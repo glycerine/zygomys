@@ -25,7 +25,6 @@ import (
 // The primary use here is to be able to define
 // packages, structs, interfaces, functions,
 // methods, and type aliases.
-//
 func (env *Zlisp) ImportPackageBuilder() {
 	env.AddBuilder("infixExpand", InfixBuilder)
 	env.AddBuilder("infix", InfixBuilder)
@@ -40,6 +39,7 @@ func (env *Zlisp) ImportPackageBuilder() {
 	env.AddBuilder("var", VarBuilder)
 	env.AddBuilder("expectError", ExpectErrorBuilder)
 	env.AddBuilder("comma", CommaBuilder)
+	env.AddBuilder("raw64", Raw64Builder)
 	//	env.AddBuilder("&", AddressOfBuilder)
 
 	env.AddBuilder("import", ImportPackageBuilder)
@@ -595,6 +595,11 @@ func baseConstruct(env *Zlisp, f *RegisteredType, nargs int) (Sexp, error) {
 	case *int, *uint8, *uint16, *uint32, *uint64, *int8, *int16, *int32, *int64:
 		myint, ok := arg.(*SexpInt)
 		if !ok {
+			// try from Float, even though it will loose the decimals.
+			myfl, ok2 := arg.(*SexpFloat)
+			if ok2 {
+				return &SexpInt{Val: int64(myfl.Val)}, nil
+			}
 			return SexpNull, fmt.Errorf("cannot convert %T to int", arg)
 		}
 		return myint, nil
