@@ -3,6 +3,7 @@ package zygo
 import (
 	"errors"
 	"math"
+	"time"
 )
 
 type IntegerOp int
@@ -231,6 +232,45 @@ func NumericMatchChar(op NumericOp, a *SexpChar, b Sexp) (Sexp, error) {
 	return SexpNull, errors.New("unexpected result")
 }
 
+func NumericMatchTime(op NumericOp, a *SexpTime, b Sexp) (Sexp, error) {
+
+	ua := a.Tm.UnixNano()
+	var ub int64
+	switch op {
+	case Add, Sub, Mult, Div, Pow:
+	default:
+		return SexpNull, WrongType
+	}
+
+	switch tb := b.(type) {
+	case *SexpFloat:
+		ubf, _ := math.Modf(tb.Val)
+		ub = int64(ubf)
+	case *SexpInt:
+		ub = tb.Val
+	case *SexpTime:
+		ub = tb.Tm.UnixNano()
+	default:
+		return SexpNull, WrongType
+	}
+
+	switch op {
+	case Add:
+		return &SexpTime{Tm: time.Unix(0, ua+ub)}, nil
+	case Sub:
+		return &SexpTime{Tm: time.Unix(0, ua-ub)}, nil
+	case Mult:
+		return &SexpTime{Tm: time.Unix(0, ua*ub)}, nil
+	case Div:
+		return &SexpTime{Tm: time.Unix(0, ua/ub)}, nil
+	case Pow:
+		val := int64(math.Pow(float64(ua), float64(ub)))
+		return &SexpTime{Tm: time.Unix(0, val)}, nil
+	}
+
+	return SexpNull, WrongType
+}
+
 func NumericDo(op NumericOp, a, b Sexp) (Sexp, error) {
 	switch ta := a.(type) {
 	case *SexpFloat:
@@ -241,6 +281,8 @@ func NumericDo(op NumericOp, a, b Sexp) (Sexp, error) {
 		return NumericMatchUint64(op, ta, b)
 	case *SexpChar:
 		return NumericMatchChar(op, ta, b)
+	case *SexpTime:
+		return NumericMatchTime(op, ta, b)
 	}
 	return SexpNull, WrongType
 }
