@@ -1,0 +1,57 @@
+// fibonacci numbers are a classic test
+//  of compiler/interpreter call-stack management.
+//
+// definition
+// F_0 = 0
+// F_1 = 1
+// F_n = F_{n-1} + F_{n-2}; for n > 1
+// see https://en.wikipedia.org/wiki/Fibonacci_sequence
+
+(defn fib [x]
+  (cond
+    (== x 0) 0
+    (== x 1) 1
+    (+ (fib (- x 1)) (fib (- x 2)))))
+
+//(def ans (fib 30)) // 11 seconds
+//(assert (== ans 832040))
+
+(def ans (fib 10)) 
+(assert (== ans 55))
+//(printf "ans = %v\n" ans)
+
+// tail-call version of fibonacci numbers
+(defn fibt [x a b]
+  (cond
+    (== x 0) a
+    (== x 1) b
+    (fibt (- x 1) b (+ a b))))
+
+//(def anst (fibt 30 0 1)) // 36 msec
+//(printf "anst = %v\n" anst)
+
+(def anst (fibt 10 0 1)) 
+(assert (== anst 55))
+//(printf "anst = %v\n" anst)
+
+// non-recursive
+(defn fibnr [x]
+  (def back2 0)
+  (def back1 1)
+  (def ans   1)
+  (cond
+    (== x 0) 0
+    (== x 1) 1
+    (begin
+      (for [(def i 2) (<= i x) (def i (+ i 1))]
+        (set ans (+ back1 back2))
+        (set back2 back1)
+        (set back1 ans)
+        //(printf "after: at i=%v, back1=%v, back2=%v, ans=%v\n" i back1 back2 ans)
+      ) // end for loop
+      ans
+      )))  
+
+(def ansnr (fibnr 10)) 
+//(printf "ansnr = %v\n" ansnr)
+(assert (== ansnr 55))
