@@ -26,9 +26,9 @@ import (
 // packages, structs, interfaces, functions,
 // methods, and type aliases.
 func (env *Zlisp) ImportPackageBuilder() {
+	env.ImportMinimalBuilder()
 	env.AddBuilder("infixExpand", InfixBuilder)
 	env.AddBuilder("infix", InfixBuilder)
-	env.AddBuilder(":", ColonAccessBuilder)
 	env.AddBuilder("sys", SystemBuilder)
 	env.AddBuilder("struct", StructBuilder)
 	env.AddBuilder("func", FuncBuilder)
@@ -38,14 +38,18 @@ func (env *Zlisp) ImportPackageBuilder() {
 	//env.AddBuilder("import", ImportBuilder)
 	env.AddBuilder("var", VarBuilder)
 	env.AddBuilder("expectError", ExpectErrorBuilder)
-	env.AddBuilder("comma", CommaBuilder)
-	env.AddBuilder("raw64", Raw64Builder)
 	//	env.AddBuilder("&", AddressOfBuilder)
 
 	env.AddBuilder("import", ImportPackageBuilder)
 
 	env.AddFunction("sliceOf", SliceOfFunction)
 	env.AddFunction("ptr", PointerToFunction)
+}
+
+func (env *Zlisp) ImportMinimalBuilder() {
+	env.AddBuilder(":", ColonAccessBuilder)
+	env.AddBuilder("comma", CommaBuilder)
+	env.AddBuilder("raw64", Raw64Builder)
 }
 
 var sxSliceOf *SexpFunction = MakeUserFunction("sliceOf", SliceOfFunction)
