@@ -3,8 +3,7 @@ package zygo
 import (
 	"fmt"
 	"testing"
-
-	cv "github.com/glycerine/goconvey/convey"
+	//cv "github.com/glycerine/goconvey/convey"
 )
 
 // more demonstrating how to pass data between script and Go.
@@ -18,28 +17,28 @@ type Table struct {
 
 func Test019_ScriptCreatesData_GoReadsIt(t *testing.T) {
 
-	cv.Convey(`example zygo script created content being then read from Go`, t, func() {
+	//cv.Convey(`example zygo script created content being then read from Go`, t, func() {
 
-		env := NewZlisp()
-		defer env.Close()
+	env := NewZlisp()
+	defer env.Close()
 
-		// Typically you want to call env.StandardSetup()
-		// right after creating a new env.
-		// It will setup alot of parts of the env,
-		// like defining the base types, allowing imports, etc.
-		//
-		// A sandboxed env, however, may not want to do this.
-		env.StandardSetup()
+	// Typically you want to call env.StandardSetup()
+	// right after creating a new env.
+	// It will setup alot of parts of the env,
+	// like defining the base types, allowing imports, etc.
+	//
+	// A sandboxed env, however, may not want to do this.
+	env.StandardSetup()
 
-		// Register the above Table struct, so we can copy
-		// from zygo (table) to Go Table{}
-		GoStructRegistry.RegisterUserdef(
-			&RegisteredType{
-				GenDefMap: true, Factory: func(env *Zlisp, h *SexpHash) (interface{}, error) {
-					return &Table{}, nil
-				}}, true, "table")
+	// Register the above Table struct, so we can copy
+	// from zygo (table) to Go Table{}
+	GoStructRegistry.RegisterUserdef(
+		&RegisteredType{
+			GenDefMap: true, Factory: func(env *Zlisp, h *SexpHash) (interface{}, error) {
+				return &Table{}, nil
+			}}, true, "table")
 
-		code := `
+	code := `
         // A defmap is needed to define the table struct inside env.
         // The registry doesn't know about env(s), so it 
         // can't do it for us automatically.
@@ -51,42 +50,50 @@ func Test019_ScriptCreatesData_GoReadsIt(t *testing.T) {
                   rows:    [["oak"  "silver"]
                             ["pine" "tin"   ]]))`
 
-		//env.debugExec = true
-		x, err := env.EvalString(code)
-		panicOn(err)
+	//env.debugExec = true
+	x, err := env.EvalString(code)
+	panicOn(err)
 
-		//vv("x = '%#v'", x)
-		cv.So(x.(*SexpHash).TypeName, cv.ShouldEqual, "table")
+	//vv("x = '%#v'", x)
+	assert(x.(*SexpHash).TypeName == "table")
 
-		// provide a top level struct to fill in. In this
-		// case the tree is just a 1 node deep.
-		table := &Table{}
-		tmp, err := SexpToGoStructs(x, table, env, nil, 0, table)
-		panicOn(err)
+	// provide a top level struct to fill in. In this
+	// case the tree is just a 1 node deep.
+	table := &Table{}
+	tmp, err := SexpToGoStructs(x, table, env, nil, 0, table)
+	panicOn(err)
 
-		// The table and tmp are equal pointers. They point to the same Table.
-		cv.So(table == tmp, cv.ShouldBeTrue)
+	// The table and tmp are equal pointers. They point to the same Table.
+	assert(table == tmp)
 
-		// The script created content is accessible from Go via tmp/table now.
-		// Note that this is a copy.
-		cv.So(table.Headers, cv.ShouldResemble, []string{"wood", "metal"})
+	// The script created content is accessible from Go via tmp/table now.
+	// Note that this is a copy.
+	//cv.So(table.Headers, cv.ShouldResemble, []string{"wood", "metal"})
+	assert(table.Headers[0] == "wood")
+	assert(table.Headers[1] == "metal")
 
-		// So if we write to the copy...
-		table.Headers[0] += "en ships, on the water"
+	// So if we write to the copy...
+	table.Headers[0] += "en ships, on the water"
 
-		// the script version is unchanged...
-		//
-		// (Note that the assert will panic if it is not true.)
-		_, err = env.EvalString(`(assert {t.headers[0] == "wood"})`)
-		panicOn(err)
+	// the script version is unchanged...
+	//
+	// (Note that the assert will panic if it is not true.)
+	_, err = env.EvalString(`(assert {t.headers[0] == "wood"})`)
+	panicOn(err)
 
-		switch f := tmp.(type) {
-		case *Table:
-			_ = f
-			//fmt.Printf("my f is indeed a *Table: '%#v'", f)
-		default:
-			panic("wrong type")
-		}
+	switch f := tmp.(type) {
+	case *Table:
+		_ = f
+		//fmt.Printf("my f is indeed a *Table: '%#v'", f)
+	default:
+		panic("wrong type")
+	}
 
-	})
+	//})
+}
+
+func assert(b bool) {
+	if !b {
+		panic("assert panics on false")
+	}
 }
