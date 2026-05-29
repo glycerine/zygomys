@@ -149,6 +149,11 @@ func (env *Zlisp) Clone() *Zlisp {
 	dupenv.datastack = env.datastack.Clone()
 	dupenv.linearstack = env.linearstack.Clone()
 	dupenv.addrstack = env.addrstack.Clone()
+	if env.loopstack != nil {
+		dupenv.loopstack = env.loopstack.Clone()
+	} else {
+		dupenv.loopstack = dupenv.NewStack(LoopStackSize)
+	}
 
 	dupenv.builtins = env.builtins
 	dupenv.reserved = env.reserved
@@ -168,6 +173,8 @@ func (env *Zlisp) Clone() *Zlisp {
 	dupenv.debugExec = env.debugExec
 	dupenv.debugSymbolNotFound = env.debugSymbolNotFound
 	dupenv.showGlobalScope = env.showGlobalScope
+	dupenv.WrapLoadExpressionsInInfix = env.WrapLoadExpressionsInInfix
+	dupenv.booter = env.booter
 	return dupenv
 }
 
@@ -178,6 +185,7 @@ func (env *Zlisp) Duplicate() *Zlisp {
 	dupenv.datastack = dupenv.NewStack(DataStackSize)
 	dupenv.linearstack = dupenv.NewStack(ScopeStackSize)
 	dupenv.addrstack = dupenv.NewStack(CallStackSize)
+	dupenv.loopstack = dupenv.NewStack(LoopStackSize)
 	dupenv.builtins = env.builtins
 	dupenv.reserved = env.reserved
 	dupenv.macros = env.macros
@@ -197,6 +205,8 @@ func (env *Zlisp) Duplicate() *Zlisp {
 	dupenv.debugExec = env.debugExec
 	dupenv.debugSymbolNotFound = env.debugSymbolNotFound
 	dupenv.showGlobalScope = env.showGlobalScope
+	dupenv.WrapLoadExpressionsInInfix = env.WrapLoadExpressionsInInfix
+	dupenv.booter = env.booter
 
 	return dupenv
 }
@@ -242,6 +252,13 @@ func (env *Zlisp) MakeSymbol(name string) *SexpSymbol {
 		env.DetectSigils(symbol)
 		return symbol
 	}
+	for {
+		_, used := env.revsymtable[env.nextsymbol]
+		if !used {
+			break
+		}
+		env.nextsymbol++
+	}
 	symbol := &SexpSymbol{name: name, number: env.nextsymbol}
 	env.symtable[name] = symbol.number
 	env.revsymtable[symbol.number] = name
@@ -261,6 +278,36 @@ func (env *Zlisp) CurrentFunctionSize() int {
 		return 0
 	}
 	return len(env.curfunc.fun)
+}
+
+func functionSize(function *SexpFunction) int {
+	if function == nil || function.user {
+		return 0
+	}
+	return len(function.fun)
+}
+
+type vmControlState struct {
+	curfunc         *SexpFunction
+	pc              int
+	addrstackSize   int
+	linearstackSize int
+}
+
+func (env *Zlisp) captureControlState() vmControlState {
+	return vmControlState{
+		curfunc:         env.curfunc,
+		pc:              env.pc,
+		addrstackSize:   env.addrstack.Size(),
+		linearstackSize: env.linearstack.Size(),
+	}
+}
+
+func (env *Zlisp) restoreControlState(state vmControlState) {
+	env.addrstack.TruncateToSize(state.addrstackSize)
+	env.linearstack.TruncateToSize(state.linearstackSize)
+	env.curfunc = state.curfunc
+	env.pc = state.pc
 }
 
 func (env *Zlisp) wrangleOptargs(fnargs, nargs int) error {
@@ -357,6 +404,7 @@ func (env *Zlisp) CallUserFunction(
 			fmt.Sprintf("Error calling '%s': %v", name, err))
 	}
 
+	callState := env.captureControlState()
 	env.addrstack.PushAddr(env.curfunc, env.pc+1)
 	env.curfunc = function
 	env.pc = -1
@@ -392,6 +440,7 @@ func (env *Zlisp) CallUserFunction(
 			name, recovered, string(trace))
 	}
 	if err != nil {
+		env.restoreControlState(callState)
 		return 0, errors.New(
 			fmt.Sprintf("Error calling '%s': %v", name, err))
 	}
@@ -402,7 +451,16 @@ func (env *Zlisp) CallUserFunction(
 		posthook(env, name, res)
 	}
 
-	env.curfunc, env.pc, _ = env.addrstack.PopAddr()
+	if env.addrstack.Size() > callState.addrstackSize {
+		env.curfunc, env.pc, err = env.addrstack.PopAddr()
+		if err != nil {
+			env.restoreControlState(callState)
+			return 0, err
+		}
+	} else {
+		env.curfunc = callState.curfunc
+		env.pc = callState.pc + 1
+	}
 	return len(args), nil
 }
 
@@ -571,23 +629,29 @@ func (env *Zlisp) DumpEnvironment() {
 }
 
 func (env *Zlisp) ReachedEnd() bool {
-	return env.pc == env.CurrentFunctionSize()
+	return env.pc >= env.CurrentFunctionSize()
 }
 
 func (env *Zlisp) GetStackTrace(err error) string {
 	str := fmt.Sprintf("error in %s:%d: %v\n",
 		env.curfunc.name, env.pc, err)
-	for !env.addrstack.IsEmpty() {
-		fun, pos, _ := env.addrstack.PopAddr()
+	for i := 0; i < env.addrstack.Size(); i++ {
+		elem, getErr := env.addrstack.Get(i)
+		if getErr != nil {
+			break
+		}
+		addr := elem.(Address)
+		fun, pos := addr.function, addr.position
 		str += fmt.Sprintf("in %s:%d\n", fun.name, pos)
 	}
 	return str
 }
 
 func (env *Zlisp) Clear() {
-	env.datastack.tos = -1
-	env.linearstack.tos = 0
-	env.addrstack.tos = -1
+	env.datastack.TruncateToSize(0)
+	env.linearstack.TruncateToSize(1)
+	env.addrstack.TruncateToSize(0)
+	env.loopstack.TruncateToSize(0)
 
 	env.mainfunc = env.MakeFunction("__main", 0, false,
 		make([]Instruction, 0), nil)
@@ -610,6 +674,7 @@ func (env *Zlisp) Apply(fun *SexpFunction, args []Sexp) (Sexp, error) {
 		return fun.userfun(env, fun.name, args)
 	}
 
+	callState := env.captureControlState()
 	env.pc = -2
 	for _, expr := range args {
 		env.datastack.PushExpr(expr)
@@ -618,13 +683,20 @@ func (env *Zlisp) Apply(fun *SexpFunction, args []Sexp) (Sexp, error) {
 	//VPrintf("\nApply Calling '%s'\n", fun.SexpString())
 	err := env.CallFunction(fun, len(args))
 	if err != nil {
+		env.restoreControlState(callState)
 		return SexpNull, err
 	}
 
-	return env.Run()
+	res, err := env.Run()
+	if err != nil {
+		env.restoreControlState(callState)
+		return SexpNull, err
+	}
+	return res, nil
 }
 
 func (env *Zlisp) Run() (Sexp, error) {
+	runState := env.captureControlState()
 
 	for env.pc != -1 && !env.ReachedEnd() {
 		instr := env.curfunc.fun[env.pc]
@@ -636,10 +708,9 @@ func (env *Zlisp) Run() (Sexp, error) {
 				env.curfunc.name)
 		}
 		err := instr.Execute(env)
-		if err == StackUnderFlowErr {
-			err = nil
-		}
 		if err != nil {
+			env.restoreControlState(runState)
+			env.pc = functionSize(env.curfunc)
 			return SexpNull, err
 		}
 		if env.debugExec {

@@ -57,6 +57,10 @@ func (env *Zlisp) SourceExpressions(expressions []Sexp) error {
 	//DumpFunction(ZlispFunction(gen.instructions), -1)
 	curfunc := env.curfunc
 	curpc := env.pc
+	defer func() {
+		env.pc = curpc
+		env.curfunc = curfunc
+	}()
 
 	env.curfunc = env.MakeFunction("__source", 0, false,
 		gen.instructions, nil)
@@ -72,9 +76,6 @@ func (env *Zlisp) SourceExpressions(expressions []Sexp) error {
 
 	//P("debug done with Run in source, now stack is:")
 	//env.datastack.PrintStack()
-
-	env.pc = curpc
-	env.curfunc = curfunc
 
 	return nil
 }

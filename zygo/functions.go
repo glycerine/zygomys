@@ -623,8 +623,6 @@ func EvalFunction(env *Zlisp, name string, args []Sexp) (Sexp, error) {
 		return SexpNull, err
 	}
 
-	err = env.ReturnFromFunction()
-
 	// some sanity checks
 	if env.datastack.Size() > startingDataStackSize {
 		/*

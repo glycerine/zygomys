@@ -139,9 +139,6 @@ func (stack *Stack) Get(n int) (StackElem, error) {
 }
 
 func (stack *Stack) Pop() (StackElem, error) {
-	// always make a new array,
-	// so we can use for the closure stack-of-scopes.
-
 	elem, err := stack.Get(0)
 	if err != nil {
 		return nil, err
@@ -153,9 +150,8 @@ func (stack *Stack) Pop() (StackElem, error) {
 		return nil, fmt.Errorf("Stack.Pop() on emtpy stack")
 	}
 
-	el := make([]StackElem, n-1)
-	copy(el, stack.elements)
-	stack.elements = el
+	stack.elements[stack.tos] = nil
+	stack.elements = stack.elements[:n-1]
 	stack.tos--
 	return elem, nil
 }
@@ -194,9 +190,20 @@ func (stack *Stack) Show(env *Zlisp, ps *PrintState, label string) (string, erro
 
 // set newsize to 0 to truncate everything
 func (stack *Stack) TruncateToSize(newsize int) {
-	el := make([]StackElem, newsize)
-	copy(el, stack.elements)
-	stack.elements = el
+	if newsize < 0 {
+		newsize = 0
+	}
+	if newsize > len(stack.elements) {
+		el := make([]StackElem, newsize)
+		copy(el, stack.elements)
+		stack.elements = el
+		stack.tos = newsize - 1
+		return
+	}
+	for i := newsize; i < len(stack.elements); i++ {
+		stack.elements[i] = nil
+	}
+	stack.elements = stack.elements[:newsize]
 	stack.tos = newsize - 1
 }
 

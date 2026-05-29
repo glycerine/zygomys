@@ -31,7 +31,7 @@ func CreateGoroutineMacro(env *Zlisp, name string,
 	goroenv := env.Duplicate()
 	err := goroenv.LoadExpressions(args)
 	if err != nil {
-		return SexpNull, nil
+		return SexpNull, err
 	}
 	goro := &SexpGoroutine{goroenv}
 

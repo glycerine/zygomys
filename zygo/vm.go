@@ -96,6 +96,9 @@ func (p PopInstr) InstrString() string {
 func (p PopInstr) Execute(env *Zlisp) error {
 	_, err := env.datastack.PopExpr()
 	env.pc++
+	if err == StackUnderFlowErr {
+		return nil
+	}
 	return err
 }
 
@@ -169,7 +172,6 @@ func (p PopStackPutEnvInstr) Execute(env *Zlisp) error {
 // up the stack. Used
 // to implement (set v 10) when v is
 // not in the local scope.
-//
 type UpdateInstr struct {
 	sym *SexpSymbol
 }
@@ -572,8 +574,9 @@ func (s LabelInstr) Execute(env *Zlisp) error {
 }
 
 type BreakInstr struct {
-	loop *Loop
-	pos  int
+	loop        *Loop
+	pos         int
+	scopesToPop int
 }
 
 func (s BreakInstr) InstrString() string {
@@ -591,13 +594,19 @@ func (s *BreakInstr) Execute(env *Zlisp) error {
 		}
 		s.pos = pos
 	}
+	for i := 0; i < s.scopesToPop; i++ {
+		if err := env.linearstack.PopScope(); err != nil {
+			return err
+		}
+	}
 	env.pc = s.pos + s.loop.breakOffset
 	return nil
 }
 
 type ContinueInstr struct {
-	loop *Loop
-	pos  int
+	loop        *Loop
+	pos         int
+	scopesToPop int
 }
 
 func (s ContinueInstr) InstrString() string {
@@ -615,6 +624,11 @@ func (s *ContinueInstr) Execute(env *Zlisp) error {
 			return err
 		}
 		s.pos = pos
+	}
+	for i := 0; i < s.scopesToPop; i++ {
+		if err := env.linearstack.PopScope(); err != nil {
+			return err
+		}
 	}
 	env.pc = s.pos + s.loop.continueOffset
 	//VPrintf("\n  more detail ContinueInstr pos=%d, setting pc = %d\n", s.pos, env.pc)

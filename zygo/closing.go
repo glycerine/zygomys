@@ -9,10 +9,21 @@ type Closing struct {
 
 func NewClosing(name string, env *Zlisp) *Closing {
 	stk := env.linearstack.Clone()
-	// be super strict: only store up to our
-	// enclosing function definition, because after
-	// that, the definition time of that function
-	// should be what we use.
+	// Be strict: only store scopes from the current lexical function outward
+	// to the current top. Caller scopes below that function are dynamic state.
+	for i := stk.tos; i >= 0; i-- {
+		scop, ok := stk.elements[i].(*Scope)
+		if ok && scop.IsFunction {
+			if i > 0 {
+				trimmed := env.NewStack(stk.Size() - i)
+				for _, elem := range stk.elements[i : stk.tos+1] {
+					trimmed.Push(elem)
+				}
+				stk = trimmed
+			}
+			break
+		}
+	}
 
 	return &Closing{
 		Stack: stk,

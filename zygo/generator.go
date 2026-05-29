@@ -17,6 +17,7 @@ type Generator struct {
 type Loop struct {
 	stmtname       *SexpSymbol
 	label          *SexpSymbol
+	scopeDepth     int
 	loopStart      int
 	loopLen        int
 	breakOffset    int // i.e. relative to loopStart
@@ -868,11 +869,13 @@ func (gen *Generator) GenerateForLoop(args []Sexp) error {
 		loop = &Loop{
 			stmtname: gen.env.GenSymbol("__loop_" + labelsym.name + "_"),
 			//label:    &labelsym,
-			label: labelsym,
+			label:      labelsym,
+			scopeDepth: gen.scopes,
 		}
 	} else {
 		loop = &Loop{
-			stmtname: gen.env.GenSymbol("__loop"),
+			stmtname:   gen.env.GenSymbol("__loop"),
+			scopeDepth: gen.scopes,
 		}
 	}
 
@@ -890,11 +893,12 @@ func (gen *Generator) GenerateForLoop(args []Sexp) error {
 	// end up clobering the parents loop index
 	// inadvertently.
 	gen.AddInstruction(AddScopeInstr{Name: "runtime " + loop.stmtname.name})
+	gen.scopes++
 	gen.AddInstruction(PushStackmarkInstr{sym: loop.stmtname})
 
 	// generate the body of the loop
 	subgenBody := NewGenerator(gen.env)
-	subgenBody.Tail = gen.Tail
+	subgenBody.Tail = false
 	subgenBody.scopes = gen.scopes
 	subgenBody.funcname = gen.funcname
 	err = subgenBody.GenerateBegin(args[startgen:])
@@ -907,7 +911,7 @@ func (gen *Generator) GenerateForLoop(args []Sexp) error {
 
 	// generate the init code
 	subgenInit := NewGenerator(gen.env)
-	subgenInit.Tail = gen.Tail
+	subgenInit.Tail = false
 	subgenInit.scopes = gen.scopes
 	subgenInit.funcname = gen.funcname
 	err = subgenInit.Generate(controlargs.Val[0])
@@ -920,7 +924,7 @@ func (gen *Generator) GenerateForLoop(args []Sexp) error {
 
 	// generate the test
 	subgenT := NewGenerator(gen.env)
-	subgenT.Tail = gen.Tail
+	subgenT.Tail = false
 	subgenT.scopes = gen.scopes
 	subgenT.funcname = gen.funcname
 
@@ -934,7 +938,7 @@ func (gen *Generator) GenerateForLoop(args []Sexp) error {
 
 	// generate the increment code
 	subgenIncr := NewGenerator(gen.env)
-	subgenIncr.Tail = gen.Tail
+	subgenIncr.Tail = false
 	subgenIncr.scopes = gen.scopes
 	subgenIncr.funcname = gen.funcname
 
@@ -978,6 +982,7 @@ func (gen *Generator) GenerateForLoop(args []Sexp) error {
 	// cleanup
 	gen.AddInstruction(ClearStackmarkInstr{sym: loop.stmtname})
 	gen.AddInstruction(RemoveScopeInstr{})
+	gen.scopes--
 	gen.AddInstruction(PushInstr{SexpNull}) // for is a statement; leave null on the stack.
 
 	loop.loopStart = startPos - bodyPos // offset; should be negative.
@@ -1297,8 +1302,12 @@ scanUpTheLoops:
 			labelsym.name, labelsym.name)
 	}
 
+	scopesToPop := gen.scopes - (loop.scopeDepth + 1)
+	if scopesToPop < 0 {
+		scopesToPop = 0
+	}
 	//VPrintf("\n debug GenerateContinue() : myPos =%d  loop=%#v\n", len(gen.instructions), loop)
-	gen.AddInstruction(&ContinueInstr{loop: loop})
+	gen.AddInstruction(&ContinueInstr{loop: loop, scopesToPop: scopesToPop})
 	return nil
 }
 
@@ -1365,8 +1374,12 @@ scanUpTheLoops:
 			labelsym.name, labelsym.name)
 	}
 
+	scopesToPop := gen.scopes - (loop.scopeDepth + 1)
+	if scopesToPop < 0 {
+		scopesToPop = 0
+	}
 	//VPrintf("\n debug GenerateBreak() : loop=%#v\n", loop)
-	gen.AddInstruction(&BreakInstr{loop: loop})
+	gen.AddInstruction(&BreakInstr{loop: loop, scopesToPop: scopesToPop})
 
 	return nil
 }
@@ -1382,6 +1395,7 @@ func (gen *Generator) GenerateNewScope(expressions []Sexp) error {
 	}
 
 	gen.AddInstruction(AddScopeInstr{Name: "newScope"})
+	gen.scopes++
 	for _, expr := range expressions[:size-1] {
 		err := gen.Generate(expr)
 		if err != nil {
@@ -1397,6 +1411,7 @@ func (gen *Generator) GenerateNewScope(expressions []Sexp) error {
 		return err
 	}
 	gen.AddInstruction(RemoveScopeInstr{})
+	gen.scopes--
 	return nil
 }
 
