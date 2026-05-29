@@ -429,7 +429,6 @@ func (env *Zlisp) StandardSetup() {
 	panicOn(err)
 
 	env.ImportChannels()
-	env.ImportGoroutines()
 	env.ImportRegex()
 	env.ImportRandom()
 

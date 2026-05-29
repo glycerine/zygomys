@@ -292,6 +292,7 @@ type vmControlState struct {
 	pc              int
 	addrstackSize   int
 	linearstackSize int
+	datastackSize   int
 }
 
 func (env *Zlisp) captureControlState() vmControlState {
@@ -300,12 +301,14 @@ func (env *Zlisp) captureControlState() vmControlState {
 		pc:              env.pc,
 		addrstackSize:   env.addrstack.Size(),
 		linearstackSize: env.linearstack.Size(),
+		datastackSize:   env.datastack.Size(),
 	}
 }
 
 func (env *Zlisp) restoreControlState(state vmControlState) {
 	env.addrstack.TruncateToSize(state.addrstackSize)
 	env.linearstack.TruncateToSize(state.linearstackSize)
+	env.datastack.TruncateToSize(state.datastackSize)
 	env.curfunc = state.curfunc
 	env.pc = state.pc
 }

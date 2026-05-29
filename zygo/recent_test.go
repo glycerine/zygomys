@@ -61,10 +61,30 @@ func TestRecentCompiledFunctionErrorRestoresVM(t *testing.T) {
 	if env.linearstack.Size() != 1 {
 		t.Fatalf("linearstack leaked after compiled-function error: got %d", env.linearstack.Size())
 	}
+	if env.datastack.Size() != 0 {
+		t.Fatalf("datastack leaked after compiled-function error: got %d", env.datastack.Size())
+	}
 
 	res := recentEval(t, env, "(+ 1 2)")
 	if got := recentInt(t, res); got != 3 {
 		t.Fatalf("after compiled-function error, (+ 1 2) = %d, want 3", got)
+	}
+}
+
+func TestRecentInstructionErrorRestoresDataStack(t *testing.T) {
+	env := NewZlisp()
+	defer env.Close()
+
+	if _, err := env.EvalString("(+ 1 missingRecentOperand)"); err == nil {
+		t.Fatalf("expected missingRecentOperand to fail")
+	}
+	if env.datastack.Size() != 0 {
+		t.Fatalf("datastack leaked after instruction error: got %d", env.datastack.Size())
+	}
+
+	res := recentEval(t, env, "(+ 1 2)")
+	if got := recentInt(t, res); got != 3 {
+		t.Fatalf("after instruction error, (+ 1 2) = %d, want 3", got)
 	}
 }
 

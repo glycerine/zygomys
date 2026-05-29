@@ -3,6 +3,8 @@
 //
 // In fact, we should deprecate using the co/goroutines via (go)
 // because it is not goroutine safe. Comment this out in preparation for that.
+(expectError "symbol `go` not found" (go 1))
+
 /*
 (def ch (makeChan))
 
