@@ -681,6 +681,27 @@ func (gen *Generator) GenerateBuilder(fun Sexp, args []Sexp) error {
 	return nil
 }
 
+func (gen *Generator) GenerateInfix(args []Sexp) error {
+	arr, empty, err := InfixArgsToArray("infix", args)
+	if err != nil {
+		return err
+	}
+	if empty {
+		gen.AddInstruction(PushInstr{SexpNull})
+		return nil
+	}
+
+	xs, err := InfixExpandArray(gen.env, arr)
+	if err != nil {
+		return err
+	}
+	if len(xs) == 0 {
+		gen.AddInstruction(PushInstr{SexpNull})
+		return nil
+	}
+	return gen.GenerateBegin(xs)
+}
+
 func (gen *Generator) GenerateDispatch(fun Sexp, args []Sexp) error {
 	gen.GenerateAll(args)
 	gen.Generate(fun)
@@ -729,6 +750,9 @@ func (gen *Generator) GenerateCall(expr *SexpPair) error {
 		if err == nil {
 			fun, isFun := x.(*SexpFunction)
 			if isFun && fun.isBuilder {
+				if head.name == "infix" {
+					return gen.GenerateInfix(arr)
+				}
 				return gen.GenerateBuilder(fun, arr)
 			}
 		}

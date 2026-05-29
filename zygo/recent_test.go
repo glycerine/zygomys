@@ -24,6 +24,36 @@ func recentEval(t *testing.T, env *Zlisp, code string) Sexp {
 	return res
 }
 
+func recentLookupFunction(t *testing.T, env *Zlisp, name string) *SexpFunction {
+	t.Helper()
+	x, err, _ := env.LexicalLookupSymbol(env.MakeSymbol(name), nil)
+	if err != nil {
+		t.Fatalf("lookup %q failed: %v", name, err)
+	}
+	fn, ok := x.(*SexpFunction)
+	if !ok {
+		t.Fatalf("lookup %q returned %T, want *SexpFunction", name, x)
+	}
+	return fn
+}
+
+func recentHasDispatchInstruction(fn *SexpFunction) bool {
+	for _, instr := range fn.fun {
+		if _, ok := instr.(DispatchInstr); ok {
+			return true
+		}
+	}
+	return false
+}
+
+func recentInstructionListing(fn *SexpFunction) string {
+	var b strings.Builder
+	for i, instr := range fn.fun {
+		fmt.Fprintf(&b, "%d: %s\n", i, instr.InstrString())
+	}
+	return b.String()
+}
+
 func TestRecentUserFunctionErrorRestoresVM(t *testing.T) {
 	env := NewZlisp()
 	defer env.Close()
@@ -85,6 +115,44 @@ func TestRecentInstructionErrorRestoresDataStack(t *testing.T) {
 	res := recentEval(t, env, "(+ 1 2)")
 	if got := recentInt(t, res); got != 3 {
 		t.Fatalf("after instruction error, (+ 1 2) = %d, want 3", got)
+	}
+}
+
+func TestRecentInfixCompilesDuringGeneration(t *testing.T) {
+	env := NewZlisp()
+	defer env.Close()
+	env.StandardSetup()
+
+	recentEval(t, env, `(defn compiledInfix [] {1 + 2; 4 + 5})`)
+	fn := recentLookupFunction(t, env, "compiledInfix")
+
+	res := recentEval(t, env, "(compiledInfix)")
+	if got := recentInt(t, res); got != 9 {
+		t.Fatalf("compiledInfix returned %d, want 9", got)
+	}
+	if recentHasDispatchInstruction(fn) {
+		t.Fatalf("compiled infix still dispatches through runtime builder:\n%s", recentInstructionListing(fn))
+	}
+}
+
+func TestRecentNestedInfixCompilesDuringGeneration(t *testing.T) {
+	env := NewZlisp()
+	defer env.Close()
+	env.StandardSetup()
+
+	recentEval(t, env, `(defn compiledNestedInfix [a] { if a > 0 { a + 1 } else { a - 1 } })`)
+	fn := recentLookupFunction(t, env, "compiledNestedInfix")
+
+	res := recentEval(t, env, "(compiledNestedInfix 2)")
+	if got := recentInt(t, res); got != 3 {
+		t.Fatalf("compiledNestedInfix 2 returned %d, want 3", got)
+	}
+	res = recentEval(t, env, "(compiledNestedInfix -2)")
+	if got := recentInt(t, res); got != -3 {
+		t.Fatalf("compiledNestedInfix -2 returned %d, want -3", got)
+	}
+	if recentHasDispatchInstruction(fn) {
+		t.Fatalf("nested compiled infix still dispatches through runtime builder:\n%s", recentInstructionListing(fn))
 	}
 }
 

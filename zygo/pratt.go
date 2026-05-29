@@ -279,11 +279,10 @@ type RightMuncher func(env *Zlisp, pr *Pratt) (Sexp, error)
 type LeftMuncher func(env *Zlisp, pr *Pratt, left Sexp) (Sexp, error)
 type StmtMuncher func(env *Zlisp, pr *Pratt) (Sexp, error)
 
-func InfixBuilder(env *Zlisp, name string, args []Sexp) (Sexp, error) {
-	//Q("InfixBuilder top, name='%s', len(args)==%v ", name, len(args))
+func InfixArgsToArray(name string, args []Sexp) (*SexpArray, bool, error) {
 	if name != "infixExpand" && len(args) != 1 {
 		// let {} mean nil
-		return SexpNull, nil
+		return nil, true, nil
 	}
 	var arr *SexpArray
 	//Q("InfixBuilder after top, args[0] has type ='%T' ", args[0])
@@ -295,27 +294,31 @@ func InfixBuilder(env *Zlisp, name string, args []Sexp) (Sexp, error) {
 			_, isSent := v.Tail.(*SexpSentinel)
 			if isSent {
 				// expansion of {} is nil
-				return SexpNull, nil
+				return nil, true, nil
 			}
 			pair, isPair := v.Tail.(*SexpPair)
 			if !isPair {
-				return SexpNull, fmt.Errorf("infixExpand expects (infix []) as its argument; instead we saw '%T' [err 3]", v.Tail)
+				return nil, false, fmt.Errorf("infixExpand expects (infix []) as its argument; instead we saw '%T' [err 3]", v.Tail)
 			}
 			switch ar2 := pair.Head.(type) {
 			case *SexpArray:
 				//Q("infixExpand, doing recursive call to InfixBuilder, ar2 = '%v'", ar2.SexpString(nil))
-				return InfixBuilder(env, name, []Sexp{ar2})
+				return ar2, false, nil
 			default:
-				return SexpNull, fmt.Errorf("infixExpand expects (infix []) as its argument; instead we saw '%T'", v.Tail)
+				return nil, false, fmt.Errorf("infixExpand expects (infix []) as its argument; instead we saw '%T'", v.Tail)
 			}
 		}
-		return SexpNull, fmt.Errorf("InfixBuilder must receive an SexpArray. Saw: name='%v' / args[0]='%#v'", name, args[0])
+		return nil, false, fmt.Errorf("InfixBuilder must receive an SexpArray. Saw: name='%v' / args[0]='%#v'", name, args[0])
 	case *SexpHash:
 		// an empty basic block {} that turned into an empty hash.
-		return SexpNull, nil
+		return nil, true, nil
 	default:
-		return SexpNull, fmt.Errorf("InfixBuilder (default) must receive an SexpArray. Saw: name='%v' / args[0]='%#v'", name, args[0])
+		return nil, false, fmt.Errorf("InfixBuilder (default) must receive an SexpArray. Saw: name='%v' / args[0]='%#v'", name, args[0])
 	}
+	return arr, false, nil
+}
+
+func InfixExpandArray(env *Zlisp, arr *SexpArray) ([]Sexp, error) {
 	//Q("InfixBuilder, name='%s', arr = ", name)
 	//for i := range arr.Val {
 	//	Q("arr[%v] = '%v', of type %T", i, arr.Val[i].SexpString(nil), arr.Val[i])
@@ -323,14 +326,10 @@ func InfixBuilder(env *Zlisp, name string, args []Sexp) (Sexp, error) {
 	pr := NewPratt(arr.Val)
 	xs := []Sexp{}
 
-	if name == "infixExpand" {
-		xs = append(xs, env.MakeSymbol("quote"))
-	}
-
 	for {
 		x, err := pr.Expression(env, 0)
 		if err != nil {
-			return SexpNull, err
+			return nil, err
 		}
 		//if x == nil {
 		//	Q("x was nil")
@@ -351,13 +350,30 @@ func InfixBuilder(env *Zlisp, name string, args []Sexp) (Sexp, error) {
 			pr.Advance() // skip over the semicolon
 		}
 	}
+	return xs, nil
+}
+
+func InfixBuilder(env *Zlisp, name string, args []Sexp) (Sexp, error) {
+	//Q("InfixBuilder top, name='%s', len(args)==%v ", name, len(args))
+	arr, empty, err := InfixArgsToArray(name, args)
+	if err != nil {
+		return SexpNull, err
+	}
+	if empty {
+		return SexpNull, nil
+	}
+
+	xs, err := InfixExpandArray(env, arr)
+	if err != nil {
+		return SexpNull, err
+	}
 	//Q("infix builder loop done, here are my expressions:")
 	//for i, ele := range xs {
 	//	Q("xs[%v] = %v", i, ele.SexpString(nil))
 	//}
 
 	if name == "infixExpand" {
-		ret := MakeList(xs)
+		ret := MakeList(append([]Sexp{env.MakeSymbol("quote")}, xs...))
 		//Q("infixExpand: returning ret = '%v'", ret.SexpString(nil))
 		return ret, nil
 	}
