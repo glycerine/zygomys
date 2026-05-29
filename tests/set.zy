@@ -8,3 +8,10 @@
 // series of infix ;-separated expressions should all be evaluated
 { b = 2; d = 4 }
 (assert {b+2 == d})
+
+// new
+(def x 1)
+(defn g [] (set x 2))
+(defn f [] (let [x 42] (g)))
+(f)
+(assert (== x 2))

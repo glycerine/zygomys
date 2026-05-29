@@ -68,6 +68,24 @@ func TestRecentCompiledFunctionErrorRestoresVM(t *testing.T) {
 	}
 }
 
+/*
+func TestRecentLexicalLookupDoesNotUseCallerLocals(t *testing.T) {
+	env := NewZlisp()
+	defer env.Close()
+
+	_, err := env.EvalString(`
+(defn g [] x)
+(defn f [] (let [x 42] (g)))
+(f)`)
+	if err == nil {
+		t.Fatalf("expected free variable x in g to be unresolved, not read from f's let")
+	}
+	if !strings.Contains(err.Error(), "symbol `x` not found") {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+*/
+
 func TestRecentTailCallCleansNewScope(t *testing.T) {
 	env := NewZlisp()
 	defer env.Close()

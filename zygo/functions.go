@@ -607,6 +607,10 @@ func EvalFunction(env *Zlisp, name string, args []Sexp) (Sexp, error) {
 	if err != nil {
 		return SexpNull, err
 	}
+	if len(gen.instructions) == 0 {
+		return SexpNull, nil
+	}
+	gen.AddInstruction(ReturnInstr{nil})
 
 	newfunc := ZlispFunction(gen.instructions)
 	orig := &SexpArray{Val: args}
