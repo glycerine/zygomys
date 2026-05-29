@@ -860,11 +860,12 @@ func (env *Zlisp) LexicalLookupSymbol(sym *SexpSymbol, setVal *Sexp) (Sexp, erro
 		}
 	}
 
-	// with checkCaptures true, as tests/package.zy needs this.
-	exp, err, scope = env.linearstack.LookupSymbolUntilFunction(sym, setVal, 2, true)
+	// Some runtime function scopes carry the closure-bearing function object
+	// on the scope itself. Check that current frame's captures, but do not
+	// cross into the caller's live scopes; those are dynamic, not lexical.
+	exp, err, scope = env.linearstack.LookupSymbolUntilFunction(sym, setVal, 1, true)
 	switch err {
 	case nil:
-		//P("LexicalLookupSymbol('%s') found in env.linearstack.LookupSymbolUtilFunction(2, true) in parent runtime scope '%s'\n", sym.name, scope.Name)
 		return exp, err, scope
 	case SymNotFound:
 		break

@@ -15,3 +15,13 @@
 (defn f [] (let [x 42] (g)))
 (f)
 (assert (== x 2))
+
+(defn g [] (set x 2))
+(defn f [] (let [x 42] (g) x))
+(assert (== (f) 42))
+
+// we were still doing some dynamic scoping at the end. verify that is gone now:
+(defn staticScopeReadProbe [] localStaticScopeProbe)
+(defn staticScopeCaller [] (let [localStaticScopeProbe 42] (staticScopeReadProbe)))
+
+(expectError "symbol `localStaticScopeProbe` not found" (staticScopeCaller))

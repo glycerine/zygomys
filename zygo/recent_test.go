@@ -68,7 +68,6 @@ func TestRecentCompiledFunctionErrorRestoresVM(t *testing.T) {
 	}
 }
 
-/*
 func TestRecentLexicalLookupDoesNotUseCallerLocals(t *testing.T) {
 	env := NewZlisp()
 	defer env.Close()
@@ -84,7 +83,6 @@ func TestRecentLexicalLookupDoesNotUseCallerLocals(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 }
-*/
 
 func TestRecentTailCallCleansNewScope(t *testing.T) {
 	env := NewZlisp()
