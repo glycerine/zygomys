@@ -652,6 +652,11 @@ func TypeQueryFunction(name string) ZlispUserFunction {
 		if len(args) != 1 {
 			return SexpNull, WrongNargs
 		}
+		var err error
+		args, err = env.SubstituteRHS(args)
+		if err != nil {
+			return SexpNull, err
+		}
 
 		var result bool
 
@@ -1298,14 +1303,18 @@ func AssignmentFunction(env *Zlisp, name string, args []Sexp) (Sexp, error) {
 	if narg != 2 {
 		return SexpNull, fmt.Errorf("assignment requires two arguments: a left-hand-side and a right-hand-side argument")
 	}
+	rhs, err := env.RValue(args[1])
+	if err != nil {
+		return SexpNull, err
+	}
 
 	var sym *SexpSymbol
 	switch s := args[0].(type) {
 	case *SexpSymbol:
 		sym = s
 	case Selector:
-		err := s.AssignToSelection(env, args[1])
-		return args[1], err
+		err := s.AssignToSelection(env, rhs)
+		return rhs, err
 
 	default:
 		return SexpNull, fmt.Errorf("assignment needs left-hand-side"+
@@ -1313,16 +1322,16 @@ func AssignmentFunction(env *Zlisp, name string, args []Sexp) (Sexp, error) {
 	}
 
 	if !sym.isDot {
-		//Q("assignment sees LHS symbol but is not dot, binding '%s' to '%s'\n", sym.name, args[1].SexpString(nil))
-		err := env.LexicalBindSymbol(sym, args[1])
+		//Q("assignment sees LHS symbol but is not dot, binding '%s' to '%s'\n", sym.name, rhs.SexpString(nil))
+		err := env.LexicalBindSymbol(sym, rhs)
 		if err != nil {
 			return SexpNull, err
 		}
-		return args[1], nil
+		return rhs, nil
 	}
 
 	//Q("assignment calling dotGetSetHelper()\n")
-	return dotGetSetHelper(env, sym.name, &args[1])
+	return dotGetSetHelper(env, sym.name, &rhs)
 }
 
 func JoinSymFunction(env *Zlisp, name string, args []Sexp) (Sexp, error) {
@@ -1771,19 +1780,26 @@ func stripAnyDotPrefix(s string) string {
 	return s
 }
 
+// RValue returns the value to use when expr appears in a right-hand-side
+// context. Selectors are addressable locations, so rvalue use dereferences
+// them to the selected value.
+func (env *Zlisp) RValue(expr Sexp) (Sexp, error) {
+	obj, hasRhs := expr.(Selector)
+	if !hasRhs {
+		return expr, nil
+	}
+	return obj.RHS(env)
+}
+
 // SubstituteRHS locates any SexpSelector(s) (Selector implementers, really)
-// and substitutes
-// the value of x.RHS() for each x in args.
+// and substitutes the value of x.RHS() for each x in args.
 func (env *Zlisp) SubstituteRHS(args []Sexp) ([]Sexp, error) {
 	for i := range args {
-		obj, hasRhs := args[i].(Selector)
-		if hasRhs {
-			sx, err := obj.RHS(env)
-			if err != nil {
-				return args, err
-			}
-			args[i] = sx
+		sx, err := env.RValue(args[i])
+		if err != nil {
+			return args, err
 		}
+		args[i] = sx
 	}
 	return args, nil
 }

@@ -161,6 +161,10 @@ func (p PopStackPutEnvInstr) Execute(env *Zlisp) error {
 	if err != nil {
 		return err
 	}
+	expr, err = env.RValue(expr)
+	if err != nil {
+		return err
+	}
 	env.pc++
 	return env.LexicalBindSymbol(p.sym, expr)
 
@@ -182,6 +186,10 @@ func (p UpdateInstr) InstrString() string {
 
 func (p UpdateInstr) Execute(env *Zlisp) error {
 	expr, err := env.datastack.PopExpr()
+	if err != nil {
+		return err
+	}
+	expr, err = env.RValue(expr)
 	if err != nil {
 		return err
 	}
@@ -792,6 +800,10 @@ func (a AssignInstr) InstrString() string {
 func (a AssignInstr) Execute(env *Zlisp) error {
 	env.pc++
 	rhs, err := env.datastack.PopExpr()
+	if err != nil {
+		return err
+	}
+	rhs, err = env.RValue(rhs)
 	if err != nil {
 		return err
 	}
