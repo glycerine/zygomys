@@ -848,7 +848,7 @@ var ErrBadLoopSyntax = fmt.Errorf("for loop: first argument must be a label or a
 // predicate test.
 func (gen *Generator) GenerateForLoop(args []Sexp) error {
 	narg := len(args)
-	if narg < 2 {
+	if narg < 1 {
 		return fmt.Errorf("malformed for loop")
 	}
 
@@ -876,6 +876,9 @@ func (gen *Generator) GenerateForLoop(args []Sexp) error {
 	}
 
 	if foundSym {
+		if narg < 2 {
+			return fmt.Errorf("for loop: missing control vector after label")
+		}
 		switch expr := args[1].(type) {
 		case *SexpArray:
 			controlargs = expr

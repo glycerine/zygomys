@@ -193,6 +193,288 @@ func starOpMunchRight(env *Zlisp, pr *Pratt) (Sexp, error) {
 	return list, nil
 }
 
+func isSymbolNamed(sx Sexp, name string) bool {
+	sym, ok := sx.(*SexpSymbol)
+	return ok && sym.name == name
+}
+
+func isInfixBlock(sx Sexp) bool {
+	pair, ok := sx.(*SexpPair)
+	if !ok {
+		return false
+	}
+	return isSymbolNamed(pair.Head, "infix")
+}
+
+func isEmptyHashBlock(sx Sexp) bool {
+	hash, ok := sx.(*SexpHash)
+	return ok && hash.NumKeys == 0
+}
+
+func isForBodyBlock(sx Sexp) bool {
+	return isInfixBlock(sx) || isEmptyHashBlock(sx)
+}
+
+func infixBlockIsEmpty(block Sexp) bool {
+	_, empty, err := InfixArgsToArray("infixExpand", []Sexp{block})
+	return err == nil && empty
+}
+
+func forBodyExpressions(block Sexp) ([]Sexp, error) {
+	if isEmptyHashBlock(block) {
+		return nil, nil
+	}
+	if !isInfixBlock(block) {
+		return nil, fmt.Errorf("go-style for: missing body block")
+	}
+	if infixBlockIsEmpty(block) {
+		return nil, nil
+	}
+	return []Sexp{block}, nil
+}
+
+func prattCall(env *Zlisp, name string, args ...Sexp) Sexp {
+	return MakeList(append([]Sexp{env.MakeSymbol(name)}, args...))
+}
+
+func prattForControl(env *Zlisp, init, test, post Sexp) *SexpArray {
+	return &SexpArray{Val: []Sexp{init, test, post}, Env: env}
+}
+
+func parsePrattOne(env *Zlisp, tokens []Sexp, context string) (Sexp, error) {
+	if len(tokens) == 0 {
+		return SexpNull, nil
+	}
+	pr := NewPratt(tokens)
+	expr, err := pr.Expression(env, 0)
+	if err != nil {
+		return SexpNull, err
+	}
+	if !pr.IsEOF() {
+		return SexpNull, fmt.Errorf("%s must be a single expression", context)
+	}
+	return expr, nil
+}
+
+func splitOnSemicolons(tokens []Sexp) [][]Sexp {
+	segments := [][]Sexp{{}}
+	for _, tok := range tokens {
+		if _, isSemi := tok.(*SexpSemicolon); isSemi {
+			segments = append(segments, []Sexp{})
+			continue
+		}
+		last := len(segments) - 1
+		segments[last] = append(segments[last], tok)
+	}
+	return segments
+}
+
+func countSemicolons(tokens []Sexp) int {
+	n := 0
+	for _, tok := range tokens {
+		if _, isSemi := tok.(*SexpSemicolon); isSemi {
+			n++
+		}
+	}
+	return n
+}
+
+func hasRangeSymbol(tokens []Sexp) bool {
+	for _, tok := range tokens {
+		if isSymbolNamed(tok, "range") {
+			return true
+		}
+	}
+	return false
+}
+
+func findRangeAssign(tokens []Sexp) (int, string, bool) {
+	for i, tok := range tokens {
+		if isSymbolNamed(tok, ":=") {
+			return i, ":=", true
+		}
+		if isSymbolNamed(tok, "=") {
+			return i, "=", true
+		}
+	}
+	return -1, "", false
+}
+
+func parseRangeTargets(tokens []Sexp) ([]*SexpSymbol, error) {
+	if len(tokens) == 1 {
+		sym, ok := tokens[0].(*SexpSymbol)
+		if !ok {
+			return nil, fmt.Errorf("go-style for range header: range target must be a symbol")
+		}
+		return []*SexpSymbol{sym}, nil
+	}
+	if len(tokens) == 3 {
+		left, ok := tokens[0].(*SexpSymbol)
+		if !ok {
+			return nil, fmt.Errorf("go-style for range header: first range target must be a symbol")
+		}
+		if _, ok := tokens[1].(*SexpComma); !ok {
+			return nil, fmt.Errorf("go-style for range header: two range targets must be separated by comma")
+		}
+		right, ok := tokens[2].(*SexpSymbol)
+		if !ok {
+			return nil, fmt.Errorf("go-style for range header: second range target must be a symbol")
+		}
+		return []*SexpSymbol{left, right}, nil
+	}
+	return nil, fmt.Errorf("go-style for range header: expected one or two range targets")
+}
+
+func lowerRangeBinding(env *Zlisp, targets []*SexpSymbol, define bool, sourceSym, indexSym *SexpSymbol, body []Sexp) Sexp {
+	if len(targets) == 1 {
+		op := "set"
+		if define {
+			op = "def"
+		}
+		return prattCall(env, op, targets[0], prattCall(env, "__rangeKey", sourceSym, indexSym))
+	}
+
+	pair := prattCall(env, "__rangePair", sourceSym, indexSym)
+	if define {
+		return prattCall(env, "mdef", targets[0], targets[1], pair)
+	}
+
+	pairSym := env.GenSymbol("__range_pair")
+	pairBindings := &SexpArray{Val: []Sexp{pairSym, pair}, Env: env}
+	beginArgs := []Sexp{
+		env.MakeSymbol("begin"),
+		prattCall(env, "set", targets[0], prattCall(env, "first", pairSym)),
+		prattCall(env, "set", targets[1], prattCall(env, "second", pairSym)),
+	}
+	beginArgs = append(beginArgs, body...)
+	return prattCall(env, "let", pairBindings, MakeList(beginArgs))
+}
+
+func lowerRangeFor(env *Zlisp, header []Sexp, body []Sexp) (Sexp, bool, error) {
+	assignPos, op, foundAssign := findRangeAssign(header)
+	if !foundAssign {
+		if hasRangeSymbol(header) {
+			return SexpNull, true, fmt.Errorf("go-style for range header: expected := or = before range")
+		}
+		return SexpNull, false, nil
+	}
+
+	if len(header) <= assignPos+1 || !isSymbolNamed(header[assignPos+1], "range") {
+		if hasRangeSymbol(header) {
+			return SexpNull, true, fmt.Errorf("go-style for range header: malformed range header")
+		}
+		return SexpNull, false, nil
+	}
+
+	targets, err := parseRangeTargets(header[:assignPos])
+	if err != nil {
+		return SexpNull, true, err
+	}
+	sourceTokens := header[assignPos+2:]
+	if len(sourceTokens) == 0 {
+		return SexpNull, true, fmt.Errorf("go-style for range header: missing range expression")
+	}
+	source, err := parsePrattOne(env, sourceTokens, "go-style for range expression")
+	if err != nil {
+		return SexpNull, true, err
+	}
+
+	sourceSym := env.GenSymbol("__range_src")
+	lenSym := env.GenSymbol("__range_len")
+	indexSym := env.GenSymbol("__range_i")
+	letBindings := &SexpArray{
+		Val: []Sexp{
+			sourceSym, source,
+			lenSym, prattCall(env, "__rangeLen", sourceSym),
+		},
+		Env: env,
+	}
+	control := prattForControl(env,
+		prattCall(env, "def", indexSym, &SexpInt{Val: 0}),
+		prattCall(env, "<", indexSym, lenSym),
+		prattCall(env, "set", indexSym, prattCall(env, "+", indexSym, &SexpInt{Val: 1})),
+	)
+
+	binding := lowerRangeBinding(env, targets, op == ":=", sourceSym, indexSym, body)
+	forBody := []Sexp{binding}
+	if !(len(targets) == 2 && op == "=") {
+		forBody = append(forBody, body...)
+	}
+	forLoop := MakeList(append([]Sexp{env.MakeSymbol("for"), control}, forBody...))
+	return prattCall(env, "letseq", letBindings, forLoop), true, nil
+}
+
+func lowerGoFor(env *Zlisp, header []Sexp, bodyBlock Sexp) (Sexp, error) {
+	body, err := forBodyExpressions(bodyBlock)
+	if err != nil {
+		return SexpNull, err
+	}
+
+	nsemi := countSemicolons(header)
+	if nsemi > 0 {
+		if nsemi != 2 {
+			return SexpNull, fmt.Errorf("go-style three-clause for header must contain exactly two semicolons")
+		}
+		segments := splitOnSemicolons(header)
+		if len(segments) != 3 {
+			return SexpNull, fmt.Errorf("go-style three-clause for header must contain init, condition, and post clauses")
+		}
+		init, err := parsePrattOne(env, segments[0], "go-style for init clause")
+		if err != nil {
+			return SexpNull, err
+		}
+		test := Sexp(&SexpBool{Val: true})
+		if len(segments[1]) > 0 {
+			test, err = parsePrattOne(env, segments[1], "go-style for condition clause")
+			if err != nil {
+				return SexpNull, err
+			}
+		}
+		post, err := parsePrattOne(env, segments[2], "go-style for post clause")
+		if err != nil {
+			return SexpNull, err
+		}
+		control := prattForControl(env, init, test, post)
+		return MakeList(append([]Sexp{env.MakeSymbol("for"), control}, body...)), nil
+	}
+
+	rangeLoop, isRange, err := lowerRangeFor(env, header, body)
+	if err != nil || isRange {
+		return rangeLoop, err
+	}
+
+	init := SexpNull
+	test := Sexp(&SexpBool{Val: true})
+	post := SexpNull
+	if len(header) > 0 {
+		test, err = parsePrattOne(env, header, "go-style for condition")
+		if err != nil {
+			return SexpNull, err
+		}
+	}
+	control := prattForControl(env, init, test, post)
+	return MakeList(append([]Sexp{env.MakeSymbol("for"), control}, body...)), nil
+}
+
+func forOpMunchRight(env *Zlisp, pr *Pratt) (Sexp, error) {
+	bodyPos := -1
+	for i := pr.Pos; i < len(pr.Stream); i++ {
+		if isForBodyBlock(pr.Stream[i]) {
+			bodyPos = i
+			break
+		}
+	}
+	if bodyPos < 0 {
+		return SexpNull, fmt.Errorf("go-style for: missing body block")
+	}
+
+	header := pr.Stream[pr.Pos:bodyPos]
+	body := pr.Stream[bodyPos]
+	pr.Pos = bodyPos
+	_ = pr.Advance()
+	return lowerGoFor(env, header, body)
+}
+
 var arrayOp *InfixOp
 
 // InitInfixOps establishes the env.infixOps definitions
@@ -210,6 +492,16 @@ func (env *Zlisp) InitInfixOps() {
 	env.Infixr("and", 30)
 	env.Infixr("or", 30)
 	env.Prefix("not", 70)
+	breakOp := env.Prefix("break", 0)
+	breakOp.MunchRight = func(env *Zlisp, pr *Pratt) (Sexp, error) {
+		return prattCall(env, "break"), nil
+	}
+	continueOp := env.Prefix("continue", 0)
+	continueOp.MunchRight = func(env *Zlisp, pr *Pratt) (Sexp, error) {
+		return prattCall(env, "continue"), nil
+	}
+	forOp := env.Prefix("for", 0)
+	forOp.MunchRight = forOpMunchRight
 	env.Assignment("=", 10)
 	env.Assignment(":=", 10)
 	env.Assignment("+=", 10)

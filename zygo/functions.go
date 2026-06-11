@@ -492,6 +492,108 @@ func LenFunction(env *Zlisp, name string, args []Sexp) (Sexp, error) {
 	return &SexpInt{}, fmt.Errorf("argument must be string, list, hash, or array")
 }
 
+func rangeIndexArg(args []Sexp) (int, error) {
+	if len(args) != 2 {
+		return 0, WrongNargs
+	}
+	posreq, isInt := args[1].(*SexpInt)
+	if !isInt {
+		return 0, fmt.Errorf("range index request must be an integer")
+	}
+	pos := int(posreq.Val)
+	if pos < 0 {
+		return 0, fmt.Errorf("range index request %d out of bounds", pos)
+	}
+	return pos, nil
+}
+
+func RangeLenFunction(env *Zlisp, name string, args []Sexp) (Sexp, error) {
+	if len(args) != 1 {
+		return SexpNull, WrongNargs
+	}
+
+	switch t := args[0].(type) {
+	case *SexpArray:
+		return &SexpInt{Val: int64(len(t.Val))}, nil
+	case *SexpHash:
+		return &SexpInt{Val: int64(HashCountKeys(t))}, nil
+	case *SexpInt:
+		if t.Val < 0 {
+			return &SexpInt{Val: 0}, nil
+		}
+		return &SexpInt{Val: t.Val}, nil
+	case *SexpUint64:
+		const maxInt64AsUint64 = uint64(1<<63 - 1)
+		if t.Val > maxInt64AsUint64 {
+			return SexpNull, fmt.Errorf("range length uint64 %d overflows int64", t.Val)
+		}
+		return &SexpInt{Val: int64(t.Val)}, nil
+	}
+	return SexpNull, fmt.Errorf("range expects array, hash, or integer; got %T", args[0])
+}
+
+func RangeKeyFunction(env *Zlisp, name string, args []Sexp) (Sexp, error) {
+	pos, err := rangeIndexArg(args)
+	if err != nil {
+		return SexpNull, err
+	}
+
+	switch seq := args[0].(type) {
+	case *SexpArray:
+		if pos >= len(seq.Val) {
+			return SexpNull, fmt.Errorf("range index request %d out of bounds", pos)
+		}
+		return &SexpInt{Val: int64(pos)}, nil
+	case *SexpHash:
+		if pos >= HashCountKeys(seq) {
+			return SexpNull, fmt.Errorf("range index request %d out of bounds", pos)
+		}
+		pair, err := seq.HashPairi(pos)
+		if err != nil {
+			return SexpNull, err
+		}
+		return pair.Head, nil
+	case *SexpInt:
+		limit := seq.Val
+		if limit < 0 {
+			limit = 0
+		}
+		if int64(pos) >= limit {
+			return SexpNull, fmt.Errorf("range index request %d out of bounds", pos)
+		}
+		return &SexpInt{Val: int64(pos)}, nil
+	case *SexpUint64:
+		if uint64(pos) >= seq.Val {
+			return SexpNull, fmt.Errorf("range index request %d out of bounds", pos)
+		}
+		return &SexpInt{Val: int64(pos)}, nil
+	}
+	return SexpNull, fmt.Errorf("range expects array, hash, or integer; got %T", args[0])
+}
+
+func RangePairFunction(env *Zlisp, name string, args []Sexp) (Sexp, error) {
+	pos, err := rangeIndexArg(args)
+	if err != nil {
+		return SexpNull, err
+	}
+
+	switch seq := args[0].(type) {
+	case *SexpArray:
+		if pos >= len(seq.Val) {
+			return SexpNull, fmt.Errorf("range index request %d out of bounds", pos)
+		}
+		return Cons(&SexpInt{Val: int64(pos)}, Cons(seq.Val[pos], SexpNull)), nil
+	case *SexpHash:
+		if pos >= HashCountKeys(seq) {
+			return SexpNull, fmt.Errorf("range index request %d out of bounds", pos)
+		}
+		return seq.HashPairi(pos)
+	case *SexpInt, *SexpUint64:
+		return SexpNull, fmt.Errorf("two-variable range over integer is not supported")
+	}
+	return SexpNull, fmt.Errorf("range expects array, hash, or integer; got %T", args[0])
+}
+
 func AppendFunction(name string) ZlispUserFunction {
 	return func(env *Zlisp, _ string, args []Sexp) (Sexp, error) {
 		if len(args) != 2 {
@@ -1039,6 +1141,9 @@ func CoreFunctions() map[string]ZlispUserFunction {
 		"hdel":        HashAccessFunction("hdel"),
 		"keys":        HashAccessFunction("keys"),
 		"hpair":       GenericHpairFunction,
+		"__rangeLen":  RangeLenFunction,
+		"__rangeKey":  RangeKeyFunction,
+		"__rangePair": RangePairFunction,
 		"slice":       SliceFunction,
 		"len":         LenFunction,
 		"append":      AppendFunction("append"),
