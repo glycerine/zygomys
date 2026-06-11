@@ -75,6 +75,10 @@ func TestPrattGoForExpansion(t *testing.T) {
 			want: `(quote (letseq [__range_srcN n __range_lenN (__rangeLen __range_srcN)] (for top [(def __range_iN 0) (< __range_iN __range_lenN) (set __range_iN (+ __range_iN 1))] (def k (__rangeKey __range_srcN __range_iN)) (infix [break top ;]))))`,
 		},
 		{
+			src:  `a := 10; top: for i := range a { (println i); if i > 3 { break top } }`,
+			want: `(quote (set a 10) (letseq [__range_srcN a __range_lenN (__rangeLen __range_srcN)] (for top [(def __range_iN 0) (< __range_iN __range_lenN) (set __range_iN (+ __range_iN 1))] (def i (__rangeKey __range_srcN __range_iN)) (infix [(println i) ; if i > 3 (infix [break top])]))))`,
+		},
+		{
 			src:  `break top;`,
 			want: `(quote (break top))`,
 		},
@@ -243,6 +247,17 @@ func TestPrattGoForEval(t *testing.T) {
 							if i == 2 { break top; }
 							sum += 1
 						}
+					}}
+					sum)`,
+			want: 6,
+		},
+		{
+			name: "labeled break after prior statement",
+			code: `(begin
+					(def sum 0)
+					{a := 10; top: for i := range a {
+						if i > 3 { break top }
+						sum += i
 					}}
 					sum)`,
 			want: 6,
