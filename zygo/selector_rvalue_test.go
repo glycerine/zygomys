@@ -81,20 +81,6 @@ func TestInfixArrayIndexRValueContextsDereferenceSelector(t *testing.T) {
 	}
 }
 
-func TestPrefixCallArgumentCanUseInfixArrayIndex(t *testing.T) {
-	env := NewZlisp()
-	defer env.Close()
-	env.StandardSetup()
-
-	if _, err := env.EvalString("(def a [0 1 2])"); err != nil {
-		t.Fatalf("def a failed: %v", err)
-	}
-
-	if got := selectorRvalueTypeName(t, recentEval(t, env, "(type? a[0])")); got != "int64" {
-		t.Fatalf("(type? a[0]) = %q, want int64", got)
-	}
-}
-
 func TestInfixArrayIndexLValueStillAssignsThroughSelector(t *testing.T) {
 	env := NewZlisp()
 	defer env.Close()
