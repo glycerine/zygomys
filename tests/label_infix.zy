@@ -1,0 +1,30 @@
+// break/continue in for loop with label
+{
+isum := 0
+jsum := 0
+outerLoop:
+
+for i := 1; i < 5; i++ {
+    isum = isum + i
+    
+    innerLoop:
+      for j := 1; j < 5; j++ {
+          (printf "i = %v    j = %v\n" i j)
+          jsum = jsum + j
+          if j > 2 {
+             (printf "j=%v so j > 2, continue outerLoop" j)
+             continue outerLoop
+          }
+          if i > 2 && j > 2 {
+             (printf "j=%v; j=%v so i > 2 && j > 2, break outerLoop" i j)
+             break outerLoop
+          }
+          (printf "inner loop end, add 1000 to jsum\n")
+          jsum = jsum + 1000 // check continue works
+      }
+}
+(printf "isum is %d\n" isum)
+(printf "jsum is %d\n" jsum)
+(assert (== isum 10))
+(assert (== jsum 8024))
+}
