@@ -192,11 +192,10 @@ func Repl(env *Zlisp, cfg *ZlispConfig) {
 		}
 
 		parts := strings.Split(strings.Trim(line, " "), " ")
-		//parts := strings.Split(line, " ")
 		if len(parts) == 0 {
 			continue
 		}
-		first := strings.Trim(parts[0], " ")
+		first := strings.TrimSpace(parts[0])
 
 		if first == ".quit" {
 			break
