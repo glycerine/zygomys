@@ -230,7 +230,7 @@ var (
 
 	ComplexRegex = regexp.MustCompile("^-?([0-9]+[0-9_]*\\.[0-9_]*)i?$|^-?(\\.[0-9]+[0-9_]*)i?$|^-?([0-9]+[0-9_]*(\\.[0-9_]*)?[eE](-?[0-9]+[0-9_]*))i?$")
 
-	BuiltinOpRegex = regexp.MustCompile(`^(\+\+|\-\-|\+=|\-=|=|==|:=|\+|\-|\*|<|>|<=|>=|<-|->|\*=|/=|\*\*|!|!=|<!)$`)
+	BuiltinOpRegex = regexp.MustCompile(`^(\+\+|\-\-|\+=|\-=|=|==|:=|\+|\-|\*|<|>|<=|>=|<-|->|\*=|/=|\*\*|!|!=|<!|&&|\|\|)$`)
 )
 
 func StringToRunes(str string) []rune {
@@ -618,6 +618,12 @@ top:
 		if BuiltinOpRegex.MatchString(atom) {
 			//Q("2 rune atom in builtin op '%s', first='%s'", atom, first)
 			// 2 rune op
+			if atom == "&&" {
+				atom = "and"
+			}
+			if atom == "||" {
+				atom = "or"
+			}
 			lexer.AppendToken(lexer.Token(TokenSymbol, atom))
 			return nil
 		}
@@ -654,6 +660,10 @@ top:
 		case '=':
 			fallthrough
 		case '!':
+			fallthrough
+		case '&':
+			fallthrough
+		case '|':
 			err := lexer.dumpBuffer()
 			if err != nil {
 				return err
@@ -712,15 +722,6 @@ top:
 			lexer.state = LexerFreshAssignOrColon
 			// won't know if it is ':' alone or ':=' for sure
 			// until we get the next rune
-			return nil
-
-		// likewise &
-		case '&':
-			err := lexer.dumpBuffer()
-			if err != nil {
-				return err
-			}
-			lexer.AppendToken(lexer.Token(TokenSymbol, "&"))
 			return nil
 
 		case '%': // replaces ' as our quote shorthand
