@@ -5,26 +5,27 @@ jsum := 0
 outerLoop:
 
 for i := 1; i < 5; i++ {
-    isum = isum + i
+    isum += i
     
     innerLoop:
+      //(printf "i = %v \n" i)
       for j := 1; j < 5; j++ {
-          (printf "i = %v    j = %v\n" i j)
-          jsum = jsum + j
+          //(printf "i = %v    j = %v\n" i j)
+          jsum += j
           if j > 2 {
-             (printf "j=%v so j > 2, continue outerLoop" j)
+             //(printf "j=%v so j > 2, continue outerLoop \n" j)
              continue outerLoop
           }
           if i > 2 && j > 2 {
-             (printf "j=%v; j=%v so i > 2 && j > 2, break outerLoop" i j)
+             (printf "j=%v; j=%v so i > 2 && j > 2, break outerLoop \n" i j)
              break outerLoop
           }
-          (printf "inner loop end, add 1000 to jsum\n")
-          jsum = jsum + 1000 // check continue works
+          //(printf "inner loop end, add 1000 to jsum \n")
+          jsum += 1000 // check continue works
       }
 }
-(printf "isum is %d\n" isum)
-(printf "jsum is %d\n" jsum)
+//(printf "isum is %d\n" isum)
+//(printf "jsum is %d\n" jsum)
 (assert (== isum 10))
 (assert (== jsum 8024))
 }
