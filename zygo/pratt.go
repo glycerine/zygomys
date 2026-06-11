@@ -241,6 +241,16 @@ func prattForControl(env *Zlisp, init, test, post Sexp) *SexpArray {
 	return &SexpArray{Val: []Sexp{init, test, post}, Env: env}
 }
 
+func prattForList(env *Zlisp, label *SexpSymbol, control *SexpArray, body []Sexp) Sexp {
+	args := []Sexp{env.MakeSymbol("for")}
+	if label != nil {
+		args = append(args, label)
+	}
+	args = append(args, control)
+	args = append(args, body...)
+	return MakeList(args)
+}
+
 func parsePrattOne(env *Zlisp, tokens []Sexp, context string) (Sexp, error) {
 	if len(tokens) == 0 {
 		return SexpNull, nil
@@ -350,7 +360,7 @@ func lowerRangeBinding(env *Zlisp, targets []*SexpSymbol, define bool, sourceSym
 	return prattCall(env, "let", pairBindings, MakeList(beginArgs))
 }
 
-func lowerRangeFor(env *Zlisp, header []Sexp, body []Sexp) (Sexp, bool, error) {
+func lowerRangeFor(env *Zlisp, label *SexpSymbol, header []Sexp, body []Sexp) (Sexp, bool, error) {
 	assignPos, op, foundAssign := findRangeAssign(header)
 	if !foundAssign {
 		if hasRangeSymbol(header) {
@@ -400,11 +410,11 @@ func lowerRangeFor(env *Zlisp, header []Sexp, body []Sexp) (Sexp, bool, error) {
 	if !(len(targets) == 2 && op == "=") {
 		forBody = append(forBody, body...)
 	}
-	forLoop := MakeList(append([]Sexp{env.MakeSymbol("for"), control}, forBody...))
+	forLoop := prattForList(env, label, control, forBody)
 	return prattCall(env, "letseq", letBindings, forLoop), true, nil
 }
 
-func lowerGoFor(env *Zlisp, header []Sexp, bodyBlock Sexp) (Sexp, error) {
+func lowerGoFor(env *Zlisp, label *SexpSymbol, header []Sexp, bodyBlock Sexp) (Sexp, error) {
 	body, err := forBodyExpressions(bodyBlock)
 	if err != nil {
 		return SexpNull, err
@@ -435,10 +445,10 @@ func lowerGoFor(env *Zlisp, header []Sexp, bodyBlock Sexp) (Sexp, error) {
 			return SexpNull, err
 		}
 		control := prattForControl(env, init, test, post)
-		return MakeList(append([]Sexp{env.MakeSymbol("for"), control}, body...)), nil
+		return prattForList(env, label, control, body), nil
 	}
 
-	rangeLoop, isRange, err := lowerRangeFor(env, header, body)
+	rangeLoop, isRange, err := lowerRangeFor(env, label, header, body)
 	if err != nil || isRange {
 		return rangeLoop, err
 	}
@@ -453,10 +463,10 @@ func lowerGoFor(env *Zlisp, header []Sexp, bodyBlock Sexp) (Sexp, error) {
 		}
 	}
 	control := prattForControl(env, init, test, post)
-	return MakeList(append([]Sexp{env.MakeSymbol("for"), control}, body...)), nil
+	return prattForList(env, label, control, body), nil
 }
 
-func forOpMunchRight(env *Zlisp, pr *Pratt) (Sexp, error) {
+func forOpMunchRightWithLabel(env *Zlisp, pr *Pratt, label *SexpSymbol) (Sexp, error) {
 	bodyPos := -1
 	for i := pr.Pos; i < len(pr.Stream); i++ {
 		if isForBodyBlock(pr.Stream[i]) {
@@ -472,7 +482,42 @@ func forOpMunchRight(env *Zlisp, pr *Pratt) (Sexp, error) {
 	body := pr.Stream[bodyPos]
 	pr.Pos = bodyPos
 	_ = pr.Advance()
-	return lowerGoFor(env, header, body)
+	return lowerGoFor(env, label, header, body)
+}
+
+func forOpMunchRight(env *Zlisp, pr *Pratt) (Sexp, error) {
+	return forOpMunchRightWithLabel(env, pr, nil)
+}
+
+func (p *Pratt) LabeledFor(env *Zlisp) (Sexp, bool, error) {
+	label, ok := p.NextToken.(*SexpSymbol)
+	if !ok || !label.colonTail {
+		return SexpNull, false, nil
+	}
+	if p.Pos+1 >= len(p.Stream) || !isSymbolNamed(p.Stream[p.Pos+1], "for") {
+		return SexpNull, false, nil
+	}
+
+	_ = p.Advance()
+	_ = p.Advance()
+	if p.IsEOF() {
+		return SexpNull, true, fmt.Errorf("go-style for: missing body block")
+	}
+	x, err := forOpMunchRightWithLabel(env, p, label)
+	return x, true, err
+}
+
+func loopControlOpMunchRight(name string) RightMuncher {
+	return func(env *Zlisp, pr *Pratt) (Sexp, error) {
+		args := []Sexp{env.MakeSymbol(name)}
+		if !pr.IsEOF() {
+			if label, ok := pr.NextToken.(*SexpSymbol); ok {
+				args = append(args, label)
+				_ = pr.Advance()
+			}
+		}
+		return MakeList(args), nil
+	}
 }
 
 var arrayOp *InfixOp
@@ -493,13 +538,9 @@ func (env *Zlisp) InitInfixOps() {
 	env.Infixr("or", 30)
 	env.Prefix("not", 70)
 	breakOp := env.Prefix("break", 0)
-	breakOp.MunchRight = func(env *Zlisp, pr *Pratt) (Sexp, error) {
-		return prattCall(env, "break"), nil
-	}
+	breakOp.MunchRight = loopControlOpMunchRight("break")
 	continueOp := env.Prefix("continue", 0)
-	continueOp.MunchRight = func(env *Zlisp, pr *Pratt) (Sexp, error) {
-		return prattCall(env, "continue"), nil
-	}
+	continueOp.MunchRight = loopControlOpMunchRight("continue")
 	forOp := env.Prefix("for", 0)
 	forOp.MunchRight = forOpMunchRight
 	env.Assignment("=", 10)
@@ -619,7 +660,13 @@ func InfixExpandArray(env *Zlisp, arr *SexpArray) ([]Sexp, error) {
 	xs := []Sexp{}
 
 	for {
-		x, err := pr.Expression(env, 0)
+		x, ok, err := pr.LabeledFor(env)
+		if err != nil {
+			return nil, err
+		}
+		if !ok {
+			x, err = pr.Expression(env, 0)
+		}
 		if err != nil {
 			return nil, err
 		}

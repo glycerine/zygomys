@@ -300,6 +300,14 @@ func (parser *Parser) ParseExpression(depth int) (res Sexp, err error) {
 
 		switch tok2.typ {
 		case TokenSymbolColon:
+			_, err = parser.ParserPeekNextToken(extra)
+			if err != nil {
+				return SexpNull, err
+			}
+			second := lexer.tokens[extra]
+			if second.typ == TokenSymbol && second.str == "for" {
+				break
+			}
 			//vv("saw TokenLCurly followed by TokenSymbolColon, tok2 = '%v', typ='%v'", tok2.String(), tok2.typ)
 			lexer.tokens = append([]Token{Token{typ: TokenSymbol, str: "hash"}}, lexer.tokens...)
 			exp, err := parser.ParseList(depth+1, TokenRCurly)

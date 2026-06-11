@@ -70,6 +70,18 @@ func TestPrattGoForExpansion(t *testing.T) {
 			src:  `for k, v = range h { sum += v }`,
 			want: `(quote (letseq [__range_srcN h __range_lenN (__rangeLen __range_srcN)] (for [(def __range_iN 0) (< __range_iN __range_lenN) (set __range_iN (+ __range_iN 1))] (let [__range_pairN (__rangePair __range_srcN __range_iN)] (begin (set k (first __range_pairN)) (set v (second __range_pairN)) (infix [sum += v]))))))`,
 		},
+		{
+			src:  `top: for k := range n { break top; }`,
+			want: `(quote (letseq [__range_srcN n __range_lenN (__rangeLen __range_srcN)] (for top [(def __range_iN 0) (< __range_iN __range_lenN) (set __range_iN (+ __range_iN 1))] (def k (__rangeKey __range_srcN __range_iN)) (infix [break top ;]))))`,
+		},
+		{
+			src:  `break top;`,
+			want: `(quote (break top))`,
+		},
+		{
+			src:  `continue top;`,
+			want: `(quote (continue top))`,
+		},
 	}
 
 	for _, tc := range tests {
@@ -187,13 +199,53 @@ func TestPrattGoForEval(t *testing.T) {
 		{
 			name: "range set",
 			code: `(begin
-				(def k 0)
+					(def k 0)
 				(def v 0)
 				(def sum 0)
 				(def a [4 5])
 				{for k, v = range a { sum += (+ k v) }}
-				sum)`,
+					sum)`,
 			want: 10,
+		},
+		{
+			name: "labeled break",
+			code: `(begin
+					(def sum 0)
+					{top: for i := range 5 {
+						for j := range 3 {
+							if i == 2 { break top; }
+							sum += 1
+						}
+					}}
+					sum)`,
+			want: 6,
+		},
+		{
+			name: "labeled continue",
+			code: `(begin
+					(def sum 0)
+					{top: for i := range 3 {
+						for j := range 3 {
+							if j == 1 { continue top; }
+							sum += 1
+						}
+						sum += 100
+					}}
+					sum)`,
+			want: 3,
+		},
+		{
+			name: "labeled three clause",
+			code: `(begin
+					(def sum 0)
+					{top: for i := 0; i < 5; i++ {
+						for j := range 3 {
+							if i == 2 { break top; }
+							sum += 1
+						}
+					}}
+					sum)`,
+			want: 6,
 		},
 	}
 
@@ -203,6 +255,14 @@ func TestPrattGoForEval(t *testing.T) {
 				t.Fatalf("%s got %d, want %d", tc.name, got, tc.want)
 			}
 		})
+	}
+}
+
+func TestPrattGoForLabelDoesNotBreakHashLiteral(t *testing.T) {
+	env := prattForEnv(t)
+
+	if got := recentInt(t, recentEval(t, env, `(hget {top:1} top:)`)); got != 1 {
+		t.Fatalf("hget {top:1} top: = %d, want 1", got)
 	}
 }
 
