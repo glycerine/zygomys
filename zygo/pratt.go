@@ -159,6 +159,91 @@ func (env *Zlisp) PostfixAssign(op string, bp int) *InfixOp {
 	return iop
 }
 
+func splitColonTailSelectorSymbols(env *Zlisp, tokens []Sexp) []Sexp {
+	out := make([]Sexp, 0, len(tokens))
+	for _, tok := range tokens {
+		sym, ok := tok.(*SexpSymbol)
+		if !ok || !sym.colonTail {
+			out = append(out, tok)
+			continue
+		}
+		out = append(out, env.MakeSymbol(sym.name), env.MakeSymbol(":"))
+	}
+	return out
+}
+
+func parseArraySelectorSegment(env *Zlisp, tokens []Sexp, context string) (Sexp, error) {
+	if len(tokens) == 0 {
+		return nil, nil
+	}
+	return parsePrattOne(env, tokens, context)
+}
+
+func parseArraySelectorIndex(env *Zlisp, tokens []Sexp) (Sexp, bool, error) {
+	if len(tokens) == 0 {
+		return nil, false, nil
+	}
+	pr := NewPratt(tokens)
+	expr, err := pr.Expression(env, 0)
+	if err != nil {
+		return SexpNull, false, err
+	}
+	if !pr.IsEOF() {
+		return SexpNull, false, nil
+	}
+	return expr, true, nil
+}
+
+func normalizeArraySelector(env *Zlisp, selector Sexp) (Sexp, error) {
+	arr, ok := selector.(*SexpArray)
+	if !ok {
+		return selector, nil
+	}
+
+	tokens := splitColonTailSelectorSymbols(env, arr.Val)
+	colonPos := -1
+	for i, tok := range tokens {
+		if isSymbolNamed(tok, ":") {
+			if colonPos >= 0 {
+				return SexpNull, fmt.Errorf("array selector slice has more than one colon")
+			}
+			colonPos = i
+		}
+	}
+
+	if colonPos >= 0 {
+		val := make([]Sexp, 0, 3)
+		start, err := parseArraySelectorSegment(env, tokens[:colonPos], "array selector slice start")
+		if err != nil {
+			return SexpNull, err
+		}
+		if start != nil {
+			val = append(val, start)
+		}
+		val = append(val, env.MakeSymbol(":"))
+		end, err := parseArraySelectorSegment(env, tokens[colonPos+1:], "array selector slice end")
+		if err != nil {
+			return SexpNull, err
+		}
+		if end != nil {
+			val = append(val, end)
+		}
+		return &SexpArray{Val: val, Env: env}, nil
+	}
+
+	if len(tokens) <= 1 {
+		return &SexpArray{Val: tokens, Env: env}, nil
+	}
+	index, ok, err := parseArraySelectorIndex(env, tokens)
+	if err != nil {
+		return SexpNull, err
+	}
+	if !ok {
+		return &SexpArray{Val: tokens, Env: env}, nil
+	}
+	return &SexpArray{Val: []Sexp{index}, Env: env}, nil
+}
+
 func arrayOpMunchLeft(env *Zlisp, pr *Pratt, left Sexp) (Sexp, error) {
 	oper := env.MakeSymbol("arrayidx")
 	//Q("pr.NextToken = '%v', left = %#v", pr.NextToken.SexpString(nil), left)
@@ -168,8 +253,12 @@ func arrayOpMunchLeft(env *Zlisp, pr *Pratt, left Sexp) (Sexp, error) {
 
 	//right := pr.NextToken
 	//Q("right = %#v", right)
+	selector, err := normalizeArraySelector(env, pr.CnodeStack[0])
+	if err != nil {
+		return SexpNull, err
+	}
 	list := MakeList([]Sexp{
-		oper, left, pr.CnodeStack[0],
+		oper, left, selector,
 	})
 	return list, nil
 }
