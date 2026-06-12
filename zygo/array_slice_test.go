@@ -1,6 +1,9 @@
 package zygo
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func arraySliceInts(t *testing.T, expr Sexp) []int64 {
 	t.Helper()
@@ -113,6 +116,24 @@ func TestInfixArrayGoStyleSlicingWithSubtractionStartBound(t *testing.T) {
 	evalSelectorRvalueInfix(t, env, "got := a[x-1:x]")
 	got := arraySliceInts(t, evalSelectorRvalueInfix(t, env, "got"))
 	assertIntSlice(t, got, []int64{4})
+}
+
+func TestInfixArrayGoStyleSlicingNegativeBoundError(t *testing.T) {
+	env := NewZlisp()
+	defer env.Close()
+	env.StandardSetup()
+
+	if _, err := env.EvalString("(def a [-2 4 6 8])"); err != nil {
+		t.Fatalf("def a failed: %v", err)
+	}
+
+	_, err := env.EvalString("{got := a[-1:3]}")
+	if err == nil {
+		t.Fatalf("expected negative slice bound error")
+	}
+	if !strings.Contains(err.Error(), "negative slice bounds not supported") {
+		t.Fatalf("got error %q, want negative slice bound error", err.Error())
+	}
 }
 
 func TestInfixHashArrayKeySelectorStillWorks(t *testing.T) {

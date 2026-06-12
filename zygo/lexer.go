@@ -248,6 +248,13 @@ var (
 	SliceBoundsRegex = regexp.MustCompile("^[0-9][_0-9]*$") // allow underscores now, like go1.13
 )
 
+func sliceBoundLiteralBeforeColon(atom string) bool {
+	if len(atom) > 1 && atom[0] == '-' {
+		return SliceBoundsRegex.MatchString(atom[1:])
+	}
+	return SliceBoundsRegex.MatchString(atom)
+}
+
 func StringToRunes(str string) []rune {
 	b := []byte(str)
 	runes := make([]rune, 0)
@@ -597,7 +604,7 @@ top:
 			lexer.AppendToken(lexer.Token(TokenFreshAssign, ":="))
 			return nil
 		} else {
-			if SliceBoundsRegex.MatchString(lexer.buffer.String()) {
+			if sliceBoundLiteralBeforeColon(lexer.buffer.String()) {
 				err := lexer.dumpBuffer()
 				if err != nil {
 					return err
