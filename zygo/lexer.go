@@ -231,6 +231,8 @@ var (
 	ComplexRegex = regexp.MustCompile("^-?([0-9]+[0-9_]*\\.[0-9_]*)i?$|^-?(\\.[0-9]+[0-9_]*)i?$|^-?([0-9]+[0-9_]*(\\.[0-9_]*)?[eE](-?[0-9]+[0-9_]*))i?$")
 
 	BuiltinOpRegex = regexp.MustCompile(`^(\+\+|\-\-|\+=|\-=|=|==|:=|\+|\-|\*|<|>|<=|>=|<-|->|\*=|/=|\*\*|!|!=|<!|&&|\|\|)$`)
+
+	SliceBoundsRegex = regexp.MustCompile("^[0-9][_0-9]*$") // allow underscores now, like go1.13
 )
 
 func StringToRunes(str string) []rune {
@@ -582,6 +584,14 @@ top:
 			lexer.AppendToken(lexer.Token(TokenFreshAssign, ":="))
 			return nil
 		} else {
+			if SliceBoundsRegex.MatchString(lexer.buffer.String()) {
+				err := lexer.dumpBuffer()
+				if err != nil {
+					return err
+				}
+				lexer.AppendToken(lexer.Token(TokenColonOperator, ":"))
+				goto top // process the unknown rune r in Normal mode
+			}
 			// but still allow ':' to be a token terminator at the end of a word.
 			_, err := lexer.buffer.WriteRune(':')
 			if err != nil {

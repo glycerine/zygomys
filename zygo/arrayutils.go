@@ -163,9 +163,95 @@ func (si *SexpArraySelector) Type() *RegisteredType {
 	return GoStructRegistry.Lookup("arraySelector")
 }
 
+func isArraySliceColon(sx Sexp) bool {
+	switch x := sx.(type) {
+	case *SexpSymbol:
+		return x.name == ":"
+	case *SexpFunction:
+		return x.name == ":"
+	default:
+		return false
+	}
+}
+
+func selectorIntBound(sx Sexp, name string) (int64, error) {
+	x, ok := sx.(*SexpInt)
+	if !ok {
+		return 0, fmt.Errorf("SexpArraySelector: %s slice bound must be int; we saw %T", name, sx)
+	}
+	return x.Val, nil
+}
+
+func (x *SexpArraySelector) sliceBounds() (start, end int64, isSlice bool, err error) {
+	selectors := x.Select.Val
+	colonPos := -1
+	for i, sx := range selectors {
+		if isArraySliceColon(sx) {
+			if colonPos >= 0 {
+				return 0, 0, true, fmt.Errorf("SexpArraySelector: slice selector has more than one colon")
+			}
+			colonPos = i
+		}
+	}
+	if colonPos < 0 {
+		return 0, 0, false, nil
+	}
+
+	if len(selectors) > 3 {
+		return 0, 0, true, fmt.Errorf("SexpArraySelector: slice selector has too many elements")
+	}
+
+	start = 0
+	end = int64(len(x.Container.Val))
+	if colonPos == 1 || colonPos == 2 {
+		start, err = selectorIntBound(selectors[0], "start")
+		if err != nil {
+			return 0, 0, true, err
+		}
+	}
+	if colonPos == 0 && len(selectors) == 2 {
+		end, err = selectorIntBound(selectors[1], "end")
+		if err != nil {
+			return 0, 0, true, err
+		}
+	}
+	if colonPos == 1 && len(selectors) == 3 {
+		end, err = selectorIntBound(selectors[2], "end")
+		if err != nil {
+			return 0, 0, true, err
+		}
+	}
+	if colonPos == 2 {
+		return 0, 0, true, fmt.Errorf("SexpArraySelector: malformed slice selector")
+	}
+	return start, end, true, nil
+}
+
 // RHS applies the selector to the contain and returns
 // the value obtained.
 func (x *SexpArraySelector) RHS(env *Zlisp) (Sexp, error) {
+	start, end, isSlice, err := x.sliceBounds()
+	if err != nil {
+		return SexpNull, err
+	}
+	if isSlice {
+		n := int64(len(x.Container.Val))
+		if start < 0 || end < 0 {
+			return SexpNull, fmt.Errorf("SexpArraySelector: negative slice bounds not supported; saw %v:%v", start, end)
+		}
+		if start > end {
+			return SexpNull, fmt.Errorf("SexpArraySelector: slice start %v is greater than end %v", start, end)
+		}
+		if end > n {
+			return SexpNull, fmt.Errorf("SexpArraySelector: slice end %v is out-of-bounds; length is %v", end, n)
+		}
+		return &SexpArray{
+			Val: x.Container.Val[start:end],
+			Env: env,
+			Typ: x.Container.Typ,
+		}, nil
+	}
+
 	if len(x.Select.Val) != 1 {
 		return SexpNull, fmt.Errorf("SexpArraySelector: only " +
 			"size 1 selectors implemented")
@@ -193,7 +279,6 @@ func (x *SexpArraySelector) RHS(env *Zlisp) (Sexp, error) {
 
 // Selector stores indexing information that isn't
 // yet materialized for getting or setting.
-//
 type Selector interface {
 	// RHS (right-hand-side) is used to dereference
 	// the pointer-like Selector, yielding a value suitable for the
@@ -208,7 +293,14 @@ type Selector interface {
 }
 
 func (x *SexpArraySelector) AssignToSelection(env *Zlisp, rhs Sexp) error {
-	_, err := x.RHS(x.Container.Env) // check for errors
+	_, _, isSlice, err := x.sliceBounds()
+	if err != nil {
+		return err
+	}
+	if isSlice {
+		return fmt.Errorf("SexpArraySelector: assigning to slices is not implemented")
+	}
+	_, err = x.RHS(x.Container.Env) // check for errors
 	if err != nil {
 		return err
 	}
