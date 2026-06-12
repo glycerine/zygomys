@@ -98,6 +98,23 @@ func TestInfixArrayGoStyleSlicingWithExpressionBounds(t *testing.T) {
 	}
 }
 
+func TestInfixArrayGoStyleSlicingWithSubtractionStartBound(t *testing.T) {
+	env := NewZlisp()
+	defer env.Close()
+	env.StandardSetup()
+
+	if _, err := env.EvalString("(def a [0 2 4 6 8])"); err != nil {
+		t.Fatalf("def a failed: %v", err)
+	}
+	if _, err := env.EvalString("(def x 3)"); err != nil {
+		t.Fatalf("def x failed: %v", err)
+	}
+
+	evalSelectorRvalueInfix(t, env, "got := a[x-1:x]")
+	got := arraySliceInts(t, evalSelectorRvalueInfix(t, env, "got"))
+	assertIntSlice(t, got, []int64{4})
+}
+
 func TestInfixHashArrayKeySelectorStillWorks(t *testing.T) {
 	env := NewZlisp()
 	defer env.Close()

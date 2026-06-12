@@ -137,11 +137,12 @@ type Lexer struct {
 	tokens   []Token
 	buffer   *bytes.Buffer
 
-	prevToken     Token
-	prevPrevToken Token
-	stream        io.RuneScanner
-	next          []io.RuneScanner
-	linenum       int
+	prevToken      Token
+	prevPrevToken  Token
+	preBuiltinRune rune
+	stream         io.RuneScanner
+	next           []io.RuneScanner
+	linenum        int
 
 	priori    int
 	priorRune [20]rune
@@ -167,6 +168,17 @@ func (lexer *Lexer) twoback() rune {
 	return pr
 }
 
+func canStartSignedNumberAfter(r rune) bool {
+	switch r {
+	case 0, ' ', '\t', '\n', '\r',
+		'(', '[', '{', ',', ';', ':',
+		'+', '-', '*', '/', '<', '>', '=', '!', '&', '|':
+		return true
+	default:
+		return false
+	}
+}
+
 func NewLexer(p *Parser) *Lexer {
 	return &Lexer{
 		parser:  p,
@@ -186,6 +198,7 @@ func (lex *Lexer) Reset() {
 	lex.tokens = lex.tokens[:0]
 	lex.state = LexerNormal
 	lex.linenum = 1
+	lex.preBuiltinRune = 0
 	lex.buffer.Reset()
 }
 
@@ -612,7 +625,7 @@ top:
 		atom := fmt.Sprintf("%c%c", lexer.prevrune, r)
 		//vv("in LexerBuiltinOperator, first='%s', atom='%s', lexer.prevrune='%c'", first, atom, lexer.prevrune)
 		// are we a negative number -1 or -.1 rather than  ->, --, -= operator?
-		if lexer.prevrune == '-' {
+		if lexer.prevrune == '-' && canStartSignedNumberAfter(lexer.preBuiltinRune) {
 			if FloatRegex.MatchString(atom) || DecimalRegex.MatchString(atom) {
 				//Q("'%s' is the beginning of a negative number", atom)
 				_, err := lexer.buffer.WriteString(atom)
@@ -679,6 +692,7 @@ top:
 				return err
 			}
 			lexer.state = LexerBuiltinOperator
+			lexer.preBuiltinRune = lexer.twoback()
 			lexer.prevrune = r
 			return nil
 
