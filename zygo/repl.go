@@ -93,6 +93,7 @@ func (pr *Prompter) getExpressionWithLiner(env *Zlisp, reader *bufio.Reader, noL
 	if err != nil {
 		return "", nil, err
 	}
+	lines := []string{line}
 
 	err = UnexpectedEnd
 	var x []Sexp
@@ -104,19 +105,17 @@ func (pr *Prompter) getExpressionWithLiner(env *Zlisp, reader *bufio.Reader, noL
 
 		x, err = reply.Expr, reply.Err
 
-		if len(x) > 0 {
-			for i := range x {
-				if x[i] == SexpEnd {
-					//P("found an SexpEnd token, omitting it")
-					continue
-				}
-				xs = append(xs, x[i])
+		xs = xs[:0]
+		for i := range x {
+			if x[i] == SexpEnd {
+				//P("found an SexpEnd token, omitting it")
+				continue
 			}
+			xs = append(xs, x[i])
 		}
 		if err == nil {
-			line += "\n" + nextline
 			//Q("no problem parsing line '%s' into '%s', proceeding...\n", line, (&SexpArray{Val: x, Env: env}).SexpString(nil))
-			return line, xs, nil
+			return strings.Join(lines, "\n"), xs, nil
 		}
 
 		if err == ErrMoreInputNeeded || err == UnexpectedEnd || err == ResetRequested {
@@ -129,12 +128,13 @@ func (pr *Prompter) getExpressionWithLiner(env *Zlisp, reader *bufio.Reader, noL
 			if err != nil {
 				return "", nil, err
 			}
+			lines = append(lines, nextline)
 			env.parser.NewInput(bytes.NewBuffer([]byte(nextline + "\n")))
 			continue
 		}
 		return "", nil, fmt.Errorf("Error on line %d: %v (repl err: %#v)\n", env.parser.Linenum(), err, err)
 	}
-	return line, xs, err
+	return strings.Join(lines, "\n"), xs, err
 }
 
 func processDumpCommand(env *Zlisp, args []string) {
