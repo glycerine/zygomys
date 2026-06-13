@@ -1,0 +1,8 @@
+// For R-like capture of user argument names
+// we have lazy argument evaluation that is opt-in using
+// dollar prefixed formal arguments like: $x 
+(defn lazy [$x]
+  (printf "the name of your actual argument was: '%v', and its value: %v\n" (str (substitute $x)) (force $x)))
+
+(def who 7)
+(lazy who)
