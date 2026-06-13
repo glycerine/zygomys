@@ -191,89 +191,92 @@ func Repl(env *Zlisp, cfg *ZlispConfig) {
 			continue
 		}
 
-		parts := strings.Split(strings.Trim(line, " "), " ")
-		if len(parts) == 0 {
-			continue
-		}
-		first := strings.TrimSpace(parts[0])
-
-		if first == ".quit" {
-			break
-		}
-
-		if first == ".cd" {
-			if len(parts) < 2 {
-				fmt.Printf("provide directory path to change to.\n")
+		// disallow .ls / diagnostics in sandboxed mode.
+		if !cfg.Sandboxed {
+			parts := strings.Split(strings.Trim(line, " "), " ")
+			if len(parts) == 0 {
 				continue
 			}
-			err := os.Chdir(parts[1])
-			if err != nil {
-				fmt.Printf("error: %s\n", err)
+			first := strings.TrimSpace(parts[0])
+
+			if first == ".quit" {
+				break
+			}
+
+			if first == ".cd" {
+				if len(parts) < 2 {
+					fmt.Printf("provide directory path to change to.\n")
+					continue
+				}
+				err := os.Chdir(parts[1])
+				if err != nil {
+					fmt.Printf("error: %s\n", err)
+					continue
+				}
+				pwd, err := os.Getwd()
+				if err == nil {
+					fmt.Printf("cur dir: %s\n", pwd)
+				} else {
+					fmt.Printf("error: %s\n", err)
+				}
 				continue
 			}
-			pwd, err := os.Getwd()
-			if err == nil {
-				fmt.Printf("cur dir: %s\n", pwd)
-			} else {
-				fmt.Printf("error: %s\n", err)
+
+			// allow & at the repl to take the address of an expression
+			if len(first) > 0 && first[0] == '&' {
+				//P("saw & at repl, first='%v', parts='%#v'. exprsInput = '%#v'", first, parts, exprsInput)
+				exprsInput = []Sexp{MakeList(exprsInput)}
 			}
-			continue
-		}
 
-		// allow & at the repl to take the address of an expression
-		if len(first) > 0 && first[0] == '&' {
-			//P("saw & at repl, first='%v', parts='%#v'. exprsInput = '%#v'", first, parts, exprsInput)
-			exprsInput = []Sexp{MakeList(exprsInput)}
-		}
-
-		// allow * at the repl to dereference a pointer and print
-		if len(first) > 0 && first[0] == '*' {
-			//P("saw * at repl, first='%v', parts='%#v'. exprsInput = '%#v'", first, parts, exprsInput)
-			exprsInput = []Sexp{MakeList(exprsInput)}
-		}
-
-		if first == ".dump" {
-			processDumpCommand(env, parts[1:])
-			continue
-		}
-
-		if first == ".gls" {
-			fmt.Printf("\nScopes:\n")
-			prev := env.showGlobalScope
-			env.showGlobalScope = true
-			err = env.ShowStackStackAndScopeStack()
-			env.showGlobalScope = prev
-			if err != nil {
-				fmt.Printf("%s\n", err)
+			// allow * at the repl to dereference a pointer and print
+			if len(first) > 0 && first[0] == '*' {
+				//P("saw * at repl, first='%v', parts='%#v'. exprsInput = '%#v'", first, parts, exprsInput)
+				exprsInput = []Sexp{MakeList(exprsInput)}
 			}
-			continue
-		}
 
-		if first == ".ls" {
-			err := env.ShowStackStackAndScopeStack()
-			if err != nil {
-				fmt.Println(err)
+			if first == ".dump" {
+				processDumpCommand(env, parts[1:])
+				continue
 			}
-			continue
-		}
 
-		if first == ".verb" {
-			Verbose = !Verbose
-			fmt.Printf("verbose: %v.\n", Verbose)
-			continue
-		}
+			if first == ".gls" {
+				fmt.Printf("\nScopes:\n")
+				prev := env.showGlobalScope
+				env.showGlobalScope = true
+				err = env.ShowStackStackAndScopeStack()
+				env.showGlobalScope = prev
+				if err != nil {
+					fmt.Printf("%s\n", err)
+				}
+				continue
+			}
 
-		if first == ".debug" {
-			env.debugExec = true
-			fmt.Printf("instruction debugging on.\n")
-			continue
-		}
+			if first == ".ls" {
+				err := env.ShowStackStackAndScopeStack()
+				if err != nil {
+					fmt.Println(err)
+				}
+				continue
+			}
 
-		if first == ".undebug" {
-			env.debugExec = false
-			fmt.Printf("instruction debugging off.\n")
-			continue
-		}
+			if first == ".verb" {
+				Verbose = !Verbose
+				fmt.Printf("verbose: %v.\n", Verbose)
+				continue
+			}
+
+			if first == ".debug" {
+				env.debugExec = true
+				fmt.Printf("instruction debugging on.\n")
+				continue
+			}
+
+			if first == ".undebug" {
+				env.debugExec = false
+				fmt.Printf("instruction debugging off.\n")
+				continue
+			}
+		} // end if !cfg.Sandboxed
 
 		var expr Sexp
 		n := len(exprsInput)

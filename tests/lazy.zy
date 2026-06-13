@@ -6,3 +6,7 @@
 
 (def who 7)
 (lazy who)
+// the name of your actual argument was: 'who', and its value: 7
+
+(lazy (+ 2 3))
+// the name of your actual argument was: '(+ 2 3)', and its value: 5
