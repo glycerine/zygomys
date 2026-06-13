@@ -90,10 +90,10 @@ func Test025LexingOfStringAtomsAndSymbols(t *testing.T) {
 			// no  b: reg := `^[^a-c]+$`
 
 			symbolNotOkay := []string{`(`, `)`, `[`, `]`, `{`, `}`, `'`,
-				`:`, `^`, `\`, `|`, `%`, `"`, `;`, `,`, `&`, `#`, `?`, `$`,
+				`:`, `^`, `\`, `|`, `%`, `"`, `;`, `,`, `&`, `#`, `?`,
 				`a-b`, `*a-b*`}
 
-			symbolOkay := []string{`$hello`,
+			symbolOkay := []string{`$`, `$hello`, `$A$1`, `A$1`,
 				`#a`, `?a`, `a:`, `$a:`, `#a:`, `?a:`}
 
 			// for experimentation, comment out the actual test below

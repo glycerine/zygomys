@@ -225,9 +225,6 @@ func (env *Zlisp) DetectSigils(sym *SexpSymbol) {
 		return
 	}
 	switch sym.name[0] {
-	case '$':
-		sym.isSigil = true
-		sym.sigil = "$"
 	case '#':
 		sym.isSigil = true
 		sym.sigil = "#"
@@ -1007,8 +1004,8 @@ func (env *Zlisp) ShowGlobalStack() error {
 
 func (env *Zlisp) LexicalLookupSymbol(sym *SexpSymbol, setVal *Sexp) (Sexp, error, *Scope) {
 
-	// DotSymbols, named-argument labels, and non-dollar sigils evaluate to themselves.
-	if sym.isDot || sym.colonTail || (sym.isSigil && sym.sigil != "$") {
+	// DotSymbols, named-argument labels, and question sigils evaluate to themselves.
+	if sym.isDot || sym.colonTail || (sym.isSigil && sym.sigil == "?") {
 		return sym, nil, nil
 	}
 

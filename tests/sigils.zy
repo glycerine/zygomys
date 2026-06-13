@@ -4,8 +4,6 @@
 // symbols: objects, type variables, grammar non-terminals,
 // etc.
 
-(#symbol = "I'm a sigil-symbol")
-(expectError "cannot assign int64 to string" (#symbol = 23))
 (?symbol = "I'm a sigil-symbol")
 
 // can a: always be a sigil-symbol, colon style,
@@ -13,4 +11,10 @@
 (a: = 1)
 
 // sigils should eval to themselves
-(assert (== #a %#a))
+(assert (== ?a %?a))
+
+($symbol = "I am a normal dollar symbol")
+(assert (== $symbol "I am a normal dollar symbol"))
+
+($A$1 = 99)
+(assert (== $A$1 99))

@@ -224,7 +224,7 @@ var (
 	InfRegex     = regexp.MustCompile(`^(-|\+)?[Ii]nf$`)
 
 	// SymbolRegex = regexp.MustCompile("^[^'#]+$")
-	// (Sigil) symbols can begin with #, $, ?, but
+	// (Sigil) symbols can begin with # or ?, but
 	// sigils cannot appear later in any symbol.
 	// Symbols cannot contain whitespace nor `~`, `@`, `(`, `)`, `[`, `]`,
 	// `{`, `}`, `'`, `#`, `^`, `\`, `|`, `%`, `"`, `;`. They can optionally
@@ -232,7 +232,7 @@ var (
 	// Nor, obviously, can symbols contain backticks, "`".
 	// Symbols cannot start with a number. DotSymbols cannot have a number
 	// as the first character after '.'
-	SymbolRegex = regexp.MustCompile(`^[#$?]?[^#$?':;\\~@\[\]{}\^|"()%0-9,&][^'#:;\\~@\[\]{}\^|"()%,&*\-]*[:]?$`)
+	SymbolRegex = regexp.MustCompile(`^[#?]?[^#?':;\\~@\[\]{}\^|"()%0-9,&][^'#:;\\~@\[\]{}\^|"()%,&*\-]*[:]?$`)
 	// dot symbol examples: `.`, `.a`, `.a.b`, `.a.b.c`
 	// dot symbol non-examples: `.a.`, `..`
 	DotSymbolRegex = regexp.MustCompile(`^[.]$|^([.][^'#:;\\~@\[\]{}\^|"()%.0-9,][^'#:;\\~@\[\]{}\^|"()%.,*+\-]*)+$|^[^'#:;\\~@\[\]{}\^|"()%.0-9,][^'#:;\\~@\[\]{}\^|"()%.,*+\-]*([.][^'#:;\\~@\[\]{}\^|"()%.0-9,][^'#:;\\~@\[\]{}\^|"()%.,*+\-]*)+$`)

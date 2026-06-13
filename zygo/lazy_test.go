@@ -41,7 +41,7 @@ func TestLazyFormalDoesNotEvaluateUnusedArgument(t *testing.T) {
 	env := newLazyTestEnv(t)
 
 	res := recentEval(t, env, `
-(defn keep [$x] 7)
+(defn keep [#x] 7)
 (keep (stop "lazy argument should not be forced"))`)
 
 	if got := recentInt(t, res); got != 7 {
@@ -61,15 +61,15 @@ n`)
 	}
 }
 
-func TestLazyFormalOnlyBindsDollarName(t *testing.T) {
+func TestLazyFormalOnlyBindsHashName(t *testing.T) {
 	env := newLazyTestEnv(t)
 
 	lazyExpectEvalError(t, env, `
-(defn onlyDollar [$x] x)
-(onlyDollar 10)`, "symbol `x` not found")
+(defn onlyHash [#x] x)
+(onlyHash 10)`, "symbol `x` not found")
 
 	res := recentEval(t, env, `
-(defn lazyType [$x] (type? $x))
+(defn lazyType [#x] (type? #x))
 (lazyType (+ 1 2))`)
 
 	if got := lazyString(t, res); got != "lazyArg" {
@@ -81,7 +81,7 @@ func TestLazyFormalSubstituteReturnsCallExpressionWithoutForcing(t *testing.T) {
 	env := newLazyTestEnv(t)
 
 	res := recentEval(t, env, `
-(defn labelOf [$x] (str (substitute $x)))
+(defn labelOf [#x] (str (substitute #x)))
 (labelOf (stop "substitute should not force"))`)
 
 	if got, want := lazyString(t, res), `(stop "substitute should not force")`; got != want {
@@ -93,9 +93,9 @@ func TestLazyFormalForceEvaluatesInCallerLexicalEnvironment(t *testing.T) {
 	env := newLazyTestEnv(t)
 
 	res := recentEval(t, env, `
-(defn receiver [$x]
+(defn receiver [#x]
   (let [a 100]
-    (force $x)))
+    (force #x)))
 (defn caller []
   (let [a 7]
     (receiver (+ a 1))))
@@ -112,7 +112,7 @@ func TestLazyFormalForceMemoizesValue(t *testing.T) {
 	res := recentEval(t, env, `
 (def n 0)
 (defn bump [] (set n (+ n 1)) n)
-(defn forceTwice [$x] (+ (force $x) (force $x)))
+(defn forceTwice [#x] (+ (force #x) (force #x)))
 (forceTwice (bump))`)
 
 	if got := recentInt(t, res); got != 2 {
@@ -128,14 +128,14 @@ func TestLazyFormalForcePropagatesErrorsOnlyWhenForced(t *testing.T) {
 	env := newLazyTestEnv(t)
 
 	res := recentEval(t, env, `
-(defn captureOnly [$x] (str (substitute $x)))
+(defn captureOnly [#x] (str (substitute #x)))
 (captureOnly (stop "boom only on force"))`)
 	if got, want := lazyString(t, res), `(stop "boom only on force")`; got != want {
 		t.Fatalf("captureOnly returned %q, want %q", got, want)
 	}
 
 	lazyExpectEvalError(t, env, `
-(defn forceBoom [$x] (force $x))
+(defn forceBoom [#x] (force #x))
 (forceBoom (stop "boom on force"))`, "boom on force")
 }
 
@@ -145,7 +145,7 @@ func TestLazyFormalCanBeMixedWithStrictFormals(t *testing.T) {
 	res := recentEval(t, env, `
 (def n 0)
 (defn bump [] (set n (+ n 1)) n)
-(defn mixed [a $b c] (+ a c))
+(defn mixed [a #b c] (+ a c))
 (mixed (bump) (stop "middle lazy argument should not be forced") (bump))`)
 
 	if got := recentInt(t, res); got != 3 {
@@ -160,7 +160,7 @@ func TestLazyFormalCanBeMixedWithStrictFormals(t *testing.T) {
 func TestLazyFormalWorksInAnonymousFunction(t *testing.T) {
 	env := newLazyTestEnv(t)
 
-	res := recentEval(t, env, `((fn [$x] (force $x)) (+ 10 5))`)
+	res := recentEval(t, env, `((fn [#x] (force #x)) (+ 10 5))`)
 
 	if got := recentInt(t, res); got != 15 {
 		t.Fatalf("anonymous lazy function returned %d, want 15", got)
@@ -171,7 +171,7 @@ func TestLazyFormalWorksInTypedFuncDeclaration(t *testing.T) {
 	env := newLazyTestEnv(t)
 
 	res := recentEval(t, env, `
-(func forceTyped [$x:int64] [n:int64] (force $x))
+(func forceTyped [#x:int64] [n:int64] (force #x))
 (forceTyped (+ 20 22))`)
 
 	if got := recentInt(t, res); got != 42 {
@@ -183,7 +183,7 @@ func TestLazyFormalWorksThroughSymbolAlias(t *testing.T) {
 	env := newLazyTestEnv(t)
 
 	res := recentEval(t, env, `
-(defn keepAlias [$x] (type? $x))
+(defn keepAlias [#x] (type? #x))
 (def g keepAlias)
 (g (stop "aliased lazy argument should not be forced"))`)
 
@@ -196,7 +196,7 @@ func TestLazyFormalWorksThroughFunctionParameter(t *testing.T) {
 	env := newLazyTestEnv(t)
 
 	res := recentEval(t, env, `
-(defn keepParam [$x] (str (substitute $x)))
+(defn keepParam [#x] (str (substitute #x)))
 (defn caller [f] (f (stop "parameter lazy argument should not be forced")))
 (caller keepParam)`)
 
@@ -209,7 +209,7 @@ func TestLazyFormalWorksThroughComputedCallee(t *testing.T) {
 	env := newLazyTestEnv(t)
 
 	res := recentEval(t, env, `
-(defn keepComputed [$x] (str (substitute $x)))
+(defn keepComputed [#x] (str (substitute #x)))
 (((fn [] keepComputed)) (stop "computed lazy argument should not be forced"))`)
 
 	if got, want := lazyString(t, res), `(stop "computed lazy argument should not be forced")`; got != want {
@@ -234,7 +234,7 @@ func TestApplyWrapsValueOriginLazyArgument(t *testing.T) {
 	env := newLazyTestEnv(t)
 
 	res := recentEval(t, env, `
-(defn inspectApply [$x] (list (type? $x) (str (substitute $x)) (force $x)))
+(defn inspectApply [#x] (list (type? #x) (str (substitute #x)) (force #x)))
 (apply inspectApply [42])`)
 
 	got, err := ListToArray(res)
@@ -259,7 +259,7 @@ func TestMapWrapsValueOriginLazyArgument(t *testing.T) {
 	env := newLazyTestEnv(t)
 
 	res := recentEval(t, env, `
-(defn inspectMap [$x] (str (substitute $x)))
+(defn inspectMap [#x] (str (substitute #x)))
 (map inspectMap [4 5])`)
 
 	arr, ok := res.(*SexpArray)
@@ -290,8 +290,20 @@ func TestComputedCallEvaluatesCalleeBeforeStrictArguments(t *testing.T) {
 	}
 }
 
-func TestDollarSigilNoLongerSelfEvaluatesWhenUnbound(t *testing.T) {
+func TestHashSigilNoLongerSelfEvaluatesWhenUnbound(t *testing.T) {
 	env := newLazyTestEnv(t)
 
-	lazyExpectEvalError(t, env, "(begin $missingLazyFormal)", "symbol `$missingLazyFormal` not found")
+	lazyExpectEvalError(t, env, "(begin #missingLazyFormal)", "symbol `#missingLazyFormal` not found")
+}
+
+func TestDollarIsNormalSymbolText(t *testing.T) {
+	env := newLazyTestEnv(t)
+
+	res := recentEval(t, env, `
+(def $A$1 42)
+$A$1`)
+
+	if got := recentInt(t, res); got != 42 {
+		t.Fatalf("$A$1 evaluated to %d, want 42", got)
+	}
 }

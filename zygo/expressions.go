@@ -718,7 +718,7 @@ func (sf *SexpFunction) Copy() *SexpFunction {
 }
 
 func isLazyFormalSymbol(sym *SexpSymbol) bool {
-	return sym != nil && sym.isSigil && sym.sigil == "$"
+	return sym != nil && sym.isSigil && sym.sigil == "#"
 }
 
 func (sf *SexpFunction) SetFormalSymbols(argsyms []*SexpSymbol) {
