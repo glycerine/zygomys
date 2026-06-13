@@ -574,6 +574,23 @@ type SexpLazyArg struct {
 	Value   Sexp
 }
 
+func NewSourceLazyArg(env *Zlisp, expr Sexp) *SexpLazyArg {
+	lazy := &SexpLazyArg{Expr: expr}
+	if env != nil {
+		lazy.Stack = env.linearstack.Clone()
+		lazy.CurFunc = env.curfunc
+	}
+	return lazy
+}
+
+func NewValueLazyArg(value Sexp) *SexpLazyArg {
+	return &SexpLazyArg{
+		Expr:   value,
+		Forced: true,
+		Value:  value,
+	}
+}
+
 func (lazy *SexpLazyArg) SexpString(ps *PrintState) string {
 	if lazy == nil {
 		return "(lazyArg nil)"
@@ -685,6 +702,7 @@ type SexpFunction struct {
 	isBuilder         bool // see defbuild; builders are builtins that receive un-evaluated expressions
 	argSyms           []*SexpSymbol
 	lazyFormals       []bool
+	hasLazyFormals    bool
 	inputTypes        *SexpHash
 	returnTypes       *SexpHash
 	hasBody           bool // could just be declaration in an interface, without a body
@@ -706,9 +724,17 @@ func isLazyFormalSymbol(sym *SexpSymbol) bool {
 func (sf *SexpFunction) SetFormalSymbols(argsyms []*SexpSymbol) {
 	sf.argSyms = append([]*SexpSymbol(nil), argsyms...)
 	sf.lazyFormals = make([]bool, len(argsyms))
+	sf.hasLazyFormals = false
 	for i, sym := range argsyms {
 		sf.lazyFormals[i] = isLazyFormalSymbol(sym)
+		if sf.lazyFormals[i] {
+			sf.hasLazyFormals = true
+		}
 	}
+}
+
+func (sf *SexpFunction) HasLazyFormals() bool {
+	return sf != nil && sf.hasLazyFormals
 }
 
 func (sf *SexpFunction) IsLazyFormal(i int) bool {

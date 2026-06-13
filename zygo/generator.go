@@ -667,11 +667,11 @@ func (gen *Generator) GenerateCallBySymbol(sym *SexpSymbol, args []Sexp, orig Se
 
 	oldtail := gen.Tail
 	gen.Tail = false
-	err := gen.GenerateCallArgsForFunction(gen.LookupKnownFunction(sym), args)
-	if err != nil {
-		return err
-	}
 	if oldtail && sym.name == gen.funcname {
+		err := gen.GenerateCallArgsForFunction(gen.LookupKnownFunction(sym), args)
+		if err != nil {
+			return err
+		}
 		// to do a tail call
 		// pop off all the extra scopes
 		// then jump to beginning of function
@@ -681,7 +681,7 @@ func (gen *Generator) GenerateCallBySymbol(sym *SexpSymbol, args []Sexp, orig Se
 		gen.AddInstruction(PrepareCallInstr{sym, len(args)})
 		gen.AddInstruction(GotoInstr{1}) // goto 1 instead of 0 to avoid adding a new scope
 	} else {
-		gen.AddInstruction(CallInstr{sym, len(args)})
+		gen.AddInstruction(CallExprInstr{callee: sym, args: append([]Sexp(nil), args...)})
 	}
 	gen.Tail = oldtail
 	return nil
@@ -750,12 +750,7 @@ func (gen *Generator) GenerateInfix(args []Sexp) error {
 }
 
 func (gen *Generator) GenerateDispatch(fun Sexp, args []Sexp) error {
-	err := gen.GenerateAll(args)
-	if err != nil {
-		return err
-	}
-	gen.Generate(fun)
-	gen.AddInstruction(DispatchInstr{len(args)})
+	gen.AddInstruction(CallExprInstr{callee: fun, args: append([]Sexp(nil), args...)})
 	return nil
 }
 

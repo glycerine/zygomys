@@ -99,11 +99,7 @@ func (p PushLazyArgInstr) InstrString() string {
 }
 
 func (p PushLazyArgInstr) Execute(env *Zlisp) error {
-	env.datastack.PushExpr(&SexpLazyArg{
-		Expr:    p.expr,
-		Stack:   env.linearstack.Clone(),
-		CurFunc: env.curfunc,
-	})
+	env.datastack.PushExpr(NewSourceLazyArg(env, p.expr))
 	env.pc++
 	return nil
 }
@@ -341,6 +337,31 @@ func (c CallInstr) Execute(env *Zlisp) error {
 		return err
 	}
 	return fmt.Errorf("%s is not a function", c.sym.name)
+}
+
+type CallExprInstr struct {
+	callee Sexp
+	args   []Sexp
+}
+
+func (c CallExprInstr) InstrString() string {
+	callee := "<nil>"
+	if c.callee != nil {
+		callee = c.callee.SexpString(nil)
+	}
+	return fmt.Sprintf("callExpr %s %d", callee, len(c.args))
+}
+
+func (c CallExprInstr) Execute(env *Zlisp) error {
+	funcobj, err := env.EvalCallExpression(c.callee)
+	if err != nil {
+		return err
+	}
+	funcobj, callName, err := env.ResolveCallable(funcobj)
+	if err != nil {
+		return err
+	}
+	return env.CallResolved(funcobj, callName, c.args)
 }
 
 type DispatchInstr struct {

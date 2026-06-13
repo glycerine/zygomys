@@ -342,6 +342,170 @@ func (env *Zlisp) prepareLazyFinalArgs(function *SexpFunction, args []Sexp) ([]S
 	return args, nil
 }
 
+func (env *Zlisp) EvalCallExpression(expr Sexp) (Sexp, error) {
+	if expr == nil {
+		return SexpNull, nil
+	}
+	if sym, isSym := expr.(*SexpSymbol); isSym {
+		macxpr, isMacro := env.macros[sym.number]
+		if isMacro {
+			if macxpr.orig != nil {
+				return SexpNull, fmt.Errorf("'%s' is a macro, with definition: %s\n", sym.name, macxpr.orig.SexpString(nil))
+			}
+			return SexpNull, fmt.Errorf("'%s' is a builtin macro.\n", sym.name)
+		}
+		val, err, _ := env.LexicalLookupSymbol(sym, nil)
+		return val, err
+	}
+
+	gen := NewGenerator(env)
+	if err := gen.Generate(expr); err != nil {
+		return SexpNull, err
+	}
+	if len(gen.instructions) == 0 {
+		return SexpNull, nil
+	}
+	gen.AddInstruction(ReturnInstr{nil})
+
+	callState := env.captureControlState()
+	sfun := env.MakeFunction("callExprEval", 0, false, ZlispFunction(gen.instructions), expr)
+	sfun.parent = callState.curfunc
+
+	env.pc = -2
+	if err := env.CallFunction(sfun, 0); err != nil {
+		env.restoreControlState(callState)
+		return SexpNull, err
+	}
+	res, err := env.Run()
+	if err != nil {
+		env.restoreControlState(callState)
+		return SexpNull, err
+	}
+	env.restoreControlState(callState)
+	return res, nil
+}
+
+func (env *Zlisp) ResolveCallable(funcobj Sexp) (Sexp, string, error) {
+	switch f := funcobj.(type) {
+	case *SexpSymbol:
+		indirectFuncName, err := dotGetSetHelper(env, f.name, nil)
+		if err != nil {
+			return SexpNull, f.name, fmt.Errorf("'%s' could not be resolved as a function: '%s'", f.name, err)
+		}
+		return indirectFuncName, f.name, nil
+	case *SexpFunction:
+		return f, f.name, nil
+	case *RegisteredType:
+		return f, f.RegisteredName, nil
+	case *SexpArray:
+		return f, f.SexpString(nil), nil
+	default:
+		return funcobj, "", nil
+	}
+}
+
+func (env *Zlisp) PrepareCallExprArgs(function *SexpFunction, args []Sexp) error {
+	for i, expr := range args {
+		if function != nil && !function.user && function.HasLazyFormals() && function.IsLazyCallArg(i) {
+			env.datastack.PushExpr(NewSourceLazyArg(env, expr))
+			continue
+		}
+		val, err := env.EvalCallExpression(expr)
+		if err != nil {
+			return err
+		}
+		env.datastack.PushExpr(val)
+	}
+	return nil
+}
+
+func (env *Zlisp) CallResolved(funcobj Sexp, callName string, args []Sexp) error {
+	startingDataStackSize := env.datastack.Size()
+	prepare := func(function *SexpFunction) error {
+		if err := env.PrepareCallExprArgs(function, args); err != nil {
+			env.datastack.TruncateToSize(startingDataStackSize)
+			return err
+		}
+		return nil
+	}
+
+	switch f := funcobj.(type) {
+	case *SexpFunction:
+		if err := prepare(f); err != nil {
+			return err
+		}
+		if !f.user {
+			if err := env.CallFunction(f, len(args)); err != nil {
+				env.datastack.TruncateToSize(startingDataStackSize)
+				return err
+			}
+			return nil
+		}
+		if callName == "" {
+			callName = f.name
+		}
+		_, err := env.CallUserFunction(f, callName, len(args))
+		if err != nil {
+			env.datastack.TruncateToSize(startingDataStackSize)
+		}
+		return err
+
+	case *RegisteredType:
+		if err := prepare(nil); err != nil {
+			return err
+		}
+		if callName == "" {
+			callName = f.RegisteredName
+		}
+		if f.Constructor == nil {
+			env.pc++
+			res, err := baseConstruct(env, f, len(args))
+			if err != nil {
+				env.datastack.TruncateToSize(startingDataStackSize)
+				return err
+			}
+			env.datastack.PushExpr(res)
+			return nil
+		}
+		_, err := env.CallUserFunction(f.Constructor, callName, len(args))
+		if err != nil {
+			env.datastack.TruncateToSize(startingDataStackSize)
+		}
+		return err
+
+	case *SexpArray:
+		if err := prepare(nil); err != nil {
+			return err
+		}
+		if callName == "" {
+			callName = f.SexpString(nil)
+		}
+		if len(f.Val) == 0 {
+			_, err := env.CallUserFunction(sxSliceOf, callName, len(args))
+			if err != nil {
+				env.datastack.TruncateToSize(startingDataStackSize)
+			}
+			return err
+		}
+		env.datastack.PushExpr(f)
+		_, err := env.CallUserFunction(sxArrayOf, callName, len(args)+1)
+		if err != nil {
+			env.datastack.TruncateToSize(startingDataStackSize)
+		}
+		return err
+	}
+
+	if len(args) == 0 {
+		env.datastack.PushExpr(funcobj)
+		env.pc++
+		return nil
+	}
+	if funcobj == nil {
+		return fmt.Errorf("not a function on top of datastack: <nil>")
+	}
+	return fmt.Errorf("not a function on top of datastack: '%T/%#v'", funcobj, funcobj)
+}
+
 func (env *Zlisp) CallFunction(function *SexpFunction, nargs int) error {
 	for _, prehook := range env.before {
 		expressions, err := env.datastack.GetExpressions(nargs)
@@ -697,7 +861,11 @@ func (env *Zlisp) Apply(fun *SexpFunction, args []Sexp) (Sexp, error) {
 
 	callState := env.captureControlState()
 	env.pc = -2
-	for _, expr := range args {
+	for i, expr := range args {
+		if fun.IsLazyCallArg(i) {
+			env.datastack.PushExpr(NewValueLazyArg(expr))
+			continue
+		}
 		env.datastack.PushExpr(expr)
 	}
 

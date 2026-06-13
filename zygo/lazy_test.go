@@ -179,6 +179,117 @@ func TestLazyFormalWorksInTypedFuncDeclaration(t *testing.T) {
 	}
 }
 
+func TestLazyFormalWorksThroughSymbolAlias(t *testing.T) {
+	env := newLazyTestEnv(t)
+
+	res := recentEval(t, env, `
+(defn keepAlias [$x] (type? $x))
+(def g keepAlias)
+(g (stop "aliased lazy argument should not be forced"))`)
+
+	if got := lazyString(t, res); got != "lazyArg" {
+		t.Fatalf("aliased lazy call returned type %q, want lazyArg", got)
+	}
+}
+
+func TestLazyFormalWorksThroughFunctionParameter(t *testing.T) {
+	env := newLazyTestEnv(t)
+
+	res := recentEval(t, env, `
+(defn keepParam [$x] (str (substitute $x)))
+(defn caller [f] (f (stop "parameter lazy argument should not be forced")))
+(caller keepParam)`)
+
+	if got, want := lazyString(t, res), `(stop "parameter lazy argument should not be forced")`; got != want {
+		t.Fatalf("parameter lazy substitute returned %q, want %q", got, want)
+	}
+}
+
+func TestLazyFormalWorksThroughComputedCallee(t *testing.T) {
+	env := newLazyTestEnv(t)
+
+	res := recentEval(t, env, `
+(defn keepComputed [$x] (str (substitute $x)))
+(((fn [] keepComputed)) (stop "computed lazy argument should not be forced"))`)
+
+	if got, want := lazyString(t, res), `(stop "computed lazy argument should not be forced")`; got != want {
+		t.Fatalf("computed lazy substitute returned %q, want %q", got, want)
+	}
+}
+
+func TestDynamicStrictCallDoesNotReceiveLazyArg(t *testing.T) {
+	env := newLazyTestEnv(t)
+
+	res := recentEval(t, env, `
+(defn strictType [x] (type? x))
+(def g strictType)
+(g (+ 1 2))`)
+
+	if got := lazyString(t, res); got != "int64" {
+		t.Fatalf("dynamic strict call returned type %q, want int64", got)
+	}
+}
+
+func TestApplyWrapsValueOriginLazyArgument(t *testing.T) {
+	env := newLazyTestEnv(t)
+
+	res := recentEval(t, env, `
+(defn inspectApply [$x] (list (type? $x) (str (substitute $x)) (force $x)))
+(apply inspectApply [42])`)
+
+	got, err := ListToArray(res)
+	if err != nil {
+		t.Fatalf("apply result was not a list: %T/%v", res, res.SexpString(nil))
+	}
+	if len(got) != 3 {
+		t.Fatalf("apply result length %d, want 3", len(got))
+	}
+	if typ := lazyString(t, got[0]); typ != "lazyArg" {
+		t.Fatalf("apply type result %q, want lazyArg", typ)
+	}
+	if sub := lazyString(t, got[1]); sub != "42" {
+		t.Fatalf("apply substitute result %q, want 42", sub)
+	}
+	if forced := recentInt(t, got[2]); forced != 42 {
+		t.Fatalf("apply force result %d, want 42", forced)
+	}
+}
+
+func TestMapWrapsValueOriginLazyArgument(t *testing.T) {
+	env := newLazyTestEnv(t)
+
+	res := recentEval(t, env, `
+(defn inspectMap [$x] (str (substitute $x)))
+(map inspectMap [4 5])`)
+
+	arr, ok := res.(*SexpArray)
+	if !ok {
+		t.Fatalf("map result was %T/%v, want array", res, res.SexpString(nil))
+	}
+	if len(arr.Val) != 2 {
+		t.Fatalf("map result length %d, want 2", len(arr.Val))
+	}
+	if got := lazyString(t, arr.Val[0]); got != "4" {
+		t.Fatalf("map first substitute %q, want 4", got)
+	}
+	if got := lazyString(t, arr.Val[1]); got != "5" {
+		t.Fatalf("map second substitute %q, want 5", got)
+	}
+}
+
+func TestComputedCallEvaluatesCalleeBeforeStrictArguments(t *testing.T) {
+	env := newLazyTestEnv(t)
+
+	res := recentEval(t, env, `
+(def order "")
+(defn chooseStrict [] (set order (concat order "c")) (fn [x] order))
+((chooseStrict) (set order (concat order "a")))`)
+
+	if got := lazyString(t, res); got != "ca" {
+		t.Fatalf("computed call order %q, want ca", got)
+	}
+}
+
 func TestDollarSigilNoLongerSelfEvaluatesWhenUnbound(t *testing.T) {
 	env := newLazyTestEnv(t)
 
