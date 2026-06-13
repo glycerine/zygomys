@@ -2,7 +2,7 @@
 (def sum 0)
 (for [(def i 0) (< i 10) (def i (+ i 1))]
      (set sum (+ sum i)))
-(printf "sum is %d\n" sum)
+//(printf "sum is %d\n" sum)
 (assert (== sum 45))
 
 (def a [0 2 4 6])
@@ -21,4 +21,47 @@
 (assert (== sum 12))
 (assert (== isum 6))
 
+{
+// infix go style for loops
+sum = 0
+for true {
+  sum++
+  if sum > 3 {
+    break
+  }
+}
+(assert (== sum 4))
+for sum = 2; sum < 20; {
+   sum = sum * 2
+} 
+(assert (== sum 32))
+sum = 0
+//(printf "sum is %d\n" sum)
 
+for i := 0; i < 5; i++ {
+  sum += i
+}
+//(printf "sum is %d\n" sum)
+(assert (== sum 10))
+
+// infix go style for-range loops, on arrays.
+a := [5 1 2 3 4 5]
+keysum := 0
+valsum := 0
+for k, v := range a {
+   keysum += k
+   valsum += v
+}
+(assert (== keysum 15))
+(assert (== valsum 20))
+
+// infix go style for-range loops, on hashes
+h := {a: 9 b: 5}
+hsum := 0
+for k, v := range h {
+  hsum += v
+}
+(assert (== hsum 14))
+(printf "hsum is %d\n" hsum)
+
+}
