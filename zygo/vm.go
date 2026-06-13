@@ -87,6 +87,27 @@ func (p PushInstr) Execute(env *Zlisp) error {
 	return nil
 }
 
+type PushLazyArgInstr struct {
+	expr Sexp
+}
+
+func (p PushLazyArgInstr) InstrString() string {
+	if p.expr == nil {
+		return "push lazyArg nil"
+	}
+	return "push lazyArg " + p.expr.SexpString(nil)
+}
+
+func (p PushLazyArgInstr) Execute(env *Zlisp) error {
+	env.datastack.PushExpr(&SexpLazyArg{
+		Expr:    p.expr,
+		Stack:   env.linearstack.Clone(),
+		CurFunc: env.curfunc,
+	})
+	env.pc++
+	return nil
+}
+
 type PopInstr int
 
 func (p PopInstr) InstrString() string {
@@ -919,15 +940,27 @@ func (c PrepareCallInstr) execute(env *Zlisp) error {
 
 		switch g := indirectFuncName.(type) {
 		case *SexpFunction:
-			if !g.user && g.varargs {
-				return env.wrangleOptargs(g.nargs, c.nargs)
+			if !g.user {
+				nargs := c.nargs
+				if err := env.prepareLazyCallArgs(g, &nargs); err != nil {
+					return err
+				}
+				if g.varargs {
+					return env.wrangleOptargs(g.nargs, nargs)
+				}
 			}
 			return nil
 		}
 
 	case *SexpFunction:
-		if !f.user && f.varargs {
-			return env.wrangleOptargs(f.nargs, c.nargs)
+		if !f.user {
+			nargs := c.nargs
+			if err := env.prepareLazyCallArgs(f, &nargs); err != nil {
+				return err
+			}
+			if f.varargs {
+				return env.wrangleOptargs(f.nargs, nargs)
+			}
 		}
 	}
 	return nil

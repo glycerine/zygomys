@@ -200,6 +200,7 @@ func FuncBuilder(env *Zlisp, name string,
 	newfunc := ZlispFunction(gen.instructions)
 	sfun := gen.env.MakeFunction(gen.funcname, nargs,
 		varargs, newfunc, orig)
+	sfun.SetFormalSymbols(argsyms)
 	sfun.inputTypes = inHash
 	sfun.returnTypes = retHash
 

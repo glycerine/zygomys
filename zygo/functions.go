@@ -862,6 +862,31 @@ func NotFunction(env *Zlisp, name string, args []Sexp) (Sexp, error) {
 	return result, nil
 }
 
+func ForceFunction(env *Zlisp, name string, args []Sexp) (Sexp, error) {
+	if len(args) != 1 {
+		return SexpNull, WrongNargs
+	}
+	lazy, ok := args[0].(*SexpLazyArg)
+	if !ok {
+		return args[0], nil
+	}
+	return lazy.Force(env)
+}
+
+func SubstituteFunction(env *Zlisp, name string, args []Sexp) (Sexp, error) {
+	if len(args) != 1 {
+		return SexpNull, WrongNargs
+	}
+	lazy, ok := args[0].(*SexpLazyArg)
+	if !ok {
+		return args[0], nil
+	}
+	if lazy.Expr == nil {
+		return SexpNull, nil
+	}
+	return lazy.Expr, nil
+}
+
 func ApplyFunction(env *Zlisp, name string, args []Sexp) (Sexp, error) {
 	if len(args) != 2 {
 		return SexpNull, WrongNargs
@@ -1084,58 +1109,60 @@ func AllBuiltinFunctions() map[string]ZlispUserFunction {
 // CoreFunctions returns all of the core logic
 func CoreFunctions() map[string]ZlispUserFunction {
 	return map[string]ZlispUserFunction{
-		"echo":      SetEchoPrintFlag,
-		"pretty":    SetPrettyPrintFlag,
-		"<":         CompareFunction("<"),
-		">":         CompareFunction(">"),
-		"<=":        CompareFunction("<="),
-		">=":        CompareFunction(">="),
-		"==":        CompareFunction("=="),
-		"!=":        CompareFunction("!="),
-		"isnan":     IsNaNFunction("isnan"),
-		"isNaN":     IsNaNFunction("isNaN"),
-		"sll":       BinaryIntFunction("sll"),
-		"sra":       BinaryIntFunction("sra"),
-		"srl":       BinaryIntFunction("srl"),
-		"mod":       BinaryIntFunction("mod"),
-		"+":         NumericFunction("+"),
-		"-":         NumericFunction("-"),
-		"*":         PointerOrNumericFunction("*"),
-		"**":        NumericFunction("**"),
-		"/":         NumericFunction("/"),
-		"bitAnd":    BitwiseFunction("bitAnd"),
-		"bitOr":     BitwiseFunction("bitOr"),
-		"bitXor":    BitwiseFunction("bitXor"),
-		"bitNot":    ComplementFunction,
-		"read":      ReadFunction,
-		"cons":      ConsFunction,
-		"first":     FirstFunction,
-		"second":    SecondFunction,
-		"rest":      RestFunction,
-		"car":       FirstFunction,
-		"cdr":       RestFunction,
-		"type?":     TypeQueryFunction("type?"),
-		"list?":     TypeQueryFunction("list?"),
-		"null?":     TypeQueryFunction("null?"),
-		"array?":    TypeQueryFunction("array?"),
-		"hash?":     TypeQueryFunction("hash?"),
-		"number?":   TypeQueryFunction("number?"),
-		"int?":      TypeQueryFunction("int?"),
-		"float?":    TypeQueryFunction("float?"),
-		"char?":     TypeQueryFunction("char?"),
-		"symbol?":   TypeQueryFunction("symbol?"),
-		"string?":   TypeQueryFunction("string?"),
-		"zero?":     TypeQueryFunction("zero?"),
-		"empty?":    TypeQueryFunction("empty?"),
-		"func?":     TypeQueryFunction("func?"),
-		"not":       NotFunction,
-		"apply":     ApplyFunction,
-		"map":       MapFunction,
-		"makeArray": MakeArrayFunction,
-		"aget":      ArrayAccessFunction("aget"),
-		"aset":      ArrayAccessFunction("aset"),
-		"sget":      SgetFunction,
-		"hget":      GenericAccessFunction, // handles arrays or hashes
+		"echo":       SetEchoPrintFlag,
+		"pretty":     SetPrettyPrintFlag,
+		"<":          CompareFunction("<"),
+		">":          CompareFunction(">"),
+		"<=":         CompareFunction("<="),
+		">=":         CompareFunction(">="),
+		"==":         CompareFunction("=="),
+		"!=":         CompareFunction("!="),
+		"isnan":      IsNaNFunction("isnan"),
+		"isNaN":      IsNaNFunction("isNaN"),
+		"sll":        BinaryIntFunction("sll"),
+		"sra":        BinaryIntFunction("sra"),
+		"srl":        BinaryIntFunction("srl"),
+		"mod":        BinaryIntFunction("mod"),
+		"+":          NumericFunction("+"),
+		"-":          NumericFunction("-"),
+		"*":          PointerOrNumericFunction("*"),
+		"**":         NumericFunction("**"),
+		"/":          NumericFunction("/"),
+		"bitAnd":     BitwiseFunction("bitAnd"),
+		"bitOr":      BitwiseFunction("bitOr"),
+		"bitXor":     BitwiseFunction("bitXor"),
+		"bitNot":     ComplementFunction,
+		"read":       ReadFunction,
+		"cons":       ConsFunction,
+		"first":      FirstFunction,
+		"second":     SecondFunction,
+		"rest":       RestFunction,
+		"car":        FirstFunction,
+		"cdr":        RestFunction,
+		"type?":      TypeQueryFunction("type?"),
+		"list?":      TypeQueryFunction("list?"),
+		"null?":      TypeQueryFunction("null?"),
+		"array?":     TypeQueryFunction("array?"),
+		"hash?":      TypeQueryFunction("hash?"),
+		"number?":    TypeQueryFunction("number?"),
+		"int?":       TypeQueryFunction("int?"),
+		"float?":     TypeQueryFunction("float?"),
+		"char?":      TypeQueryFunction("char?"),
+		"symbol?":    TypeQueryFunction("symbol?"),
+		"string?":    TypeQueryFunction("string?"),
+		"zero?":      TypeQueryFunction("zero?"),
+		"empty?":     TypeQueryFunction("empty?"),
+		"func?":      TypeQueryFunction("func?"),
+		"not":        NotFunction,
+		"apply":      ApplyFunction,
+		"force":      ForceFunction,
+		"substitute": SubstituteFunction,
+		"map":        MapFunction,
+		"makeArray":  MakeArrayFunction,
+		"aget":       ArrayAccessFunction("aget"),
+		"aset":       ArrayAccessFunction("aset"),
+		"sget":       SgetFunction,
+		"hget":       GenericAccessFunction, // handles arrays or hashes
 		//":":          ColonAccessFunction,
 		"hset":        HashAccessFunction("hset"),
 		"hdel":        HashAccessFunction("hdel"),
@@ -1894,6 +1921,14 @@ func (env *Zlisp) RValue(expr Sexp) (Sexp, error) {
 		return expr, nil
 	}
 	return obj.RHS(env)
+}
+
+func (env *Zlisp) ForceCallArg(expr Sexp) (Sexp, error) {
+	lazy, isLazy := expr.(*SexpLazyArg)
+	if !isLazy {
+		return expr, nil
+	}
+	return lazy.Force(env)
 }
 
 // SubstituteRHS locates any SexpSelector(s) (Selector implementers, really)

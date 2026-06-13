@@ -29,36 +29,27 @@ func (env *Zlisp) FunctionCallNameTypeCheck(f *SexpFunction, nargs *int) error {
 
 	// prep submittedByName
 	for i := 0; i < *nargs; i++ {
-		switch sym := exprs[i].(type) {
-		case *SexpSymbol:
-			if sym.colonTail {
-				//Q("in env.CallFunction, have symbol.colonTail: exprs[%v]='%#v'", i, sym)
-				typ, err := f.inputTypes.HashGet(env, sym)
-				if err != nil {
-					return fmt.Errorf("%s takes no argument '%s'", f.name, sym.name)
-				}
-				if i == (*nargs)-1 {
-					return fmt.Errorf("named parameter '%s' not followed by value", sym.name)
-				}
-				val := exprs[i+1]
-				i++
-				_, already := submittedByName[sym.name]
-				if already {
-					return fmt.Errorf("duplicate named parameter '%s'", sym.name)
-				}
-
-				submittedByName[sym.name] = val
-				valtyp := val.Type()
-				if typ != nil && typ != valtyp {
-					return fmt.Errorf("type mismatch for parameter '%s': expected '%s', got '%s'",
-						sym.name, typ.SexpString(nil), valtyp.SexpString(nil))
-				}
-			} else {
-				//Q("in env.CallFunction, exprs[%v]='%v'/type=%T", i, exprs[i].SexpString(nil), exprs[i])
-			}
-		default:
+		sym, isNamed := namedArgSymbol(exprs[i])
+		if !isNamed {
 			//Q("in env.CallFunction, exprs[%v]='%v'/type=%T", i, exprs[i].SexpString(nil), exprs[i])
+			continue
 		}
+		//Q("in env.CallFunction, have symbol.colonTail: exprs[%v]='%#v'", i, sym)
+		_, err := f.inputTypes.HashGet(env, sym)
+		if err != nil {
+			return fmt.Errorf("%s takes no argument '%s'", f.name, sym.name)
+		}
+		if i == (*nargs)-1 {
+			return fmt.Errorf("named parameter '%s' not followed by value", sym.name)
+		}
+		val := exprs[i+1]
+		i++
+		_, already := submittedByName[sym.name]
+		if already {
+			return fmt.Errorf("duplicate named parameter '%s'", sym.name)
+		}
+
+		submittedByName[sym.name] = val
 	}
 
 	// simplify name matching for now with this rule: all by name, or none.
@@ -88,6 +79,44 @@ func (env *Zlisp) FunctionCallNameTypeCheck(f *SexpFunction, nargs *int) error {
 		// not using named parameters, restore the arguments to the stack as they were.
 		finalArgs = exprs
 	}
+	finalArgs, err = env.prepareLazyFinalArgs(f, finalArgs)
+	if err != nil {
+		return err
+	}
+	for i, val := range finalArgs {
+		if i >= len(f.inputTypes.KeyOrder) {
+			break
+		}
+		if f.IsLazyCallArg(i) {
+			continue
+		}
+		typ, err := f.inputTypes.HashGet(env, f.inputTypes.KeyOrder[i])
+		if err != nil {
+			return err
+		}
+		valtyp := val.Type()
+		if typ != nil && typ != valtyp {
+			sym, _ := f.inputTypes.KeyOrder[i].(*SexpSymbol)
+			name := f.inputTypes.KeyOrder[i].SexpString(nil)
+			if sym != nil {
+				name = sym.name
+			}
+			return fmt.Errorf("type mismatch for parameter '%s': expected '%s', got '%s'",
+				name, typ.SexpString(nil), valtyp.SexpString(nil))
+		}
+	}
 	*nargs = len(finalArgs)
 	return env.datastack.PushExpressions(finalArgs)
+}
+
+func namedArgSymbol(expr Sexp) (*SexpSymbol, bool) {
+	switch x := expr.(type) {
+	case *SexpSymbol:
+		return x, x.colonTail
+	case *SexpLazyArg:
+		sym, ok := x.Expr.(*SexpSymbol)
+		return sym, ok && sym.colonTail
+	default:
+		return nil, false
+	}
 }

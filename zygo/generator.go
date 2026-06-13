@@ -7,11 +7,12 @@ import (
 var NoExpressionsFound = fmt.Errorf("No expressions found")
 
 type Generator struct {
-	env          *Zlisp
-	funcname     string
-	Tail         bool
-	scopes       int
-	instructions []Instruction
+	env            *Zlisp
+	funcname       string
+	Tail           bool
+	scopes         int
+	instructions   []Instruction
+	knownFunctions map[int]*SexpFunction
 }
 
 type Loop struct {
@@ -30,11 +31,18 @@ func NewGenerator(env *Zlisp) *Generator {
 	gen := new(Generator)
 	gen.env = env
 	gen.instructions = make([]Instruction, 0)
+	gen.knownFunctions = make(map[int]*SexpFunction)
 	// tail marks whether or not we are in the tail position
 	gen.Tail = false
 	// scopes is the number of extra (non-function) scopes we've created
 	gen.scopes = 0
 	return gen
+}
+
+func (gen *Generator) NewSubGenerator() *Generator {
+	subgen := NewGenerator(gen.env)
+	subgen.knownFunctions = gen.knownFunctions
+	return subgen
 }
 
 func (gen *Generator) AddInstructions(instr []Instruction) {
@@ -77,11 +85,15 @@ func buildSexpFun(
 	name string,
 	funcargs *SexpArray,
 	funcbody []Sexp,
-	orig Sexp) (*SexpFunction, error) {
+	orig Sexp,
+	knownFunctions map[int]*SexpFunction) (*SexpFunction, error) {
 
 	//defer func() { //VPrintf("exiting buildSexpFun()\n") }()
 
 	gen := NewGenerator(env)
+	if knownFunctions != nil {
+		gen.knownFunctions = knownFunctions
+	}
 	gen.Tail = true
 
 	if len(name) == 0 {
@@ -115,6 +127,12 @@ func buildSexpFun(
 		nargs = len(argsyms) - 1
 	}
 
+	sfun := gen.env.MakeFunction(gen.funcname, nargs, varargs, nil, orig)
+	sfun.SetFormalSymbols(argsyms)
+	if len(name) > 0 {
+		gen.knownFunctions[env.MakeSymbol(name).number] = sfun
+	}
+
 	//VPrintf("\n in buildSexpFun(): DumpFunction just before %v args go onto stack\n", len(argsyms))
 	if Working {
 		DumpFunction(ZlispFunction(gen.instructions), -1)
@@ -131,8 +149,7 @@ func buildSexpFun(
 	gen.AddInstruction(ReturnInstr{nil})
 
 	newfunc := ZlispFunction(gen.instructions)
-	sfun := gen.env.MakeFunction(gen.funcname, nargs,
-		varargs, newfunc, orig)
+	sfun.fun = newfunc
 
 	// tell the function scope where their function is, to
 	// provide access to the captured-closure scopes at runtime.
@@ -157,7 +174,7 @@ func (gen *Generator) GenerateFn(args []Sexp, orig Sexp) error {
 
 	//VPrintf("GenerateFn() about to call buildSexpFun\n")
 	funcbody := args[1:]
-	sfun, err := buildSexpFun(gen.env, "", funcargs, funcbody, orig)
+	sfun, err := buildSexpFun(gen.env, "", funcargs, funcbody, orig, gen.knownFunctions)
 	if err != nil {
 		return err
 	}
@@ -251,7 +268,7 @@ func (gen *Generator) GenerateDefn(args []Sexp, orig Sexp) error {
 
 	//VPrintf("GenerateDefn() about to call buildSexpFun\n")
 
-	sfun, err := buildSexpFun(gen.env, sym.name, funcargs, args[2:], orig)
+	sfun, err := buildSexpFun(gen.env, sym.name, funcargs, args[2:], orig, gen.knownFunctions)
 	if err != nil {
 		return err
 	}
@@ -300,7 +317,7 @@ func (gen *Generator) GenerateDefmac(args []Sexp, orig Sexp) error {
 			sym.name, xpr.SexpString(nil))
 	}
 
-	sfun, err := buildSexpFun(gen.env, sym.name, funcargs, args[2:], orig)
+	sfun, err := buildSexpFun(gen.env, sym.name, funcargs, args[2:], orig, gen.knownFunctions)
 	if err != nil {
 		return err
 	}
@@ -367,7 +384,7 @@ func (gen *Generator) GenerateMacexpand(args []Sexp) error {
 func (gen *Generator) GenerateShortCircuit(or bool, args []Sexp) error {
 	size := len(args)
 
-	subgen := NewGenerator(gen.env)
+	subgen := gen.NewSubGenerator()
 	subgen.scopes = gen.scopes
 	subgen.Tail = gen.Tail
 	subgen.funcname = gen.funcname
@@ -375,7 +392,7 @@ func (gen *Generator) GenerateShortCircuit(or bool, args []Sexp) error {
 	instructions := subgen.instructions
 
 	for i := size - 2; i >= 0; i-- {
-		subgen = NewGenerator(gen.env)
+		subgen = gen.NewSubGenerator()
 		subgen.Generate(args[i])
 		subgen.AddInstruction(DupInstr(0))
 		subgen.AddInstruction(BranchInstr{or, len(instructions) + 2})
@@ -392,7 +409,7 @@ func (gen *Generator) GenerateCond(args []Sexp) error {
 		return fmt.Errorf("missing default case")
 	}
 
-	subgen := NewGenerator(gen.env)
+	subgen := gen.NewSubGenerator()
 	subgen.Tail = gen.Tail
 	subgen.scopes = gen.scopes
 	subgen.funcname = gen.funcname
@@ -650,7 +667,7 @@ func (gen *Generator) GenerateCallBySymbol(sym *SexpSymbol, args []Sexp, orig Se
 
 	oldtail := gen.Tail
 	gen.Tail = false
-	err := gen.GenerateAll(args)
+	err := gen.GenerateCallArgsForFunction(gen.LookupKnownFunction(sym), args)
 	if err != nil {
 		return err
 	}
@@ -681,6 +698,36 @@ func (gen *Generator) GenerateBuilder(fun Sexp, args []Sexp) error {
 	return nil
 }
 
+func (gen *Generator) LookupKnownFunction(sym *SexpSymbol) *SexpFunction {
+	if sym == nil {
+		return nil
+	}
+	if gen.knownFunctions != nil {
+		if function := gen.knownFunctions[sym.number]; function != nil {
+			return function
+		}
+	}
+	x, err, _ := gen.env.LexicalLookupSymbol(sym, nil)
+	if err != nil {
+		return nil
+	}
+	function, _ := x.(*SexpFunction)
+	return function
+}
+
+func (gen *Generator) GenerateCallArgsForFunction(function *SexpFunction, args []Sexp) error {
+	for i, expr := range args {
+		if function != nil && function.IsLazyCallArg(i) {
+			gen.AddInstruction(PushLazyArgInstr{expr: expr})
+			continue
+		}
+		if err := gen.Generate(expr); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (gen *Generator) GenerateInfix(args []Sexp) error {
 	arr, empty, err := InfixArgsToArray("infix", args)
 	if err != nil {
@@ -703,7 +750,10 @@ func (gen *Generator) GenerateInfix(args []Sexp) error {
 }
 
 func (gen *Generator) GenerateDispatch(fun Sexp, args []Sexp) error {
-	gen.GenerateAll(args)
+	err := gen.GenerateAll(args)
+	if err != nil {
+		return err
+	}
 	gen.Generate(fun)
 	gen.AddInstruction(DispatchInstr{len(args)})
 	return nil
@@ -924,7 +974,7 @@ func (gen *Generator) GenerateForLoop(args []Sexp) error {
 	gen.AddInstruction(PushStackmarkInstr{sym: loop.stmtname})
 
 	// generate the body of the loop
-	subgenBody := NewGenerator(gen.env)
+	subgenBody := gen.NewSubGenerator()
 	subgenBody.Tail = false
 	subgenBody.scopes = gen.scopes
 	subgenBody.funcname = gen.funcname
@@ -937,7 +987,7 @@ func (gen *Generator) GenerateForLoop(args []Sexp) error {
 	len_body_code := len(subgenBody.instructions)
 
 	// generate the init code
-	subgenInit := NewGenerator(gen.env)
+	subgenInit := gen.NewSubGenerator()
 	subgenInit.Tail = false
 	subgenInit.scopes = gen.scopes
 	subgenInit.funcname = gen.funcname
@@ -950,7 +1000,7 @@ func (gen *Generator) GenerateForLoop(args []Sexp) error {
 	init_code := subgenInit.instructions
 
 	// generate the test
-	subgenT := NewGenerator(gen.env)
+	subgenT := gen.NewSubGenerator()
 	subgenT.Tail = false
 	subgenT.scopes = gen.scopes
 	subgenT.funcname = gen.funcname
@@ -964,7 +1014,7 @@ func (gen *Generator) GenerateForLoop(args []Sexp) error {
 	test_code := subgenT.instructions
 
 	// generate the increment code
-	subgenIncr := NewGenerator(gen.env)
+	subgenIncr := gen.NewSubGenerator()
 	subgenIncr.Tail = false
 	subgenIncr.scopes = gen.scopes
 	subgenIncr.funcname = gen.funcname

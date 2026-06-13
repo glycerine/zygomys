@@ -164,6 +164,8 @@ func TypeOf(expr Sexp) *SexpStr {
 		v = "symbol"
 	case *SexpFunction:
 		v = "func"
+	case *SexpLazyArg:
+		v = "lazyArg"
 	case *SexpSentinel:
 		v = "nil"
 	case *SexpTime:

@@ -290,6 +290,7 @@ func functionSize(function *SexpFunction) int {
 type vmControlState struct {
 	curfunc         *SexpFunction
 	pc              int
+	linearstack     *Stack
 	addrstackSize   int
 	linearstackSize int
 	datastackSize   int
@@ -299,6 +300,7 @@ func (env *Zlisp) captureControlState() vmControlState {
 	return vmControlState{
 		curfunc:         env.curfunc,
 		pc:              env.pc,
+		linearstack:     env.linearstack,
 		addrstackSize:   env.addrstack.Size(),
 		linearstackSize: env.linearstack.Size(),
 		datastackSize:   env.datastack.Size(),
@@ -307,6 +309,7 @@ func (env *Zlisp) captureControlState() vmControlState {
 
 func (env *Zlisp) restoreControlState(state vmControlState) {
 	env.addrstack.TruncateToSize(state.addrstackSize)
+	env.linearstack = state.linearstack
 	env.linearstack.TruncateToSize(state.linearstackSize)
 	env.datastack.TruncateToSize(state.datastackSize)
 	env.curfunc = state.curfunc
@@ -331,6 +334,14 @@ func (env *Zlisp) wrangleOptargs(fnargs, nargs int) error {
 	return nil
 }
 
+func (env *Zlisp) prepareLazyCallArgs(function *SexpFunction, nargs *int) error {
+	return nil
+}
+
+func (env *Zlisp) prepareLazyFinalArgs(function *SexpFunction, args []Sexp) ([]Sexp, error) {
+	return args, nil
+}
+
 func (env *Zlisp) CallFunction(function *SexpFunction, nargs int) error {
 	for _, prehook := range env.before {
 		expressions, err := env.datastack.GetExpressions(nargs)
@@ -341,9 +352,16 @@ func (env *Zlisp) CallFunction(function *SexpFunction, nargs int) error {
 	}
 
 	// do name and type checking
-	err := env.FunctionCallNameTypeCheck(function, &nargs)
-	if err != nil {
-		return err
+	if function.inputTypes != nil && !function.varargs {
+		err := env.FunctionCallNameTypeCheck(function, &nargs)
+		if err != nil {
+			return err
+		}
+	} else {
+		err := env.prepareLazyCallArgs(function, &nargs)
+		if err != nil {
+			return err
+		}
 	}
 
 	if function.varargs {
@@ -821,8 +839,8 @@ func (env *Zlisp) ShowGlobalStack() error {
 
 func (env *Zlisp) LexicalLookupSymbol(sym *SexpSymbol, setVal *Sexp) (Sexp, error, *Scope) {
 
-	// DotSymbols always evaluate to themselves
-	if sym.isDot || sym.isSigil || sym.colonTail {
+	// DotSymbols, named-argument labels, and non-dollar sigils evaluate to themselves.
+	if sym.isDot || sym.colonTail || (sym.isSigil && sym.sigil != "$") {
 		return sym, nil, nil
 	}
 

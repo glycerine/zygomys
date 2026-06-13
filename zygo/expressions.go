@@ -566,6 +566,85 @@ func (sym SexpSymbol) Number() int {
 	return sym.number
 }
 
+type SexpLazyArg struct {
+	Expr    Sexp
+	Stack   *Stack
+	CurFunc *SexpFunction
+	Forced  bool
+	Value   Sexp
+}
+
+func (lazy *SexpLazyArg) SexpString(ps *PrintState) string {
+	if lazy == nil {
+		return "(lazyArg nil)"
+	}
+	if lazy.Expr == nil {
+		return "(lazyArg nil)"
+	}
+	return "(lazyArg " + lazy.Expr.SexpString(ps) + ")"
+}
+
+func (lazy *SexpLazyArg) Type() *RegisteredType {
+	return nil
+}
+
+func (lazy *SexpLazyArg) Force(env *Zlisp) (Sexp, error) {
+	if lazy == nil {
+		return SexpNull, fmt.Errorf("cannot force nil lazy argument")
+	}
+	if lazy.Forced {
+		return lazy.Value, nil
+	}
+	if env == nil {
+		return SexpNull, fmt.Errorf("cannot force lazy argument with nil environment")
+	}
+	if lazy.Expr == nil {
+		lazy.Value = SexpNull
+		lazy.Forced = true
+		return lazy.Value, nil
+	}
+
+	gen := NewGenerator(env)
+	if err := gen.Generate(lazy.Expr); err != nil {
+		return SexpNull, err
+	}
+	if len(gen.instructions) == 0 {
+		lazy.Value = SexpNull
+		lazy.Forced = true
+		return lazy.Value, nil
+	}
+	gen.AddInstruction(ReturnInstr{nil})
+
+	sfun := env.MakeFunction("lazyArgForce", 0, false, ZlispFunction(gen.instructions), lazy.Expr)
+	if lazy.Stack != nil {
+		sfun.SetClosing(&Closing{
+			Stack: lazy.Stack.Clone(),
+			Name:  "lazyArgForce",
+			env:   env,
+		})
+	}
+	sfun.parent = lazy.CurFunc
+
+	callState := env.captureControlState()
+	if lazy.Stack != nil {
+		env.linearstack = lazy.Stack.Clone()
+	}
+	env.pc = -2
+	if err := env.CallFunction(sfun, 0); err != nil {
+		env.restoreControlState(callState)
+		return SexpNull, err
+	}
+	res, err := env.Run()
+	if err != nil {
+		env.restoreControlState(callState)
+		return SexpNull, err
+	}
+	env.restoreControlState(callState)
+	lazy.Value = res
+	lazy.Forced = true
+	return res, nil
+}
+
 // SexpInterfaceDecl
 type SexpInterfaceDecl struct {
 	name    string
@@ -604,6 +683,8 @@ type SexpFunction struct {
 	closingOverScopes *Closing
 	parent            *SexpFunction
 	isBuilder         bool // see defbuild; builders are builtins that receive un-evaluated expressions
+	argSyms           []*SexpSymbol
+	lazyFormals       []bool
 	inputTypes        *SexpHash
 	returnTypes       *SexpHash
 	hasBody           bool // could just be declaration in an interface, without a body
@@ -616,6 +697,29 @@ func (sf *SexpFunction) Type() *RegisteredType {
 func (sf *SexpFunction) Copy() *SexpFunction {
 	cp := *sf
 	return &cp
+}
+
+func isLazyFormalSymbol(sym *SexpSymbol) bool {
+	return sym != nil && sym.isSigil && sym.sigil == "$"
+}
+
+func (sf *SexpFunction) SetFormalSymbols(argsyms []*SexpSymbol) {
+	sf.argSyms = append([]*SexpSymbol(nil), argsyms...)
+	sf.lazyFormals = make([]bool, len(argsyms))
+	for i, sym := range argsyms {
+		sf.lazyFormals[i] = isLazyFormalSymbol(sym)
+	}
+}
+
+func (sf *SexpFunction) IsLazyFormal(i int) bool {
+	return i >= 0 && i < len(sf.lazyFormals) && sf.lazyFormals[i]
+}
+
+func (sf *SexpFunction) IsLazyCallArg(i int) bool {
+	if sf.varargs && i >= sf.nargs {
+		return false
+	}
+	return sf.IsLazyFormal(i)
 }
 
 func (sf *SexpFunction) SetClosing(clos *Closing) {

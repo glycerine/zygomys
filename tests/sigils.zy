@@ -6,7 +6,6 @@
 
 (#symbol = "I'm a sigil-symbol")
 (expectError "cannot assign int64 to string" (#symbol = 23))
-($symbol = "I'm a sigil-symbol")
 (?symbol = "I'm a sigil-symbol")
 
 // can a: always be a sigil-symbol, colon style,
@@ -14,5 +13,4 @@
 (a: = 1)
 
 // sigils should eval to themselves
-(assert (== $a %$a))
-
+(assert (== #a %#a))
