@@ -6,7 +6,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	//"4d63.com/tz"
+
+	"4d63.com/tz"
 )
 
 const RFC3339Micro = "2006-01-02T15:04:05.999999"
@@ -115,11 +116,11 @@ var UTCLocation = time.UTC
 
 func init() {
 	var err error
-	WestCoastUSLocation, err = time.LoadLocation("America/Los_Angeles")
+	WestCoastUSLocation, err = tz.LoadLocation("America/Los_Angeles")
 	panicOn(err)
-	EastCoastUSLocation, err = time.LoadLocation("America/New_York")
+	EastCoastUSLocation, err = tz.LoadLocation("America/New_York")
 	panicOn(err)
-	LondonLocation, err = time.LoadLocation("Europe/London")
+	LondonLocation, err = tz.LoadLocation("Europe/London")
 	panicOn(err)
 }
 

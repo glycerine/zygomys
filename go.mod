@@ -3,6 +3,7 @@ module github.com/glycerine/zygomys/v9
 go 1.24.2
 
 require (
+	4d63.com/tz v1.2.0
 	github.com/glycerine/blake2b v0.0.0-20151022103502-3c8c640cd7be
 	github.com/glycerine/goconvey v0.0.0-20190410193231-58a59202ab31
 	github.com/glycerine/greenpack v0.541.0
@@ -13,6 +14,7 @@ require (
 )
 
 require (
+	4d63.com/embedfiles v0.0.0-20190311033909-995e0740726f // indirect
 	github.com/glycerine/fwd v1.1.4-beta.jea // indirect
 	github.com/gopherjs/gopherjs v1.17.2 // indirect
 	github.com/jtolds/gls v4.20.0+incompatible // indirect

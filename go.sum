@@ -1,3 +1,7 @@
+4d63.com/embedfiles v0.0.0-20190311033909-995e0740726f h1:oyYjGRBNq1TxAIG8aHqtxlvqUfzdZf+MbcRb/oweNfY=
+4d63.com/embedfiles v0.0.0-20190311033909-995e0740726f/go.mod h1:HxEsUxoVZyRxsZML/S6e2xAuieFMlGO0756ncWx1aXE=
+4d63.com/tz v1.2.0 h1:EpJt060xY+M+M0Wj8btz+THdOJbSxj4i8jhVQP3Wr0U=
+4d63.com/tz v1.2.0/go.mod h1:SHGqVdL7hd2ZaX2T9uEiOZ/OFAUfCCLURdLPJsd8ZNs=
 github.com/glycerine/blake2b v0.0.0-20151022103502-3c8c640cd7be h1:XBJdPGgA3qqhW+p9CANCAVdF7ZIXdu3pZAkypMkKAjE=
 github.com/glycerine/blake2b v0.0.0-20151022103502-3c8c640cd7be/go.mod h1:OSCrScrFAjcBObrulk6BEQlytA462OkG1UGB5NYj9kE=
 github.com/glycerine/fwd v1.1.4-beta.jea h1:penEwsXMBPCMCH+iUj/HKRIuRzfESzLIk99OcttgqTU=
