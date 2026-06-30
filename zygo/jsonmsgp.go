@@ -998,7 +998,7 @@ func SexpToGoStructs(
 					//vv("upperKey = '%v' from recordKey = '%v'; found=%v; det='%#v'", upperKey, recordKey, found, det)
 					if !found {
 						fmt.Printf(" skipping field '%s' in this hash/which we could not find in the JsonTagMap", recordKey)
-						panic(fmt.Sprintf("unkown field '%s' not allowed; could not find in the JsonTagMap. Fieldnames are case sensitive. src.JstonTagMap: '%#v'", recordKey, src.JsonTagMap))
+						panic(fmt.Sprintf("unknown field '%s' not allowed; could not find in the JsonTagMap. Fieldnames are case sensitive. src.JstonTagMap: '%#v'", recordKey, src.JsonTagMap))
 						continue
 					}
 				}
