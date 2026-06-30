@@ -43,6 +43,8 @@ func (c *ZlispConfig) DefineFlags() {
 	c.Flags.BoolVar(&c.Quiet, "quiet", false, "start repl without printing the version/mode/help banner")
 	c.Flags.BoolVar(&c.Trace, "trace", false, "trace execution (warning: very verbose and slow)")
 	c.Flags.BoolVar(&c.LoadDemoStructs, "demo", false, "load the demo structs: Event, Snoopy, Hornet, Weather and friends.")
+	c.Flags.BoolVar(&c.NoLiner, "no-liner", false, "skip the use of liner library for stdin, may be needed under emacs")
+
 }
 
 // call c.ValidateConfig() after myflags.Parse()
